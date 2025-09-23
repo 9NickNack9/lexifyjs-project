@@ -1,18 +1,24 @@
-@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+/* src/app/globals.css */
+
+/* Your fonts and custom styles */
+/*@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');*/
+
+/* Tailwind v4 – one import */
 @import "tailwindcss";
+
 
 :root {
   --background: #11999e;
   --foreground: #ededed;
 }
 
+/* (Optional) Tailwind v4 inline theme API is fine to keep */
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
-
 
 body {
   background: var(--background);
@@ -21,16 +27,8 @@ body {
 }
 
 @keyframes fadeInScale {
-  0% {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  100% {
-    opacity: 1;
-    transform: scale(1);
-  }
+  0% { opacity: 0; transform: scale(0.9); }
+  100% { opacity: 1; transform: scale(1); }
 }
 
-.animate-fadeInScale {
-  animation: fadeInScale 0.3s ease-out;
-}
+.animate-fadeInScale { animation: fadeInScale 0.3s ease-out; }
