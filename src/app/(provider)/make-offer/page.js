@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import QuestionMarkTooltip from "../components/QuestionmarkTooltip";
+import QuestionMarkTooltip from "../../components/QuestionmarkTooltip";
 
 export default function MakeOffer() {
   const router = useRouter();
