@@ -1,0 +1,121 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  PURCHASER
+  PROVIDER
+  ADMIN
+}
+
+model AppUser {
+  userId                         BigInt   @id @default(autoincrement()) @db.BigInt
+  role                           Role
+  registerStatus                 String   @default("pending")
+  username                       String   @unique
+  companyName                    String   @unique
+  companyId                      String   @unique
+  companyAddress                 String
+  companyPostalCode              String
+  companyCity                    String
+  companyCountry                 String
+  companyWebsite                 String
+  companyProfessionals           Int?
+  contactFirstName               String
+  contactLastName                String
+  contactEmail                   String
+  contactTelephone               String
+  contactPosition                String
+  passwordHash                   String
+  companyContactPersons          Json
+  notificationPreferences        Json     @default("[\"no_offers\",\"over_max_price\",\"pending_offer_selection\"]")
+  winningOfferSelection          String   @default("manual")
+  blockedServiceProviders        Json     @default("[]")
+  preferredLegalServiceProviders Json     @default("[]")
+  legalPanelServiceProviders     Json     @default("[]")
+  providerTotalRating            Decimal? @db.Decimal
+  providerIndividualRating       Json     @default("[]")
+  invoiceFee                     Decimal  @default("0") @db.Decimal
+  companyInvoiceContactPersons   Json
+
+  requests        Request[]  @relation("UserRequests")
+  offers          Offer[]    @relation("ProviderOffers")
+  contractsClient Contract[] @relation("ClientContracts")
+  contractsProv   Contract[] @relation("ProviderContracts")
+}
+
+model Request {
+  requestId                    BigInt       @id @default(autoincrement())  // ← present in every request
+  clientId                     BigInt                                  // ← session.userId
+  requestState                 String                                  // e.g. "OPEN", "CLOSED"
+  requestCategory              String
+  requestSubcategory           String?                                 // not relevant to all
+  assignmentType               String?                                 // not relevant to all
+  clientCompanyName            String?
+  primaryContactPerson         String
+  scopeOfWork                  String                                  // what was requested
+  description                  String                                  // your “company line of business”
+  additionalBackgroundInfo     String     @default("")                 // present but can be empty
+  backgroundInfoFiles          Json       @default("[]")              // present but can be empty
+  supplierCodeOfConductFiles   Json       @default("[]")              // present but can be empty
+
+  serviceProviderType          String
+  domesticOffers               String
+  providerSize                 String
+  providerCompanyAge           String
+  providerMinimumRating        String
+  currency                     String
+  paymentRate                  String
+  advanceRetainerFee           String
+  invoiceType                  String
+  language                     String
+  offersDeadline               DateTime
+  title                        String
+
+  dateCreated                  DateTime  @default(now())
+  dateExpired                  DateTime
+
+  contractResult               String?                                 // initially null
+  contractPrice                Decimal?  @db.Decimal // initially null
+
+  // Flexible bucket for request-specific fields
+  details                      Json      @default("{}")
+
+  client   AppUser    @relation("UserRequests", fields: [clientId], references: [userId], onDelete: Cascade)
+  offers   Offer[]
+  contract Contract[]
+}
+
+model Offer {
+  offerId     BigInt   @id @default(autoincrement()) @db.BigInt
+  requestId   BigInt
+  providerId  BigInt
+  offerLawyer String
+  offerPrice  Decimal  @db.Decimal
+  createdAt   DateTime @default(now())
+  offerTitle  String
+  offerStatus String   @default("Pending")
+
+  request  Request @relation(fields: [requestId], references: [requestId], onDelete: Cascade)
+  provider AppUser @relation("ProviderOffers", fields: [providerId], references: [userId], onDelete: Cascade)
+
+  @@unique([requestId, providerId])
+}
+
+model Contract {
+  contractId    BigInt   @id @default(autoincrement()) @db.BigInt
+  requestId     BigInt
+  clientId      BigInt
+  providerId    BigInt
+  contractDate  DateTime @default(now())
+  contractPrice Decimal  @db.Decimal
+
+  request  Request @relation(fields: [requestId], references: [requestId], onDelete: Cascade)
+  client   AppUser @relation("ClientContracts", fields: [clientId], references: [userId], onDelete: Cascade)
+  provider AppUser @relation("ProviderContracts", fields: [providerId], references: [userId], onDelete: Cascade)
+}
