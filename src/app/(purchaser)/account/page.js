@@ -649,7 +649,7 @@ export default function Account() {
           <span className="ms-3 text-sm text-black dark:text-black">
             My LEXIFY Request expires and qualifying offers have been received,
             but the best offer exceeds the maximum price in my LEXIFY Request{" "}
-            <NarrowTooltip tooltipText="Whenever your LEXIFY Request expires and you receive at least one qualifying offer but the offer exceeds the maximum price you have set in the LEXIFY Request, you will still have 48 hours from the expiration of your LEXIFY Request to accept this best offer if you wish to do so. If not accepted within 48 hours, the best offer exceeding your maximum price will automatically be rejected." />
+            <NarrowTooltip tooltipText="Whenever your LEXIFY Request expires and you receive at least one qualifying offer but the offer exceeds the maximum price you have set in the LEXIFY Request, you will still have 72 hours from the expiration of your LEXIFY Request to accept this best offer if you wish to do so. If not accepted within 72 hours, the best offer exceeding your maximum price will automatically be rejected." />
           </span>
         </label>
         <br />
@@ -736,9 +736,9 @@ export default function Account() {
           LEXIFY Contract. When this option is set to &quot;Manual&quot;, LEXIFY
           will show the three best offers received by the expiration of each
           LEXIFY Request on the &quot;My Dashboard&quot; page, and you will have
-          48 hours from the expiration of each LEXIFY Request to manually select
+          72 hours from the expiration of each LEXIFY Request to manually select
           the winning offer from the best offers which are shown. If you do not
-          select any of the best offers to be the winning offer within 48 hours,
+          select any of the best offers to be the winning offer within 72 hours,
           LEXIFY will automatically select the best offer as the winning offer
           for the corresponding LEXIFY Contract.{" "}
         </h4>

@@ -10,9 +10,7 @@ export default function AwaitingSelectionTable({ rows, onPreview }) {
       </h2>
 
       {rows.length === 0 ? (
-        <div className="p-4 bg-white rounded border text-black">
-          No requests awaiting your selection.
-        </div>
+        <div className="p-4 bg-white rounded border text-black">N/A</div>
       ) : (
         <table className="w-full border-collapse border border-gray-300 bg-white text-black">
           <thead>

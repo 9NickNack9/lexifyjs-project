@@ -187,7 +187,7 @@ export default function ProviderArchive() {
             </select>
 
             {filteredOffers.length === 0 ? (
-              <EmptyBox>No pending offers at the moment.</EmptyBox>
+              <EmptyBox>N/A</EmptyBox>
             ) : (
               <table className="w-full border-collapse border border-gray-300 bg-white text-black">
                 <thead>
@@ -319,7 +319,7 @@ export default function ProviderArchive() {
             </select>
 
             {filteredContracts.length === 0 ? (
-              <EmptyBox>No contracts yet.</EmptyBox>
+              <EmptyBox>N/A</EmptyBox>
             ) : (
               <table className="w-full border-collapse border border-gray-300 bg-white text-black">
                 <thead>

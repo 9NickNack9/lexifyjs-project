@@ -45,9 +45,7 @@ export default function PendingRequestsTable({
       </h2>
 
       {enriched.length === 0 ? (
-        <div className="p-4 bg-white rounded border text-black">
-          No pending requests.
-        </div>
+        <div className="p-4 bg-white rounded border text-black">N/A</div>
       ) : (
         <table className="w-full border-collapse border border-gray-300 bg-white text-black">
           <thead>

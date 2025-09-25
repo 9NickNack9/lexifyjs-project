@@ -8,9 +8,7 @@ export default function ContractsTable({ rows, onShowContract }) {
       <h2 className="text-2xl font-semibold mb-4">My LEXIFY Contracts</h2>
 
       {rows.length === 0 ? (
-        <div className="p-4 bg-white rounded border text-black">
-          No contracts yet.
-        </div>
+        <div className="p-4 bg-white rounded border text-black">N/A</div>
       ) : (
         <table className="w-full border-collapse border border-gray-300 bg-white text-black">
           <thead>
