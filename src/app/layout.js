@@ -6,6 +6,7 @@ import FooterBanner from "./components/FooterBanner";
 import "./globals.css";
 import { SessionProvider } from "next-auth/react";
 import { Poppins } from "next/font/google";
+import Script from "next/script";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -25,6 +26,14 @@ export default function RootLayout({ children }) {
 
   return (
     <html lang="en">
+      <head>
+        <Script
+          id="cookieyes"
+          type="text/javascript"
+          src="https://cdn-cookieyes.com/client_data/1ef10650c8505320b7959abd/script.js"
+          strategy="beforeInteractive"
+        ></Script>
+      </head>
       <body className={poppins.className}>
         <SessionProvider>
           {!noNavPages.includes(pathname) && <Navbar />}
