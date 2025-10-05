@@ -25,7 +25,7 @@ export default function About() {
           Founded on principles of efficiency and ease of use, LEXIFY is
           reimagining legal service delivery for the digital age. We&apos;re
           committed to making expert legal support more accessible, predictable,
-          and value-driven for businesses of all sizes.{" "}
+          and value-driven for businesses.{" "}
         </h1>
         <h1 className="text-2xl font-bold mb-4">
           Join the LEXIFY community and experience a smarter, simpler approach

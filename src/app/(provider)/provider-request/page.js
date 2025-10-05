@@ -147,7 +147,7 @@ export default function ProviderRequest() {
         </div>
 
         {/* Empty State */}
-        <EmptyBox>No available requests at the moment.</EmptyBox>
+        <EmptyBox>No pending LEXIFY Requests available at the moment.</EmptyBox>
       </div>
     </div>
   );

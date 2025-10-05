@@ -482,11 +482,11 @@ export default function ProviderAccount() {
         <h2 className="text-2xl font-semibold mb-4">Fees and Invoicing</h2>
         <h4 className="text-md">
           LEXIFY charges a monthly service fee for the use of the LEXIFY
-          platform. The amount of the service fee is seven point five percent
-          (7,5%) of the total legal service sales (VAT 0%) by your company on
-          the LEXIFY platform during a calendar month. The service fee for an
-          individual calendar month is invoiced by LEXIFY during the following
-          calendar month.
+          platform. The amount of the service fee is zero percent (0%) of the
+          total legal service sales (VAT 0%) by your company on the LEXIFY
+          platform during a calendar month. The service fee for an individual
+          calendar month is invoiced by LEXIFY during the following calendar
+          month.
         </h4>
         <br />
         <div className="grid grid-cols-2 gap-4">
