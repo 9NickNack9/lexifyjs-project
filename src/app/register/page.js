@@ -418,7 +418,7 @@ export default function Register() {
                 onChange={(e) => setAcceptedGeneral(e.target.checked)}
               />
               <Link
-                href="/docs/lexify-gtcs-2025.pdf"
+                href="/docs/lexify-gtcs-2025-v2.pdf"
                 className="text-blue-500 underline"
                 target="_blank"
                 rel="noopener"

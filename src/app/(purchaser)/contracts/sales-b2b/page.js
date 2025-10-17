@@ -584,8 +584,8 @@ export default function SalesB2B() {
               <option value="At least 15 lawyers">
                 Yes, the legal service provider must employ at least 15 lawyers
               </option>
-              <option value="At least 50 lawyers">
-                Yes, the legal service provider must employ at least 50 lawyers
+              <option value="At least 40 lawyers">
+                Yes, the legal service provider must employ at least 40 lawyers
               </option>
             </select>
           </div>

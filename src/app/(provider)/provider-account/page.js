@@ -667,7 +667,7 @@ export default function ProviderAccount() {
           </li>
           <li>
             <Link
-              href="/docs/lexify-gtcs-2025.pdf"
+              href="/docs/lexify-gtcs-2025-v2.pdf"
               target="_blank"
               rel="noopener"
               className="text-blue-600 dark:text-blue-500 hover:underline"

@@ -210,7 +210,7 @@ export default function DisputeCourt() {
                   <em>
                     {option ===
                     "Full legal representation in pending court proceedings (including, for example, drafting of legal briefs, representation in court hearings and related attorney-client communications)"
-                      ? "Any offers you receive will be for a lump sum fixed price and cover the pending proceedings in one court instance only. Any offers you receive will not include fees or charges possibly levied by the competent court and such fees and charges, if any, will be invoiced separately."
+                      ? "Any offers you receive will be for a capped price and cover the pending proceedings in one court instance only. Any offers you receive will not include fees or charges possibly levied by the competent court and such fees and charges, if any, will be invoiced separately. The capped price offer will provide the maximum price for the work, taking into account all possible unexpected developments in the dispute proceedings (such as an unusually high number of rounds of written pleadings). In addition to the capped price, the offer will include an expected price, representing the price of the work if the dispute proceedings proceed without such unexpected developments."
                       : "Any offers you receive will provide an applicable hourly rate only. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the legal service provider submitting the winning offer. The offered hourly rate will be valid until the court proceedings in the current court instance have concluded."}
                   </em>
                 </p>
@@ -798,19 +798,19 @@ export default function DisputeCourt() {
                 </Section>
 
                 {/* Contract Price and Currency */}
-                <Section title="Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency">
+                <Section title="Contract Price (Capped Price or Flat Hourly Rate) and Currency">
                   {formData.need.includes(
                     "Full legal representation in pending court proceedings (including, for example, drafting of legal briefs, representation in court hearings and related attorney-client communications)"
                   ) ? (
                     <>
-                      {`Lump Sum Fixed Fee ${
+                      {`Capped Price ${
                         formData.currency ? `(${formData.currency})` : ""
                       }`}
                       <p className="text-md mt-2">
-                        The lump sum fixed fee covers the pending proceedings in
-                        one court instance only and does not include fees or
-                        charges possibly levied by the competent court which
-                        fees and charges, if any, will be invoiced separately.
+                        The capped price covers the pending proceedings in one
+                        court instance only and does not include fees or charges
+                        possibly levied by the competent court which fees and
+                        charges, if any, will be invoiced separately.
                       </p>
                     </>
                   ) : (

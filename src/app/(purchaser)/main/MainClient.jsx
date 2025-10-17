@@ -19,6 +19,12 @@ export default function MainClient() {
       link: "/archive",
     },
     {
+      title: "Rate Legal Service Providers",
+      description:
+        "Here you can rate individual legal service providers based on your experience of their performance. You can also view the current aggregated user ratings of each provider.",
+      link: "/provider_rating",
+    },
+    {
       title: "My Account",
       description:
         "Your account and contact details can be found and updated here. Here you can also manage which legal service providers can view your LEXIFY Requests and make offers to you.",
@@ -35,7 +41,7 @@ export default function MainClient() {
   return (
     <div>
       <div className="flex items-start justify-center min-h-screen p-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 max-w-7xl w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 max-w-7xl w-full">
           {cards.map((card, index) => (
             <div
               key={index}

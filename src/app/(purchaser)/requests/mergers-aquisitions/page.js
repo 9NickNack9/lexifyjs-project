@@ -983,7 +983,7 @@ export default function MergerAquisitions() {
 
                 {/* Object of Sale */}
                 <Section title="Object of Sale">
-                  <p>{formData.saleObject || "-"}</p>
+                  <p>{formData.objectType || "-"}</p>
                 </Section>
 
                 {/* Counterparty */}

@@ -18,8 +18,17 @@ export default function Contact() {
           <a href="mailto:support@lexify.online" className="underline">
             support@lexify.online
           </a>{" "}
-          for any inquiries about LEXIFY. Our dedicated team is committed to
-          responding promptly and providing the assistance you need.{" "}
+          for any inquiries about LEXIFY. For technical support inquiries, you
+          can call us at +358 (45) 7833 4005 (available Monday to Friday from
+          10:00 to 14:00, excluding public holidays) or send us an email at{" "}
+          <a href="mailto:support@lexify.online" className="underline">
+            support@lexify.online
+          </a>
+          .
+        </h1>
+        <h1 className="text-2xl font-bold mb-4">
+          Our dedicated team is committed to responding promptly and providing
+          the assistance you need.{" "}
         </h1>
       </div>
     </div>

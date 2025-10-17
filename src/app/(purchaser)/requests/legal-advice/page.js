@@ -307,6 +307,7 @@ export default function LegalAdvice() {
             "Intellectual Property Rights",
             "Data Privacy",
             "Competition/Antitrust",
+            "Environment and Energy",
             "Other",
           ].map((option, index) => (
             <label key={index} className="block">

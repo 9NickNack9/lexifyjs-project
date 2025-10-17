@@ -38,7 +38,10 @@ model AppUser {
   blockedServiceProviders        Json     @default("[]")
   preferredLegalServiceProviders Json     @default("[]")
   legalPanelServiceProviders     Json     @default("[]")
-  providerTotalRating            Decimal? @db.Decimal
+  providerTotalRating            Decimal? @default("5") @db.Decimal
+  providerQualityRating          Decimal? @default("5") @db.Decimal
+  providerCommunicationRating    Decimal? @default("5") @db.Decimal
+  providerBillingRating          Decimal? @default("5") @db.Decimal
   providerIndividualRating       Json     @default("[]")
   invoiceFee                     Decimal  @default("0") @db.Decimal
   companyInvoiceContactPersons   Json
