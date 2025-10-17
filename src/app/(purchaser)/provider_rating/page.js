@@ -373,9 +373,6 @@ export default function ProviderRatingPage() {
                     <div className="font-medium">
                       {r.companyName || "(no company name)"}
                     </div>
-                    <div className="text-xs text-gray-600">
-                      Username: {r.username}
-                    </div>
                   </div>
                 );
               })
