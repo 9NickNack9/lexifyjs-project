@@ -429,7 +429,7 @@ export default function LegalTraining() {
                 Yes, the legal service provider must employ at least 15 lawyers
               </option>
               <option value="Atleast 50 lawyers">
-                Yes, the legal service provider must employ at least 50 lawyers
+                Yes, the legal service provider must employ at least 40 lawyers
               </option>
             </select>
           </div>

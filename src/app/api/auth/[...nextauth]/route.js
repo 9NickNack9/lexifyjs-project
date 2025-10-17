@@ -22,6 +22,7 @@ export const authOptions = {
             passwordHash: true, // ✅ correct field
             role: true, // "ADMIN" | "PROVIDER" | "PURCHASER"
             registerStatus: true, // "pending" | "approved" | ...
+            companyName: true,
           },
         });
 
@@ -45,6 +46,7 @@ export const authOptions = {
           name: user.username,
           role: user.role,
           registerStatus: user.registerStatus,
+          companyName: user.companyName,
         };
       },
     }),
@@ -56,6 +58,7 @@ export const authOptions = {
       if (user) {
         token.role = user.role;
         token.registerStatus = user.registerStatus;
+        token.companyName = user.companyName ?? null;
       }
 
       // Optional: keep token fresh if registerStatus can change server-side
@@ -79,6 +82,7 @@ export const authOptions = {
       session.userId = token.sub;
       session.role = token.role;
       session.registerStatus = token.registerStatus;
+      session.companyName = token.companyName;
       // (optional) keep username in session.user.name if you need it
       return session;
     },

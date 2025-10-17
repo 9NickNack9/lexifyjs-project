@@ -38,6 +38,7 @@ export default function ProviderAccount() {
             position: c.title || c.position || "",
             telephone: c.telephone || "",
             email: c.email || "",
+            allNotifications: !!c.allNotifications,
             isEditing: false,
           }))
         );
@@ -70,6 +71,19 @@ export default function ProviderAccount() {
       xs.map((c) => (c.id === id ? { ...c, [field]: value } : c))
     );
 
+  const toggleAllNotifications = async (id, checked) => {
+    const next = contacts.map((c) =>
+      c.id === id ? { ...c, allNotifications: checked } : c
+    );
+    setContacts(next);
+    try {
+      await saveContacts(next);
+    } catch (e) {
+      setContacts(contacts);
+      alert("Failed to update notification flag for this contact.");
+    }
+  };
+
   const addContact = () =>
     setContacts((xs) => [
       ...xs,
@@ -91,6 +105,7 @@ export default function ProviderAccount() {
       title: (c.position || "").trim(),
       telephone: (c.telephone || "").trim(),
       email: (c.email || "").trim(),
+      allNotifications: !!c.allNotifications,
     }));
 
   // Save the current list to the server (no flag changes here)
@@ -282,6 +297,7 @@ export default function ProviderAccount() {
                   <th className="border p-2">Title/Position in Company</th>
                   <th className="border p-2">Telephone (with country code)</th>
                   <th className="border p-2">Email</th>
+                  <th className="border p-2">Receive all notifications</th>
                   <th className="border p-2">Edit/Save</th>
                   <th className="border p-2">Delete</th>
                 </tr>
@@ -353,6 +369,15 @@ export default function ProviderAccount() {
                       ) : (
                         c.email
                       )}
+                    </td>
+                    <td className="border p-2 text-center">
+                      <input
+                        type="checkbox"
+                        checked={!!c.allNotifications}
+                        onChange={(e) =>
+                          toggleAllNotifications(c.id, e.target.checked)
+                        }
+                      />
                     </td>
                     <td className="border p-2 text-center">
                       <button

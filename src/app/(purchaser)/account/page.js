@@ -107,6 +107,7 @@ export default function Account() {
             position: c.title || c.position || "",
             telephone: c.telephone || "",
             email: c.email || "",
+            allNotifications: !!c.allNotifications,
             isEditing: false,
           }))
         );
@@ -124,6 +125,23 @@ export default function Account() {
     setContacts((xs) =>
       xs.map((c) => (c.id === id ? { ...c, [field]: value } : c))
     );
+
+  const toggleAllNotifications = async (id, checked) => {
+    // Optimistic UI
+    const next = contacts.map((c) =>
+      c.id === id ? { ...c, allNotifications: checked } : c
+    );
+    setContacts(next);
+
+    // Persist immediately
+    try {
+      await saveContacts(next);
+    } catch (e) {
+      // Revert on error
+      setContacts(contacts);
+      alert("Failed to update notification flag for this contact.");
+    }
+  };
 
   const addContact = () =>
     setContacts((xs) => [
@@ -146,6 +164,7 @@ export default function Account() {
       title: (c.position || "").trim(),
       telephone: (c.telephone || "").trim(),
       email: (c.email || "").trim(),
+      allNotifications: !!c.allNotifications,
     }));
 
   // Save the current list to the server (no flag changes here)
@@ -486,6 +505,7 @@ export default function Account() {
                   <th className="border p-2">Title / Position in Company</th>
                   <th className="border p-2">Telephone (with country code)</th>
                   <th className="border p-2">Email</th>
+                  <th className="border p-2">Receive all notifications</th>
                   <th className="border p-2">Edit</th>
                   <th className="border p-2">Delete</th>
                 </tr>
@@ -557,6 +577,15 @@ export default function Account() {
                       ) : (
                         c.email
                       )}
+                    </td>
+                    <td className="border p-2 text-center">
+                      <input
+                        type="checkbox"
+                        checked={!!c.allNotifications}
+                        onChange={(e) =>
+                          toggleAllNotifications(c.id, e.target.checked)
+                        }
+                      />
                     </td>
                     <td className="border p-2 text-center">
                       <button
@@ -796,9 +825,6 @@ export default function Account() {
                     <div className="font-medium">
                       {r.companyName || "(no company name)"}
                     </div>
-                    <div className="text-xs text-gray-600">
-                      Username: {r.username}
-                    </div>
                   </div>
                 );
               })
@@ -811,7 +837,7 @@ export default function Account() {
           onClick={blockSelectedProvider}
           disabled={!bpSelected}
         >
-          Block Provider
+          Block Service Provider
         </button>
 
         {/* Blocked list table */}
@@ -821,14 +847,14 @@ export default function Account() {
           </h3>
           {blockedProviders.length === 0 ? (
             <div className="text-sm text-gray-500">
-              You have not blocked any providers.
+              You have not blocked any legal service providers.
             </div>
           ) : (
             <table className="w-full border border-gray-300 text-sm">
               <thead className="bg-gray-200">
                 <tr className="bg-[#3a3a3c] text-white">
                   <th className="border p-2 text-left">
-                    Provider Company Name
+                    Legal Service Provider Company Name
                   </th>
                   <th className="border p-2">Unblock</th>
                 </tr>
@@ -842,7 +868,7 @@ export default function Account() {
                         className="bg-green-600 text-white px-3 py-1 rounded cursor-pointer"
                         onClick={() => unblockProvider(name)}
                       >
-                        Unblock Provider
+                        Unblock Legal Service Provider
                       </button>
                     </td>
                   </tr>
@@ -905,9 +931,6 @@ export default function Account() {
                     <div className="font-medium">
                       {r.companyName || "(no company name)"}
                     </div>
-                    <div className="text-xs text-gray-600">
-                      Username: {r.username}
-                    </div>
                   </div>
                 );
               })
@@ -945,7 +968,7 @@ export default function Account() {
           onClick={assignPreferredProvider}
           disabled={!ppSelected || selectedAreas.length === 0}
         >
-          Assign Preferred Provider
+          Assign Preferred Status
         </button>
 
         <div className="mt-6">
@@ -954,7 +977,7 @@ export default function Account() {
           </h3>
           {preferredProviders.length === 0 ? (
             <div className="text-sm text-gray-500">
-              You have not assigned any preferred providers.
+              You have not assigned any preferred legal service providers.
             </div>
           ) : (
             <table className="w-full border border-gray-300 text-sm">
@@ -1099,9 +1122,6 @@ export default function Account() {
                     <div className="font-medium">
                       {r.companyName || "(no company name)"}
                     </div>
-                    <div className="text-xs text-gray-600">
-                      Username: {r.username}
-                    </div>
                   </div>
                 );
               })
@@ -1114,14 +1134,14 @@ export default function Account() {
           onClick={addToLegalPanel}
           disabled={!lpSelected}
         >
-          Add to Legal Panel
+          Assign Legal Panel Status
         </button>
 
         <div className="mt-6">
           <h3 className="text-md font-semibold mb-2">Current Panel</h3>
           {legalPanelProviders.length === 0 ? (
             <div className="text-sm text-gray-500">
-              You have not added any panel providers.
+              You have not assigned any legal panel service providers.
             </div>
           ) : (
             <table className="w-full border border-gray-300 text-sm">

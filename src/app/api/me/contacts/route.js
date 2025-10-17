@@ -32,3 +32,51 @@ export async function GET() {
 
   return NextResponse.json({ contacts: list });
 }
+
+// ✅ NEW: persist contacts (including allNotifications) to companyContactPersons
+export async function PUT(req) {
+  const session = await getServerSession(authOptions);
+  if (!session?.userId)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  let body;
+  try {
+    body = await req.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  }
+
+  const incoming = Array.isArray(body?.contacts) ? body.contacts : null;
+  if (!incoming) {
+    return NextResponse.json(
+      { error: "`contacts` must be an array" },
+      { status: 400 }
+    );
+  }
+
+  // Normalize & lightly validate; keep unknown fields out
+  const cleaned = incoming.map((c) => ({
+    firstName: (c.firstName ?? "").toString().trim(),
+    lastName: (c.lastName ?? "").toString().trim(),
+    title: (c.title ?? c.position ?? "").toString().trim(),
+    telephone: (c.telephone ?? "").toString().trim(),
+    email: (c.email ?? "").toString().trim(),
+    allNotifications: !!c.allNotifications, // 👈 persist the checkbox
+  }));
+
+  // Optional: ensure at least one contact exists
+  if (cleaned.length === 0) {
+    return NextResponse.json(
+      { error: "At least one contact is required." },
+      { status: 400 }
+    );
+  }
+
+  await prisma.appUser.update({
+    where: { userId: BigInt(session.userId) },
+    data: { companyContactPersons: cleaned },
+    select: { userId: true },
+  });
+
+  return NextResponse.json({ ok: true, contacts: cleaned });
+}

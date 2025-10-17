@@ -330,6 +330,7 @@ export default function ProviderRatingPage() {
         </div>
       )}
       <br />
+      <br />
       <h1 className="text-2xl font-bold">
         Check Aggregated Rating of a Legal Service Provider
       </h1>
