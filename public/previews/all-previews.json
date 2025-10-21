@@ -1,0 +1,3220 @@
+{
+  "requests": [
+    {
+      "category": "Help with Contracts",
+      "subcategory": "B2B Sales",
+      "assignmentType": null,
+      "preview": {
+        "sections": [
+          {
+            "title": "Client Name, Business Identity Code and Country of Domicile",
+            "fields": [
+              { "label": "Client", "path": "__clientLine__" },
+              {
+                "label": "Primary contact person",
+                "path": "primaryContactPerson"
+              }
+            ]
+          },
+          {
+            "title": "Scope of Work",
+            "fields": [{ "label": "What do you need?", "path": "scopeOfWork" }]
+          },
+          {
+            "title": "Description of Client's Line of Business",
+            "fields": [{ "label": "Description", "path": "description" }]
+          },
+          {
+            "title": "Commercial Terms",
+            "fields": [
+              { "label": "Payment rate", "path": "paymentRate" },
+              {
+                "label": "Currency / Maximum price",
+                "path": "__currencyMax__"
+              },
+              { "label": "Invoice type", "path": "invoiceType" },
+              { "label": "Advance retainer fee", "path": "advanceRetainerFee" }
+            ]
+          },
+          {
+            "title": "Provider Requirements",
+            "fields": [
+              {
+                "label": "Service provider type",
+                "path": "serviceProviderType"
+              },
+              { "label": "Domestic offers", "path": "domesticOffers" },
+              { "label": "Minimum provider size", "path": "providerSize" },
+              { "label": "Minimum company age", "path": "providerCompanyAge" },
+              { "label": "Minimum rating", "path": "providerMinimumRating" }
+            ]
+          },
+          {
+            "title": "Attachments",
+            "fields": [
+              { "label": "Background files", "path": "backgroundInfoFiles" },
+              {
+                "label": "Supplier Code of Conduct files",
+                "path": "supplierCodeOfConductFiles"
+              }
+            ]
+          },
+          {
+            "title": "Meta",
+            "fields": [
+              { "label": "Request title", "path": "title" },
+              { "label": "Languages", "path": "language" },
+              { "label": "Offers deadline", "path": "offersDeadline" }
+            ]
+          }
+        ]
+      },
+      "payloadExample": {
+        "requestState": "PENDING",
+        "requestCategory": "Help with Contracts",
+        "requestSubcategory": "B2B Sales",
+        "primaryContactPerson": "Jane Doe",
+        "scopeOfWork": "A sales contract template for the client's B2B business. The work includes preparation of the template documentation, necessary revisions based on client feedback and all related attorney-client communication.",
+        "description": "Brief description...",
+        "additionalBackgroundInfo": "",
+        "backgroundInfoFiles": [],
+        "supplierCodeOfConductFiles": [],
+        "serviceProviderType": "Only law firms / solo practitioners / both",
+        "domesticOffers": "Domestic only / Domestic and foreign",
+        "providerSize": "1-3 / 4-10 / 11-50 / 50+",
+        "providerCompanyAge": "Any / >2 years / >5 years ...",
+        "providerMinimumRating": "3/5, 4/5, ...",
+        "currency": "EUR",
+        "paymentRate": "Lump sum fixed price or Hourly Rate (computed from choice)",
+        "advanceRetainerFee": "Yes/No",
+        "invoiceType": "Monthly / On completion ...",
+        "language": "English, Finnish",
+        "offersDeadline": "2025-10-28",
+        "title": "LEXIFY Request title",
+        "dateExpired": "2025-10-28",
+        "details": {
+          "confidential": true,
+          "winnerBidderOnlyStatus": "Disclosed to Winning Bidder Only",
+          "maximumPrice": "4000 (only when template option selected)"
+        }
+      }
+    },
+
+    {
+      "category": "Help with Contracts",
+      "subcategory": "B2C Sales",
+      "assignmentType": null,
+      "preview": {
+        "sections": [
+          {
+            "title": "Client Name, Business Identity Code and Country of Domicile",
+            "fields": [
+              { "label": "Client", "path": "__clientLine__" },
+              {
+                "label": "Primary contact person",
+                "path": "primaryContactPerson"
+              }
+            ]
+          },
+          {
+            "title": "Scope of Work",
+            "fields": [{ "label": "What do you need?", "path": "scopeOfWork" }]
+          },
+          {
+            "title": "Description of Client's Line of Business",
+            "fields": [{ "label": "Description", "path": "description" }]
+          },
+          {
+            "title": "Commercial Terms",
+            "fields": [
+              { "label": "Payment rate", "path": "paymentRate" },
+              {
+                "label": "Currency / Maximum price",
+                "path": "__currencyMax__"
+              },
+              { "label": "Invoice type", "path": "invoiceType" },
+              { "label": "Advance retainer fee", "path": "advanceRetainerFee" }
+            ]
+          },
+          {
+            "title": "Provider Requirements",
+            "fields": [
+              {
+                "label": "Service provider type",
+                "path": "serviceProviderType"
+              },
+              { "label": "Domestic offers", "path": "domesticOffers" },
+              { "label": "Minimum provider size", "path": "providerSize" },
+              { "label": "Minimum company age", "path": "providerCompanyAge" },
+              { "label": "Minimum rating", "path": "providerMinimumRating" }
+            ]
+          },
+          {
+            "title": "Attachments",
+            "fields": [
+              { "label": "Background files", "path": "backgroundInfoFiles" },
+              {
+                "label": "Supplier Code of Conduct files",
+                "path": "supplierCodeOfConductFiles"
+              }
+            ]
+          },
+          {
+            "title": "Meta",
+            "fields": [
+              { "label": "Request title", "path": "title" },
+              { "label": "Languages", "path": "language" },
+              { "label": "Offers deadline", "path": "offersDeadline" }
+            ]
+          }
+        ]
+      },
+      "payloadExample": {
+        "requestState": "PENDING",
+        "requestCategory": "Help with Contracts",
+        "requestSubcategory": "B2C Sales",
+        "primaryContactPerson": "Jane Doe",
+        "scopeOfWork": "A sales contract template for the Client's B2C business. The work includes preparation of the template documentation, necessary revisions based on client feedback and all related attorney-client communication.",
+        "description": "Brief description...",
+        "additionalBackgroundInfo": "",
+        "backgroundInfoFiles": [],
+        "supplierCodeOfConductFiles": [],
+        "serviceProviderType": "Only law firms / solo practitioners / both",
+        "domesticOffers": "Domestic only / Domestic and foreign",
+        "providerSize": "1-3 / 4-10 / 11-50 / 50+",
+        "providerCompanyAge": "Any / >2 years / >5 years ...",
+        "providerMinimumRating": "3/5, 4/5, ...",
+        "currency": "EUR",
+        "paymentRate": "Lump sum fixed price or Hourly Rate (computed from choice)",
+        "advanceRetainerFee": "Yes/No",
+        "invoiceType": "Monthly / On completion ...",
+        "language": "English, Finnish",
+        "offersDeadline": "2025-10-28",
+        "title": "LEXIFY Request title",
+        "dateExpired": "2025-10-28",
+        "details": {
+          "confidential": true,
+          "winnerBidderOnlyStatus": "Disclosed to Winning Bidder Only",
+          "maximumPrice": "4000 (only when template option selected)"
+        }
+      }
+    },
+
+    {
+      "category": "Help with Contracts",
+      "subcategory": "Real Estate and Construction",
+      "assignmentType": "Sale and Purchase of Real Estate",
+      "preview": {
+        "sections": [
+          {
+            "title": "Client Name, Business Identity Code and Country of Domicile",
+            "fields": [
+              { "label": "Client", "path": "__clientLineOrDisclosed__" },
+              {
+                "label": "Primary contact person",
+                "path": "primaryContactPerson"
+              }
+            ]
+          },
+          {
+            "title": "Scope of Work",
+            "fields": [
+              {
+                "label": "Selected support",
+                "path": "__supportWithDueDiligenceFormat__"
+              }
+            ]
+          },
+          {
+            "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
+            "fields": [{ "label": "Price model", "path": "__priceModel__" }]
+          },
+          {
+            "title": "Object of Sale",
+            "fields": [
+              { "label": "Object", "path": "details.saleObject" },
+              { "label": "Other (specified)", "path": "details.otherObject" }
+            ]
+          },
+          {
+            "title": "Confidentiality",
+            "fields": [
+              {
+                "label": "Winner-bidder-only status",
+                "path": "details.winnerBidderOnlyStatus"
+              }
+            ]
+          },
+          {
+            "title": "Commercial Terms",
+            "fields": [
+              { "label": "Payment rate", "path": "paymentRate" },
+              { "label": "Currency", "path": "currency" },
+              { "label": "Invoice type", "path": "invoiceType" },
+              { "label": "Advance retainer fee", "path": "advanceRetainerFee" }
+            ]
+          },
+          {
+            "title": "Provider Requirements",
+            "fields": [
+              {
+                "label": "Service provider type",
+                "path": "serviceProviderType"
+              },
+              { "label": "Domestic offers", "path": "domesticOffers" },
+              { "label": "Minimum provider size", "path": "providerSize" },
+              { "label": "Minimum company age", "path": "providerCompanyAge" },
+              { "label": "Minimum rating", "path": "providerMinimumRating" }
+            ]
+          },
+          {
+            "title": "Attachments",
+            "fields": [
+              { "label": "Background files", "path": "backgroundInfoFiles" },
+              {
+                "label": "Supplier Code of Conduct files",
+                "path": "supplierCodeOfConductFiles"
+              }
+            ]
+          },
+          {
+            "title": "Meta",
+            "fields": [
+              { "label": "Request title", "path": "title" },
+              { "label": "Languages", "path": "language" },
+              { "label": "Offers deadline", "path": "offersDeadline" }
+            ]
+          }
+        ]
+      },
+      "payloadExample": {
+        "requestState": "PENDING",
+        "requestCategory": "Help with Contracts",
+        "requestSubcategory": "Real Estate and Construction",
+        "assignmentType": "Sale and Purchase of Real Estate",
+        "primaryContactPerson": "Jane Doe",
+        "scopeOfWork": "Comprehensive legal support… / Occasional legal support… / A sale and purchase agreement… / A letter of intent… / A legal due diligence inspection…",
+        "description": "Brief description...",
+        "additionalBackgroundInfo": "",
+        "backgroundInfoFiles": [],
+        "supplierCodeOfConductFiles": [],
+        "serviceProviderType": "Only law firms / solo practitioners / both",
+        "domesticOffers": "Domestic only / Domestic and foreign",
+        "providerSize": "1-3 / 4-10 / 11-50 / 50+",
+        "providerCompanyAge": "Any / >2 years / >5 years ...",
+        "providerMinimumRating": "3/5, 4/5, ...",
+        "currency": "EUR",
+        "paymentRate": "Hourly Rate if 'Occasional…', otherwise Lump sum fixed price",
+        "advanceRetainerFee": "Yes/No",
+        "invoiceType": "Monthly / On completion ...",
+        "language": "English, Finnish",
+        "offersDeadline": "2025-10-28",
+        "title": "LEXIFY Request title",
+        "dateExpired": "2025-10-28",
+        "details": {
+          "saleObject": "Plot/Parcel of Land | Shares in a Real Estate Company | Shares in a Housing Association | Other",
+          "otherObject": "(string when Other)",
+          "confidential": true,
+          "winnerBidderOnlyStatus": "Disclosed to Winning Bidder Only",
+          "priceRange": "(string)",
+          "dueDiligence": "'Red flag' report | Long form report | Legal Due Diligence inspection not needed"
+        }
+      }
+    },
+
+    {
+      "category": "Help with Contracts",
+      "subcategory": "Real Estate and Construction",
+      "assignmentType": "Sale and Leaseback of Real Estate",
+      "preview": {
+        "sections": [
+          {
+            "title": "Client Name, Business Identity Code and Country of Domicile",
+            "fields": [
+              { "label": "Client", "path": "__clientLineOrDisclosed__" },
+              {
+                "label": "Primary contact person",
+                "path": "primaryContactPerson"
+              }
+            ]
+          },
+          {
+            "title": "Scope of Work",
+            "fields": [
+              {
+                "label": "Selected support",
+                "path": "__supportWithDueDiligenceFormat__"
+              }
+            ]
+          },
+          {
+            "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
+            "fields": [{ "label": "Price model", "path": "__priceModel__" }]
+          },
+          {
+            "title": "Object of Sale",
+            "fields": [
+              { "label": "Object", "path": "details.saleObject" },
+              { "label": "Other (specified)", "path": "details.otherObject" }
+            ]
+          },
+          {
+            "title": "Confidentiality",
+            "fields": [
+              {
+                "label": "Winner-bidder-only status",
+                "path": "details.winnerBidderOnlyStatus"
+              }
+            ]
+          },
+          {
+            "title": "Commercial Terms",
+            "fields": [
+              { "label": "Payment rate", "path": "paymentRate" },
+              { "label": "Currency", "path": "currency" },
+              { "label": "Invoice type", "path": "invoiceType" },
+              { "label": "Advance retainer fee", "path": "advanceRetainerFee" }
+            ]
+          },
+          {
+            "title": "Provider Requirements",
+            "fields": [
+              {
+                "label": "Service provider type",
+                "path": "serviceProviderType"
+              },
+              { "label": "Domestic offers", "path": "domesticOffers" },
+              { "label": "Minimum provider size", "path": "providerSize" },
+              { "label": "Minimum company age", "path": "providerCompanyAge" },
+              { "label": "Minimum rating", "path": "providerMinimumRating" }
+            ]
+          },
+          {
+            "title": "Attachments",
+            "fields": [
+              { "label": "Background files", "path": "backgroundInfoFiles" },
+              {
+                "label": "Supplier Code of Conduct files",
+                "path": "supplierCodeOfConductFiles"
+              }
+            ]
+          },
+          {
+            "title": "Meta",
+            "fields": [
+              { "label": "Request title", "path": "title" },
+              { "label": "Languages", "path": "language" },
+              { "label": "Offers deadline", "path": "offersDeadline" }
+            ]
+          }
+        ]
+      },
+      "payloadExample": {
+        "requestState": "PENDING",
+        "requestCategory": "Help with Contracts",
+        "requestSubcategory": "Real Estate and Construction",
+        "assignmentType": "Sale and Leaseback of Real Estate",
+        "primaryContactPerson": "Jane Doe",
+        "scopeOfWork": "Comprehensive legal support… / Occasional legal support… / A sale and purchase agreement and a lease agreement… / A letter of intent… / A legal due diligence inspection…",
+        "description": "Brief description...",
+        "additionalBackgroundInfo": "",
+        "backgroundInfoFiles": [],
+        "supplierCodeOfConductFiles": [],
+        "serviceProviderType": "Only law firms / solo practitioners / both",
+        "domesticOffers": "Domestic only / Domestic and foreign",
+        "providerSize": "1-3 / 4-10 / 11-50 / 50+",
+        "providerCompanyAge": "Any / >2 years / >5 years ...",
+        "providerMinimumRating": "3/5, 4/5, ...",
+        "currency": "EUR",
+        "paymentRate": "Hourly Rate if 'Occasional…', otherwise Lump sum fixed price",
+        "advanceRetainerFee": "Yes/No",
+        "invoiceType": "Monthly / On completion ...",
+        "language": "English, Finnish",
+        "offersDeadline": "2025-10-28",
+        "title": "LEXIFY Request title",
+        "dateExpired": "2025-10-28",
+        "details": {
+          "dueDiligence": "'Red flag' report | Long form report | Legal Due Diligence inspection not needed",
+          "saleObject": "Plot/Parcel of Land | Shares in a Real Estate Company | Shares in a Housing Association | Other",
+          "otherObject": "(string when Other)",
+          "confidential": true,
+          "winnerBidderOnlyStatus": "Disclosed to Winning Bidder Only",
+          "priceRange": "(string)"
+        }
+      }
+    },
+    {
+      "category": "Help with Contracts",
+      "subcategory": "Real Estate and Construction",
+      "assignmentType": "Lease of Business Premises, Residential Premises or Land",
+      "preview": {
+        "sections": [
+          {
+            "title": "Client Name, Business Identity Code and Country of Domicile",
+            "fields": [
+              { "label": "Client", "path": "__clientLineOrDisclosed__" },
+              {
+                "label": "Primary contact person",
+                "path": "primaryContactPerson"
+              }
+            ]
+          },
+          {
+            "title": "Scope of Work",
+            "fields": [{ "label": "Selected support", "path": "scopeOfWork" }]
+          },
+          {
+            "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
+            "fields": [{ "label": "Price model", "path": "__priceModel__" }]
+          },
+          {
+            "title": "Type of Lease Agreement Being Negotiated",
+            "fields": [
+              { "label": "Agreement type", "path": "details.agreementType" }
+            ]
+          },
+          {
+            "title": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Lease Agreement",
+            "fields": [
+              {
+                "label": "Counterparty",
+                "path": "__counterpartyConfidential__"
+              }
+            ]
+          },
+          {
+            "title": "Commercial Terms",
+            "fields": [
+              { "label": "Payment rate", "path": "paymentRate" },
+              { "label": "Currency", "path": "currency" },
+              { "label": "Invoice type", "path": "invoiceType" },
+              { "label": "Advance retainer fee", "path": "advanceRetainerFee" }
+            ]
+          },
+          {
+            "title": "Provider Requirements",
+            "fields": [
+              {
+                "label": "Service provider type",
+                "path": "serviceProviderType"
+              },
+              { "label": "Domestic offers", "path": "domesticOffers" },
+              { "label": "Minimum provider size", "path": "providerSize" },
+              { "label": "Minimum company age", "path": "providerCompanyAge" },
+              { "label": "Minimum rating", "path": "providerMinimumRating" }
+            ]
+          },
+          {
+            "title": "Attachments",
+            "fields": [
+              { "label": "Background files", "path": "backgroundInfoFiles" },
+              {
+                "label": "Supplier Code of Conduct files",
+                "path": "supplierCodeOfConductFiles"
+              }
+            ]
+          },
+          {
+            "title": "Meta",
+            "fields": [
+              { "label": "Request title", "path": "title" },
+              { "label": "Languages", "path": "language" },
+              { "label": "Offers deadline", "path": "offersDeadline" }
+            ]
+          }
+        ]
+      },
+      "payloadExample": {
+        "requestState": "PENDING",
+        "requestCategory": "Help with Contracts",
+        "requestSubcategory": "Real Estate and Construction",
+        "assignmentType": "Lease of Business Premises, Residential Premises or Land",
+        "primaryContactPerson": "Jane Doe",
+        "scopeOfWork": "Comprehensive legal support … / Occasional legal support … / A lease agreement …",
+        "description": "Brief description...",
+        "additionalBackgroundInfo": "",
+        "backgroundInfoFiles": [],
+        "supplierCodeOfConductFiles": [],
+        "serviceProviderType": "Attorneys-at-law / Law firms / Both",
+        "domesticOffers": "Yes, domestic only. / No, domestic and foreign.",
+        "providerSize": "Any size / Atleast 5 lawyers / 15 / 40",
+        "providerCompanyAge": "Any age / 5y / 10y / 25y",
+        "providerMinimumRating": "Any rating / 3 / 4",
+        "currency": "Euro (€) / …",
+        "paymentRate": "Hourly Rate if “Occasional…”, otherwise Lump sum fixed price",
+        "advanceRetainerFee": "Yes/No",
+        "invoiceType": "Monthly / On completion …",
+        "language": "English, …",
+        "offersDeadline": "2025-10-28",
+        "title": "LEXIFY Request title",
+        "dateExpired": "2025-10-28",
+        "details": {
+          "agreementType": "Lease of business premises | Lease of residential premises | Lease of plot or parcel of land",
+          "customerType": "Lessor (landlord) | Lessee (tenant)",
+          "rentRange": "0-1 kEUR | 1-10 kEUR | 10-50 kEUR | 50+ kEUR | To be confirmed later",
+          "confidential": true,
+          "winnerBidderOnlyStatus": "Disclosed to Winning Bidder Only"
+        }
+      }
+    },
+    {
+      "category": "Help with Contracts",
+      "subcategory": "Real Estate and Construction",
+      "assignmentType": "Easement Agreement",
+      "preview": {
+        "sections": [
+          {
+            "title": "Client Name, Business Identity Code and Country of Domicile",
+            "fields": [
+              { "label": "Client", "path": "__clientLineOrDisclosed__" },
+              {
+                "label": "Primary contact person",
+                "path": "primaryContactPerson"
+              }
+            ]
+          },
+          {
+            "title": "Scope of Work",
+            "fields": [{ "label": "Selected support", "path": "scopeOfWork" }]
+          },
+          {
+            "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
+            "fields": [{ "label": "Price model", "path": "__priceModel__" }]
+          },
+          {
+            "title": "Type of Lease Agreement Being Negotiated",
+            "fields": [
+              { "label": "Agreement type", "path": "details.agreementType" }
+            ]
+          },
+          {
+            "title": "Name and (if applicable) Business Identity Code and Country of Domicile of the Client's Counterparty in the Easement Agreement; Property Identification Codes of the Properties Included in the Easement Agreement",
+            "fields": [
+              {
+                "label": "Counterparty & property ids",
+                "path": "__counterpartyConfidential__"
+              }
+            ]
+          },
+          {
+            "title": "Commercial Terms",
+            "fields": [
+              { "label": "Payment rate", "path": "paymentRate" },
+              { "label": "Currency", "path": "currency" },
+              { "label": "Invoice type", "path": "invoiceType" },
+              { "label": "Advance retainer fee", "path": "advanceRetainerFee" }
+            ]
+          },
+          {
+            "title": "Provider Requirements",
+            "fields": [
+              {
+                "label": "Service provider type",
+                "path": "serviceProviderType"
+              },
+              { "label": "Domestic offers", "path": "domesticOffers" },
+              { "label": "Minimum provider size", "path": "providerSize" },
+              { "label": "Minimum company age", "path": "providerCompanyAge" },
+              { "label": "Minimum rating", "path": "providerMinimumRating" }
+            ]
+          },
+          {
+            "title": "Attachments",
+            "fields": [
+              { "label": "Background files", "path": "backgroundInfoFiles" },
+              {
+                "label": "Supplier Code of Conduct files",
+                "path": "supplierCodeOfConductFiles"
+              }
+            ]
+          },
+          {
+            "title": "Meta",
+            "fields": [
+              { "label": "Request title", "path": "title" },
+              { "label": "Languages", "path": "language" },
+              { "label": "Offers deadline", "path": "offersDeadline" }
+            ]
+          }
+        ]
+      },
+      "payloadExample": {
+        "requestState": "PENDING",
+        "requestCategory": "Help with Contracts",
+        "requestSubcategory": "Real Estate and Construction",
+        "assignmentType": "Easement Agreement",
+        "primaryContactPerson": "Jane Doe",
+        "scopeOfWork": "Comprehensive legal support … / Occasional legal support … / An easement agreement …",
+        "description": "Brief description...",
+        "additionalBackgroundInfo": "",
+        "backgroundInfoFiles": [],
+        "supplierCodeOfConductFiles": [],
+        "serviceProviderType": "Attorneys-at-law / Law firms / Both",
+        "domesticOffers": "Yes, domestic only. / No, domestic and foreign.",
+        "providerSize": "Any size / 5 / 15 / 40",
+        "providerCompanyAge": "Any age / 5y / 10y / 25y",
+        "providerMinimumRating": "Any rating / 3 / 4",
+        "currency": "Euro (€) / …",
+        "paymentRate": "Hourly Rate if “Occasional…”, otherwise Lump sum fixed price",
+        "advanceRetainerFee": "Yes/No",
+        "invoiceType": "Monthly / On completion …",
+        "language": "English, …",
+        "offersDeadline": "2025-10-28",
+        "title": "LEXIFY Request title",
+        "dateExpired": "2025-10-28",
+        "details": {
+          "confidential": true,
+          "winnerBidderOnlyStatus": "Disclosed to Winning Bidder Only"
+        }
+      }
+    },
+    {
+      "category": "Help with Contracts",
+      "subcategory": "Real Estate and Construction",
+      "assignmentType": "Construction Contract",
+      "preview": {
+        "sections": [
+          {
+            "title": "Client Name, Business Identity Code and Country of Domicile",
+            "fields": [
+              { "label": "Client", "path": "__clientLineOrDisclosed__" },
+              {
+                "label": "Primary contact person",
+                "path": "primaryContactPerson"
+              }
+            ]
+          },
+          {
+            "title": "Scope of Work",
+            "fields": [{ "label": "Selected support", "path": "scopeOfWork" }]
+          },
+          {
+            "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
+            "fields": [{ "label": "Price model", "path": "__priceModel__" }]
+          },
+          {
+            "title": "Client's Role in the Construction Contract",
+            "fields": [{ "label": "Role", "path": "details.customerType" }]
+          },
+          {
+            "title": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Construction Contract",
+            "fields": [
+              {
+                "label": "Counterparty",
+                "path": "__counterpartyConfidential__"
+              }
+            ]
+          },
+          {
+            "title": "Commercial Terms",
+            "fields": [
+              { "label": "Payment rate", "path": "paymentRate" },
+              { "label": "Currency", "path": "currency" },
+              { "label": "Invoice type", "path": "invoiceType" },
+              { "label": "Advance retainer fee", "path": "advanceRetainerFee" }
+            ]
+          },
+          {
+            "title": "Provider Requirements",
+            "fields": [
+              {
+                "label": "Service provider type",
+                "path": "serviceProviderType"
+              },
+              { "label": "Domestic offers", "path": "domesticOffers" },
+              { "label": "Minimum provider size", "path": "providerSize" },
+              { "label": "Minimum company age", "path": "providerCompanyAge" },
+              { "label": "Minimum rating", "path": "providerMinimumRating" }
+            ]
+          },
+          {
+            "title": "Attachments",
+            "fields": [
+              { "label": "Background files", "path": "backgroundInfoFiles" },
+              {
+                "label": "Supplier Code of Conduct files",
+                "path": "supplierCodeOfConductFiles"
+              }
+            ]
+          },
+          {
+            "title": "Meta",
+            "fields": [
+              { "label": "Request title", "path": "title" },
+              { "label": "Languages", "path": "language" },
+              { "label": "Offers deadline", "path": "offersDeadline" }
+            ]
+          }
+        ]
+      },
+      "payloadExample": {
+        "requestState": "PENDING",
+        "requestCategory": "Help with Contracts",
+        "requestSubcategory": "Real Estate and Construction",
+        "assignmentType": "Construction Contract",
+        "primaryContactPerson": "Jane Doe",
+        "scopeOfWork": "Comprehensive legal support … / Occasional legal support … / A construction contract …",
+        "description": "Brief description...",
+        "additionalBackgroundInfo": "",
+        "backgroundInfoFiles": [],
+        "supplierCodeOfConductFiles": [],
+        "serviceProviderType": "Attorneys-at-law / Law firms / Both",
+        "domesticOffers": "Yes, domestic only. / No, domestic and foreign.",
+        "providerSize": "Any size / 5 / 15 / 40",
+        "providerCompanyAge": "Any age / 5y / 10y / 25y",
+        "providerMinimumRating": "Any rating / 3 / 4",
+        "currency": "Euro (€) / …",
+        "paymentRate": "Hourly Rate if “Occasional…”, otherwise Lump sum fixed price",
+        "advanceRetainerFee": "Yes/No",
+        "invoiceType": "Monthly / On completion …",
+        "language": "English, …",
+        "offersDeadline": "2025-10-28",
+        "title": "LEXIFY Request title",
+        "dateExpired": "2025-10-28",
+        "details": {
+          "customerType": "Property owner as buyer … | Main contractor … | Subcontractor … | …",
+          "priceRange": "0-50 kEUR | 50-100 kEUR | 100 kEUR-1 mEUR | 10+ mEUR | To be confirmed later",
+          "confidential": true,
+          "winnerBidderOnlyStatus": "Disclosed to Winning Bidder Only"
+        }
+      }
+    },
+    {
+      "category": "Help with Contracts",
+      "subcategory": "Sourcing",
+      "assignmentType": "Prepare agreement template",
+      "preview": {
+        "sections": [
+          {
+            "title": "Client Name, Business Identity Code and Country of Domicile",
+            "fields": [
+              { "label": "Client", "path": "__clientLine__" },
+              {
+                "label": "Primary contact person",
+                "path": "primaryContactPerson"
+              }
+            ]
+          },
+          {
+            "title": "Scope of Work",
+            "fields": [
+              { "label": "Template type", "path": "scopeOfWork" },
+              { "label": "Description (if customized)", "path": "description" }
+            ]
+          },
+          {
+            "title": "Commercial Terms",
+            "fields": [
+              { "label": "Payment rate", "path": "paymentRate" },
+              {
+                "label": "Currency / Maximum price",
+                "path": "__currencyMax__"
+              },
+              { "label": "Invoice type", "path": "invoiceType" },
+              { "label": "Advance retainer fee", "path": "advanceRetainerFee" }
+            ]
+          },
+          {
+            "title": "Provider Requirements",
+            "fields": [
+              {
+                "label": "Service provider type",
+                "path": "serviceProviderType"
+              },
+              { "label": "Domestic offers", "path": "domesticOffers" },
+              { "label": "Minimum provider size", "path": "providerSize" },
+              { "label": "Minimum company age", "path": "providerCompanyAge" },
+              { "label": "Minimum rating", "path": "providerMinimumRating" }
+            ]
+          },
+          {
+            "title": "Attachments",
+            "fields": [
+              { "label": "Background files", "path": "backgroundInfoFiles" },
+              {
+                "label": "Supplier Code of Conduct files",
+                "path": "supplierCodeOfConductFiles"
+              }
+            ]
+          },
+          {
+            "title": "Meta",
+            "fields": [
+              { "label": "Request title", "path": "title" },
+              { "label": "Languages", "path": "language" },
+              { "label": "Offers deadline", "path": "offersDeadline" }
+            ]
+          }
+        ]
+      },
+      "payloadExample": {
+        "requestState": "PENDING",
+        "requestCategory": "Help with Contracts",
+        "requestSubcategory": "Sourcing",
+        "assignmentType": "Prepare agreement template",
+        "primaryContactPerson": "Jane Doe",
+        "scopeOfWork": "General in nature, applicable to buying of all or most products and services",
+        "description": "Describe product/service type if customized",
+        "additionalBackgroundInfo": "",
+        "backgroundInfoFiles": [],
+        "supplierCodeOfConductFiles": [],
+        "serviceProviderType": "Attorneys-at-law / Law firms / Both",
+        "domesticOffers": "Domestic only / Domestic and foreign",
+        "providerSize": "Any size / Atleast 5 lawyers / 15 / 40",
+        "providerCompanyAge": "Any age / 5y / 10y / 25y",
+        "providerMinimumRating": "Any rating / 3 / 4",
+        "currency": "Euro (€) | …",
+        "paymentRate": "Lump sum fixed price",
+        "advanceRetainerFee": "No | 10% | 25% | 50%",
+        "invoiceType": "Monthly / On completion …",
+        "language": "English, …",
+        "offersDeadline": "2025-10-28",
+        "title": "LEXIFY Request title",
+        "dateExpired": "2025-10-28",
+        "details": { "maximumPrice": "4000" }
+      }
+    },
+    {
+      "category": "Help with Contracts",
+      "subcategory": "Sourcing",
+      "assignmentType": "Legal review of sourcing agreement",
+      "preview": {
+        "sections": [
+          {
+            "title": "Client Name, Business Identity Code and Country of Domicile",
+            "fields": [
+              { "label": "Client", "path": "__clientLineOrDisclosed__" },
+              {
+                "label": "Primary contact person",
+                "path": "primaryContactPerson"
+              }
+            ]
+          },
+          {
+            "title": "Scope of Work",
+            "fields": [
+              { "label": "What is being reviewed", "path": "scopeOfWork" },
+              { "label": "Brief description", "path": "description" }
+            ]
+          },
+          {
+            "title": "Counterparty & Confidentiality",
+            "fields": [
+              {
+                "label": "Counterparty",
+                "path": "__counterpartyConfidential__"
+              },
+              {
+                "label": "Expected value of the agreement",
+                "path": "details.expectedValue"
+              }
+            ]
+          },
+          {
+            "title": "Commercial Terms",
+            "fields": [
+              { "label": "Payment rate", "path": "paymentRate" },
+              { "label": "Currency", "path": "currency" },
+              { "label": "Invoice type", "path": "invoiceType" },
+              { "label": "Advance retainer fee", "path": "advanceRetainerFee" }
+            ]
+          },
+          {
+            "title": "Provider Requirements",
+            "fields": [
+              {
+                "label": "Service provider type",
+                "path": "serviceProviderType"
+              },
+              { "label": "Domestic offers", "path": "domesticOffers" },
+              { "label": "Minimum provider size", "path": "providerSize" },
+              { "label": "Minimum company age", "path": "providerCompanyAge" },
+              { "label": "Minimum rating", "path": "providerMinimumRating" }
+            ]
+          },
+          {
+            "title": "Attachments",
+            "fields": [
+              { "label": "Background files", "path": "backgroundInfoFiles" },
+              {
+                "label": "Supplier Code of Conduct files",
+                "path": "supplierCodeOfConductFiles"
+              }
+            ]
+          },
+          {
+            "title": "Meta",
+            "fields": [
+              { "label": "Request title", "path": "title" },
+              { "label": "Languages", "path": "language" },
+              { "label": "Offers deadline", "path": "offersDeadline" }
+            ]
+          }
+        ]
+      },
+      "payloadExample": {
+        "requestState": "PENDING",
+        "requestCategory": "Help with Contracts",
+        "requestSubcategory": "Sourcing",
+        "assignmentType": "Legal review of sourcing agreement",
+        "primaryContactPerson": "Jane Doe",
+        "scopeOfWork": "Legal review of a sourcing agreement provided by a supplier of the Client… (with proposed changes & observations in writing).",
+        "description": "Brief description + number of pages",
+        "additionalBackgroundInfo": "",
+        "backgroundInfoFiles": [],
+        "supplierCodeOfConductFiles": [],
+        "serviceProviderType": "Attorneys-at-law / Law firms / Both",
+        "domesticOffers": "Domestic only / Domestic and foreign",
+        "providerSize": "Any size / 5 / 15 / 40",
+        "providerCompanyAge": "Any age / 5y / 10y / 25y",
+        "providerMinimumRating": "Any rating / 3 / 4",
+        "currency": "Euro (€) | …",
+        "paymentRate": "Lump sum fixed price",
+        "advanceRetainerFee": "No | 10% | 25% | 50%",
+        "invoiceType": "Monthly / On completion …",
+        "language": "English, …",
+        "offersDeadline": "2025-10-28",
+        "title": "LEXIFY Request title",
+        "dateExpired": "2025-10-28",
+        "details": {
+          "confidential": true,
+          "winnerBidderOnlyStatus": "Disclosed to Winning Bidder Only",
+          "expectedValue": "0-100 kEUR | … | To be confirmed later"
+        }
+      }
+    },
+    {
+      "category": "Help with Contracts",
+      "subcategory": "Sourcing",
+      "assignmentType": "Support with sourcing agreement negotiations",
+      "preview": {
+        "sections": [
+          {
+            "title": "Client Name, Business Identity Code and Country of Domicile",
+            "fields": [
+              { "label": "Client", "path": "__clientLineOrDisclosed__" },
+              {
+                "label": "Primary contact person",
+                "path": "primaryContactPerson"
+              }
+            ]
+          },
+          {
+            "title": "Scope of Work",
+            "fields": [
+              { "label": "Negotiation scope", "path": "scopeOfWork" },
+              { "label": "Brief description", "path": "description" }
+            ]
+          },
+          {
+            "title": "Counterparty, Expected Value & Template",
+            "fields": [
+              {
+                "label": "Counterparty",
+                "path": "__counterpartyConfidential__"
+              },
+              {
+                "label": "Expected value of the contract",
+                "path": "details.expectedValue"
+              },
+              {
+                "label": "Negotiated on template",
+                "path": "details.negotiationTemplate"
+              }
+            ]
+          },
+          {
+            "title": "Commercial Terms",
+            "fields": [
+              { "label": "Payment rate", "path": "paymentRate" },
+              { "label": "Currency", "path": "currency" },
+              { "label": "Invoice type", "path": "invoiceType" },
+              { "label": "Advance retainer fee", "path": "advanceRetainerFee" }
+            ]
+          },
+          {
+            "title": "Provider Requirements",
+            "fields": [
+              {
+                "label": "Service provider type",
+                "path": "serviceProviderType"
+              },
+              { "label": "Domestic offers", "path": "domesticOffers" },
+              { "label": "Minimum provider size", "path": "providerSize" },
+              { "label": "Minimum company age", "path": "providerCompanyAge" },
+              { "label": "Minimum rating", "path": "providerMinimumRating" }
+            ]
+          },
+          {
+            "title": "Attachments",
+            "fields": [
+              { "label": "Background files", "path": "backgroundInfoFiles" },
+              {
+                "label": "Supplier Code of Conduct files",
+                "path": "supplierCodeOfConductFiles"
+              }
+            ]
+          },
+          {
+            "title": "Meta",
+            "fields": [
+              { "label": "Request title", "path": "title" },
+              { "label": "Languages", "path": "language" },
+              { "label": "Offers deadline", "path": "offersDeadline" }
+            ]
+          }
+        ]
+      },
+      "payloadExample": {
+        "requestState": "PENDING",
+        "requestCategory": "Help with Contracts",
+        "requestSubcategory": "Sourcing",
+        "assignmentType": "Support with sourcing agreement negotiations",
+        "primaryContactPerson": "Jane Doe",
+        "scopeOfWork": "Legal support with negotiating a sourcing agreement… (commenting on docs, advice during stages).",
+        "description": "Brief description",
+        "additionalBackgroundInfo": "",
+        "backgroundInfoFiles": [],
+        "supplierCodeOfConductFiles": [],
+        "serviceProviderType": "Attorneys-at-law / Law firms / Both",
+        "domesticOffers": "Domestic only / Domestic and foreign",
+        "providerSize": "Any size / 5 / 15 / 40",
+        "providerCompanyAge": "Any age / 5y / 10y / 25y",
+        "providerMinimumRating": "Any rating / 3 / 4",
+        "currency": "Euro (€) | …",
+        "paymentRate": "Hourly Rate",
+        "advanceRetainerFee": "No | hourly×3 | hourly×5 | hourly×10",
+        "invoiceType": "Monthly / On completion …",
+        "language": "English, …",
+        "offersDeadline": "2025-10-28",
+        "title": "LEXIFY Request title",
+        "dateExpired": "2025-10-28",
+        "details": {
+          "negotiationTemplate": "My contract template | Supplier's contract template",
+          "confidential": true,
+          "winnerBidderOnlyStatus": "Disclosed to Winning Bidder Only",
+          "expectedValue": "0-100 kEUR | … | To be confirmed later"
+        }
+      }
+    },
+    {
+      "category": "Help with Contracts",
+      "subcategory": "ICT and IT",
+      "assignmentType": "Prepare contract template",
+      "preview": {
+        "sections": [
+          {
+            "title": "Client Name, Business Identity Code and Country of Domicile",
+            "fields": [
+              { "label": "Client", "path": "__clientLine__" },
+              {
+                "label": "Primary contact person",
+                "path": "primaryContactPerson"
+              }
+            ]
+          },
+          {
+            "title": "Scope of Work",
+            "fields": [{ "label": "Template(s)", "path": "scopeOfWork" }]
+          },
+          {
+            "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
+            "fields": [
+              {
+                "label": "Price model",
+                "path": "__priceModel_LumpSumWithCurrency__"
+              }
+            ]
+          },
+          {
+            "title": "Description of Client's Line of Business",
+            "fields": [{ "label": "Description", "path": "description" }]
+          },
+          {
+            "title": "Additional Background Information Provided by Client",
+            "fields": [
+              { "label": "Notes", "path": "additionalBackgroundInfo" },
+              { "label": "Background files", "path": "backgroundInfoFiles" }
+            ]
+          },
+          {
+            "title": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
+            "fields": [
+              { "label": "Advance retainer fee", "path": "advanceRetainerFee" }
+            ]
+          },
+          {
+            "title": "Invoice Type",
+            "fields": [{ "label": "How invoiced", "path": "invoiceType" }]
+          },
+          {
+            "title": "Provider Requirements",
+            "fields": [
+              {
+                "label": "Service provider type",
+                "path": "serviceProviderType"
+              },
+              { "label": "Domestic offers", "path": "domesticOffers" },
+              { "label": "Minimum provider size", "path": "providerSize" },
+              { "label": "Minimum company age", "path": "providerCompanyAge" },
+              { "label": "Minimum rating", "path": "providerMinimumRating" }
+            ]
+          },
+          {
+            "title": "Meta",
+            "fields": [
+              { "label": "Languages", "path": "language" },
+              { "label": "Offers deadline", "path": "offersDeadline" },
+              { "label": "Request title", "path": "title" }
+            ]
+          }
+        ]
+      },
+      "payloadExample": {
+        "requestState": "PENDING",
+        "requestCategory": "Help with Contracts",
+        "requestSubcategory": "ICT and IT",
+        "assignmentType": "Prepare contract template",
+        "primaryContactPerson": "Jane Doe",
+        "scopeOfWork": "Preparation of the following ICT/IT related contract and/or document template(s) for the Client: SaaS, Licensing, … The work includes the preparation of the listed document(s) and necessary revisions on the basis of the Client's feedback to the Legal Service Provider.",
+        "description": "",
+        "additionalBackgroundInfo": "",
+        "backgroundInfoFiles": [],
+        "supplierCodeOfConductFiles": [],
+        "serviceProviderType": "Attorneys-at-law / Law firms / Both",
+        "domesticOffers": "Domestic only / Domestic and foreign",
+        "providerSize": "Any / ≥5 / ≥15 / ≥40",
+        "providerCompanyAge": "Any / ≥5y / ≥10y / ≥25y",
+        "providerMinimumRating": "Any / 3 / 4",
+        "currency": "Euro (€) | …",
+        "paymentRate": "Lump sum fixed price",
+        "maximumPrice": "4000",
+        "advanceRetainerFee": "No | 10% | 25% | 50%",
+        "invoiceType": "Monthly / On completion …",
+        "language": "English, …",
+        "offersDeadline": "2025-10-28",
+        "title": "LEXIFY Request title",
+        "dateExpired": "2025-10-28",
+        "details": {}
+      }
+    },
+    {
+      "category": "Help with Contracts",
+      "subcategory": "ICT and IT",
+      "assignmentType": "Legal review of ICT/IT contract",
+      "preview": {
+        "sections": [
+          {
+            "title": "Client Name, Business Identity Code and Country of Domicile",
+            "fields": [
+              { "label": "Client", "path": "__clientLineOrDisclosed__" },
+              {
+                "label": "Primary contact person",
+                "path": "primaryContactPerson"
+              }
+            ]
+          },
+          {
+            "title": "Scope of Work",
+            "fields": [
+              { "label": "What is being reviewed", "path": "scopeOfWork" }
+            ]
+          },
+          {
+            "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
+            "fields": [
+              {
+                "label": "Price model",
+                "path": "__priceModel_LumpSumWithCurrency__"
+              }
+            ]
+          },
+          {
+            "title": "Description of the Product or Service the Client is Buying with the Contract under Negotiation; Total Number of Pages of Documentation Requiring Legal Review",
+            "fields": [{ "label": "Description", "path": "description" }]
+          },
+          {
+            "title": "Name, Business Identity Code and Country of Domicile of Client's Counterparty (Supplier) in the Matter",
+            "fields": [
+              {
+                "label": "Counterparty",
+                "path": "__counterpartyConfidential__"
+              }
+            ]
+          },
+          {
+            "title": "Expected Value of the Contract",
+            "fields": [
+              { "label": "Expected value", "path": "details.expectedValue" }
+            ]
+          },
+          {
+            "title": "Provider Requirements",
+            "fields": [
+              {
+                "label": "Service provider type",
+                "path": "serviceProviderType"
+              },
+              { "label": "Domestic offers", "path": "domesticOffers" },
+              { "label": "Minimum provider size", "path": "providerSize" },
+              { "label": "Minimum company age", "path": "providerCompanyAge" },
+              { "label": "Minimum rating", "path": "providerMinimumRating" }
+            ]
+          },
+          {
+            "title": "Attachments",
+            "fields": [
+              { "label": "Background files", "path": "backgroundInfoFiles" },
+              {
+                "label": "Supplier Code of Conduct files",
+                "path": "supplierCodeOfConductFiles"
+              }
+            ]
+          },
+          {
+            "title": "Meta",
+            "fields": [
+              { "label": "Languages", "path": "language" },
+              { "label": "Offers deadline", "path": "offersDeadline" },
+              { "label": "Request title", "path": "title" }
+            ]
+          }
+        ]
+      },
+      "payloadExample": {
+        "requestState": "PENDING",
+        "requestCategory": "Help with Contracts",
+        "requestSubcategory": "ICT and IT",
+        "assignmentType": "Legal review of ICT/IT contract",
+        "primaryContactPerson": "Jane Doe",
+        "scopeOfWork": "Legal review of the following ICT/IT related contract documents provided by a supplier of the Client: SaaS, Licensing, … Additional work … is not included.",
+        "description": "Brief description + number of pages",
+        "additionalBackgroundInfo": "",
+        "backgroundInfoFiles": [],
+        "supplierCodeOfConductFiles": [],
+        "serviceProviderType": "Attorneys-at-law / Law firms / Both",
+        "domesticOffers": "Domestic only / Domestic and foreign",
+        "providerSize": "Any / ≥5 / ≥15 / ≥40",
+        "providerCompanyAge": "Any / ≥5y / ≥10y / ≥25y",
+        "providerMinimumRating": "Any / 3 / 4",
+        "currency": "Euro (€) | …",
+        "paymentRate": "Lump sum fixed price",
+        "advanceRetainerFee": "No | 10% | 25% | 50%",
+        "invoiceType": "Monthly / On completion …",
+        "language": "English, …",
+        "offersDeadline": "2025-10-28",
+        "title": "LEXIFY Request title",
+        "dateExpired": "2025-10-28",
+        "details": {
+          "documentTypes": "comma-separated list from checkboxes",
+          "expectedValue": "0-100 kEUR | … | To be confirmed later",
+          "confidential": true,
+          "winnerBidderOnlyStatus": "Disclosed to Winning Bidder Only"
+        }
+      }
+    },
+    {
+      "category": "Help with Contracts",
+      "subcategory": "ICT and IT",
+      "assignmentType": "Support with ICT/IT contract negotiations",
+      "preview": {
+        "sections": [
+          {
+            "title": "Client Name, Business Identity Code and Country of Domicile",
+            "fields": [
+              { "label": "Client", "path": "__clientLineOrDisclosed__" },
+              {
+                "label": "Primary contact person",
+                "path": "primaryContactPerson"
+              }
+            ]
+          },
+          {
+            "title": "Scope of Work",
+            "fields": [
+              { "label": "Negotiated document(s)", "path": "scopeOfWork" }
+            ]
+          },
+          {
+            "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
+            "fields": [
+              {
+                "label": "Price model",
+                "path": "__priceModel_HourlyWithCurrency__"
+              }
+            ]
+          },
+          {
+            "title": "Description of Product or Service Client is Buying or Selling with the Contract under Negotiation",
+            "fields": [{ "label": "Description", "path": "description" }]
+          },
+          {
+            "title": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter",
+            "fields": [
+              {
+                "label": "Counterparty",
+                "path": "__counterpartyConfidential__"
+              }
+            ]
+          },
+          {
+            "title": "Expected Value of the Contract",
+            "fields": [
+              { "label": "Expected value", "path": "details.expectedValue" }
+            ]
+          },
+          {
+            "title": "Template Used in the Negotiations",
+            "fields": [
+              {
+                "label": "Negotiated on template",
+                "path": "details.negotiationTemplate"
+              }
+            ]
+          },
+          {
+            "title": "Provider Requirements",
+            "fields": [
+              {
+                "label": "Service provider type",
+                "path": "serviceProviderType"
+              },
+              { "label": "Domestic offers", "path": "domesticOffers" },
+              { "label": "Minimum provider size", "path": "providerSize" },
+              { "label": "Minimum company age", "path": "providerCompanyAge" },
+              { "label": "Minimum rating", "path": "providerMinimumRating" }
+            ]
+          },
+          {
+            "title": "Attachments",
+            "fields": [
+              { "label": "Background files", "path": "backgroundInfoFiles" },
+              {
+                "label": "Supplier Code of Conduct files",
+                "path": "supplierCodeOfConductFiles"
+              }
+            ]
+          },
+          {
+            "title": "Meta",
+            "fields": [
+              { "label": "Languages", "path": "language" },
+              { "label": "Offers deadline", "path": "offersDeadline" },
+              { "label": "Request title", "path": "title" }
+            ]
+          }
+        ]
+      },
+      "payloadExample": {
+        "requestState": "PENDING",
+        "requestCategory": "Help with Contracts",
+        "requestSubcategory": "ICT and IT",
+        "assignmentType": "Support with ICT/IT contract negotiations",
+        "primaryContactPerson": "Jane Doe",
+        "scopeOfWork": "Legal support with negotiating the following ICT/IT related contract document(s): SaaS, Licensing, … The legal support can include, for example, commenting on agreement documentation or legal advice during different stages of the negotiation process.",
+        "description": "Brief description",
+        "additionalBackgroundInfo": "",
+        "backgroundInfoFiles": [],
+        "supplierCodeOfConductFiles": [],
+        "serviceProviderType": "Attorneys-at-law / Law firms / Both",
+        "domesticOffers": "Domestic only / Domestic and foreign",
+        "providerSize": "Any / ≥5 / ≥15 / ≥40",
+        "providerCompanyAge": "Any / ≥5y / ≥10y / ≥25y",
+        "providerMinimumRating": "Any / 3 / 4",
+        "currency": "Euro (€) | …",
+        "paymentRate": "Hourly Rate",
+        "advanceRetainerFee": "No | hourly×3 | hourly×5 | hourly×10",
+        "invoiceType": "Monthly / On completion …",
+        "language": "English, …",
+        "offersDeadline": "2025-10-28",
+        "title": "LEXIFY Request title",
+        "dateExpired": "2025-10-28",
+        "details": {
+          "negotiationTemplate": "My contract template | Counterparty's contract template",
+          "documentTypes": "comma-separated list from checkboxes",
+          "expectedValue": "0-100 kEUR | … | To be confirmed later",
+          "confidential": true,
+          "winnerBidderOnlyStatus": "Disclosed to Winning Bidder Only"
+        }
+      }
+    },
+    {
+      "dayToDayLegalAdvice": {
+        "category": "Day-to-day Legal Advice",
+        "subcategory": null,
+        "preview": {
+          "sections": [
+            {
+              "title": "Client Name, Business Identity Code and Country of Domicile",
+              "value": "companyHeader"
+            },
+            {
+              "title": "Scope of Work",
+              "value": "dynamic",
+              "notes": "If 'Occasional...' → just that text. If 'Fixed monthly hours...' → also show hours/month (otherHour if 'Other') and duration monthAmount, plus the explanatory italic note, and the list of selected topics."
+            },
+            {
+              "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
+              "value": "dynamic",
+              "notes": "If 'Fixed monthly hours...' → Lump sum fixed monthly price (show currency). Else → Flat hourly rate (show currency) with the explanatory paragraph."
+            },
+            {
+              "title": "Description of the Client's Line of Business",
+              "value": "description"
+            },
+            {
+              "title": "Additional Background Information Provided by Client",
+              "value": "backgroundWithFiles"
+            },
+            {
+              "title": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
+              "value": "retainerFeeWithNote"
+            },
+            {
+              "title": "How is the Client Invoiced by the Legal Service Provider?",
+              "value": "paymentTerms"
+            },
+            {
+              "title": "What is the Language of Legal Services Provided to the Client?",
+              "value": "languageCSV"
+            },
+            {
+              "title": "In Which Country/Countries is the Legal Service Provider Domiciled?",
+              "value": "providerCountry"
+            },
+            {
+              "title": "Which Legal Service Providers May Offer in Response to this LEXIFY Request?",
+              "value": "offerer"
+            },
+            {
+              "title": "Minimum Number of Lawyers Employed by the Legal Service Provider",
+              "value": "lawyerCount"
+            },
+            {
+              "title": "Minimum Length of Time the Legal Service Provider Must Have Been in Operation",
+              "value": "firmAge"
+            },
+            {
+              "title": "Minimum Rating of the Legal Service Provider",
+              "value": "firmRating"
+            },
+            {
+              "title": "Deadline for Offers to be Submitted by Legal Service Providers",
+              "value": "date"
+            }
+          ]
+        },
+        "payloadTemplate": {
+          "requestState": "PENDING",
+          "requestCategory": "Day-to-day Legal Advice",
+          "requestSubcategory": null,
+          "primaryContactPerson": "{{contactPerson}}",
+          "scopeOfWork": "{{need}}",
+          "description": "{{description}}",
+          "additionalBackgroundInfo": "{{background}}",
+          "backgroundInfoFiles": [],
+          "supplierCodeOfConductFiles": [],
+          "serviceProviderType": "{{offerer}}",
+          "domesticOffers": "{{providerCountry}}",
+          "providerSize": "{{lawyerCount}}",
+          "providerCompanyAge": "{{firmAge}}",
+          "providerMinimumRating": "{{firmRating}}",
+          "currency": "{{currency}}",
+          "paymentRate": "{{need.includes('fixed monthly') ? 'Lump sum fixed price' : 'Hourly Rate'}}",
+          "maximumPrice": null,
+          "advanceRetainerFee": "{{retainerFee}}",
+          "invoiceType": "{{paymentTerms}}",
+          "language": "{{languageCSV}}",
+          "offersDeadline": "{{date}}",
+          "title": "{{requestTitle}}",
+          "dateExpired": "{{date}}",
+          "details": {}
+        }
+      }
+    },
+    {
+      "employmentContractTemplates": {
+        "category": "Help with Employment related Documents",
+        "subcategory": "Employment Contract Template",
+        "preview": {
+          "sections": [
+            {
+              "title": "Client Name, Business Identity Code and Country of Domicile",
+              "value": "companyHeader"
+            },
+            {
+              "title": "Scope of Work",
+              "value": "static+list",
+              "notes": "Intro: 'Preparation of the following employment contract templates for the Client:' then join areaboxes"
+            },
+            {
+              "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
+              "value": "lumpSumWithCurrency",
+              "notes": "Includes the line about revisions based on Client's feedback"
+            },
+            {
+              "title": "Description of Position and Tasks of the Employee or Employee Group for whom the Contract Template(s) is Prepared",
+              "value": "description"
+            },
+            {
+              "title": "Additional Background Information Provided by Client",
+              "value": "backgroundWithFiles"
+            },
+            {
+              "title": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
+              "value": "retainerFeeWithNote"
+            },
+            {
+              "title": "How is the Client Invoiced by the Legal Service Provider?",
+              "value": "paymentTerms"
+            },
+            {
+              "title": "What is the Language of Legal Services Provided to the Client?",
+              "value": "languageCSV"
+            },
+            {
+              "title": "Which Legal Service Providers May Offer in Response to this LEXIFY Request?",
+              "value": "offerer"
+            },
+            {
+              "title": "In Which Country/Countries is the Legal Service Provider Domiciled?",
+              "value": "providerCountry"
+            },
+            {
+              "title": "Minimum Number of Lawyers Employed by the Legal Service Provider",
+              "value": "lawyerCount"
+            },
+            {
+              "title": "Minimum Length of Time the Legal Service Provider Must Have Been in Operation",
+              "value": "firmAge"
+            },
+            {
+              "title": "Minimum Rating of the Legal Service Provider",
+              "value": "firmRating"
+            },
+            { "title": "Contract Price Currency", "value": "currency" },
+            { "title": "Maximum Price (VAT 0%)", "value": "maxPrice" },
+            {
+              "title": "Deadline for Offers to be Submitted by Legal Service Providers",
+              "value": "date"
+            }
+          ]
+        },
+        "payloadTemplate": {
+          "requestState": "PENDING",
+          "requestCategory": "Help with Employment related Documents",
+          "requestSubcategory": "Employment Contract Template",
+          "primaryContactPerson": "{{contactPerson}}",
+          "scopeOfWork": "{{areaboxes.join(', ')}}",
+          "description": "{{description}}",
+          "additionalBackgroundInfo": "{{background}}",
+          "backgroundInfoFiles": [],
+          "supplierCodeOfConductFiles": [],
+          "serviceProviderType": "{{offerer}}",
+          "domesticOffers": "{{providerCountry}}",
+          "providerSize": "{{lawyerCount}}",
+          "providerCompanyAge": "{{firmAge}}",
+          "providerMinimumRating": "{{firmRating}}",
+          "currency": "{{currency}}",
+          "paymentRate": "Lump sum fixed price",
+          "maximumPrice": "{{maxPrice}}",
+          "advanceRetainerFee": "{{retainerFee}}",
+          "invoiceType": "{{paymentTerms}}",
+          "language": "{{languageCSV}}",
+          "offersDeadline": "{{date}}",
+          "title": "{{requestTitle}}",
+          "dateExpired": "{{date}}",
+          "details": {}
+        }
+      }
+    },
+    {
+      "employmentDocumentTemplates": {
+        "category": "Help with Employment related Documents",
+        "subcategory": "Employment related Document Templates",
+        "preview": {
+          "sections": [
+            {
+              "title": "Client Name, Business Identity Code and Country of Domicile",
+              "value": "companyHeader"
+            },
+            {
+              "title": "Scope of Work",
+              "value": "static+list",
+              "notes": "Intro: 'Preparation of the following employment related document templates for the Client:' then areaboxes; if 'Other Template(s)' include otherArea"
+            },
+            {
+              "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
+              "value": "lumpSumWithCurrency",
+              "notes": "Includes the standard invoicing note"
+            },
+            {
+              "title": "Additional Background Information Provided by Client",
+              "value": "backgroundWithFiles"
+            },
+            {
+              "title": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
+              "value": "retainerFeeWithNote"
+            },
+            {
+              "title": "How is the Client Invoiced by the Legal Service Provider?",
+              "value": "paymentTerms"
+            },
+            {
+              "title": "What is the Language of Legal Services Provided to the Client?",
+              "value": "languageCSV"
+            },
+            {
+              "title": "Which Legal Service Providers May Offer in Response to this LEXIFY Request?",
+              "value": "offerer"
+            },
+            {
+              "title": "In Which Country/Countries is the Legal Service Provider Domiciled?",
+              "value": "providerCountry"
+            },
+            {
+              "title": "Minimum Number of Lawyers Employed by the Legal Service Provider",
+              "value": "lawyerCount"
+            },
+            {
+              "title": "Minimum Length of Time the Legal Service Provider Must Have Been in Operation",
+              "value": "firmAge"
+            },
+            {
+              "title": "Minimum Rating of the Legal Service Provider",
+              "value": "firmRating"
+            },
+            { "title": "Contract Price Currency", "value": "currency" },
+            { "title": "Maximum Price (VAT 0%)", "value": "maxPrice" },
+            {
+              "title": "Deadline for Offers to be Submitted by Legal Service Providers",
+              "value": "date"
+            }
+          ]
+        },
+        "payloadTemplate": {
+          "requestState": "PENDING",
+          "requestCategory": "Help with Employment related Documents",
+          "requestSubcategory": "Employment related Document Templates",
+          "primaryContactPerson": "{{contactPerson}}",
+          "scopeOfWork": "{{areaboxesFilteredJoin}}",
+          "description": "",
+          "additionalBackgroundInfo": "{{background}}",
+          "backgroundInfoFiles": [],
+          "supplierCodeOfConductFiles": [],
+          "serviceProviderType": "{{offerer}}",
+          "domesticOffers": "{{providerCountry}}",
+          "providerSize": "{{lawyerCount}}",
+          "providerCompanyAge": "{{firmAge}}",
+          "providerMinimumRating": "{{firmRating}}",
+          "currency": "{{currency}}",
+          "paymentRate": "Lump sum fixed price",
+          "maximumPrice": "{{maxPrice}}",
+          "advanceRetainerFee": "{{retainerFee}}",
+          "invoiceType": "{{paymentTerms}}",
+          "language": "{{languageCSV}}",
+          "offersDeadline": "{{date}}",
+          "title": "{{requestTitle}}",
+          "dateExpired": "{{date}}",
+          "details": {}
+        }
+      }
+    },
+    {
+      "employmentNegotiationSupport": {
+        "category": "Help with Employment related Documents",
+        "subcategory": "Negotiation Support",
+        "preview": {
+          "sections": [
+            {
+              "title": "Client Name, Business Identity Code and Country of Domicile",
+              "value": "companyHeader"
+            },
+            {
+              "title": "Scope of Work",
+              "value": "static+list",
+              "notes": "Intro: 'Legal support with negotiating the following contract(s) with an employee or a director:' then areaboxes; if 'Other' include otherTopic"
+            },
+            {
+              "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
+              "value": "flatHourlyWithCurrency",
+              "notes": "Includes the validity-until-negotiations-conclude note"
+            },
+            {
+              "title": "Please provide the name and position (in your company) of the employee with whom you are negotiating",
+              "value": "description",
+              "notes": "Shown with the page’s privacy note"
+            },
+            {
+              "title": "Additional Background Information Provided by Client",
+              "value": "backgroundWithFiles"
+            },
+            {
+              "title": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
+              "value": "retainerFeeWithNote"
+            },
+            {
+              "title": "How is the Client Invoiced by the Legal Service Provider?",
+              "value": "paymentTerms"
+            },
+            {
+              "title": "What is the Language of Legal Services Provided to the Client?",
+              "value": "languageCSV"
+            },
+            {
+              "title": "In Which Country/Countries is the Legal Service Provider Domiciled?",
+              "value": "providerCountry"
+            },
+            {
+              "title": "Which Legal Service Providers May Offer in Response to this LEXIFY Request?",
+              "value": "offerer"
+            },
+            {
+              "title": "Minimum Number of Lawyers Employed by the Legal Service Provider",
+              "value": "lawyerCount"
+            },
+            {
+              "title": "Minimum Length of Time the Legal Service Provider Must Have Been in Operation",
+              "value": "firmAge"
+            },
+            {
+              "title": "Minimum Rating of the Legal Service Provider",
+              "value": "firmRating"
+            },
+            { "title": "Contract Price Currency", "value": "currency" },
+            {
+              "title": "Deadline for Offers to be Submitted by Legal Service Providers",
+              "value": "date"
+            }
+          ]
+        },
+        "payloadTemplate": {
+          "requestState": "PENDING",
+          "requestCategory": "Help with Employment related Documents",
+          "requestSubcategory": "Negotiation Support",
+          "primaryContactPerson": "{{contactPerson}}",
+          "scopeOfWork": "Occasional legal support during negotiation (commenting and advice as needed).",
+          "description": "{{description}}",
+          "additionalBackgroundInfo": "{{background}}",
+          "backgroundInfoFiles": [],
+          "supplierCodeOfConductFiles": [],
+          "serviceProviderType": "{{offerer}}",
+          "domesticOffers": "{{providerCountry}}",
+          "providerSize": "{{lawyerCount}}",
+          "providerCompanyAge": "{{firmAge}}",
+          "providerMinimumRating": "{{firmRating}}",
+          "currency": "{{currency}}",
+          "paymentRate": "Hourly Rate",
+          "advanceRetainerFee": "{{retainerFee}}",
+          "invoiceType": "{{paymentTerms}}",
+          "language": "{{languageCSV}}",
+          "offersDeadline": "{{date}}",
+          "title": "{{requestTitle}}",
+          "dateExpired": "{{date}}",
+          "details": { "contractTypes": "{{areaboxesOtherJoin}}" }
+        }
+      }
+    },
+    {
+      "category": "Help with Dispute Resolution or Debt Collection",
+      "subcategory": "Support with Court Proceedings",
+      "assignmentType": null,
+      "preview": {
+        "sections": [
+          {
+            "title": "Client Name, Business Identity Code and Country of Domicile",
+            "fields": [
+              { "label": "Client", "path": "__clientLineOrDisclosed__" },
+              {
+                "label": "Primary contact person",
+                "path": "primaryContactPerson"
+              }
+            ]
+          },
+          {
+            "title": "Scope of Work",
+            "fields": [
+              {
+                "label": "What kind of support you need",
+                "path": "scopeOfWork"
+              }
+            ]
+          },
+          {
+            "title": "Counterparty (Court Proceedings)",
+            "fields": [
+              {
+                "label": "Counterparty",
+                "path": "__counterpartyConfidential__"
+              }
+            ]
+          },
+          {
+            "title": "Description of the Matter under Dispute and Current Status of Court Proceedings",
+            "fields": [{ "label": "Description", "path": "description" }]
+          },
+          {
+            "title": "Additional Background Information Provided by Client",
+            "fields": [
+              { "label": "Notes", "path": "additionalBackgroundInfo" },
+              { "label": "Background files", "path": "backgroundInfoFiles" }
+            ]
+          },
+          {
+            "title": "Contract Price and Currency",
+            "fields": [
+              { "label": "Price model", "path": "__priceModel_Court__" }
+            ]
+          },
+          {
+            "title": "Provider Requirements",
+            "fields": [
+              {
+                "label": "Service provider type",
+                "path": "serviceProviderType"
+              },
+              { "label": "Domestic offers", "path": "domesticOffers" },
+              { "label": "Minimum provider size", "path": "providerSize" },
+              { "label": "Minimum company age", "path": "providerCompanyAge" },
+              { "label": "Minimum rating", "path": "providerMinimumRating" }
+            ]
+          },
+          {
+            "title": "Billing & Language",
+            "fields": [
+              { "label": "Advance retainer fee", "path": "advanceRetainerFee" },
+              { "label": "Invoice type", "path": "invoiceType" },
+              { "label": "Languages", "path": "language" }
+            ]
+          },
+          {
+            "title": "Meta",
+            "fields": [
+              { "label": "Offers deadline", "path": "offersDeadline" },
+              { "label": "Request title", "path": "title" }
+            ]
+          }
+        ]
+      },
+      "payloadExample": {
+        "requestState": "PENDING",
+        "requestCategory": "Help with Dispute Resolution or Debt Collection",
+        "requestSubcategory": "Support with Court Proceedings",
+        "primaryContactPerson": "Jane Doe",
+        "scopeOfWork": "Full legal representation in pending court proceedings … / Occasional support …",
+        "description": "Brief status of proceedings and next steps",
+        "additionalBackgroundInfo": "",
+        "backgroundInfoFiles": [],
+        "supplierCodeOfConductFiles": [],
+        "serviceProviderType": "Attorneys-at-law / Law firms / Both",
+        "domesticOffers": "Domestic only / Domestic and foreign",
+        "providerSize": "Any / ≥5 / ≥15 / ≥40",
+        "providerCompanyAge": "Any / ≥5y / ≥10y / ≥25y",
+        "providerMinimumRating": "Any / 3 / 4",
+        "currency": "Euro (€) | …",
+        "paymentRate": "Capped Price or Hourly Rate (depends on scopeOfWork)",
+        "maximumPrice": "Shown when capped price",
+        "advanceRetainerFee": "No | 10% | 25% | 50%",
+        "invoiceType": "Monthly / On completion …",
+        "language": "English, …",
+        "offersDeadline": "2025-10-28",
+        "title": "LEXIFY Request title",
+        "dateExpired": "2025-10-28",
+        "details": {
+          "confidential": true,
+          "winnerBidderOnlyStatus": "Disclosed to Winning Bidder Only"
+        }
+      }
+    },
+    {
+      "category": "Help with Dispute Resolution or Debt Collection",
+      "subcategory": "Support with Arbitration Proceedings",
+      "assignmentType": null,
+      "preview": {
+        "sections": [
+          {
+            "title": "Client Name, Business Identity Code and Country of Domicile",
+            "fields": [
+              { "label": "Client", "path": "__clientLineOrDisclosed__" },
+              {
+                "label": "Primary contact person",
+                "path": "primaryContactPerson"
+              }
+            ]
+          },
+          {
+            "title": "Scope of Work",
+            "fields": [
+              {
+                "label": "What kind of support you need",
+                "path": "scopeOfWork"
+              }
+            ]
+          },
+          {
+            "title": "Counterparty (Arbitration)",
+            "fields": [
+              {
+                "label": "Counterparty",
+                "path": "__counterpartyConfidential__"
+              }
+            ]
+          },
+          {
+            "title": "Description of the Matter under Dispute and Current Status of the Arbitration Proceedings",
+            "fields": [{ "label": "Description", "path": "description" }]
+          },
+          {
+            "title": "Additional Background Information Provided by Client",
+            "fields": [
+              { "label": "Notes", "path": "additionalBackgroundInfo" },
+              { "label": "Background files", "path": "backgroundInfoFiles" }
+            ]
+          },
+          {
+            "title": "Contract Price and Currency",
+            "fields": [
+              { "label": "Price model", "path": "__priceModel_Arbitration__" }
+            ]
+          },
+          {
+            "title": "Provider Requirements",
+            "fields": [
+              {
+                "label": "Service provider type",
+                "path": "serviceProviderType"
+              },
+              { "label": "Domestic offers", "path": "domesticOffers" },
+              { "label": "Minimum provider size", "path": "providerSize" },
+              { "label": "Minimum company age", "path": "providerCompanyAge" },
+              { "label": "Minimum rating", "path": "providerMinimumRating" }
+            ]
+          },
+          {
+            "title": "Billing & Language",
+            "fields": [
+              { "label": "Advance retainer fee", "path": "advanceRetainerFee" },
+              { "label": "Invoice type", "path": "invoiceType" },
+              { "label": "Languages", "path": "language" }
+            ]
+          },
+          {
+            "title": "Meta",
+            "fields": [
+              { "label": "Offers deadline", "path": "offersDeadline" },
+              { "label": "Request title", "path": "title" }
+            ]
+          }
+        ]
+      },
+      "payloadExample": {
+        "requestState": "PENDING",
+        "requestCategory": "Help with Dispute Resolution or Debt Collection",
+        "requestSubcategory": "Support with Arbitration Proceedings",
+        "primaryContactPerson": "Jane Doe",
+        "scopeOfWork": "Full legal representation in pending arbitration proceedings … / Occasional support …",
+        "description": "Brief status of arbitration and next steps",
+        "additionalBackgroundInfo": "",
+        "backgroundInfoFiles": [],
+        "supplierCodeOfConductFiles": [],
+        "serviceProviderType": "Attorneys-at-law / Law firms / Both",
+        "domesticOffers": "Domestic only / Domestic and foreign",
+        "providerSize": "Any / ≥5 / ≥15 / ≥40",
+        "providerCompanyAge": "Any / ≥5y / ≥10y / ≥25y",
+        "providerMinimumRating": "Any / 3 / 4",
+        "currency": "Euro (€) | …",
+        "paymentRate": "Capped Price or Hourly Rate (depends on scopeOfWork)",
+        "maximumPrice": "Shown when capped price",
+        "advanceRetainerFee": "No | 10% | 25% | 50%",
+        "invoiceType": "Monthly / On completion …",
+        "language": "English, …",
+        "offersDeadline": "2025-10-28",
+        "title": "LEXIFY Request title",
+        "dateExpired": "2025-10-28",
+        "details": {
+          "confidential": true,
+          "winnerBidderOnlyStatus": "Disclosed to Winning Bidder Only"
+        }
+      }
+    },
+    {
+      "category": "Help with Dispute Resolution or Debt Collection",
+      "subcategory": "Settlement Negotiation Support",
+      "assignmentType": null,
+      "preview": {
+        "sections": [
+          {
+            "title": "Client Name, Business Identity Code and Country of Domicile",
+            "fields": [
+              { "label": "Client", "path": "__clientLineOrDisclosed__" },
+              {
+                "label": "Primary contact person",
+                "path": "primaryContactPerson"
+              }
+            ]
+          },
+          {
+            "title": "Scope of Work",
+            "fields": [
+              {
+                "label": "What kind of support you need",
+                "path": "scopeOfWork"
+              }
+            ]
+          },
+          {
+            "title": "Counterparty (Settlement Negotiations)",
+            "fields": [
+              {
+                "label": "Counterparty",
+                "path": "__counterpartyConfidential__"
+              }
+            ]
+          },
+          {
+            "title": "Description of the Matter under Dispute and Current Status of the Settlement Negotiations",
+            "fields": [{ "label": "Description", "path": "description" }]
+          },
+          {
+            "title": "Additional Background Information Provided by Client",
+            "fields": [
+              { "label": "Notes", "path": "additionalBackgroundInfo" },
+              { "label": "Background files", "path": "backgroundInfoFiles" }
+            ]
+          },
+          {
+            "title": "Contract Price and Currency",
+            "fields": [
+              { "label": "Price model", "path": "__priceModel_Settlement__" }
+            ]
+          },
+          {
+            "title": "Provider Requirements",
+            "fields": [
+              {
+                "label": "Service provider type",
+                "path": "serviceProviderType"
+              },
+              { "label": "Domestic offers", "path": "domesticOffers" },
+              { "label": "Minimum provider size", "path": "providerSize" },
+              { "label": "Minimum company age", "path": "providerCompanyAge" },
+              { "label": "Minimum rating", "path": "providerMinimumRating" }
+            ]
+          },
+          {
+            "title": "Billing & Language",
+            "fields": [
+              { "label": "Advance retainer fee", "path": "advanceRetainerFee" },
+              { "label": "Invoice type", "path": "invoiceType" },
+              { "label": "Languages", "path": "language" }
+            ]
+          },
+          {
+            "title": "Meta",
+            "fields": [
+              { "label": "Offers deadline", "path": "offersDeadline" },
+              { "label": "Request title", "path": "title" }
+            ]
+          }
+        ]
+      },
+      "payloadExample": {
+        "requestState": "PENDING",
+        "requestCategory": "Help with Dispute Resolution or Debt Collection",
+        "requestSubcategory": "Settlement Negotiation Support",
+        "primaryContactPerson": "Jane Doe",
+        "scopeOfWork": "Full legal representation in settlement negotiations … / Occasional support …",
+        "description": "Brief status of negotiations and next steps",
+        "additionalBackgroundInfo": "",
+        "backgroundInfoFiles": [],
+        "supplierCodeOfConductFiles": [],
+        "serviceProviderType": "Attorneys-at-law / Law firms / Both",
+        "domesticOffers": "Domestic only / Domestic and foreign",
+        "providerSize": "Any / ≥5 / ≥15 / ≥40",
+        "providerCompanyAge": "Any / ≥5y / ≥10y / ≥25y",
+        "providerMinimumRating": "Any / 3 / 4",
+        "currency": "Euro (€) | …",
+        "paymentRate": "Lump sum fixed price or Hourly Rate (depends on scopeOfWork)",
+        "maximumPrice": "Shown when lump sum",
+        "advanceRetainerFee": "No | 10% | 25% | 50%",
+        "invoiceType": "Monthly / On completion …",
+        "language": "English, …",
+        "offersDeadline": "2025-10-28",
+        "title": "LEXIFY Request title",
+        "dateExpired": "2025-10-28",
+        "details": {
+          "confidential": true,
+          "winnerBidderOnlyStatus": "Disclosed to Winning Bidder Only"
+        }
+      }
+    },
+    {
+      "category": "Help with Dispute Resolution or Debt Collection",
+      "subcategory": "Debt Collection Support",
+      "assignmentType": null,
+      "preview": {
+        "sections": [
+          {
+            "title": "Client Name, Business Identity Code and Country of Domicile",
+            "fields": [
+              { "label": "Client", "path": "__clientLineOrDisclosed__" },
+              {
+                "label": "Primary contact person",
+                "path": "primaryContactPerson"
+              }
+            ]
+          },
+          {
+            "title": "Scope of Work",
+            "fields": [
+              {
+                "label": "What kind of support you need",
+                "path": "scopeOfWork"
+              }
+            ]
+          },
+          {
+            "title": "Debtor (Debt Collection)",
+            "fields": [
+              {
+                "label": "Counterparty / Debtor",
+                "path": "__counterpartyConfidential__"
+              }
+            ]
+          },
+          {
+            "title": "Description of the Debt and the Collection Process",
+            "fields": [{ "label": "Description", "path": "description" }]
+          },
+          {
+            "title": "Additional Background Information Provided by Client",
+            "fields": [
+              { "label": "Notes", "path": "additionalBackgroundInfo" },
+              { "label": "Background files", "path": "backgroundInfoFiles" }
+            ]
+          },
+          {
+            "title": "Contract Price and Currency",
+            "fields": [
+              { "label": "Price model", "path": "__priceModel_Debt__" }
+            ]
+          },
+          {
+            "title": "Provider Requirements",
+            "fields": [
+              {
+                "label": "Service provider type",
+                "path": "serviceProviderType"
+              },
+              { "label": "Domestic offers", "path": "domesticOffers" },
+              { "label": "Minimum provider size", "path": "providerSize" },
+              { "label": "Minimum company age", "path": "providerCompanyAge" },
+              { "label": "Minimum rating", "path": "providerMinimumRating" }
+            ]
+          },
+          {
+            "title": "Billing & Language",
+            "fields": [
+              { "label": "Advance retainer fee", "path": "advanceRetainerFee" },
+              { "label": "Invoice type", "path": "invoiceType" },
+              { "label": "Languages", "path": "language" }
+            ]
+          },
+          {
+            "title": "Meta",
+            "fields": [
+              { "label": "Offers deadline", "path": "offersDeadline" },
+              { "label": "Request title", "path": "title" }
+            ]
+          }
+        ]
+      },
+      "payloadExample": {
+        "requestState": "PENDING",
+        "requestCategory": "Help with Dispute Resolution or Debt Collection",
+        "requestSubcategory": "Debt Collection Support",
+        "primaryContactPerson": "Jane Doe",
+        "scopeOfWork": "A legal letter addressed to a debtor … / Occasional support with a debt collection process …",
+        "description": "Debt amount, grounds, steps taken so far, debtor’s position",
+        "additionalBackgroundInfo": "",
+        "backgroundInfoFiles": [],
+        "supplierCodeOfConductFiles": [],
+        "serviceProviderType": "Attorneys-at-law / Law firms / Both",
+        "domesticOffers": "Domestic only / Domestic and foreign",
+        "providerSize": "Any / ≥5 / ≥15 / ≥40",
+        "providerCompanyAge": "Any / ≥5y / ≥10y / ≥25y",
+        "providerMinimumRating": "Any / 3 / 4",
+        "currency": "Euro (€) | …",
+        "paymentRate": "Lump sum fixed price (letter) or Hourly Rate (occasional)",
+        "maximumPrice": "Shown when letter",
+        "advanceRetainerFee": "No | 10% | 25% | 50%",
+        "invoiceType": "Monthly / On completion …",
+        "language": "English, …",
+        "offersDeadline": "2025-10-28",
+        "title": "LEXIFY Request title",
+        "dateExpired": "2025-10-28",
+        "details": {
+          "confidential": true,
+          "winnerBidderOnlyStatus": "Disclosed to Winning Bidder Only"
+        }
+      }
+    },
+    {
+      "category": "Help with Mergers & Acquisitions",
+      "subcategory": null,
+      "assignmentType": null,
+      "preview": {
+        "sections": [
+          {
+            "title": "Client Name, Business Identity Code and Country of Domicile",
+            "fields": [
+              { "label": "Client", "path": "__clientLineOrDisclosed__" },
+              {
+                "label": "Primary contact person",
+                "path": "primaryContactPerson"
+              }
+            ]
+          },
+          {
+            "title": "Scope of Work",
+            "fields": [
+              { "label": "Selected support", "path": "scopeOfWork" },
+              {
+                "label": "Due diligence reporting format",
+                "path": "details.dueDiligence"
+              }
+            ]
+          },
+          {
+            "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
+            "fields": [{ "label": "Price model", "path": "__priceModel_MA__" }]
+          },
+          {
+            "title": "Object of Sale",
+            "fields": [{ "label": "Object", "path": "details.objectOfSale" }]
+          },
+          {
+            "title": "Buyer or Seller",
+            "fields": [
+              { "label": "Client’s role", "path": "details.buyerOrSeller" }
+            ]
+          },
+          {
+            "title": "Confidentiality",
+            "fields": [
+              {
+                "label": "Winner-bidder-only status",
+                "path": "details.winnerBidderOnlyStatus"
+              }
+            ]
+          },
+          {
+            "title": "Commercial Terms",
+            "fields": [
+              { "label": "Payment rate", "path": "paymentRate" },
+              { "label": "Currency", "path": "currency" },
+              { "label": "Invoice type", "path": "invoiceType" },
+              { "label": "Advance retainer fee", "path": "advanceRetainerFee" }
+            ]
+          },
+          {
+            "title": "Provider Requirements",
+            "fields": [
+              {
+                "label": "Service provider type",
+                "path": "serviceProviderType"
+              },
+              { "label": "Domestic offers", "path": "domesticOffers" },
+              { "label": "Minimum provider size", "path": "providerSize" },
+              { "label": "Minimum company age", "path": "providerCompanyAge" },
+              { "label": "Minimum rating", "path": "providerMinimumRating" }
+            ]
+          },
+          {
+            "title": "Attachments",
+            "fields": [
+              { "label": "Background files", "path": "backgroundInfoFiles" },
+              {
+                "label": "Supplier Code of Conduct files",
+                "path": "supplierCodeOfConductFiles"
+              }
+            ]
+          },
+          {
+            "title": "Meta",
+            "fields": [
+              { "label": "Request title", "path": "title" },
+              { "label": "Languages", "path": "language" },
+              { "label": "Offers deadline", "path": "offersDeadline" }
+            ]
+          }
+        ]
+      },
+      "payloadExample": {
+        "requestState": "PENDING",
+        "requestCategory": "Help with Mergers & Acquisitions",
+        "primaryContactPerson": "Jane Doe",
+        "scopeOfWork": "Comprehensive legal support … / Occasional legal support … / A sale and purchase agreement … / A letter of intent … / A legal due diligence inspection …",
+        "description": "",
+        "additionalBackgroundInfo": "",
+        "backgroundInfoFiles": [],
+        "supplierCodeOfConductFiles": [],
+        "serviceProviderType": "Attorneys-at-law / Law firms / Both",
+        "domesticOffers": "Domestic only / Domestic and foreign",
+        "providerSize": "Any / ≥5 / ≥15 / ≥40",
+        "providerCompanyAge": "Any / ≥5y / ≥10y / ≥25y",
+        "providerMinimumRating": "Any / 3 / 4",
+        "currency": "Euro (€) | …",
+        "paymentRate": "Hourly Rate (if Occasional) else Lump sum fixed price",
+        "maximumPrice": "required when Lump sum",
+        "advanceRetainerFee": "No | 10% | 25% | 50%",
+        "invoiceType": "Monthly / On completion …",
+        "language": "English, …",
+        "offersDeadline": "2025-10-28",
+        "title": "LEXIFY Request title",
+        "dateExpired": "2025-10-28",
+        "details": {
+          "objectOfSale": "All shares / Majority / Minority / Entire business / Specific assets",
+          "buyerOrSeller": "Buyer / Seller",
+          "priceRange": "(string)",
+          "dueDiligence": "'Red flag' report | Long form report | Legal Due Diligence inspection not needed",
+          "confidential": true,
+          "winnerBidderOnlyStatus": "Disclosed to Winning Bidder Only"
+        }
+      }
+    },
+    {
+      "category": "Help with Corporate Governance",
+      "subcategory": null,
+      "assignmentType": null,
+      "preview": {
+        "sections": [
+          {
+            "title": "Client Name, Business Identity Code and Country of Domicile",
+            "fields": [
+              { "label": "Client", "path": "__clientLine__" },
+              {
+                "label": "Primary contact person",
+                "path": "primaryContactPerson"
+              }
+            ]
+          },
+          {
+            "title": "Scope of Work",
+            "fields": [
+              { "label": "Selected items", "path": "details.selectedItems" },
+              {
+                "label": "Purpose of notification/application",
+                "path": "details.applicationPurpose"
+              },
+              {
+                "label": "Purpose of corporate policy",
+                "path": "details.policyPurpose"
+              }
+            ]
+          },
+          {
+            "title": "Contract Price (Lump Sum Fixed Fee) and Currency",
+            "fields": [
+              {
+                "label": "Price model",
+                "path": "__priceModel_LumpSumWithCurrency__"
+              }
+            ]
+          },
+          {
+            "title": "Additional Background Information Provided by Client",
+            "fields": [
+              { "label": "Notes", "path": "additionalBackgroundInfo" },
+              { "label": "Background files", "path": "backgroundInfoFiles" }
+            ]
+          },
+          {
+            "title": "Provider Requirements",
+            "fields": [
+              {
+                "label": "Service provider type",
+                "path": "serviceProviderType"
+              },
+              { "label": "Domestic offers", "path": "domesticOffers" },
+              { "label": "Minimum provider size", "path": "providerSize" },
+              { "label": "Minimum company age", "path": "providerCompanyAge" },
+              { "label": "Minimum rating", "path": "providerMinimumRating" }
+            ]
+          },
+          {
+            "title": "Billing & Language",
+            "fields": [
+              { "label": "Advance retainer fee", "path": "advanceRetainerFee" },
+              { "label": "Invoice type", "path": "invoiceType" },
+              { "label": "Languages", "path": "language" }
+            ]
+          },
+          {
+            "title": "Meta",
+            "fields": [
+              { "label": "Offers deadline", "path": "offersDeadline" },
+              { "label": "Request title", "path": "title" }
+            ]
+          }
+        ]
+      },
+      "payloadExample": {
+        "requestState": "PENDING",
+        "requestCategory": "Help with Corporate Governance",
+        "primaryContactPerson": "Jane Doe",
+        "scopeOfWork": "Lump sum corporate governance support as specified in the request.",
+        "description": "",
+        "additionalBackgroundInfo": "",
+        "backgroundInfoFiles": [],
+        "supplierCodeOfConductFiles": [],
+        "serviceProviderType": "Attorneys-at-law / Law firms / Both",
+        "domesticOffers": "Domestic only / Domestic and foreign",
+        "providerSize": "Any / ≥5 / ≥15 / ≥40",
+        "providerCompanyAge": "Any / ≥5y / ≥10y / ≥25y",
+        "providerMinimumRating": "Any / 3 / 4",
+        "currency": "Euro (€) | …",
+        "paymentRate": "Lump sum fixed price",
+        "maximumPrice": "required",
+        "advanceRetainerFee": "No | 10% | 25% | 50%",
+        "invoiceType": "Monthly / On completion …",
+        "language": "English, …",
+        "offersDeadline": "2025-10-28",
+        "title": "LEXIFY Request title",
+        "dateExpired": "2025-10-28",
+        "details": {
+          "selectedItems": "comma-separated list of checked items",
+          "applicationPurpose": "",
+          "policyPurpose": ""
+        }
+      }
+    },
+    {
+      "category": "Help with KYC (Know Your Customer) or Compliance related Questionnaire",
+      "subcategory": null,
+      "assignmentType": null,
+      "preview": {
+        "sections": [
+          {
+            "title": "Client Name, Business Identity Code and Country of Domicile",
+            "fields": [
+              { "label": "Client", "path": "__clientLineOrDisclosed__" },
+              {
+                "label": "Primary contact person",
+                "path": "primaryContactPerson"
+              }
+            ]
+          },
+          {
+            "title": "Scope of Work",
+            "fields": [
+              {
+                "label": "What kind of support you need",
+                "path": "scopeOfWork"
+              }
+            ]
+          },
+          {
+            "title": "Description of your Company's Line of Business",
+            "fields": [{ "label": "Description", "path": "description" }]
+          },
+          {
+            "title": "Questionnaire & Background",
+            "fields": [
+              {
+                "label": "Background files (questionnaire)",
+                "path": "backgroundInfoFiles"
+              },
+              {
+                "label": "Additional background info",
+                "path": "additionalBackgroundInfo"
+              }
+            ]
+          },
+          {
+            "title": "Confidentiality",
+            "fields": [
+              {
+                "label": "Winner-bidder-only status",
+                "path": "details.winnerBidderOnlyStatus"
+              }
+            ]
+          },
+          {
+            "title": "Contract Price (Lump Sum Fixed Fee) and Currency",
+            "fields": [
+              {
+                "label": "Price model",
+                "path": "__priceModel_LumpSumWithCurrency__"
+              }
+            ]
+          },
+          {
+            "title": "Provider Requirements",
+            "fields": [
+              {
+                "label": "Service provider type",
+                "path": "serviceProviderType"
+              },
+              { "label": "Domestic offers", "path": "domesticOffers" },
+              { "label": "Minimum provider size", "path": "providerSize" },
+              { "label": "Minimum company age", "path": "providerCompanyAge" },
+              { "label": "Minimum rating", "path": "providerMinimumRating" }
+            ]
+          },
+          {
+            "title": "Billing & Language",
+            "fields": [
+              { "label": "Advance retainer fee", "path": "advanceRetainerFee" },
+              { "label": "Invoice type", "path": "invoiceType" },
+              { "label": "Languages", "path": "language" }
+            ]
+          },
+          {
+            "title": "Meta",
+            "fields": [
+              { "label": "Offers deadline", "path": "offersDeadline" },
+              { "label": "Request title", "path": "title" }
+            ]
+          }
+        ]
+      },
+      "payloadExample": {
+        "requestState": "PENDING",
+        "requestCategory": "Help with KYC (Know Your Customer) or Compliance related Questionnaire",
+        "primaryContactPerson": "Jane Doe",
+        "scopeOfWork": "Legal support with responding to a KYC … / Responding to a compliance related questionnaire …",
+        "description": "Brief description of line of business",
+        "additionalBackgroundInfo": "",
+        "backgroundInfoFiles": [],
+        "supplierCodeOfConductFiles": [],
+        "serviceProviderType": "Attorneys-at-law / Law firms / Both",
+        "domesticOffers": "Domestic only / Domestic and foreign",
+        "providerSize": "Any / ≥5 / ≥15 / ≥40",
+        "providerCompanyAge": "Any / ≥5y / ≥10y / ≥25y",
+        "providerMinimumRating": "Any / 3 / 4",
+        "currency": "Euro (€) | …",
+        "paymentRate": "Lump sum fixed price",
+        "maximumPrice": "required",
+        "advanceRetainerFee": "No | 10% | 25% | 50%",
+        "invoiceType": "Monthly / On completion …",
+        "language": "English, …",
+        "offersDeadline": "2025-10-28",
+        "title": "LEXIFY Request title",
+        "dateExpired": "2025-10-28",
+        "details": {
+          "confidential": true,
+          "winnerBidderOnlyStatus": "Disclosed to Winning Bidder Only"
+        }
+      }
+    },
+    {
+      "category": "Legal Training for Management and/or Personnel",
+      "subcategory": null,
+      "assignmentType": null,
+      "preview": {
+        "sections": [
+          {
+            "title": "Client Name, Business Identity Code and Country of Domicile",
+            "fields": [
+              { "label": "Client", "path": "__clientLine__" },
+              {
+                "label": "Primary contact person",
+                "path": "primaryContactPerson"
+              }
+            ]
+          },
+          {
+            "title": "Scope of Work",
+            "fields": [{ "label": "Training scope", "path": "scopeOfWork" }]
+          },
+          {
+            "title": "Training Details",
+            "fields": [
+              { "label": "Duration", "path": "details.trainingDuration" },
+              { "label": "Date & time", "path": "details.trainingDateTime" },
+              { "label": "Location", "path": "details.trainingLocation" }
+            ]
+          },
+          {
+            "title": "Additional Background Information Provided by Client",
+            "fields": [
+              { "label": "Notes", "path": "additionalBackgroundInfo" },
+              { "label": "Background files", "path": "backgroundInfoFiles" }
+            ]
+          },
+          {
+            "title": "Contract Price (Lump Sum Fixed Fee) and Currency",
+            "fields": [
+              {
+                "label": "Price model",
+                "path": "__priceModel_LumpSumWithCurrency__"
+              }
+            ]
+          },
+          {
+            "title": "Provider Requirements",
+            "fields": [
+              {
+                "label": "Service provider type",
+                "path": "serviceProviderType"
+              },
+              { "label": "Domestic offers", "path": "domesticOffers" },
+              { "label": "Minimum provider size", "path": "providerSize" },
+              { "label": "Minimum company age", "path": "providerCompanyAge" },
+              { "label": "Minimum rating", "path": "providerMinimumRating" }
+            ]
+          },
+          {
+            "title": "Billing & Language",
+            "fields": [
+              { "label": "Advance retainer fee", "path": "advanceRetainerFee" },
+              { "label": "Invoice type", "path": "invoiceType" },
+              { "label": "Languages", "path": "language" }
+            ]
+          },
+          {
+            "title": "Meta",
+            "fields": [
+              { "label": "Offers deadline", "path": "offersDeadline" },
+              { "label": "Request title", "path": "title" }
+            ]
+          }
+        ]
+      },
+      "payloadExample": {
+        "requestState": "PENDING",
+        "requestCategory": "Legal Training for Management and/or Personnel",
+        "primaryContactPerson": "Jane Doe",
+        "scopeOfWork": "Legal training for personnel on: <topics>",
+        "description": "<topics>",
+        "additionalBackgroundInfo": "",
+        "backgroundInfoFiles": [],
+        "supplierCodeOfConductFiles": [],
+        "serviceProviderType": "Attorneys-at-law / Law firms / Both",
+        "domesticOffers": "Domestic only / Domestic and foreign",
+        "providerSize": "Any / ≥5 / ≥15 / ≥40",
+        "providerCompanyAge": "Any / ≥5y / ≥10y / ≥25y",
+        "providerMinimumRating": "Any / 3 / 4",
+        "currency": "Euro (€) | …",
+        "paymentRate": "Lump sum fixed price",
+        "maximumPrice": "required",
+        "advanceRetainerFee": "No | 10% | 25% | 50%",
+        "invoiceType": "Monthly / On completion …",
+        "language": "English, …",
+        "offersDeadline": "2025-10-28",
+        "title": "LEXIFY Request title",
+        "dateExpired": "2025-10-28",
+        "details": {
+          "trainingDuration": "1 hour | 2 hours | 4 hours | 1 full day | 2 full days | Other: …",
+          "trainingDateTime": "ISO datetime or 'Date and time to be confirmed later'",
+          "trainingLocation": "Specific location / Remote (Teams, …)"
+        }
+      }
+    },
+    {
+      "category": "Help with Personal Data Protection",
+      "subcategory": "GDPR Compliance Analysis",
+      "assignmentType": null,
+      "preview": {
+        "sections": [
+          {
+            "title": "Client Name, Business Identity Code and Country of Domicile",
+            "fields": [
+              { "label": "Client", "path": "__clientLine__" },
+              {
+                "label": "Primary contact person",
+                "path": "primaryContactPerson"
+              }
+            ]
+          },
+          {
+            "title": "Scope of Work",
+            "fields": [{ "label": "Selected support", "path": "scopeOfWork" }]
+          },
+          {
+            "title": "Description of Your Company's Line of Business",
+            "fields": [{ "label": "Description", "path": "description" }]
+          },
+          {
+            "title": "Company Scale",
+            "fields": [
+              { "label": "Annual revenue", "path": "details.companyRevenue" },
+              { "label": "Employees", "path": "details.employeeCount" },
+              { "label": "Customers", "path": "details.customerCount" },
+              {
+                "label": "IT applications with personal data",
+                "path": "details.applicationCount"
+              },
+              {
+                "label": "Products with personal data",
+                "path": "details.productCount"
+              },
+              { "label": "Web domains", "path": "details.domainCount" }
+            ]
+          },
+          {
+            "title": "Existing Documentation",
+            "fields": [
+              {
+                "label": "IT app/process documentation",
+                "path": "details.appDocumentation"
+              },
+              {
+                "label": "Documentation description",
+                "path": "details.documentDescription"
+              },
+              {
+                "label": "Data architecture / data flow docs",
+                "path": "details.existingData"
+              },
+              {
+                "label": "Data documentation description",
+                "path": "details.dataDescription"
+              }
+            ]
+          },
+          {
+            "title": "Governance & Technology",
+            "fields": [
+              {
+                "label": "Dedicated owners for key IT/processes/products",
+                "path": "details.dedicatedOwners"
+              },
+              {
+                "label": "Use of AI for processing personal data",
+                "path": "details.aiUsage"
+              },
+              {
+                "label": "AI usage description",
+                "path": "details.aiDescription"
+              },
+              { "label": "Use of profiling", "path": "details.profiling" },
+              {
+                "label": "Profiling description",
+                "path": "details.profilingDescription"
+              }
+            ]
+          },
+          {
+            "title": "Interviews with Personnel",
+            "fields": [
+              {
+                "label": "Preferred interview location",
+                "path": "details.interviewLocation"
+              },
+              {
+                "label": "Location description",
+                "path": "details.locationDescription"
+              }
+            ]
+          },
+          {
+            "title": "Additional Background Information Provided by Client",
+            "fields": [
+              { "label": "Notes", "path": "additionalBackgroundInfo" },
+              { "label": "Background files", "path": "backgroundInfoFiles" }
+            ]
+          },
+          {
+            "title": "Commercial Terms",
+            "fields": [
+              { "label": "Payment rate", "path": "paymentRate" },
+              { "label": "Currency", "path": "currency" },
+              { "label": "Maximum price (VAT 0%)", "path": "maximumPrice" },
+              { "label": "Invoice type", "path": "invoiceType" },
+              { "label": "Advance retainer fee", "path": "advanceRetainerFee" }
+            ]
+          },
+          {
+            "title": "Provider Requirements",
+            "fields": [
+              {
+                "label": "Service provider type",
+                "path": "serviceProviderType"
+              },
+              { "label": "Domestic offers", "path": "domesticOffers" },
+              { "label": "Minimum provider size", "path": "providerSize" },
+              { "label": "Minimum company age", "path": "providerCompanyAge" },
+              { "label": "Minimum rating", "path": "providerMinimumRating" }
+            ]
+          },
+          {
+            "title": "Meta",
+            "fields": [
+              { "label": "Languages", "path": "language" },
+              { "label": "Offers deadline", "path": "offersDeadline" },
+              { "label": "Request title", "path": "title" }
+            ]
+          }
+        ]
+      },
+      "payloadExample": {
+        "requestState": "PENDING",
+        "requestCategory": "Help with Personal Data Protection",
+        "requestSubcategory": "GDPR Compliance Analysis",
+        "primaryContactPerson": "Jane Doe",
+        "scopeOfWork": "Legal assessment of the Client's current level of compliance with GDPR requirements.",
+        "description": "",
+        "additionalBackgroundInfo": "",
+        "backgroundInfoFiles": [],
+        "supplierCodeOfConductFiles": [],
+        "serviceProviderType": "Attorneys-at-law / Law firms / Both",
+        "domesticOffers": "Domestic only / Domestic and foreign",
+        "providerSize": "Any / ≥5 / ≥15 / ≥40",
+        "providerCompanyAge": "Any / ≥5y / ≥10y / ≥25y",
+        "providerMinimumRating": "Any / 3 / 4",
+        "currency": "Euro (€) | …",
+        "paymentRate": "Lump sum fixed price",
+        "maximumPrice": "Required",
+        "advanceRetainerFee": "No | 10% | 25% | 50%",
+        "invoiceType": "Monthly / On completion …",
+        "language": "English, …",
+        "offersDeadline": "2025-10-28",
+        "title": "LEXIFY Request title",
+        "dateExpired": "2025-10-28",
+        "details": {
+          "companyRevenue": "",
+          "employeeCount": "",
+          "customerCount": "",
+          "applicationCount": "",
+          "productCount": "",
+          "domainCount": "",
+          "appDocumentation": "",
+          "documentDescription": "",
+          "existingData": "",
+          "dataDescription": "",
+          "dedicatedOwners": "",
+          "aiUsage": "",
+          "aiDescription": "",
+          "profiling": "",
+          "profilingDescription": "",
+          "interviewLocation": "",
+          "locationDescription": ""
+        }
+      }
+    },
+    {
+      "category": "Help with Personal Data Protection",
+      "subcategory": "Support with Data Breach",
+      "assignmentType": null,
+      "preview": {
+        "sections": [
+          {
+            "title": "Client Name, Business Identity Code and Country of Domicile",
+            "fields": [
+              { "label": "Client", "path": "__clientLineOrDisclosed__" },
+              {
+                "label": "Primary contact person",
+                "path": "primaryContactPerson"
+              }
+            ]
+          },
+          {
+            "title": "Scope of Work",
+            "fields": [{ "label": "Selected support", "path": "scopeOfWork" }]
+          },
+          {
+            "title": "Breach Details",
+            "fields": [
+              {
+                "label": "Description of the breach and actions taken",
+                "path": "details.breachStatus"
+              },
+              {
+                "label": "Is another identified company involved?",
+                "path": "details.involvedParties"
+              },
+              {
+                "label": "Other involved company/companies",
+                "path": "__counterpartyConfidential__"
+              }
+            ]
+          },
+          {
+            "title": "Description of Company’s Line of Business",
+            "fields": [{ "label": "Description", "path": "description" }]
+          },
+          {
+            "title": "Additional Background Information Provided by Client",
+            "fields": [
+              { "label": "Notes", "path": "additionalBackgroundInfo" },
+              { "label": "Background files", "path": "backgroundInfoFiles" }
+            ]
+          },
+          {
+            "title": "Commercial Terms",
+            "fields": [
+              { "label": "Payment rate", "path": "paymentRate" },
+              { "label": "Currency", "path": "currency" },
+              { "label": "Invoice type", "path": "invoiceType" },
+              { "label": "Advance retainer fee", "path": "advanceRetainerFee" }
+            ]
+          },
+          {
+            "title": "Provider Requirements",
+            "fields": [
+              {
+                "label": "Service provider type",
+                "path": "serviceProviderType"
+              },
+              { "label": "Domestic offers", "path": "domesticOffers" },
+              { "label": "Minimum provider size", "path": "providerSize" },
+              { "label": "Minimum company age", "path": "providerCompanyAge" },
+              { "label": "Minimum rating", "path": "providerMinimumRating" }
+            ]
+          },
+          {
+            "title": "Meta",
+            "fields": [
+              { "label": "Languages", "path": "language" },
+              { "label": "Offers deadline", "path": "offersDeadline" },
+              { "label": "Request title", "path": "title" }
+            ]
+          }
+        ]
+      },
+      "payloadExample": {
+        "requestState": "PENDING",
+        "requestCategory": "Help with Personal Data Protection",
+        "requestSubcategory": "Support with Data Breach",
+        "primaryContactPerson": "Jane Doe",
+        "scopeOfWork": "create internal process & templates / react to occurred breach / authority communications / court proceedings (one or more selected)",
+        "description": "",
+        "additionalBackgroundInfo": "",
+        "backgroundInfoFiles": [],
+        "supplierCodeOfConductFiles": [],
+        "serviceProviderType": "Attorneys-at-law / Law firms / Both",
+        "domesticOffers": "Domestic only / Domestic and foreign",
+        "providerSize": "Any / ≥5 / ≥15 / ≥40",
+        "providerCompanyAge": "Any / ≥5y / ≥10y / ≥25y",
+        "providerMinimumRating": "Any / 3 / 4",
+        "currency": "Euro (€) | …",
+        "paymentRate": "Hourly Rate",
+        "advanceRetainerFee": "No | 10% | 25% | 50%",
+        "invoiceType": "Monthly / On completion …",
+        "language": "English, …",
+        "offersDeadline": "2025-10-28",
+        "title": "LEXIFY Request title",
+        "dateExpired": "2025-10-28",
+        "details": {
+          "breachStatus": "",
+          "involvedParties": "",
+          "breachCompany": "",
+          "confidential": true
+        }
+      }
+    },
+    {
+      "category": "Help with Personal Data Protection",
+      "subcategory": "Specific Privacy related Question",
+      "assignmentType": null,
+      "preview": {
+        "sections": [
+          {
+            "title": "Client Name, Business Identity Code and Country of Domicile",
+            "fields": [
+              { "label": "Client", "path": "__clientLine__" },
+              {
+                "label": "Primary contact person",
+                "path": "primaryContactPerson"
+              }
+            ]
+          },
+          {
+            "title": "Scope of Work",
+            "fields": [{ "label": "Support type", "path": "scopeOfWork" }]
+          },
+          {
+            "title": "Your Question",
+            "fields": [{ "label": "Question / inquiry", "path": "description" }]
+          },
+          {
+            "title": "Additional Background Information Provided by Client",
+            "fields": [
+              { "label": "Notes", "path": "additionalBackgroundInfo" },
+              { "label": "Background files", "path": "backgroundInfoFiles" }
+            ]
+          },
+          {
+            "title": "Commercial Terms",
+            "fields": [
+              { "label": "Payment rate", "path": "paymentRate" },
+              { "label": "Currency", "path": "currency" },
+              { "label": "Invoice type", "path": "invoiceType" },
+              { "label": "Advance retainer fee", "path": "advanceRetainerFee" }
+            ]
+          },
+          {
+            "title": "Provider Requirements",
+            "fields": [
+              {
+                "label": "Service provider type",
+                "path": "serviceProviderType"
+              },
+              { "label": "Domestic offers", "path": "domesticOffers" },
+              { "label": "Minimum provider size", "path": "providerSize" },
+              { "label": "Minimum company age", "path": "providerCompanyAge" },
+              { "label": "Minimum rating", "path": "providerMinimumRating" }
+            ]
+          },
+          {
+            "title": "Meta",
+            "fields": [
+              { "label": "Languages", "path": "language" },
+              { "label": "Offers deadline", "path": "offersDeadline" },
+              { "label": "Request title", "path": "title" }
+            ]
+          }
+        ]
+      },
+      "payloadExample": {
+        "requestState": "PENDING",
+        "requestCategory": "Help with Personal Data Protection",
+        "requestSubcategory": "Specific Privacy related Question",
+        "primaryContactPerson": "Jane Doe",
+        "scopeOfWork": "Occasional legal support; Q&A and written advice as needed.",
+        "description": "",
+        "additionalBackgroundInfo": "",
+        "backgroundInfoFiles": [],
+        "supplierCodeOfConductFiles": [],
+        "serviceProviderType": "Attorneys-at-law / Law firms / Both",
+        "domesticOffers": "Domestic only / Domestic and foreign",
+        "providerSize": "Any / ≥5 / ≥15 / ≥40",
+        "providerCompanyAge": "Any / ≥5y / ≥10y / ≥25y",
+        "providerMinimumRating": "Any / 3 / 4",
+        "currency": "Euro (€) | …",
+        "paymentRate": "Hourly Rate",
+        "advanceRetainerFee": "No | 10% | 25% | 50%",
+        "invoiceType": "Monthly / On completion …",
+        "language": "English, …",
+        "offersDeadline": "2025-10-28",
+        "title": "LEXIFY Request title",
+        "dateExpired": "2025-10-28",
+        "details": {}
+      }
+    },
+    {
+      "category": "Help with Personal Data Protection",
+      "subcategory": "Data Privacy Documentation",
+      "assignmentType": null,
+      "preview": {
+        "sections": [
+          {
+            "title": "Client Name, Business Identity Code and Country of Domicile",
+            "fields": [
+              { "label": "Client", "path": "__clientLine__" },
+              {
+                "label": "Primary contact person",
+                "path": "primaryContactPerson"
+              }
+            ]
+          },
+          {
+            "title": "What kind of document(s) do you need?",
+            "fields": [{ "label": "Document(s)", "path": "__docsWithOther__" }]
+          },
+          {
+            "title": "Do you need the above document(s) as empty template(s) only or fully completed…",
+            "fields": [
+              { "label": "Document type", "path": "details.documentType" },
+              {
+                "label": "Context for template use",
+                "path": "details.documentTemplateContext"
+              },
+              {
+                "label": "Group(s) of individuals concerned",
+                "path": "details.individuals"
+              },
+              {
+                "label": "What will the document(s) cover",
+                "path": "details.documentCoverage"
+              },
+              {
+                "label": "Description of the application/solution/product/process",
+                "path": "details.generalDescription"
+              }
+            ]
+          },
+          {
+            "title": "Description of Your Company's Line of Business",
+            "fields": [{ "label": "Description", "path": "description" }]
+          },
+          {
+            "title": "Additional Background Information Provided by Client",
+            "fields": [
+              { "label": "Notes", "path": "additionalBackgroundInfo" },
+              { "label": "Background files", "path": "backgroundInfoFiles" }
+            ]
+          },
+          {
+            "title": "Commercial Terms",
+            "fields": [
+              { "label": "Payment rate", "path": "paymentRate" },
+              { "label": "Currency", "path": "currency" },
+              { "label": "Maximum price (VAT 0%)", "path": "maximumPrice" },
+              { "label": "Invoice type", "path": "invoiceType" },
+              { "label": "Advance retainer fee", "path": "advanceRetainerFee" }
+            ]
+          },
+          {
+            "title": "Provider Requirements",
+            "fields": [
+              {
+                "label": "Service provider type",
+                "path": "serviceProviderType"
+              },
+              { "label": "Domestic offers", "path": "domesticOffers" },
+              { "label": "Minimum provider size", "path": "providerSize" },
+              { "label": "Minimum company age", "path": "providerCompanyAge" },
+              { "label": "Minimum rating", "path": "providerMinimumRating" }
+            ]
+          },
+          {
+            "title": "Meta",
+            "fields": [
+              { "label": "Languages", "path": "language" },
+              { "label": "Offers deadline", "path": "offersDeadline" },
+              { "label": "Request title", "path": "title" }
+            ]
+          }
+        ]
+      },
+      "payloadExample": {
+        "requestState": "PENDING",
+        "requestCategory": "Help with Personal Data Protection",
+        "requestSubcategory": "Data Privacy Documentation",
+        "primaryContactPerson": "Jane Doe",
+        "scopeOfWork": "Privacy Statement or Notice … / Data Subject Consent / Record of Processing Activities (RoPa) / Personal Data Protection Impact Assessment (DPIA) / Balancing Test / Other …",
+        "description": "",
+        "additionalBackgroundInfo": "",
+        "backgroundInfoFiles": [],
+        "supplierCodeOfConductFiles": [],
+        "serviceProviderType": "Attorneys-at-law / Law firms / Both",
+        "domesticOffers": "Domestic only / Domestic and foreign",
+        "providerSize": "Any / ≥5 / ≥15 / ≥40",
+        "providerCompanyAge": "Any / ≥5y / ≥10y / ≥25y",
+        "providerMinimumRating": "Any / 3 / 4",
+        "currency": "Euro (€) | …",
+        "paymentRate": "Lump sum fixed price",
+        "maximumPrice": "Required",
+        "advanceRetainerFee": "No | 10% | 25% | 50%",
+        "invoiceType": "Monthly / On completion …",
+        "language": "English, …",
+        "offersDeadline": "2025-10-28",
+        "title": "LEXIFY Request title",
+        "dateExpired": "2025-10-28",
+        "details": {
+          "documentType": "",
+          "documentTemplateContext": "",
+          "documentCoverage": "",
+          "individuals": "",
+          "generalDescription": "",
+          "companyRevenue": "",
+          "employeeCount": "",
+          "customerCount": ""
+        }
+      }
+    }
+  ]
+}

@@ -1,3 +1,4 @@
+// /api/me/requests/expired/route.js
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
@@ -17,7 +18,7 @@ export async function GET() {
       where: {
         clientId: BigInt(session.userId),
         dateExpired: { lt: now },
-        requestState: "PENDING",
+        requestState: "EXPIRED", // ← changed
       },
       orderBy: { dateCreated: "desc" },
       select: {
@@ -27,61 +28,54 @@ export async function GET() {
         dateCreated: true,
         dateExpired: true,
         currency: true,
-        scopeOfWork: true,
-        description: true,
-        additionalBackgroundInfo: true,
-        supplierCodeOfConductFiles: true,
         paymentRate: true,
-        language: true,
-        invoiceType: true,
-        advanceRetainerFee: true,
-        serviceProviderType: true,
-        domesticOffers: true,
-        providerSize: true,
-        providerCompanyAge: true,
-        providerMinimumRating: true,
+        contractResult: true, // ← added
         details: true,
-        offers: { select: { offerPrice: true } },
+        // offers with provider for names & ratings if needed later
+        offers: {
+          select: {
+            offerPrice: true,
+            provider: { select: { companyName: true } },
+          },
+        },
       },
     });
 
     const shaped = reqs.map((r) => {
-      const offerValues = (r.offers || [])
-        .map((o) => toNum(o.offerPrice))
-        .filter((n) => typeof n === "number" && !Number.isNaN(n));
-      const bestOffer = offerValues.length ? Math.min(...offerValues) : null;
-
-      let maximumPrice = null;
+      // Parse maxPrice from details.maximumPrice
+      let maxPrice = null;
       const rawMax = r.details?.maximumPrice;
       if (rawMax !== undefined && rawMax !== null && rawMax !== "") {
         const mp = Number(String(rawMax).replace(/[^\d.]/g, ""));
-        if (!Number.isNaN(mp)) maximumPrice = mp;
+        if (!Number.isNaN(mp)) maxPrice = mp;
       }
+
+      // Collect numeric offers + provider name
+      const offers = (r.offers || [])
+        .map((o) => ({
+          offeredPrice: toNum(o.offerPrice),
+          providerCompanyName: o.provider?.companyName || "—",
+        }))
+        .filter(
+          (o) =>
+            typeof o.offeredPrice === "number" && !Number.isNaN(o.offeredPrice)
+        )
+        .sort((a, b) => a.offeredPrice - b.offeredPrice);
+
+      const bestOffer = offers[0] || null;
+      const runnerUps = offers.slice(1, 3); // top 2 runner-ups
 
       return {
         requestId: safeNumber(r.requestId),
-        title: r.title,
-        primaryContactPerson: r.primaryContactPerson,
+        requestTitle: r.title, // table expects "requestTitle"
         dateCreated: r.dateCreated,
         dateExpired: r.dateExpired,
-        scopeOfWork: r.scopeOfWork,
-        description: r.description,
-        additionalBackgroundInfo: r.additionalBackgroundInfo || "",
-        supplierCodeOfConductFiles: r.supplierCodeOfConductFiles || [],
-        paymentRate: r.paymentRate,
+        contractResult: r.contractResult ?? null,
         currency: r.currency,
-        language: r.language,
-        invoiceType: r.invoiceType,
-        advanceRetainerFee: r.advanceRetainerFee,
-        serviceProviderType: r.serviceProviderType,
-        domesticOffers: r.domesticOffers,
-        providerSize: r.providerSize,
-        providerCompanyAge: r.providerCompanyAge,
-        providerMinimumRating: r.providerMinimumRating,
-        details: r.details || {},
-        offersReceived: (r.offers || []).length,
+        paymentRate: r.paymentRate,
+        maxPrice,
         bestOffer,
-        maximumPrice,
+        runnerUps,
       };
     });
 

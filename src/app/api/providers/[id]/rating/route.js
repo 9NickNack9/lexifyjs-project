@@ -33,17 +33,27 @@ export async function GET(_req, { params }) {
     ? provider.providerIndividualRating
     : [];
 
-  const mine = arr.find((r) => Number(r.raterId) === Number(session.userId));
+  const mine =
+    arr.find((r) => Number(r.raterId) === Number(session.userId)) || null;
 
-  return NextResponse.json({
-    mine: mine || {},
-    aggregates: {
-      quality: Number(provider?.providerQualityRating ?? 0),
-      communication: Number(provider?.providerCommunicationRating ?? 0),
-      billing: Number(provider?.providerBillingRating ?? 0),
-      total: Number(provider?.providerTotalRating ?? 0),
-    },
-  });
+  const hasRealRatings = arr.length > 0;
+
+  // Default to 5.0s if nobody has rated yet
+  const aggregates = hasRealRatings
+    ? {
+        quality: Number(provider?.providerQualityRating ?? 0),
+        communication: Number(provider?.providerCommunicationRating ?? 0),
+        billing: Number(provider?.providerBillingRating ?? 0),
+        total: Number(provider?.providerTotalRating ?? 0),
+      }
+    : {
+        quality: 5.0,
+        communication: 5.0,
+        billing: 5.0,
+        total: 5.0,
+      };
+
+  return NextResponse.json({ mine: mine || {}, aggregates });
 }
 
 export async function POST(req, { params }) {
@@ -61,7 +71,7 @@ export async function POST(req, { params }) {
   const responsiveness = sanitize(body.responsiveness);
   const billing = sanitize(body.billing);
 
-  // Guard: user must have at least one contract with the provider
+  // Must have at least one contract together
   const hadContract = await prisma.contract.findFirst({
     where: {
       clientId: Number(session.userId),
@@ -76,7 +86,14 @@ export async function POST(req, { params }) {
     );
   }
 
-  // Read existing ratings blob
+  // Purchaser companyName for storage alongside the rating
+  const purchaser = await prisma.appUser.findUnique({
+    where: { userId: Number(session.userId) },
+    select: { companyName: true },
+  });
+  const purchaserCompany = purchaser?.companyName || "Unknown Company";
+
+  // Read existing ratings array
   const provider = await prisma.appUser.findUnique({
     where: { userId: providerId },
     select: { providerIndividualRating: true },
@@ -91,12 +108,15 @@ export async function POST(req, { params }) {
 
   const newEntry = {
     raterId: raterIdNum,
+    raterCompanyName: purchaserCompany, // ← store company name
     quality,
     responsiveness,
     billing,
+    subratings: [quality, responsiveness, billing], // ← compact array if you want quick reads
     updatedAt: now,
   };
 
+  // Upsert into array
   let next = [];
   const idx = arr.findIndex((r) => Number(r.raterId) === raterIdNum);
   if (idx >= 0) {
@@ -107,32 +127,47 @@ export async function POST(req, { params }) {
   }
 
   // ----- Recalculate aggregates -----
-  const count = next.length || 1;
+  const firstEver = next.length === 1;
 
-  const sumQuality = next.reduce((a, r) => a + Number(r.quality || 0), 0);
-  const sumComm = next.reduce((a, r) => a + Number(r.responsiveness || 0), 0);
-  const sumBilling = next.reduce((a, r) => a + Number(r.billing || 0), 0);
+  let avgQuality, avgComm, avgBilling, totalAvg;
 
-  const avgQuality = Number((sumQuality / count).toFixed(2));
-  const avgComm = Number((sumComm / count).toFixed(2));
-  const avgBilling = Number((sumBilling / count).toFixed(2));
+  if (firstEver) {
+    // First ever rating: set to exactly this rating (don't average with 5s)
+    avgQuality = quality;
+    avgComm = responsiveness;
+    avgBilling = billing;
+    totalAvg = Number(((quality + responsiveness + billing) / 3).toFixed(2));
+  } else {
+    // Standard averaging across all entries
+    const count = next.length;
 
-  // Mean of per-rater means (keeps rater weights equal across categories)
-  const perRaterMeans = next.map(
-    (r) =>
-      (Number(r.quality || 0) +
-        Number(r.responsiveness || 0) +
-        Number(r.billing || 0)) /
-      3
-  );
-  const totalAvg = Number(
-    (perRaterMeans.reduce((a, b) => a + b, 0) / perRaterMeans.length).toFixed(2)
-  );
+    const sumQuality = next.reduce((a, r) => a + Number(r.quality || 0), 0);
+    const sumComm = next.reduce((a, r) => a + Number(r.responsiveness || 0), 0);
+    const sumBilling = next.reduce((a, r) => a + Number(r.billing || 0), 0);
+
+    avgQuality = Number((sumQuality / count).toFixed(2));
+    avgComm = Number((sumComm / count).toFixed(2));
+    avgBilling = Number((sumBilling / count).toFixed(2));
+
+    // Mean of per-rater means (equal weight per rater)
+    const perRaterMeans = next.map(
+      (r) =>
+        (Number(r.quality || 0) +
+          Number(r.responsiveness || 0) +
+          Number(r.billing || 0)) /
+        3
+    );
+    totalAvg = Number(
+      (perRaterMeans.reduce((a, b) => a + b, 0) / perRaterMeans.length).toFixed(
+        2
+      )
+    );
+  }
 
   const updated = await prisma.appUser.update({
     where: { userId: providerId },
     data: {
-      providerIndividualRating: next,
+      providerIndividualRating: next, // full history with company names
       providerQualityRating: avgQuality,
       providerCommunicationRating: avgComm,
       providerBillingRating: avgBilling,

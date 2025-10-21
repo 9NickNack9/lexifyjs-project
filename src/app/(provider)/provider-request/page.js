@@ -1,6 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { formatTimeUntil } from "@/app/(purchaser)/archive/utils/format"; // <- reuse your existing helper
 
 const subcategoriesByCategory = {
   "Help with Contracts": [
@@ -62,10 +64,47 @@ export default function ProviderRequest() {
   const [subcategoryFilter, setSubcategoryFilter] = useState("All");
   const [assignmentTypeFilter, setAssignmentTypeFilter] = useState("All");
 
+  const [rows, setRows] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  // Build query params based on current filters
+  const queryString = useMemo(() => {
+    const p = new URLSearchParams();
+    if (descriptionFilter !== "All") p.set("category", descriptionFilter);
+    if (subcategoryFilter !== "All") p.set("subcategory", subcategoryFilter);
+    if (assignmentTypeFilter !== "All")
+      p.set("assignment", assignmentTypeFilter);
+    return p.toString();
+  }, [descriptionFilter, subcategoryFilter, assignmentTypeFilter]);
+
+  useEffect(() => {
+    let active = true;
+    (async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(
+          `/api/provider/requests/available${
+            queryString ? `?${queryString}` : ""
+          }`,
+          { cache: "no-store" }
+        );
+        const data = res.ok ? await res.json() : { requests: [] };
+        if (active) setRows(data.requests || []);
+      } catch {
+        if (active) setRows([]);
+      } finally {
+        if (active) setLoading(false);
+      }
+    })();
+    return () => {
+      active = false;
+    };
+  }, [queryString]);
+
   return (
     <div className="flex flex-col items-center min-h-screen p-6">
       <h1 className="text-3xl font-bold text-center mb-8">
-        Pending LEXIFY Requests
+        Available LEXIFY Requests
       </h1>
 
       {/* Filters */}
@@ -76,6 +115,7 @@ export default function ProviderRequest() {
             onChange={(e) => {
               setDescriptionFilter(e.target.value);
               setSubcategoryFilter("All");
+              setAssignmentTypeFilter("All");
             }}
             className="w-full p-2 border rounded bg-white text-black text-center"
           >
@@ -146,8 +186,70 @@ export default function ProviderRequest() {
           )}
         </div>
 
-        {/* Empty State */}
-        <EmptyBox>No pending LEXIFY Requests available at the moment.</EmptyBox>
+        {/* Table */}
+        <div className="mt-8">
+          {loading ? (
+            <EmptyBox>Loading…</EmptyBox>
+          ) : rows.length === 0 ? (
+            <EmptyBox>
+              No matching LEXIFY Requests available at the moment.
+            </EmptyBox>
+          ) : (
+            <table className="w-full border-collapse border border-gray-300 bg-white text-black">
+              <thead>
+                <tr className="bg-[#3a3a3c] text-white">
+                  <th className="border p-2 text-center">Category</th>
+                  <th className="border p-2 text-center">Subcategory</th>
+                  <th className="border p-2 text-center">Assignment type</th>
+                  <th className="border p-2 text-center">Client Name</th>
+                  <th className="border p-2 text-center">
+                    Time until Deadline
+                  </th>
+                  <th className="border p-2 text-center">
+                    Review & Submit Offer
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => {
+                  const timeLeft = formatTimeUntil(r.offersDeadline);
+                  return (
+                    <tr key={r.requestId}>
+                      <td className="border p-2 text-center">{r.category}</td>
+                      <td className="border p-2 text-center">
+                        {r.subcategory}
+                      </td>
+                      <td className="border p-2 text-center">
+                        {r.assignmentType}
+                      </td>
+                      <td className="border p-2 text-center">
+                        {r.clientCompanyName}
+                      </td>
+                      <td
+                        className="border p-2 text-center"
+                        title={
+                          r.offersDeadline
+                            ? new Date(r.offersDeadline).toString()
+                            : ""
+                        }
+                      >
+                        {timeLeft || "—"}
+                      </td>
+                      <td className="border p-2 text-center">
+                        <Link
+                          href={`/make-offer?requestId=${r.requestId}`}
+                          className="bg-[#11999e] text-white px-3 py-1 rounded inline-block"
+                        >
+                          Make Offer
+                        </Link>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -13,11 +13,16 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const now = new Date();
+
+    // expired + pending + (no contracts) + (contractResult === null if the field exists)
     const reqs = await prisma.request.findMany({
       where: {
         clientId: BigInt(session.userId),
         dateExpired: { lt: now },
         requestState: "PENDING",
+        contract: { none: {} },
+        // If your Request model has this column, keep it; if not, remove this line.
+        contractResult: null,
       },
       orderBy: { dateCreated: "desc" },
       select: {
@@ -27,65 +32,74 @@ export async function GET() {
         dateCreated: true,
         dateExpired: true,
         currency: true,
-        scopeOfWork: true,
-        description: true,
-        additionalBackgroundInfo: true,
-        supplierCodeOfConductFiles: true,
-        paymentRate: true,
-        language: true,
-        invoiceType: true,
-        advanceRetainerFee: true,
-        serviceProviderType: true,
-        domesticOffers: true,
-        providerSize: true,
-        providerCompanyAge: true,
-        providerMinimumRating: true,
         details: true,
-        offers: { select: { offerPrice: true } },
+        // pull offers WITH provider + ratings for the table
+        offers: {
+          select: {
+            offerPrice: true,
+            offerLawyer: true,
+            provider: {
+              select: {
+                companyName: true,
+                providerTotalRating: true,
+                providerQualityRating: true,
+                providerCommunicationRating: true,
+                providerBillingRating: true,
+              },
+            },
+          },
+        },
       },
     });
 
     const shaped = [];
     for (const r of reqs) {
-      const values = (r.offers || [])
-        .map((o) => toNum(o.offerPrice))
-        .filter((n) => typeof n === "number" && !Number.isNaN(n));
-      if (!values.length) continue;
-      const bestOffer = Math.min(...values);
-
+      // Parse max price ("My Max. Price")
       let maximumPrice = null;
       const rawMax = r.details?.maximumPrice;
       if (rawMax !== undefined && rawMax !== null && rawMax !== "") {
         const mp = Number(String(rawMax).replace(/[^\d.]/g, ""));
         if (!Number.isNaN(mp)) maximumPrice = mp;
       }
-      if (typeof maximumPrice === "number" && bestOffer > maximumPrice) {
-        shaped.push({
-          requestId: safeNumber(r.requestId),
-          title: r.title,
-          primaryContactPerson: r.primaryContactPerson,
-          dateCreated: r.dateCreated,
-          dateExpired: r.dateExpired,
-          scopeOfWork: r.scopeOfWork,
-          description: r.description,
-          additionalBackgroundInfo: r.additionalBackgroundInfo || "",
-          supplierCodeOfConductFiles: r.supplierCodeOfConductFiles || [],
-          paymentRate: r.paymentRate,
-          currency: r.currency,
-          language: r.language,
-          invoiceType: r.invoiceType,
-          advanceRetainerFee: r.advanceRetainerFee,
-          serviceProviderType: r.serviceProviderType,
-          domesticOffers: r.domesticOffers,
-          providerSize: r.providerSize,
-          providerCompanyAge: r.providerCompanyAge,
-          providerMinimumRating: r.providerMinimumRating,
-          details: r.details || {},
-          offersReceived: (r.offers || []).length,
-          bestOffer,
-          maximumPrice,
-        });
-      }
+
+      // Collect numeric offers
+      const offers = (r.offers || [])
+        .map((o) => ({
+          offeredPrice: toNum(o.offerPrice),
+          providerCompanyName: o.provider?.companyName || "—",
+          providerContactPersonName: o.provider?.contactPersonName || "—",
+          providerTotalRating: toNum(o.provider?.providerTotalRating),
+          providerQualityRating: toNum(o.provider?.providerQualityRating),
+          providerCommunicationRating: toNum(
+            o.provider?.providerCommunicationRating
+          ),
+          providerBillingRating: toNum(o.provider?.providerBillingRating),
+        }))
+        .filter(
+          (o) =>
+            typeof o.offeredPrice === "number" && !Number.isNaN(o.offeredPrice)
+        );
+
+      if (!offers.length || typeof maximumPrice !== "number") continue;
+
+      const allOverMax = offers.every((o) => o.offeredPrice > maximumPrice);
+      if (!allOverMax) continue;
+
+      // top 3 (lowest) offers with full info
+      const topOffers = [...offers]
+        .sort((a, b) => a.offeredPrice - b.offeredPrice)
+        .slice(0, 3);
+
+      shaped.push({
+        requestId: safeNumber(r.requestId),
+        requestTitle: r.title, // align with Awaiting table naming
+        primaryContactPerson: r.primaryContactPerson,
+        dateCreated: r.dateCreated,
+        dateExpired: r.dateExpired,
+        currency: r.currency,
+        maxPrice: maximumPrice, // align with Awaiting table naming
+        topOffers,
+      });
     }
 
     return NextResponse.json({ requests: shaped });

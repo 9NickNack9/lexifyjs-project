@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import QuestionMarkTooltip from "../../../components/QuestionmarkTooltip";
 
 export default function SalesB2C() {
   const router = useRouter();
+
   const initialFormState = {
     contactPerson: "",
     need: "",
@@ -33,37 +34,70 @@ export default function SalesB2C() {
 
   const [formData, setFormData] = useState(initialFormState);
   const [showPreview, setShowPreview] = useState(false);
+  const [contactOptions, setContactOptions] = useState([]);
+  const [company, setCompany] = useState({ name: "", id: "", country: "" });
+  const [submitting, setSubmitting] = useState(false);
+
+  // Fetch company + contact persons (same behavior as B2B)
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/me", { cache: "no-store" });
+        if (!res.ok) return;
+        const me = await res.json();
+
+        setCompany({
+          name: me?.companyName || "",
+          id: me?.companyId || "",
+          country: me?.companyCountry || "",
+        });
+
+        const list = Array.isArray(me.companyContactPersons)
+          ? me.companyContactPersons
+          : [];
+        const opts = list
+          .map((p) => {
+            const first = (p.firstName || "").trim();
+            const last = (p.lastName || "").trim();
+            const full = [first, last].filter(Boolean).join(" ").trim();
+            return full ? { label: full, value: full } : null;
+          })
+          .filter(Boolean);
+        setContactOptions(opts);
+      } catch {
+        // no-op
+      }
+    })();
+  }, []);
 
   const handleBackgroundFileChange = (e) => {
     const newFiles = Array.from(e.target.files || []);
-    setFormData({
-      ...formData,
-      backgroundFiles: [...formData.backgroundFiles, ...newFiles],
-    });
-    // Reset the file input value to allow selecting the same file again
+    setFormData((s) => ({
+      ...s,
+      backgroundFiles: [...s.backgroundFiles, ...newFiles],
+    }));
     e.target.value = "";
   };
 
   const handleSupplierFileChange = (e) => {
     const newFiles = Array.from(e.target.files || []);
-    setFormData({
-      ...formData,
-      supplierFiles: [...formData.supplierFiles, ...newFiles],
-    });
-    // Reset the file input value to allow selecting the same file again
+    setFormData((s) => ({
+      ...s,
+      supplierFiles: [...s.supplierFiles, ...newFiles],
+    }));
     e.target.value = "";
   };
 
   const handleDeleteBackgroundFile = (index) => {
-    const updatedFiles = [...formData.backgroundFiles];
-    updatedFiles.splice(index, 1);
-    setFormData({ ...formData, backgroundFiles: updatedFiles });
+    const updated = [...formData.backgroundFiles];
+    updated.splice(index, 1);
+    setFormData({ ...formData, backgroundFiles: updated });
   };
 
   const handleDeleteSupplierFile = (index) => {
-    const updatedFiles = [...formData.supplierFiles];
-    updatedFiles.splice(index, 1);
-    setFormData({ ...formData, supplierFiles: updatedFiles });
+    const updated = [...formData.supplierFiles];
+    updated.splice(index, 1);
+    setFormData({ ...formData, supplierFiles: updated });
   };
 
   const handleChange = (e) => {
@@ -86,8 +120,6 @@ export default function SalesB2C() {
             : formData.checkboxes.filter((item) => item !== value),
         });
       }
-    } else if (type === "text") {
-      setFormData({ ...formData, [e.target.name]: e.target.value });
     } else if (type === "radio") {
       setFormData({ ...formData, need: value });
     } else {
@@ -95,53 +127,145 @@ export default function SalesB2C() {
     }
   };
 
-  const handleSubmit = (e) => {
+  const isTemplateOption =
+    formData.need ===
+    "A sales contract template for the Client's B2C business. The work includes preparation of the template documentation, necessary revisions based on client feedback and all related attorney-client communication.";
+
+  const validate = () => {
+    if (!formData.contactPerson)
+      return "Please select a primary contact person.";
+    if (!formData.need) return "Please select what you need.";
+    if (!formData.description)
+      return "Please provide a brief description of your company's line of business.";
+    if (!formData.offerer) return "Please choose which providers can offer.";
+    if (!formData.providerCountry)
+      return "Please choose domestic/foreign offers.";
+    if (!formData.lawyerCount) return "Please choose a minimum provider size.";
+    if (!formData.firmAge) return "Please choose a minimum company age.";
+    if (!formData.firmRating) return "Please choose a minimum rating.";
+    if (!formData.currency) return "Please choose a currency.";
+    if (!formData.retainerFee)
+      return "Please choose an advance retainer option.";
+    if (!formData.paymentTerms)
+      return "Please choose how you want to be invoiced.";
+
+    const langs = [
+      ...(formData.checkboxes || []).filter((l) => l !== "Other:"),
+      formData.otherLang || null,
+    ].filter(Boolean);
+    if (langs.length === 0)
+      return "Please select at least one language (or type another).";
+
+    if (!formData.date) return "Please pick an offers deadline.";
+    if (!formData.requestTitle)
+      return "Please give a title for your LEXIFY Request.";
+    if (isTemplateOption && !formData.maxPrice)
+      return "Please set a maximum price for the template option.";
+    if (!formData.agree) return "You must confirm you're ready to submit.";
+    return null;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-
-    // Check if any dropdown is unselected
-    if (
-      !formData.offerer ||
-      !formData.lawyerCount ||
-      !formData.firmAge ||
-      !formData.firmRating ||
-      !formData.paymentTerms
-    ) {
-      alert("Please select an option for all dropdowns before submitting.");
+    const err = validate();
+    if (err) {
+      alert(err);
       return;
     }
 
-    // Check if contract type is unselected
-    if (!formData.need) {
-      alert("Please select an option for contract type before submitting.");
-      return;
-    }
+    setSubmitting(true);
+    try {
+      const paymentRate = isTemplateOption
+        ? "Lump sum fixed price"
+        : "Hourly Rate";
+      const languageCSV = [
+        ...(formData.checkboxes || []).filter((l) => l !== "Other:"),
+        formData.otherLang || null,
+      ]
+        .filter(Boolean)
+        .join(", ");
 
-    if (!formData.agree) {
-      alert("You must agree to submit the form.");
-      return;
+      const payload = {
+        requestState: "PENDING",
+        requestCategory: "Help with Contracts",
+        requestSubcategory: "B2C Sales",
+        primaryContactPerson: formData.contactPerson,
+        scopeOfWork: formData.need,
+        description: formData.description,
+        additionalBackgroundInfo: formData.background || "",
+        // files will be read server-side from form-data blobs:
+        backgroundInfoFiles: [],
+        supplierCodeOfConductFiles: [],
+        serviceProviderType: formData.offerer,
+        domesticOffers: formData.providerCountry,
+        providerSize: formData.lawyerCount,
+        providerCompanyAge: formData.firmAge,
+        providerMinimumRating: formData.firmRating,
+        currency: formData.currency,
+        paymentRate,
+        advanceRetainerFee: formData.retainerFee,
+        invoiceType: formData.paymentTerms,
+        language: languageCSV,
+        offersDeadline: formData.date, // API will set end-of-day locally
+        title: formData.requestTitle,
+        dateExpired: formData.date,
+        details: {
+          confidential:
+            !!formData.confidential ||
+            formData.confboxes.includes("Disclosed to Winning Bidder Only"),
+          winnerBidderOnlyStatus: formData.confboxes.includes(
+            "Disclosed to Winning Bidder Only"
+          )
+            ? "Disclosed to Winning Bidder Only"
+            : formData.confidential || "",
+          maximumPrice: isTemplateOption ? formData.maxPrice : null,
+        },
+      };
+
+      const form = new FormData();
+      form.append(
+        "data",
+        new Blob([JSON.stringify(payload)], { type: "application/json" })
+      );
+      for (const f of formData.backgroundFiles)
+        form.append("backgroundFiles", f, f.name);
+      for (const f of formData.supplierFiles)
+        form.append("supplierFiles", f, f.name);
+
+      const res = await fetch("/api/requests", { method: "POST", body: form });
+
+      // Defensive response parsing to avoid "Unexpected end of JSON input"
+      const text = await res.text();
+      let json = null;
+      try {
+        json = text ? JSON.parse(text) : null;
+      } catch {
+        // ignore, we'll surface text below if error
+      }
+      if (!res.ok) {
+        throw new Error(
+          (json && json.error) || text || "Failed to create request."
+        );
+      }
+
+      alert("LEXIFY Request submitted successfully.");
+      router.push("/main");
+    } catch (e2) {
+      alert(e2.message);
+    } finally {
+      setSubmitting(false);
     }
-    console.log("Submitted: ", formData);
-    router.push("/main");
   };
 
   const handleClear = () => {
     setFormData(initialFormState);
-    // Reset all form elements to their initial values
     const formElements = document.querySelectorAll("input, textarea, select");
-    formElements.forEach((element) => {
-      if (
-        element.type === "text" ||
-        element.type === "textarea" ||
-        element.tagName === "TEXTAREA"
-      ) {
-        element.value = "";
-      } else if (element.type === "checkbox" || element.type === "radio") {
-        element.checked = false;
-      } else if (element.tagName === "SELECT") {
-        element.selectedIndex = 0;
-      } else if (element.type === "file") {
-        element.value = [];
-      }
+    formElements.forEach((el) => {
+      if (el.type === "text" || el.tagName === "TEXTAREA") el.value = "";
+      else if (el.type === "checkbox" || el.type === "radio")
+        el.checked = false;
+      else if (el.tagName === "SELECT") el.selectedIndex = 0;
+      else if (el.type === "file") el.value = [];
     });
   };
 
@@ -162,28 +286,35 @@ export default function SalesB2C() {
       <h2 className="text-2xl font-semibold mb-6">
         Help with B2C Sales Contracts
       </h2>
+
       <div className="w-full max-w-7xl p-6 rounded shadow-2xl text-black bg-white">
-        {/* Form Section */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <h4 className="text-md font-medium mb-1 font-semibold">
               Who is the primary contact person for this LEXIFY Request at your
               company?{" "}
-              <QuestionMarkTooltip tooltipText="All updates and notifications regarding this LEXIFY Request will be sent to the designated person. If you do not see your name listed below, you can add new contact persons on the 'My Account' page (see My Account in the LEXIFY main menu). " />
+              <QuestionMarkTooltip tooltipText="All updates and notifications regarding this LEXIFY Request will be sent to the designated person. If you do not see your name listed below, you can add new contact persons on the 'My Account' page (see My Account in the LEXIFY main menu)." />
             </h4>
             <select
               name="contactPerson"
               className="w-full border p-2"
               onChange={handleChange}
+              value={formData.contactPerson}
+              required
             >
               <option value="">Select</option>
-              <option value="Anna Korhonen">Anna Korhonen</option>
-              <option value="Mika Laine">Mika Laine</option>
+              {contactOptions.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
             </select>
           </div>
+
           <br />
           <hr />
           <br />
+
           <h4 className="text-md font-medium font-semibold">
             What do you need?
           </h4>
@@ -212,7 +343,7 @@ export default function SalesB2C() {
                   " I need a legal review of a customer's comments on my own contract template and possible further assistance during later negotiation rounds"}
               </label>
               <p className="text-xs pb-2">
-                <strong>NOTE:</strong>{" "}
+                <strong>NOTE: </strong>
                 <em>
                   {option ===
                   "A sales contract template for the Client's B2C business. The work includes preparation of the template documentation, necessary revisions based on client feedback and all related attorney-client communication."
@@ -222,9 +353,11 @@ export default function SalesB2C() {
               </p>
             </div>
           ))}
+
           <br />
           <hr />
           <br />
+
           <h4 className="text-md font-semibold">
             Please provide a brief description of your company&apos;s line of
             business{" "}
@@ -234,11 +367,14 @@ export default function SalesB2C() {
             name="description"
             className="w-full border p-2"
             onChange={handleChange}
+            value={formData.description}
           ></textarea>
+
           <br />
           <br />
           <hr />
           <br />
+
           {!formData.need.includes(
             "A sales contract template for the Client's B2C business. The work includes preparation of the template documentation, necessary revisions based on client feedback and all related attorney-client communication."
           ) && (
@@ -256,6 +392,7 @@ export default function SalesB2C() {
                 name="confidential"
                 className="w-full border p-2"
                 onChange={handleChange}
+                value={formData.confidential}
               ></textarea>
               {["Disclosed to Winning Bidder Only"].map((option, index) => (
                 <label key={index} className="block">
@@ -275,6 +412,7 @@ export default function SalesB2C() {
               <br />
             </div>
           )}
+
           <h4 className="text-md font-semibold">
             Please provide additional background information, if any, you wish
             to share with legal service providers in your LEXIFY Request. If you
@@ -286,6 +424,7 @@ export default function SalesB2C() {
             name="background"
             className="w-full border p-2"
             onChange={handleChange}
+            value={formData.background}
           ></textarea>
           <div className="mt-2">
             <label className="inline-block px-4 py-2 bg-[#c8c8cf] text-black border border-black rounded cursor-pointer">
@@ -304,7 +443,6 @@ export default function SalesB2C() {
                 : "No files selected"}
             </span>
           </div>
-          {/* Display background files */}
           {formData.backgroundFiles.length > 0 && (
             <div className="mt-2 p-2">
               <h5 className="font-medium mb-1">Uploaded Files:</h5>
@@ -324,9 +462,12 @@ export default function SalesB2C() {
               </ul>
             </div>
           )}
+
+          <br />
           <br />
           <hr />
           <br />
+
           <div>
             <h4 className="text-md font-medium mb-1 font-semibold">
               Which legal service providers can make you an offer?
@@ -335,6 +476,7 @@ export default function SalesB2C() {
               name="offerer"
               className="w-full border p-2"
               onChange={handleChange}
+              value={formData.offerer}
             >
               <option value="">Select</option>
               <option value="Attorneys-at-law">Attorneys-at-law</option>
@@ -354,9 +496,11 @@ export default function SalesB2C() {
               services according to the law of their country of domicile.
             </em>
           </p>
+
           <br />
           <hr />
           <br />
+
           <div>
             <h4 className="text-md font-medium mb-1 font-semibold">
               Do you want offers only from legal service providers based in the
@@ -366,6 +510,7 @@ export default function SalesB2C() {
               name="providerCountry"
               className="w-full border p-2"
               onChange={handleChange}
+              value={formData.providerCountry}
             >
               <option value="">Select</option>
               <option value="Yes, I want offers from domestic legal service providers only.">
@@ -377,9 +522,11 @@ export default function SalesB2C() {
               </option>
             </select>
           </div>
+
           <br />
           <hr />
           <br />
+
           <div>
             <h4 className="text-md font-medium mb-1 font-semibold">
               Do you want offers only from legal service providers of a specific
@@ -389,25 +536,28 @@ export default function SalesB2C() {
               name="lawyerCount"
               className="w-full border p-2"
               onChange={handleChange}
+              value={formData.lawyerCount}
             >
               <option value="">Select</option>
               <option value="Any size">
                 No, the legal service provider can be of any size
               </option>
-              <option value="Atleast 5 lawyers">
-                Yes, the legal service provider must employ at least 5 lawyers
+              <option value="At least 5 lawyers">
+                Yes, at least 5 lawyers
               </option>
-              <option value="Atleast 15 lawyers">
-                Yes, the legal service provider must employ at least 15 lawyers
+              <option value="At least 15 lawyers">
+                Yes, at least 15 lawyers
               </option>
-              <option value="Atleast 50 lawyers">
-                Yes, the legal service provider must employ at least 40 lawyers
+              <option value="At least 40 lawyers">
+                Yes, at least 40 lawyers
               </option>
             </select>
           </div>
+
           <br />
           <hr />
           <br />
+
           <div>
             <h4 className="text-md font-medium mb-1 font-semibold">
               Do you want offers only from legal service providers who have been
@@ -417,28 +567,28 @@ export default function SalesB2C() {
               name="firmAge"
               className="w-full border p-2"
               onChange={handleChange}
+              value={formData.firmAge}
             >
               <option value="">Select</option>
               <option value="Any age">
                 No, the legal service provider can be of any age
               </option>
               <option value="At least 5 years of operation">
-                Yes, the legal service provider has been in operation for at
-                least 5 years
+                Yes, at least 5 years
               </option>
               <option value="At least 10 years of operation">
-                Yes, the legal service provider has been in operation for at
-                least 10 years
+                Yes, at least 10 years
               </option>
               <option value="At least 25 years of operation">
-                Yes, the legal service provider has been in operation for at
-                least 25 years
+                Yes, at least 25 years
               </option>
             </select>
           </div>
+
           <br />
           <hr />
           <br />
+
           <div>
             <h4 className="text-md font-medium mb-1 font-semibold">
               Do tendering legal service providers need to have a minimum
@@ -450,20 +600,19 @@ export default function SalesB2C() {
               name="firmRating"
               className="w-full border p-2"
               onChange={handleChange}
+              value={formData.firmRating}
             >
               <option value="">Select</option>
               <option value="Any rating">No</option>
-              <option value="At least a rating of 3 stars">
-                Yes, at least 3 stars
-              </option>
-              <option value="At least a rating of 4 stars">
-                Yes, at least 4 stars
-              </option>
+              <option value="3">Yes, at least 3 stars</option>
+              <option value="4">Yes, at least 4 stars</option>
             </select>
           </div>
+
           <br />
           <hr />
           <br />
+
           <div>
             <h4 className="text-md font-medium mb-1 font-semibold">
               In what currency do you want to buy the legal service?
@@ -472,6 +621,7 @@ export default function SalesB2C() {
               name="currency"
               className="w-full border p-2"
               onChange={handleChange}
+              value={formData.currency}
             >
               <option value="">Select</option>
               <option value="Euro (€)">Euro (€)</option>
@@ -486,9 +636,11 @@ export default function SalesB2C() {
               </option>
             </select>
           </div>
+
           <br />
           <hr />
           <br />
+
           <div>
             {[
               "A sales contract template for the Client's B2C business. The work includes preparation of the template documentation, necessary revisions based on client feedback and all related attorney-client communication.",
@@ -505,7 +657,7 @@ export default function SalesB2C() {
                   className="border p-2 w-full mb-2"
                   value={formData.maxPrice}
                   onChange={(e) => {
-                    const onlyNumbers = e.target.value.replace(/[^0-9]/g, "");
+                    const onlyNumbers = e.target.value.replace(/[^0-9.]/g, "");
                     setFormData({ ...formData, maxPrice: onlyNumbers });
                   }}
                 />
@@ -526,6 +678,7 @@ export default function SalesB2C() {
               </div>
             )}
           </div>
+
           <div>
             <h4 className="text-md font-medium mb-1 font-semibold">
               Are you prepared to pay an advance retainer fee to the legal
@@ -536,6 +689,7 @@ export default function SalesB2C() {
               name="retainerFee"
               className="w-full border p-2"
               onChange={handleChange}
+              value={formData.retainerFee}
             >
               <option value="">Select</option>
               <option value="No">No</option>
@@ -553,9 +707,11 @@ export default function SalesB2C() {
               </option>
             </select>
           </div>
+
           <br />
           <hr />
           <br />
+
           <div>
             <h4 className="text-md font-medium mb-1 font-semibold">
               How do you want to be invoiced?
@@ -564,22 +720,25 @@ export default function SalesB2C() {
               name="paymentTerms"
               className="w-full border p-2"
               onChange={handleChange}
+              value={formData.paymentTerms}
             >
               <option value="">Select</option>
-              <option value="Monthly invoice">
+              <option value="On a monthly basis, invoice sent at end of each calendar month">
                 On a monthly basis, invoice sent at end of each calendar month
               </option>
-              <option value="Quarter year invoice">
+              <option value="On a quarterly basis, invoice sent at end of each quarter">
                 On a quarterly basis, invoice sent at end of each quarter
               </option>
-              <option value="One time invoice">
+              <option value="One time invoice upon completion of the assignment">
                 One time invoice upon completion of the assignment
               </option>
             </select>
           </div>
+
           <br />
           <hr />
           <br />
+
           <h4 className="text-md font-medium mb-1 font-semibold">
             What languages are needed for the performance of the work?
           </h4>
@@ -606,11 +765,14 @@ export default function SalesB2C() {
               onChange={handleChange}
             />
           )}
+
           <br />
           <hr />
           <br />
+
           <h4 className="text-md font-medium mb-1 font-semibold">
             By when do you need offers from interested legal service providers?
+            <QuestionMarkTooltip tooltipText="Sets the deadline for offers at the end of the selected day." />
           </h4>
           <input
             type="date"
@@ -620,10 +782,12 @@ export default function SalesB2C() {
             onChange={handleChange}
             min={new Date().toISOString().split("T")[0]}
           />
+
           <br />
           <br />
           <hr />
           <br />
+
           <h4 className="text-md font-medium mb-1 font-semibold">
             Do you want to include in the LEXIFY Request your Supplier Code of
             Conduct or other procurement related requirements which legal
@@ -648,7 +812,6 @@ export default function SalesB2C() {
               ? `${formData.supplierFiles.length} file(s) selected`
               : "No files selected"}
           </span>
-          {/* Display supplier files */}
           {formData.supplierFiles.length > 0 && (
             <div className="mt-2 p-2">
               <h5 className="font-medium mb-1">Uploaded Files:</h5>
@@ -668,6 +831,7 @@ export default function SalesB2C() {
               </ul>
             </div>
           )}
+
           {[
             "Legal review of comments from a customer of the Client on the Client's contract template and possible further assistance during later negotiation rounds.",
           ].includes(formData.need) && (
@@ -683,9 +847,11 @@ export default function SalesB2C() {
               </em>
             </p>
           )}
+
           <br />
           <hr />
           <br />
+
           <h4 className="text-md font-medium mb-1 font-semibold">
             Give a title for your LEXIFY Request{" "}
             <QuestionMarkTooltip tooltipText="This title will not be shown to any legal service providers and will only be used in your personal LEXIFY Request archive (see My Dashboard in the LEXIFY main menu)." />
@@ -694,13 +860,15 @@ export default function SalesB2C() {
             type="text"
             name="requestTitle"
             className="w-full border p-2"
-            value={formData.textInput}
+            value={formData.requestTitle}
             onChange={handleChange}
           />
+
           <br />
           <br />
           <hr />
           <br />
+
           <div className="flex gap-4">
             <button
               type="button"
@@ -717,7 +885,9 @@ export default function SalesB2C() {
               Cancel
             </button>
           </div>
+
           <br />
+
           <label className="block">
             <input
               type="checkbox"
@@ -729,6 +899,7 @@ export default function SalesB2C() {
             I have carefully reviewed my LEXIFY Request and I am ready to submit
             it.
           </label>
+
           <p className="text-xs font-bold">
             <em>
               By submitting this LEXIFY Request I accept that LEXIFY will
@@ -736,7 +907,7 @@ export default function SalesB2C() {
               company as the legal service purchaser and the legal service
               provider submitting the best offer subject to the parameters in my
               LEXIFY Request. The LEXIFY Contract will consist of i) the service
-              description, other specifications and my Supplier Code of Conduct
+              description, other specifications and my Procurement Appendices
               (if applicable) as I have designated in the LEXIFY Request and ii)
               the General Terms and Conditions for LEXIFY Contracts. The LEXIFY
               Contract will not be generated if i) no qualifying offers have
@@ -745,21 +916,30 @@ export default function SalesB2C() {
               LEXIFY Request before any qualifying offers have been received.
             </em>
           </p>
+
           <br />
+
           <div className="flex gap-4">
             <button
-              disabled
               type="submit"
-              className="p-2 bg-[#11999e] text-white rounded cursor-not-allowed disabled:opacity-60"
+              disabled /*</div>={submitting}*/
+              className="p-2 bg-[#11999e] text-white rounded disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
             >
-              Submit LEXIFY Request
+              {submitting ? "Submitting…" : "Submit LEXIFY Request"}
+            </button>
+            <button
+              type="button"
+              onClick={handleClear}
+              className="p-2 bg-gray-300 text-black rounded cursor-pointer"
+            >
+              Clear
             </button>
           </div>
         </form>
+
         {showPreview && (
           <div className="fixed inset-0 bg-[#11999e] bg-opacity-50 flex justify-center items-center z-50 transition-opacity duration-300">
             <div className="bg-white w-11/12 max-w-4xl shadow-lg overflow-y-auto max-h-[90vh] animate-fadeInScale relative">
-              {/* Header */}
               <div className="w-full p-4 flex flex-col items-center">
                 <img
                   src="/lexify.png"
@@ -771,7 +951,6 @@ export default function SalesB2C() {
                 </h2>
               </div>
 
-              {/* Close Button */}
               <button
                 onClick={() => setShowPreview(false)}
                 className="absolute top-4 right-4 text-white bg-[#3a3a3c] rounded-full w-8 h-8 flex items-center justify-center text-xl hover:bg-red-600 transition cursor-pointer"
@@ -779,34 +958,23 @@ export default function SalesB2C() {
                 &times;
               </button>
 
-              {/* Download Button */}
-              {/*}
-              <button
-                onClick={handleDownloadPdf}
-                className="absolute top-4 left-4 text-white bg-[#3a3a3c] rounded flex items-center justify-center text-xl hover:bg-[#11999e] transition cursor-pointer p-1"
-                title="Save as PDF"
-              >
-                Save as PDF
-              </button> 
-              */}
-
-              {/* Content */}
               <div id="lexify-preview" className="space-y-6 text-black p-8">
-                {/* Client Name */}
                 <Section title="Client Name, Business Identity Code and Country of Domicile">
-                  {formData.contactPerson
-                    ? `SilverProperties Oy, 445566-2, Finland`
+                  {formData.confboxes.includes(
+                    "Disclosed to Winning Bidder Only"
+                  )
+                    ? "Disclosed to Winning Bidder Only"
+                    : formData.contactPerson
+                    ? [company.name, company.id, company.country]
+                        .filter(Boolean)
+                        .join(", ")
                     : "-"}
                 </Section>
 
-                {/* Scope of Work */}
                 <Section title="Scope of Work">{formData.need || "-"}</Section>
 
-                {/* Contract Price and Currency */}
                 <Section title="Contract Price and Currency">
-                  {formData.need.includes(
-                    "A sales contract template for the Client's B2C business. The work includes preparation of the template documentation, necessary revisions based on client feedback and all related attorney-client communication."
-                  ) ? (
+                  {isTemplateOption ? (
                     `Lump Sum Fixed Fee ${
                       formData.currency ? `(${formData.currency})` : ""
                     }`
@@ -832,41 +1000,23 @@ export default function SalesB2C() {
                   </p>
                 </Section>
 
-                {/* Description of Client's Line of Business */}
                 <Section title="Description of Client's Line of Business">
                   <p>{formData.description || "-"}</p>
                 </Section>
 
-                {/* Counterparty */}
                 {formData.need &&
-                  (formData.need.includes(
+                  formData.need.includes(
                     "Legal review of comments from a customer of the Client on the Client's contract template and possible further assistance during later negotiation rounds."
-                  ) ||
-                    formData.need.includes(
-                      "Legal review of comments from a customer of the Client on the Client's contract template and possible further assistance during later negotiation rounds."
-                    )) && (
+                  ) && (
                     <Section title="Name of Client's Counterparty in the Matter">
                       {formData.confboxes.includes(
                         "Disclosed to Winning Bidder Only"
                       )
                         ? "Disclosed to Winning Bidder Only"
                         : formData.confidential || "-"}
-                      <p className="text-xs mt-2 italic">
-                        <strong>NOTE:</strong> If the above states
-                        &quot;Disclosed to Winning Bidder Only&quot;, the
-                        relevant identity or identities will be disclosed only
-                        to the legal service provider submitting the winning
-                        offer to enable that service provider to complete its
-                        mandatory conflict checks. If an existing conflict is
-                        then notified by the legal service provider to LEXIFY,
-                        the winning offer will automatically be disqualified and
-                        the second-best offer (if any) will replace it as the
-                        winning offer.
-                      </p>
                     </Section>
                   )}
 
-                {/* Additional Background */}
                 <Section title="Additional Background Information Provided by Client">
                   <p>{formData.background || "-"}</p>
                   {formData.backgroundFiles.length > 0 && (
@@ -887,58 +1037,6 @@ export default function SalesB2C() {
                   )}
                 </Section>
 
-                {/* Advance Retainer Fee */}
-                <Section title="Is an Advance Retainer Fee Paid to the Legal Service Provider?">
-                  {formData.retainerFee || "-"}
-                  <p className="text-xs mt-2 italic">
-                    <strong>NOTE:</strong> An advance retainer fee is an amount
-                    payable by the client to the legal service provider
-                    submitting the winning offer within 14 days of the date of
-                    the LEXIFY Contract between the client and the legal service
-                    provider. The advance retainer fee forms a part of the total
-                    price of the legal service as offered by the legal service
-                    provider. For legal service based on an hourly rate, the
-                    legal service provider shall refund the client for any
-                    unused amount of the advance retainer fee if the total price
-                    of the legal service when completed amounts to less than the
-                    amount of the advance retainer fee. Such refund shall be
-                    paid within 14 days of the completion of the legal service.
-                  </p>
-                </Section>
-
-                {/* Invoicing */}
-                <Section title="Invoicing">
-                  <p className="text-md mt-2">
-                    The Legal Service Provider shall invoice the Client in the
-                    following manner:
-                  </p>
-                  {formData.paymentTerms || "-"}
-                  <p className="text-md mt-2">
-                    Further details, such as contact person for invoices and
-                    method of invoicing (for example, email, e-invoicing or
-                    other), related to invoicing shall be agreed separately
-                    between the client and the legal service provider.
-                  </p>
-                </Section>
-
-                {/* Languages */}
-                <Section title="Languages Required for the Performance of the Work">
-                  {[
-                    ...(formData.checkboxes || []).filter(
-                      (lang) => lang !== "Other:"
-                    ),
-                    formData.otherLang,
-                  ]
-                    .filter(Boolean)
-                    .join(", ") || "-"}
-                  <p className="text-md mt-2">
-                    The legal service provider confirms that its representatives
-                    involved in the performance of the work have appropriate
-                    advanced proficiency in all the languages listed above.
-                  </p>
-                </Section>
-
-                {/* Supplier Code of Conduct */}
                 <Section title="Is the Legal Service Provider Required to Comply with a Supplier Code of Conduct and/or Other Procurement related Requirements of the Client?">
                   {formData.supplierFiles.length > 0 ? (
                     <>
@@ -965,7 +1063,7 @@ export default function SalesB2C() {
                   )}
                 </Section>
               </div>
-              {/* Close Button */}
+
               <button
                 onClick={() => setShowPreview(false)}
                 className="top-4 right-4 text-white bg-[#3a3a3c] rounded w-24 h-15 flex items-center justify-center text-xl hover:bg-red-600 transition cursor-pointer"

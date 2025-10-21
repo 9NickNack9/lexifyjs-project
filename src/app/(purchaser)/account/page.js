@@ -765,9 +765,9 @@ export default function Account() {
           LEXIFY Contract. When this option is set to &quot;Manual&quot;, LEXIFY
           will show the three best offers received by the expiration of each
           LEXIFY Request on the &quot;My Dashboard&quot; page, and you will have
-          72 hours from the expiration of each LEXIFY Request to manually select
+          7 days from the expiration of each LEXIFY Request to manually select
           the winning offer from the best offers which are shown. If you do not
-          select any of the best offers to be the winning offer within 72 hours,
+          select any of the best offers to be the winning offer within 7 days,
           LEXIFY will automatically select the best offer as the winning offer
           for the corresponding LEXIFY Contract.{" "}
         </h4>

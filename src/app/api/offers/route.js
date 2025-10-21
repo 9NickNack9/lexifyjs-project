@@ -6,9 +6,10 @@ import { getSessionUser } from "@/lib/auth";
 const OfferCreate = z.object({
   requestId: z.union([z.string(), z.number()]),
   providerId: z.union([z.string(), z.number()]).optional(),
-  offerLawyer: z.string(),
+  offerLawyer: z.string().min(1),
   offerPrice: z.union([z.string(), z.number()]),
-  offerTitle: z.string(),
+  offerTitle: z.string().min(1),
+  offerExpectedPrice: z.union([z.string(), z.number()]).optional(),
   offerStatus: z.string().optional(),
 });
 
@@ -23,7 +24,7 @@ export async function POST(req) {
     if (sessionUser?.role === "PROVIDER") {
       providerId = sessionUser.userId;
     } else if (sessionUser?.role === "ADMIN" && parsed.providerId) {
-      providerId = BigInt(String(parsed.providerId)); // admin can act on behalf
+      providerId = BigInt(String(parsed.providerId));
     } else if (parsed.providerId) {
       providerId = BigInt(String(parsed.providerId));
     }
@@ -44,6 +45,10 @@ export async function POST(req) {
         providerId,
         offerLawyer: parsed.offerLawyer,
         offerPrice: String(parsed.offerPrice),
+        offerExpectedPrice:
+          parsed.offerExpectedPrice !== undefined
+            ? String(parsed.offerExpectedPrice)
+            : null, // ✨ added
         offerTitle: parsed.offerTitle,
         offerStatus: parsed.offerStatus ?? "Pending",
       },

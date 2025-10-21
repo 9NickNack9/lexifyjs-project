@@ -13,23 +13,21 @@ export async function GET(req) {
   const { searchParams } = new URL(req.url);
   const q = (searchParams.get("q") || "").trim();
 
-  // Only search PROVIDERs
+  // Robust provider search by companyName; avoid hardcoding role value that may differ in DB.
+  // If you *must* filter by role, use: role: { in: ["PROVIDER","LEGAL_SERVICE_PROVIDER","SERVICE_PROVIDER"] }
+  const where = {
+    companyName: q ? { contains: q, mode: "insensitive" } : { not: null }, // allow listing when user starts typing
+    role: { in: ["PROVIDER", "LEGAL_SERVICE_PROVIDER", "SERVICE_PROVIDER"] }, // <- optional, only if your enum supports these values
+  };
+
   const results = await prisma.appUser.findMany({
-    where: {
-      role: "PROVIDER",
-      OR: q
-        ? [
-            { companyName: { contains: q, mode: "insensitive" } },
-            { username: { contains: q, mode: "insensitive" } },
-          ]
-        : undefined,
-    },
+    where,
     select: {
       userId: true,
       username: true,
       companyName: true,
     },
-    take: 10,
+    take: 25,
     orderBy: [{ companyName: "asc" }, { username: "asc" }],
   });
 

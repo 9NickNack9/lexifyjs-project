@@ -11,7 +11,23 @@ export default function PendingRequestsTable({
   busyIds,
 }) {
   const enriched = (rows || []).map((r) => {
-    const timeLeft = formatTimeUntil(r.dateExpired);
+    console.log("row deadline debug", {
+      id: r.requestId,
+      offersDeadline: r.offersDeadline,
+      offerDeadline: r.offerDeadline,
+      detailsOffersDeadline: r?.details?.offersDeadline,
+    });
+
+    // Accept multiple shapes: top-level, alternate key, or nested
+    const rawDeadline =
+      r.offersDeadline ??
+      r.offerDeadline ??
+      r.deadline ??
+      r?.details?.offersDeadline ??
+      r?.details?.deadline ??
+      null;
+
+    const timeLeft = formatTimeUntil(rawDeadline);
     let deadlineText = timeLeft;
 
     if (!timeLeft) {
@@ -35,8 +51,13 @@ export default function PendingRequestsTable({
       }
     }
 
-    return { ...r, deadlineText, isExpired: !timeLeft };
+    return { ...r, rawDeadline, deadlineText, isExpired: !timeLeft };
   });
+
+  // Only show non-expired + non-EXPIRED state requests
+  const active = enriched.filter(
+    (r) => !r.isExpired && r.requestState !== "EXPIRED"
+  );
 
   return (
     <div className="w-full mb-8">
@@ -44,7 +65,7 @@ export default function PendingRequestsTable({
         My Pending LEXIFY Requests
       </h2>
 
-      {enriched.length === 0 ? (
+      {active.length === 0 ? (
         <div className="p-4 bg-white rounded border text-black">N/A</div>
       ) : (
         <table className="w-full border-collapse border border-gray-300 bg-white text-black">
@@ -75,7 +96,14 @@ export default function PendingRequestsTable({
                 <td className="border p-2 text-center">
                   {new Date(r.dateCreated).toLocaleDateString()}
                 </td>
-                <td className="border p-2 text-center">{r.deadlineText}</td>
+                <td
+                  className="border p-2 text-center"
+                  title={
+                    r.rawDeadline ? new Date(r.rawDeadline).toString() : ""
+                  }
+                >
+                  {r.deadlineText}
+                </td>
                 <td className="border p-2 text-center">
                   {r.offersReceived || 0}
                 </td>

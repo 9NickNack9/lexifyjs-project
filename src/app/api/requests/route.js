@@ -2,12 +2,75 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { randomBytes } from "crypto";
+import { promises as fs } from "fs";
+import path from "path";
 
-// Decimal helper (send Decimal as string)
 function toDecimalString(v) {
   if (v === undefined || v === null || v === "") return null;
   const s = String(v).replace(/[^\d.]/g, "");
   return s === "" ? null : s;
+}
+
+const s3 = new S3Client({
+  region: process.env.S3_REGION,
+  endpoint: process.env.S3_ENDPOINT || undefined,
+  forcePathStyle: !!process.env.S3_FORCE_PATH_STYLE,
+  credentials: process.env.S3_ACCESS_KEY_ID
+    ? {
+        accessKeyId: process.env.S3_ACCESS_KEY_ID,
+        secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
+      }
+    : undefined,
+});
+
+function hasS3() {
+  return !!(
+    process.env.S3_BUCKET &&
+    process.env.S3_ACCESS_KEY_ID &&
+    process.env.S3_SECRET_ACCESS_KEY
+  );
+}
+
+async function uploadBlobToS3(file, prefix = "uploads") {
+  const arrayBuf = await file.arrayBuffer();
+  const ext = (file.name?.split(".").pop() || "").toLowerCase();
+  const key = `${prefix}/${Date.now()}-${Math.random().toString(36).slice(2)}${
+    ext ? "." + ext : ""
+  }`;
+
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: process.env.S3_BUCKET,
+      Key: key,
+      Body: Buffer.from(arrayBuf),
+      ContentType: file.type || "application/octet-stream",
+      ACL: "public-read",
+    })
+  );
+
+  const base = process.env.S3_PUBLIC_BASE_URL;
+  const url = base ? `${base}/${key}` : `s3://${process.env.S3_BUCKET}/${key}`;
+  return { key, url };
+}
+
+async function saveBlobLocally(file, prefix = "uploads") {
+  const arrayBuf = await file.arrayBuffer();
+  const buf = Buffer.from(arrayBuf);
+  const ext = (file.name?.split(".").pop() || "").toLowerCase();
+  const name = `${Date.now()}-${randomBytes(6).toString("hex")}${
+    ext ? "." + ext : ""
+  }`;
+
+  const uploadsDir = path.join(process.cwd(), "public", prefix);
+  await fs.mkdir(uploadsDir, { recursive: true });
+  const abs = path.join(uploadsDir, name);
+  await fs.writeFile(abs, buf);
+
+  const url = `/${prefix}/${name}`;
+  const key = `${prefix}/${name}`;
+  return { key, url };
 }
 
 export async function POST(req) {
@@ -17,13 +80,37 @@ export async function POST(req) {
   }
 
   let body;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+  let backgroundFilesBlobs = [];
+  let supplierFilesBlobs = [];
+
+  const contentType = req.headers.get("content-type") || "";
+  if (contentType.includes("multipart/form-data")) {
+    const form = await req.formData();
+    const dataPart = form.get("data");
+    if (!dataPart) {
+      return NextResponse.json(
+        { error: "Missing 'data' part" },
+        { status: 400 }
+      );
+    }
+    try {
+      body = JSON.parse(await dataPart.text());
+    } catch {
+      return NextResponse.json(
+        { error: "Invalid JSON in 'data' part" },
+        { status: 400 }
+      );
+    }
+    backgroundFilesBlobs = form.getAll("backgroundFiles") || [];
+    supplierFilesBlobs = form.getAll("supplierFiles") || [];
+  } else {
+    try {
+      body = await req.json();
+    } catch {
+      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
+    }
   }
 
-  // REQUIRED in every request per your schema
   const required = [
     "requestState",
     "requestCategory",
@@ -57,35 +144,62 @@ export async function POST(req) {
     }
   }
 
-  // Load user's company for clientCompanyName
   const me = await prisma.appUser.findUnique({
     where: { userId: BigInt(session.userId) },
     select: { companyName: true },
   });
 
-  // Fields that must exist but may be empty
   const additionalBackgroundInfo = body.additionalBackgroundInfo ?? "";
-  const backgroundInfoFiles = Array.isArray(body.backgroundInfoFiles)
+
+  let backgroundInfoFiles = Array.isArray(body.backgroundInfoFiles)
     ? body.backgroundInfoFiles
     : [];
-  const supplierCodeOfConductFiles = Array.isArray(
+  let supplierCodeOfConductFiles = Array.isArray(
     body.supplierCodeOfConductFiles
   )
     ? body.supplierCodeOfConductFiles
     : [];
 
-  // Optional fields (not relevant to all)
+  async function processUploads(fileBlobs, prefix) {
+    const out = [];
+    for (const f of fileBlobs) {
+      const stored = hasS3()
+        ? await uploadBlobToS3(f, prefix)
+        : await saveBlobLocally(f, prefix);
+      out.push({
+        name: f.name || "",
+        type: f.type || "",
+        size: f.size || 0,
+        url: stored.url,
+        key: stored.key,
+      });
+    }
+    return out;
+  }
+
+  if (backgroundFilesBlobs.length > 0) {
+    backgroundInfoFiles = await processUploads(
+      backgroundFilesBlobs,
+      "background"
+    );
+  }
+  if (supplierFilesBlobs.length > 0) {
+    supplierCodeOfConductFiles = await processUploads(
+      supplierFilesBlobs,
+      "supplier"
+    );
+  }
+
   const requestSubcategory = body.requestSubcategory ?? null;
   const assignmentType = body.assignmentType ?? null;
 
-  // Set dateCreated and dateExpired
   const now = new Date();
-  const offersDeadline = new Date(body.offersDeadline);
+  const [year, month, day] = body.offersDeadline.split("-").map(Number);
+  const offersDeadline = new Date(year, month - 1, day, 23, 59, 59);
   const dateExpired = body.dateExpired
     ? new Date(body.dateExpired)
     : offersDeadline;
 
-  // Create request
   const created = await prisma.request.create({
     data: {
       clientId: BigInt(session.userId),
@@ -119,17 +233,15 @@ export async function POST(req) {
       dateCreated: now,
       dateExpired,
 
-      // Initial contract fields: empty at creation time
       contractResult: null,
       contractPrice: toDecimalString(body.contractPrice ?? null),
 
-      // Everything request-type-specific goes here (safe default {})
       details: body.details ?? {},
     },
   });
 
   return NextResponse.json(
-    { ok: true, requestId: created.requestId },
+    { ok: true, requestId: String(created.requestId) },
     { status: 201 }
   );
 }

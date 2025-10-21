@@ -1,16 +1,14 @@
+// ==== IMPORTS ====
 "use client";
-
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import QuestionMarkTooltip from "../../../components/QuestionmarkTooltip";
 
 export default function DataQuestion() {
   const router = useRouter();
+
   const initialFormState = {
     contactPerson: "",
-    breachStatus: "",
-    involvedParties: "",
-    breachCompany: "",
     description: "",
     background: "",
     backgroundFiles: [],
@@ -20,7 +18,6 @@ export default function DataQuestion() {
     firmAge: "",
     firmRating: "",
     currency: "",
-    maxPrice: "",
     retainerFee: "",
     paymentTerms: "",
     checkboxes: [],
@@ -33,118 +30,201 @@ export default function DataQuestion() {
 
   const [formData, setFormData] = useState(initialFormState);
   const [showPreview, setShowPreview] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
+  // contacts + company
+  const [contactOptions, setContactOptions] = useState([]);
+  const [company, setCompany] = useState({ name: "", id: "", country: "" });
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/me", { cache: "no-store" });
+        if (!res.ok) return;
+        const me = await res.json();
+        setCompany({
+          name: me?.companyName || "",
+          id: me?.companyId || "",
+          country: me?.companyCountry || "",
+        });
+        const list = Array.isArray(me.companyContactPersons)
+          ? me.companyContactPersons
+          : [];
+        setContactOptions(
+          list
+            .map((p) => {
+              const n = [p.firstName || "", p.lastName || ""]
+                .filter(Boolean)
+                .join(" ")
+                .trim();
+              return n ? { label: n, value: n } : null;
+            })
+            .filter(Boolean)
+        );
+      } catch {}
+    })();
+  }, []);
+
+  // files
   const handleBackgroundFileChange = (e) => {
-    const newFiles = Array.from(e.target.files || []);
-    setFormData({
-      ...formData,
-      backgroundFiles: [...formData.backgroundFiles, ...newFiles],
-    });
-    // Reset the file input value to allow selecting the same file again
+    const files = Array.from(e.target.files || []);
+    setFormData((s) => ({
+      ...s,
+      backgroundFiles: [...s.backgroundFiles, ...files],
+    }));
     e.target.value = "";
   };
-
   const handleSupplierFileChange = (e) => {
-    const newFiles = Array.from(e.target.files || []);
-    setFormData({
-      ...formData,
-      supplierFiles: [...formData.supplierFiles, ...newFiles],
-    });
-    // Reset the file input value to allow selecting the same file again
+    const files = Array.from(e.target.files || []);
+    setFormData((s) => ({
+      ...s,
+      supplierFiles: [...s.supplierFiles, ...files],
+    }));
     e.target.value = "";
   };
-
-  const handleDeleteBackgroundFile = (index) => {
-    const updatedFiles = [...formData.backgroundFiles];
-    updatedFiles.splice(index, 1);
-    setFormData({ ...formData, backgroundFiles: updatedFiles });
+  const handleDeleteBackgroundFile = (i) => {
+    const arr = [...formData.backgroundFiles];
+    arr.splice(i, 1);
+    setFormData({ ...formData, backgroundFiles: arr });
+  };
+  const handleDeleteSupplierFile = (i) => {
+    const arr = [...formData.supplierFiles];
+    arr.splice(i, 1);
+    setFormData({ ...formData, supplierFiles: arr });
   };
 
-  const handleDeleteSupplierFile = (index) => {
-    const updatedFiles = [...formData.supplierFiles];
-    updatedFiles.splice(index, 1);
-    setFormData({ ...formData, supplierFiles: updatedFiles });
-  };
-
+  // change
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     if (type === "checkbox") {
       if (name === "agree") {
         setFormData({ ...formData, agree: checked });
-      } else if (name === "areaboxes") {
-        setFormData({
-          ...formData,
-          areaboxes: checked
-            ? [...formData.areaboxes, value]
-            : formData.areaboxes.filter((item) => item !== value),
-        });
-      } else if (type === "file") {
-        setFormData({ ...formData, files: Array.from(files) });
       } else {
         setFormData({
           ...formData,
           checkboxes: checked
             ? [...formData.checkboxes, value]
-            : formData.checkboxes.filter((item) => item !== value),
+            : formData.checkboxes.filter((v) => v !== value),
         });
       }
-    } else if (type === "radio") {
-      setFormData({ ...formData, documentCoverage: value });
     } else {
       setFormData({ ...formData, [name]: value });
     }
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-
-    // Check if any dropdown is unselected
-    if (
-      !formData.offerer ||
-      !formData.lawyerCount ||
-      !formData.firmAge ||
-      !formData.firmRating ||
-      !formData.paymentTerms
-    ) {
-      alert("Please select an option for all dropdowns before submitting.");
-      return;
-    }
-
-    // Check if contract type is unselected
-    if (!formData.need) {
-      alert("Please select an option for contract type before submitting.");
-      return;
-    }
-
-    if (!formData.agree) {
-      alert("You must agree to submit the form.");
-      return;
-    }
-    console.log("Submitted: ", formData);
-    router.push("/main");
+  // validate
+  const validate = () => {
+    if (!formData.contactPerson)
+      return "Please select a primary contact person.";
+    if (!formData.description) return "Please type your data privacy question.";
+    if (!formData.offerer) return "Choose which providers can offer.";
+    if (!formData.providerCountry) return "Choose domestic/foreign offers.";
+    if (!formData.lawyerCount) return "Choose a minimum provider size.";
+    if (!formData.firmAge) return "Choose a minimum company age.";
+    if (!formData.firmRating) return "Choose a minimum rating.";
+    if (!formData.currency) return "Choose a currency.";
+    if (!formData.retainerFee) return "Choose an advance retainer option.";
+    if (!formData.paymentTerms) return "Choose how you want to be invoiced.";
+    const langs = [
+      ...(formData.checkboxes || []).filter((l) => l !== "Other:"),
+      formData.otherLang || null,
+    ].filter(Boolean);
+    if (langs.length === 0)
+      return "Select at least one language (or type another).";
+    if (!formData.date) return "Pick an offers deadline.";
+    if (!formData.requestTitle) return "Give a title for your LEXIFY Request.";
+    if (!formData.agree) return "Confirm you're ready to submit.";
+    return null;
   };
 
+  // submit
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    const err = validate();
+    if (err) return alert(err);
+
+    setSubmitting(true);
+    try {
+      const languageCSV = [
+        ...(formData.checkboxes || []).filter((l) => l !== "Other:"),
+        formData.otherLang || null,
+      ]
+        .filter(Boolean)
+        .join(", ");
+
+      const payload = {
+        requestState: "PENDING",
+        requestCategory: "Help with Personal Data Protection",
+        requestSubcategory: "Specific Privacy related Question",
+        primaryContactPerson: formData.contactPerson,
+        scopeOfWork:
+          "Legal support for the Client with the following specific data privacy related question/inquiry:" +
+          formData.description,
+        description: formData.description || "",
+        additionalBackgroundInfo: formData.background || "",
+        backgroundInfoFiles: [],
+        supplierCodeOfConductFiles: [],
+        serviceProviderType: formData.offerer,
+        domesticOffers: formData.providerCountry,
+        providerSize: formData.lawyerCount,
+        providerCompanyAge: formData.firmAge,
+        providerMinimumRating: formData.firmRating,
+        currency: formData.currency,
+        paymentRate: "Hourly Rate",
+        advanceRetainerFee: formData.retainerFee,
+        invoiceType: formData.paymentTerms,
+        language: languageCSV,
+        offersDeadline: formData.date,
+        title: formData.requestTitle,
+        dateExpired: formData.date,
+        details: {},
+      };
+
+      const form = new FormData();
+      form.append(
+        "data",
+        new Blob([JSON.stringify(payload)], { type: "application/json" })
+      );
+      for (const f of formData.backgroundFiles)
+        form.append("backgroundFiles", f, f.name);
+      for (const f of formData.supplierFiles)
+        form.append("supplierFiles", f, f.name);
+
+      const res = await fetch("/api/requests", { method: "POST", body: form });
+      const text = await res.text();
+      let json = null;
+      try {
+        json = text ? JSON.parse(text) : null;
+      } catch {}
+      if (!res.ok)
+        throw new Error(
+          (json && (json.error || json.message)) ||
+            text ||
+            "Failed to create request."
+        );
+
+      alert("LEXIFY Request submitted successfully.");
+      router.push("/main");
+    } catch (e2) {
+      alert(e2.message || "Submission failed.");
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  // clear
   const handleClear = () => {
     setFormData(initialFormState);
-    // Reset all form elements to their initial values
-    const formElements = document.querySelectorAll("input, textarea, select");
-    formElements.forEach((element) => {
-      if (
-        element.type === "text" ||
-        element.type === "textarea" ||
-        element.tagName === "TEXTAREA"
-      ) {
-        element.value = "";
-      } else if (element.type === "checkbox" || element.type === "radio") {
-        element.checked = false;
-      } else if (element.tagName === "SELECT") {
-        element.selectedIndex = 0;
-      } else if (element.type === "file") {
-        element.value = [];
-      }
+    document.querySelectorAll("input, textarea, select").forEach((el) => {
+      if (el.type === "text" || el.tagName === "TEXTAREA") el.value = "";
+      else if (el.type === "checkbox" || el.type === "radio")
+        el.checked = false;
+      else if (el.tagName === "SELECT") el.selectedIndex = 0;
+      else if (el.type === "file") el.value = [];
     });
   };
 
+  // preview helper
   function Section({ title, children }) {
     return (
       <div>
@@ -170,18 +250,24 @@ export default function DataQuestion() {
             <h4 className="text-md font-medium mb-1 font-semibold">
               Who is the primary contact person for this LEXIFY Request at your
               company?{" "}
-              <QuestionMarkTooltip tooltipText="All updates and notifications regarding this LEXIFY Request will be sent to the designated person. If you do not see your name listed below, you can add new contact persons on the 'My Account' page (see My Account in the LEXIFY main menu). " />
+              <QuestionMarkTooltip tooltipText="All updates and notifications regarding this LEXIFY Request will be sent to the designated person. If you do not see your name listed below, you can add new contact persons on the 'My Account' page (see My Account in the LEXIFY main menu)." />
             </h4>
             <select
               name="contactPerson"
               className="w-full border p-2"
               onChange={handleChange}
+              value={formData.contactPerson}
+              required
             >
               <option value="">Select</option>
-              <option value="Anna Korhonen">Anna Korhonen</option>
-              <option value="Mika Laine">Mika Laine</option>
+              {contactOptions.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
             </select>
           </div>
+
           <br />
           <hr />
           <br />
@@ -390,12 +476,8 @@ export default function DataQuestion() {
             >
               <option value="">Select</option>
               <option value="Any rating">No</option>
-              <option value="At least a rating of 3 stars">
-                Yes, at least 3 stars
-              </option>
-              <option value="At least a rating of 4 stars">
-                Yes, at least 4 stars
-              </option>
+              <option value="3">Yes, at least 3 stars</option>
+              <option value="4">Yes, at least 4 stars</option>
             </select>
           </div>
           <br />
@@ -586,7 +668,7 @@ export default function DataQuestion() {
             type="text"
             name="requestTitle"
             className="w-full border p-2"
-            value={formData.textInput}
+            value={formData.requestTitle}
             onChange={handleChange}
           />
           <br />
@@ -628,7 +710,7 @@ export default function DataQuestion() {
               company as the legal service purchaser and the legal service
               provider submitting the best offer subject to the parameters in my
               LEXIFY Request. The LEXIFY Contract will consist of i) the service
-              description, other specifications and my Supplier Code of Conduct
+              description, other specifications and my Procurement Appendices
               (if applicable) as I have designated in the LEXIFY Request and ii)
               the General Terms and Conditions for LEXIFY Contracts. The LEXIFY
               Contract will not be generated if i) no qualifying offers have
@@ -640,11 +722,18 @@ export default function DataQuestion() {
           <br />
           <div className="flex gap-4">
             <button
-              disabled
               type="submit"
-              className="p-2 bg-[#11999e] text-white rounded cursor-not-allowed disabled:opacity-60"
+              disabled /*</div>={submitting}*/
+              className="p-2 bg-[#11999e] text-white rounded disabled:opacity-60 cursor-pointer"
             >
-              Submit LEXIFY Request
+              {submitting ? "Submitting…" : "Submit LEXIFY Request"}
+            </button>
+            <button
+              type="button"
+              onClick={handleClear}
+              className="p-2 bg-gray-300 text-black rounded"
+            >
+              Clear
             </button>
           </div>
         </form>
@@ -687,7 +776,9 @@ export default function DataQuestion() {
                 {/* Client Name */}
                 <Section title="Client Name, Business Identity Code and Country of Domicile">
                   {formData.contactPerson
-                    ? `SilverProperties Oy, 445566-2, Finland`
+                    ? [company.name, company.id, company.country]
+                        .filter(Boolean)
+                        .join(", ")
                     : "-"}
                 </Section>
 

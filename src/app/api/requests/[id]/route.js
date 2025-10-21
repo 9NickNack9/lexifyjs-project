@@ -32,16 +32,48 @@ async function requireSession() {
 }
 
 // GET /api/requests/:id  -> only owner can read
-export async function GET(_, { params }) {
-  const session = await requireSession();
-  const id = BigInt(params.id);
+export async function GET(_req, { params }) {
+  try {
+    // optional: require any signed-in user; remove this if truly public
+    const session = await getServerSession(authOptions);
+    if (!session?.userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  const row = await prisma.request.findFirst({
-    where: { requestId: id, clientId: BigInt(session.userId) },
-  });
+    const requestId = Number(params.id);
+    if (!requestId) {
+      return NextResponse.json({ error: "Bad request" }, { status: 400 });
+    }
 
-  if (!row) return NextResponse.json({ error: "Not found" }, { status: 404 });
-  return NextResponse.json(row);
+    const r = await prisma.request.findUnique({
+      where: { requestId: BigInt(requestId) },
+      select: {
+        requestId: true,
+        title: true,
+        scopeOfWork: true,
+        description: true,
+        paymentRate: true,
+        requestCategory: true,
+        requestSubcategory: true,
+        dateExpired: true,
+        details: true,
+        language: true,
+        client: {
+          select: {
+            companyName: true,
+            companyId: true,
+            companyCountry: true,
+          },
+        },
+      },
+    });
+
+    if (!r) return NextResponse.json(null);
+    return NextResponse.json({ ...r, details: r.details || {} });
+  } catch (e) {
+    console.error("GET /api/requests/public/[id] failed:", e);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
 }
 
 // PATCH /api/requests/:id  -> only owner can patch

@@ -426,7 +426,7 @@ export default function ProviderAccount() {
               Username: {username || "-"}
             </div>
             <button
-              onClick={() => router.push("/requests/change-password")}
+              onClick={() => router.push("/change-password")}
               className="mt-4 bg-[#11999e] text-white px-11 py-2 rounded cursor-pointer"
             >
               Change Password

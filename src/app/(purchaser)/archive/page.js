@@ -133,6 +133,58 @@ export default function ArchivePage() {
     }
   };
 
+  const handleCancelAwaiting = async (requestId) => {
+    if (
+      !window.confirm(
+        "Are you sure? This will delete your LEXIFY Request and it will no longer be visible to legal service providers."
+      )
+    )
+      return;
+    setBusyIds((s) => new Set([...s, requestId]));
+    try {
+      const res = await fetch(`/api/requests/${requestId}`, {
+        method: "DELETE",
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || "Failed to cancel");
+      setAwaiting((xs) => xs.filter((r) => r.requestId !== requestId));
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setBusyIds((s) => {
+        const n = new Set(s);
+        n.delete(requestId);
+        return n;
+      });
+    }
+  };
+
+  const handleCancelOverMax = async (requestId) => {
+    if (
+      !window.confirm(
+        "Are you sure? This will delete your LEXIFY Request and it will no longer be visible to legal service providers."
+      )
+    )
+      return;
+    setBusyIds((s) => new Set([...s, requestId]));
+    try {
+      const res = await fetch(`/api/requests/${requestId}`, {
+        method: "DELETE",
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || "Failed to cancel");
+      setOverMax((xs) => xs.filter((r) => r.requestId !== requestId));
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setBusyIds((s) => {
+        const n = new Set(s);
+        n.delete(requestId);
+        return n;
+      });
+    }
+  };
+
   return (
     <div className="flex flex-col items-center min-h-screen p-8">
       <h1 className="text-3xl font-bold mb-6">My Dashboard</h1>
@@ -149,9 +201,17 @@ export default function ArchivePage() {
             busyIds={busyIds}
           />
 
-          <AwaitingSelectionTable rows={awaiting} onPreview={handlePreview} />
+          <AwaitingSelectionTable
+            rows={awaiting}
+            onPreview={handlePreview}
+            onCancel={handleCancelAwaiting}
+          />
 
-          <OverMaxTable rows={overMax} onPreview={handlePreview} />
+          <OverMaxTable
+            rows={overMax}
+            onPreview={handlePreview}
+            onCancel={handleCancelAwaiting}
+          />
 
           <ExpiredRequestsTable rows={expired} onPreview={handlePreview} />
 

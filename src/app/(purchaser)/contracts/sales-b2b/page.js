@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import QuestionMarkTooltip from "../../../components/QuestionmarkTooltip";
-import html2pdf from "html2pdf.js";
 
 export default function SalesB2B() {
   const router = useRouter();
@@ -35,16 +34,23 @@ export default function SalesB2B() {
 
   const [formData, setFormData] = useState(initialFormState);
   const [showPreview, setShowPreview] = useState(false);
-  const [contactOptions, setContactOptions] = useState([]); // [{label, value}]
+  const [contactOptions, setContactOptions] = useState([]);
+  const [company, setCompany] = useState({ name: "", id: "", country: "" });
   const [submitting, setSubmitting] = useState(false);
 
-  // Load contacts for the primary contact dropdown
   useEffect(() => {
     (async () => {
       try {
         const res = await fetch("/api/me", { cache: "no-store" });
         if (!res.ok) return;
         const me = await res.json();
+
+        setCompany({
+          name: me?.companyName || "",
+          id: me?.companyId || "",
+          country: me?.companyCountry || "",
+        });
+
         const list = Array.isArray(me.companyContactPersons)
           ? me.companyContactPersons
           : [];
@@ -58,39 +64,39 @@ export default function SalesB2B() {
           .filter(Boolean);
         setContactOptions(opts);
       } catch {
-        // ignore
+        /* no-op */
       }
     })();
   }, []);
 
   const handleBackgroundFileChange = (e) => {
     const newFiles = Array.from(e.target.files || []);
-    setFormData({
-      ...formData,
-      backgroundFiles: [...formData.backgroundFiles, ...newFiles],
-    });
+    setFormData((s) => ({
+      ...s,
+      backgroundFiles: [...s.backgroundFiles, ...newFiles],
+    }));
     e.target.value = "";
   };
 
   const handleSupplierFileChange = (e) => {
     const newFiles = Array.from(e.target.files || []);
-    setFormData({
-      ...formData,
-      supplierFiles: [...formData.supplierFiles, ...newFiles],
-    });
+    setFormData((s) => ({
+      ...s,
+      supplierFiles: [...s.supplierFiles, ...newFiles],
+    }));
     e.target.value = "";
   };
 
   const handleDeleteBackgroundFile = (index) => {
-    const updatedFiles = [...formData.backgroundFiles];
-    updatedFiles.splice(index, 1);
-    setFormData({ ...formData, backgroundFiles: updatedFiles });
+    const updated = [...formData.backgroundFiles];
+    updated.splice(index, 1);
+    setFormData({ ...formData, backgroundFiles: updated });
   };
 
   const handleDeleteSupplierFile = (index) => {
-    const updatedFiles = [...formData.supplierFiles];
-    updatedFiles.splice(index, 1);
-    setFormData({ ...formData, supplierFiles: updatedFiles });
+    const updated = [...formData.supplierFiles];
+    updated.splice(index, 1);
+    setFormData({ ...formData, supplierFiles: updated });
   };
 
   const handleChange = (e) => {
@@ -120,14 +126,11 @@ export default function SalesB2B() {
     }
   };
 
-  // “Template” option → lump sum, others → hourly
   const isTemplateOption =
     formData.need ===
     "A sales contract template for the client's B2B business. The work includes preparation of the template documentation, necessary revisions based on client feedback and all related attorney-client communication.";
 
-  // Client-side validation per your schema
   const validate = () => {
-    // Required fields (everything except: confidential, backgroundFiles, supplierFiles)
     if (!formData.contactPerson)
       return "Please select a primary contact person.";
     if (!formData.need) return "Please select what you need.";
@@ -155,12 +158,9 @@ export default function SalesB2B() {
     if (!formData.date) return "Please pick an offers deadline.";
     if (!formData.requestTitle)
       return "Please give a title for your LEXIFY Request.";
-
-    // Max price required only if template option
     if (isTemplateOption && !formData.maxPrice)
       return "Please set a maximum price for the template option.";
-
-    if (!formData.agree) return "You must confirm you’re ready to submit.";
+    if (!formData.agree) return "You must confirm you're ready to submit.";
     return null;
   };
 
@@ -174,7 +174,6 @@ export default function SalesB2B() {
 
     setSubmitting(true);
     try {
-      // Common computed fields
       const paymentRate = isTemplateOption
         ? "Lump sum fixed price"
         : "Hourly Rate";
@@ -185,35 +184,17 @@ export default function SalesB2B() {
         .filter(Boolean)
         .join(", ");
 
-      // File metadata (swap to real uploads later)
-      const bgFiles = formData.backgroundFiles.map((f) => ({
-        name: f.name,
-        type: f.type,
-        size: f.size,
-      }));
-      const supFiles = formData.supplierFiles.map((f) => ({
-        name: f.name,
-        type: f.type,
-        size: f.size,
-      }));
-
-      // Build payload that matches your schema (generic + details)
       const payload = {
-        // Required in every request
-        requestState: "PENDING", // initial state on creation
+        requestState: "PENDING",
         requestCategory: "Help with Contracts",
-        requestSubcategory: "B2B Sales", // optional overall, but relevant here
-        // assignmentType: undefined, // if you use it for this request, set it here
-
+        requestSubcategory: "B2B Sales",
         primaryContactPerson: formData.contactPerson,
         scopeOfWork: formData.need,
         description: formData.description,
-
-        // Present-but-can-be-empty fields
         additionalBackgroundInfo: formData.background || "",
-        backgroundInfoFiles: bgFiles, // [] ok
-        supplierCodeOfConductFiles: supFiles, // [] ok
-
+        // arrays will be filled server-side from file blobs
+        backgroundInfoFiles: [],
+        supplierCodeOfConductFiles: [],
         serviceProviderType: formData.offerer,
         domesticOffers: formData.providerCountry,
         providerSize: formData.lawyerCount,
@@ -224,17 +205,9 @@ export default function SalesB2B() {
         advanceRetainerFee: formData.retainerFee,
         invoiceType: formData.paymentTerms,
         language: languageCSV,
-        offersDeadline: formData.date, // API casts to Date
+        offersDeadline: formData.date,
         title: formData.requestTitle,
-
-        // You can omit dateExpired to let backend default it to offersDeadline
         dateExpired: formData.date,
-
-        // Leave contract fields empty at creation; backend sets nulls by default
-        // contractResult: undefined,
-        // contractPrice: undefined,
-
-        // Request-specific extras live here:
         details: {
           confidential:
             !!formData.confidential ||
@@ -248,14 +221,30 @@ export default function SalesB2B() {
         },
       };
 
-      const res = await fetch("/api/requests", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      });
-      const json = await res.json();
+      const form = new FormData();
+      form.append(
+        "data",
+        new Blob([JSON.stringify(payload)], { type: "application/json" })
+      );
+      for (const f of formData.backgroundFiles)
+        form.append("backgroundFiles", f, f.name);
+      for (const f of formData.supplierFiles)
+        form.append("supplierFiles", f, f.name);
+
+      const res = await fetch("/api/requests", { method: "POST", body: form });
+      // in SalesB2B handleSubmit, right after fetch(...)
+      const text = await res.text();
+      let json = null;
+      try {
+        json = text ? JSON.parse(text) : null;
+      } catch {
+        // keep json = null; text will include any HTML or error message
+      }
+
       if (!res.ok) {
-        throw new Error(json?.error || "Failed to create request.");
+        throw new Error(
+          (json && json.error) || text || "Failed to create request."
+        );
       }
 
       alert("LEXIFY Request submitted successfully.");
@@ -267,35 +256,15 @@ export default function SalesB2B() {
     }
   };
 
-  const handleDownloadPdf = () => {
-    const element = document.getElementById("lexify-preview");
-    const opt = {
-      margin: 0.5,
-      filename: "LEXIFY_Request_Preview.pdf",
-      image: { type: "jpeg", quality: 0.98 },
-      html2canvas: { scale: 2 },
-      jsPDF: { unit: "in", format: "letter", orientation: "portrait" },
-    };
-    html2pdf().set(opt).from(element).save();
-  };
-
   const handleClear = () => {
     setFormData(initialFormState);
     const formElements = document.querySelectorAll("input, textarea, select");
-    formElements.forEach((element) => {
-      if (
-        element.type === "text" ||
-        element.type === "textarea" ||
-        element.tagName === "TEXTAREA"
-      ) {
-        element.value = "";
-      } else if (element.type === "checkbox" || element.type === "radio") {
-        element.checked = false;
-      } else if (element.tagName === "SELECT") {
-        element.selectedIndex = 0;
-      } else if (element.type === "file") {
-        element.value = [];
-      }
+    formElements.forEach((el) => {
+      if (el.type === "text" || el.tagName === "TEXTAREA") el.value = "";
+      else if (el.type === "checkbox" || el.type === "radio")
+        el.checked = false;
+      else if (el.tagName === "SELECT") el.selectedIndex = 0;
+      else if (el.type === "file") el.value = [];
     });
   };
 
@@ -316,8 +285,8 @@ export default function SalesB2B() {
       <h2 className="text-2xl font-semibold mb-6">
         Help with B2B Sales Contracts
       </h2>
+
       <div className="w-full max-w-7xl p-6 rounded shadow-2xl bg-white text-black">
-        {/* Form Section */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <h4 className="text-md font-medium mb-1 font-semibold">
@@ -643,12 +612,8 @@ export default function SalesB2B() {
             >
               <option value="">Select</option>
               <option value="Any rating">No</option>
-              <option value="At least a rating of 3 stars">
-                Yes, at least 3 stars
-              </option>
-              <option value="At least a rating of 4 stars">
-                Yes, at least 4 stars
-              </option>
+              <option value="3">Yes, at least 3 stars</option>
+              <option value="4">Yes, at least 4 stars</option>
             </select>
           </div>
 
@@ -684,7 +649,6 @@ export default function SalesB2B() {
           <hr />
           <br />
 
-          {/* Maximum price only if template option */}
           <div>
             {[
               "A sales contract template for the client's B2B business. The work includes preparation of the template documentation, necessary revisions based on client feedback and all related attorney-client communication.",
@@ -816,6 +780,7 @@ export default function SalesB2B() {
 
           <h4 className="text-md font-medium mb-1 font-semibold">
             By when do you need offers from interested legal service providers?
+            <QuestionMarkTooltip tooltipText="Sets the deadline for offers at the end of the selected day." />
           </h4>
           <input
             type="date"
@@ -969,7 +934,7 @@ export default function SalesB2B() {
             <button
               type="submit"
               disabled /*</div>={submitting}*/
-              className="p-2 bg-[#11999e] text-white rounded cursor-not-allowed disabled:opacity-60"
+              className="p-2 bg-[#11999e] text-white rounded disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
             >
               {submitting ? "Submitting…" : "Submit LEXIFY Request"}
             </button>
@@ -986,7 +951,6 @@ export default function SalesB2B() {
         {showPreview && (
           <div className="fixed inset-0 bg-[#11999e] bg-opacity-50 flex justify-center items-center z-50 transition-opacity duration-300">
             <div className="bg-white w-11/12 max-w-4xl shadow-lg overflow-y-auto max-h-[90vh] animate-fadeInScale relative">
-              {/* Header */}
               <div className="w-full p-4 flex flex-col items-center">
                 <img
                   src="/lexify.png"
@@ -998,7 +962,6 @@ export default function SalesB2B() {
                 </h2>
               </div>
 
-              {/* Close Button */}
               <button
                 onClick={() => setShowPreview(false)}
                 className="absolute top-4 right-4 text-white bg-[#3a3a3c] rounded-full w-8 h-8 flex items-center justify-center text-xl hover:bg-red-600 transition cursor-pointer"
@@ -1006,21 +969,16 @@ export default function SalesB2B() {
                 &times;
               </button>
 
-              {/* Download Button (optional)
-              <button
-                onClick={handleDownloadPdf}
-                className="absolute top-4 left-4 text-white bg-[#3a3a3c] rounded flex items-center justify-center text-xl hover:bg-[#11999e] transition cursor-pointer p-1"
-                title="Save as PDF"
-              >
-                Save as PDF
-              </button> 
-              */}
-
-              {/* Content */}
               <div id="lexify-preview" className="space-y-6 text-black p-8">
                 <Section title="Client Name, Business Identity Code and Country of Domicile">
-                  {formData.contactPerson
-                    ? `SilverProperties Oy, 445566-2, Finland`
+                  {formData.confboxes.includes(
+                    "Disclosed to Winning Bidder Only"
+                  )
+                    ? "Disclosed to Winning Bidder Only"
+                    : formData.contactPerson
+                    ? [company.name, company.id, company.country]
+                        .filter(Boolean)
+                        .join(", ")
                     : "-"}
                 </Section>
 

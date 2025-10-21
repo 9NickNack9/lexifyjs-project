@@ -1,15 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import QuestionMarkTooltip from "../../../components/QuestionmarkTooltip";
 
 export default function LegalAdvice() {
   const router = useRouter();
+
   const initialFormState = {
     contactPerson: "",
     need: "",
-    offerType: "",
     hourAmount: "",
     otherHour: "",
     monthAmount: "",
@@ -37,24 +37,59 @@ export default function LegalAdvice() {
 
   const [formData, setFormData] = useState(initialFormState);
   const [showPreview, setShowPreview] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
 
+  // NEW: contacts + company for preview header
+  const [contactOptions, setContactOptions] = useState([]);
+  const [company, setCompany] = useState({ name: "", id: "", country: "" });
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/me", { cache: "no-store" });
+        if (!res.ok) return;
+        const me = await res.json();
+        setCompany({
+          name: me?.companyName || "",
+          id: me?.companyId || "",
+          country: me?.companyCountry || "",
+        });
+        const list = Array.isArray(me.companyContactPersons)
+          ? me.companyContactPersons
+          : [];
+        setContactOptions(
+          list
+            .map((p) => {
+              const n = [p.firstName || "", p.lastName || ""]
+                .filter(Boolean)
+                .join(" ")
+                .trim();
+              return n ? { label: n, value: n } : null;
+            })
+            .filter(Boolean)
+        );
+      } catch {
+        // silent: dropdown will just show "Select"
+      }
+    })();
+  }, []);
+
+  // file handlers
   const handleBackgroundFileChange = (e) => {
     const newFiles = Array.from(e.target.files || []);
-    setFormData({
-      ...formData,
-      backgroundFiles: [...formData.backgroundFiles, ...newFiles],
-    });
-    // Reset the file input value to allow selecting the same file again
+    setFormData((s) => ({
+      ...s,
+      backgroundFiles: [...s.backgroundFiles, ...newFiles],
+    }));
     e.target.value = "";
   };
 
   const handleSupplierFileChange = (e) => {
     const newFiles = Array.from(e.target.files || []);
-    setFormData({
-      ...formData,
-      supplierFiles: [...formData.supplierFiles, ...newFiles],
-    });
-    // Reset the file input value to allow selecting the same file again
+    setFormData((s) => ({
+      ...s,
+      supplierFiles: [...s.supplierFiles, ...newFiles],
+    }));
     e.target.value = "";
   };
 
@@ -97,51 +132,162 @@ export default function LegalAdvice() {
     }
   };
 
-  const handleSubmit = (e) => {
+  // validation
+  const validate = () => {
+    if (!formData.contactPerson)
+      return "Please select a primary contact person.";
+    if (!formData.need)
+      return "Please select what kind of day-to-day legal advice arrangement you want.";
+
+    const isMonthly =
+      formData.need ===
+      "A fixed monthly number of hours of day-to-day legal support on specific areas of law, as needed from time to time.";
+
+    if (isMonthly) {
+      if (!formData.hourAmount)
+        return "Please select how many hours per month you need.";
+      if (formData.hourAmount === "Other" && !formData.otherHour)
+        return "Please specify the number of hours.";
+      if (!formData.monthAmount)
+        return "Please select the duration of the arrangement.";
+      if (!formData.maxPrice)
+        return "Please set a maximum monthly price (VAT 0%).";
+    }
+
+    if (!formData.offerer) return "Please select which providers can offer.";
+    if (!formData.providerCountry)
+      return "Please select domestic/foreign offers preference.";
+    if (!formData.lawyerCount) return "Please select a minimum provider size.";
+    if (!formData.firmAge) return "Please select a minimum company age.";
+    if (!formData.firmRating) return "Please select a minimum rating.";
+    if (!formData.currency) return "Please select a currency.";
+    if (!formData.retainerFee)
+      return "Please select an advance retainer fee option.";
+    if (!formData.paymentTerms)
+      return "Please select how you want to be invoiced.";
+
+    const langs = [
+      ...(formData.checkboxes || []).filter((l) => l !== "Other:"),
+      formData.otherLang || null,
+    ]
+      .filter(Boolean)
+      .join(", ");
+    if (!langs) return "Please select at least one language (or type another).";
+
+    if (!formData.date)
+      return "Please pick the offers deadline (latest acceptable date).";
+    if (!formData.requestTitle) return "Please enter a title.";
+    if (!formData.agree)
+      return "You must confirm you're ready to submit the request.";
+
+    return null;
+  };
+
+  // submit → /api/requests (multipart/form-data)
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    const err = validate();
+    if (err) return alert(err);
 
-    // Check if any dropdown is unselected
-    if (
-      !formData.offerer ||
-      !formData.lawyerCount ||
-      !formData.firmAge ||
-      !formData.firmRating ||
-      !formData.paymentTerms
-    ) {
-      alert("Please select an option for all dropdowns before submitting.");
-      return;
-    }
+    const isMonthly =
+      formData.need ===
+      "A fixed monthly number of hours of day-to-day legal support on specific areas of law, as needed from time to time.";
 
-    // Check if contract type is unselected
-    if (!formData.need) {
-      alert("Please select an option for contract type before submitting.");
-      return;
-    }
+    setSubmitting(true);
+    try {
+      const languageCSV = [
+        ...(formData.checkboxes || []).filter((l) => l !== "Other:"),
+        formData.otherLang || null,
+      ]
+        .filter(Boolean)
+        .join(", ");
 
-    if (!formData.agree) {
-      alert("You must agree to submit the form.");
-      return;
+      const topics = [
+        ...(formData.areaboxes || []).filter((t) => t !== "Other"),
+        formData.otherTopic || null,
+      ]
+        .filter(Boolean)
+        .join(", ");
+
+      const payload = {
+        requestState: "PENDING",
+        requestCategory: "Day-to-day Legal Advice",
+        primaryContactPerson: formData.contactPerson,
+        scopeOfWork: formData.need,
+        description: formData.description || "",
+        additionalBackgroundInfo: formData.background || "",
+        backgroundInfoFiles: [], // actual files appended separately
+        supplierCodeOfConductFiles: [],
+        serviceProviderType: formData.offerer,
+        domesticOffers: formData.providerCountry,
+        providerSize: formData.lawyerCount,
+        providerCompanyAge: formData.firmAge,
+        providerMinimumRating: formData.firmRating,
+        currency: formData.currency,
+        paymentRate: isMonthly
+          ? "Lump sum fixed price per month"
+          : "Hourly Rate",
+        advanceRetainerFee: formData.retainerFee,
+        invoiceType: formData.paymentTerms,
+        language: languageCSV,
+        offersDeadline: formData.date, // API will store correctly; UI uses <input type="date">
+        title: formData.requestTitle,
+        dateExpired: formData.date,
+        details: {
+          topics,
+          monthlyHours:
+            isMonthly &&
+            (formData.hourAmount === "Other"
+              ? formData.otherHour
+              : formData.hourAmount),
+          monthlyDuration: isMonthly ? formData.monthAmount : "",
+          maximumPrice: isMonthly ? formData.maxPrice : "",
+        },
+      };
+
+      const form = new FormData();
+      form.append(
+        "data",
+        new Blob([JSON.stringify(payload)], { type: "application/json" })
+      );
+      for (const f of formData.backgroundFiles)
+        form.append("backgroundFiles", f, f.name);
+      for (const f of formData.supplierFiles)
+        form.append("supplierFiles", f, f.name);
+
+      const res = await fetch("/api/requests", { method: "POST", body: form });
+
+      const text = await res.text(); // defensive parse
+      let json = null;
+      try {
+        json = text ? JSON.parse(text) : null;
+      } catch {}
+      if (!res.ok) {
+        throw new Error(
+          (json && (json.error || json.message)) ||
+            text ||
+            "Failed to create request."
+        );
+      }
+
+      alert("LEXIFY Request submitted successfully.");
+      router.push("/main");
+    } catch (e2) {
+      alert(e2.message || "Submission failed.");
+    } finally {
+      setSubmitting(false);
     }
-    console.log("Submitted: ", formData);
-    router.push("/main");
   };
 
   const handleClear = () => {
     setFormData(initialFormState);
-    // Reset all form elements to their initial values
-    const formElements = document.querySelectorAll("input, textarea, select");
-    formElements.forEach((element) => {
-      if (
-        element.type === "text" ||
-        element.type === "textarea" ||
-        element.tagName === "TEXTAREA"
-      ) {
-        element.value = "";
-      } else if (element.type === "checkbox" || element.type === "radio") {
-        element.checked = false;
-      } else if (element.tagName === "SELECT") {
-        element.selectedIndex = 0;
-      }
+    // Reset form controls
+    document.querySelectorAll("input, textarea, select").forEach((el) => {
+      if (el.type === "text" || el.tagName === "TEXTAREA") el.value = "";
+      else if (el.type === "checkbox" || el.type === "radio")
+        el.checked = false;
+      else if (el.tagName === "SELECT") el.selectedIndex = 0;
+      else if (el.type === "file") el.value = [];
     });
   };
 
@@ -170,16 +316,21 @@ export default function LegalAdvice() {
             <h4 className="text-md font-medium mb-1 font-semibold">
               Who is the primary contact person for this LEXIFY Request at your
               company?{" "}
-              <QuestionMarkTooltip tooltipText="All updates and notifications regarding this LEXIFY Request will be sent to the designated person. If you do not see your name listed below, you can add new contact persons on the 'My Account' page (see My Account in the LEXIFY main menu). " />
+              <QuestionMarkTooltip tooltipText="All updates and notifications regarding this LEXIFY Request will be sent to the designated person. If you do not see your name listed below, you can add new contact persons on the 'My Account' page (see My Account in the LEXIFY main menu)." />
             </h4>
             <select
               name="contactPerson"
               className="w-full border p-2"
               onChange={handleChange}
+              value={formData.contactPerson}
+              required
             >
               <option value="">Select</option>
-              <option value="Anna Korhonen">Anna Korhonen</option>
-              <option value="Mika Laine">Mika Laine</option>
+              {contactOptions.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
             </select>
           </div>
           <br />
@@ -526,12 +677,8 @@ export default function LegalAdvice() {
             >
               <option value="">Select</option>
               <option value="Any rating">No</option>
-              <option value="At least a rating of 3 stars">
-                Yes, at least 3 stars
-              </option>
-              <option value="At least a rating of 4 stars">
-                Yes, at least 4 stars
-              </option>
+              <option value="3">Yes, at least 3 stars</option>
+              <option value="4">Yes, at least 4 stars</option>
             </select>
           </div>
           <br />
@@ -795,7 +942,7 @@ export default function LegalAdvice() {
               company as the legal service purchaser and the legal service
               provider submitting the best offer subject to the parameters in my
               LEXIFY Request. The LEXIFY Contract will consist of i) the service
-              description, other specifications and my Supplier Code of Conduct
+              description, other specifications and my Procurement Appendices
               (if applicable) as I have designated in the LEXIFY Request and ii)
               the General Terms and Conditions for LEXIFY Contracts. The LEXIFY
               Contract will not be generated if i) no qualifying offers have
@@ -807,11 +954,18 @@ export default function LegalAdvice() {
           <br />
           <div className="flex gap-4">
             <button
-              disabled
               type="submit"
-              className="p-2 bg-[#11999e] text-white rounded cursor-not-allowed disabled:opacity-60"
+              disabled /*</div>={submitting}*/
+              className="p-2 bg-[#11999e] text-white rounded disabled:opacity-60 cursor-pointer"
             >
-              Submit LEXIFY Request
+              {submitting ? "Submitting…" : "Submit LEXIFY Request"}
+            </button>
+            <button
+              type="button"
+              onClick={handleClear}
+              className="p-2 bg-gray-300 text-black rounded"
+            >
+              Clear
             </button>
           </div>
         </form>
@@ -854,7 +1008,9 @@ export default function LegalAdvice() {
                 {/* Client Name */}
                 <Section title="Client Name, Business Identity Code and Country of Domicile">
                   {formData.contactPerson
-                    ? `SilverProperties Oy, 445566-2, Finland`
+                    ? [company.name, company.id, company.country]
+                        .filter(Boolean)
+                        .join(", ")
                     : "-"}
                 </Section>
 

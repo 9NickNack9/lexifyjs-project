@@ -17,7 +17,12 @@ export async function GET() {
 
     const me = await prisma.appUser.findUnique({
       where: { userId: BigInt(session.userId) },
-      select: { winningOfferSelection: true, companyName: true },
+      select: {
+        winningOfferSelection: true,
+        companyName: true,
+        companyId: true,
+        companyCountry: true,
+      },
     });
 
     const requests = await prisma.request.findMany({
@@ -72,6 +77,11 @@ export async function GET() {
         if (!Number.isNaN(mp)) maximumPrice = mp;
       }
 
+      const offersDeadline =
+        r.details?.offersDeadline != null && r.details?.offersDeadline !== ""
+          ? r.details.offersDeadline
+          : r.dateExpired || null;
+
       return {
         requestId: safeNumber(r.requestId),
         title: r.title,
@@ -95,15 +105,21 @@ export async function GET() {
         requestCategory: r.requestCategory,
         requestSubcategory: r.requestSubcategory || null,
         details: r.details || {},
+        offersDeadline,
         offersReceived,
         bestOffer,
         maximumPrice,
+        companyId: me?.companyId || null,
+        companyCountry: me?.companyCountry || null,
+        requestState: r.requestState,
       };
     });
 
     return NextResponse.json({
       winningOfferSelection: me?.winningOfferSelection || "Automatic",
       companyName: me?.companyName || null,
+      companyId: me?.companyId || null,
+      companyCountry: me?.companyCountry || null,
       requests: shaped,
     });
   } catch (err) {

@@ -1,11 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import QuestionMarkTooltip from "../../../components/QuestionmarkTooltip";
 
 export default function ReConstruction() {
   const router = useRouter();
+
   const initialFormState = {
     contactPerson: "",
     customerType: "",
@@ -22,7 +23,6 @@ export default function ReConstruction() {
     firmAge: "",
     firmRating: "",
     currency: "",
-    maxPrice: "",
     retainerFee: "",
     paymentTerms: "",
     checkboxes: [],
@@ -35,57 +35,82 @@ export default function ReConstruction() {
 
   const [formData, setFormData] = useState(initialFormState);
   const [showPreview, setShowPreview] = useState(false);
+  const [contactOptions, setContactOptions] = useState([]);
+  const [company, setCompany] = useState({ name: "", id: "", country: "" });
+  const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    (async () => {
+      try {
+        const res = await fetch("/api/me", { cache: "no-store" });
+        if (!res.ok) return;
+        const me = await res.json();
+        setCompany({
+          name: me?.companyName || "",
+          id: me?.companyId || "",
+          country: me?.companyCountry || "",
+        });
+        const list = Array.isArray(me.companyContactPersons)
+          ? me.companyContactPersons
+          : [];
+        const opts = list
+          .map((p) => {
+            const n = [p.firstName || "", p.lastName || ""]
+              .filter(Boolean)
+              .join(" ")
+              .trim();
+            return n ? { label: n, value: n } : null;
+          })
+          .filter(Boolean);
+        setContactOptions(opts);
+      } catch {}
+    })();
+  }, []);
 
   const handleBackgroundFileChange = (e) => {
-    const newFiles = Array.from(e.target.files || []);
-    setFormData({
-      ...formData,
-      backgroundFiles: [...formData.backgroundFiles, ...newFiles],
-    });
-    // Reset the file input value to allow selecting the same file again
+    const files = Array.from(e.target.files || []);
+    setFormData((s) => ({
+      ...s,
+      backgroundFiles: [...s.backgroundFiles, ...files],
+    }));
     e.target.value = "";
   };
-
   const handleSupplierFileChange = (e) => {
-    const newFiles = Array.from(e.target.files || []);
-    setFormData({
-      ...formData,
-      supplierFiles: [...formData.supplierFiles, ...newFiles],
-    });
-    // Reset the file input value to allow selecting the same file again
+    const files = Array.from(e.target.files || []);
+    setFormData((s) => ({
+      ...s,
+      supplierFiles: [...s.supplierFiles, ...files],
+    }));
     e.target.value = "";
   };
-
-  const handleDeleteBackgroundFile = (index) => {
-    const updatedFiles = [...formData.backgroundFiles];
-    updatedFiles.splice(index, 1);
-    setFormData({ ...formData, backgroundFiles: updatedFiles });
+  const handleDeleteBackgroundFile = (i) => {
+    const arr = [...formData.backgroundFiles];
+    arr.splice(i, 1);
+    setFormData({ ...formData, backgroundFiles: arr });
   };
-
-  const handleDeleteSupplierFile = (index) => {
-    const updatedFiles = [...formData.supplierFiles];
-    updatedFiles.splice(index, 1);
-    setFormData({ ...formData, supplierFiles: updatedFiles });
+  const handleDeleteSupplierFile = (i) => {
+    const arr = [...formData.supplierFiles];
+    arr.splice(i, 1);
+    setFormData({ ...formData, supplierFiles: arr });
   };
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     if (type === "checkbox") {
-      if (name === "agree") {
-        setFormData({ ...formData, agree: checked });
-      } else if (name === "confboxes") {
+      if (name === "agree") setFormData({ ...formData, agree: checked });
+      else if (name === "confboxes") {
         setFormData({
           ...formData,
           confboxes: checked
             ? [...formData.confboxes, value]
-            : formData.confboxes.filter((item) => item !== value),
+            : formData.confboxes.filter((v) => v !== value),
         });
       } else {
         setFormData({
           ...formData,
           checkboxes: checked
             ? [...formData.checkboxes, value]
-            : formData.checkboxes.filter((item) => item !== value),
+            : formData.checkboxes.filter((v) => v !== value),
         });
       }
     } else if (type === "radio") {
@@ -95,51 +120,127 @@ export default function ReConstruction() {
     }
   };
 
-  const handleSubmit = (e) => {
+  const isHourly = formData.supportType.startsWith("Occasional legal support");
+
+  const validate = () => {
+    if (!formData.contactPerson)
+      return "Please select a primary contact person.";
+    if (!formData.supportType) return "Please select what you need.";
+    if (!formData.description) return "Please provide a brief description.";
+    if (!formData.offerer) return "Please choose which providers can offer.";
+    if (!formData.providerCountry)
+      return "Please choose domestic/foreign offers.";
+    if (!formData.lawyerCount) return "Please choose a minimum provider size.";
+    if (!formData.firmAge) return "Please choose a minimum company age.";
+    if (!formData.firmRating) return "Please choose a minimum rating.";
+    if (!formData.currency) return "Please choose a currency.";
+    if (!formData.retainerFee)
+      return "Please choose an advance retainer option.";
+    if (!formData.paymentTerms)
+      return "Please choose how you want to be invoiced.";
+    const langs = [
+      ...(formData.checkboxes || []).filter((l) => l !== "Other:"),
+      formData.otherLang || "",
+    ].filter(Boolean);
+    if (langs.length === 0)
+      return "Please select at least one language (or type another).";
+    if (!formData.date) return "Please pick an offers deadline.";
+    if (!formData.requestTitle)
+      return "Please give a title for your LEXIFY Request.";
+    if (!formData.agree) return "You must confirm you're ready to submit.";
+    return null;
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    const err = validate();
+    if (err) return alert(err);
 
-    // Check if any dropdown is unselected
-    if (
-      !formData.offerer ||
-      !formData.lawyerCount ||
-      !formData.firmAge ||
-      !formData.firmRating ||
-      !formData.paymentTerms
-    ) {
-      alert("Please select an option for all dropdowns before submitting.");
-      return;
-    }
+    setSubmitting(true);
+    try {
+      const paymentRate = isHourly ? "Hourly Rate" : "Lump sum fixed price";
+      const languageCSV = [
+        ...(formData.checkboxes || []).filter((l) => l !== "Other:"),
+        formData.otherLang || null,
+      ]
+        .filter(Boolean)
+        .join(", ");
 
-    // Check if contract type is unselected
-    if (!formData.supportType) {
-      alert("Please select an option for contract type before submitting.");
-      return;
-    }
+      const payload = {
+        requestState: "PENDING",
+        requestCategory: "Help with Contracts",
+        requestSubcategory: "Real Estate and Construction",
+        assignmentType: "Construction Contract",
+        primaryContactPerson: formData.contactPerson,
+        scopeOfWork: formData.supportType,
+        description: formData.description,
+        additionalBackgroundInfo: formData.background || "",
+        backgroundInfoFiles: [],
+        supplierCodeOfConductFiles: [],
+        serviceProviderType: formData.offerer,
+        domesticOffers: formData.providerCountry,
+        providerSize: formData.lawyerCount,
+        providerCompanyAge: formData.firmAge,
+        providerMinimumRating: formData.firmRating,
+        currency: formData.currency,
+        paymentRate,
+        advanceRetainerFee: formData.retainerFee,
+        invoiceType: formData.paymentTerms,
+        language: languageCSV,
+        offersDeadline: formData.date,
+        title: formData.requestTitle,
+        dateExpired: formData.date,
+        details: {
+          customerType: formData.customerType || "",
+          confidential:
+            !!formData.confidential ||
+            formData.confboxes.includes("Disclosed to Winning Bidder Only"),
+          winnerBidderOnlyStatus: formData.confboxes.includes(
+            "Disclosed to Winning Bidder Only"
+          )
+            ? "Disclosed to Winning Bidder Only"
+            : formData.confidential || "",
+          priceRange: formData.priceRange || "",
+        },
+      };
 
-    if (!formData.agree) {
-      alert("You must agree to submit the form.");
-      return;
+      const form = new FormData();
+      form.append(
+        "data",
+        new Blob([JSON.stringify(payload)], { type: "application/json" })
+      );
+      for (const f of formData.backgroundFiles)
+        form.append("backgroundFiles", f, f.name);
+      for (const f of formData.supplierFiles)
+        form.append("supplierFiles", f, f.name);
+
+      const res = await fetch("/api/requests", { method: "POST", body: form });
+      const text = await res.text();
+      let json = null;
+      try {
+        json = text ? JSON.parse(text) : null;
+      } catch {}
+      if (!res.ok)
+        throw new Error(
+          (json && json.error) || text || "Failed to create request."
+        );
+
+      alert("LEXIFY Request submitted successfully.");
+      router.push("/main");
+    } catch (e2) {
+      alert(e2.message);
+    } finally {
+      setSubmitting(false);
     }
-    console.log("Submitted: ", formData);
-    router.push("/main");
   };
 
   const handleClear = () => {
     setFormData(initialFormState);
-    // Reset all form elements to their initial values
-    const formElements = document.querySelectorAll("input, textarea, select");
-    formElements.forEach((element) => {
-      if (
-        element.type === "text" ||
-        element.type === "textarea" ||
-        element.tagName === "TEXTAREA"
-      ) {
-        element.value = "";
-      } else if (element.type === "checkbox" || element.type === "radio") {
-        element.checked = false;
-      } else if (element.tagName === "SELECT") {
-        element.selectedIndex = 0;
-      }
+    document.querySelectorAll("input, textarea, select").forEach((el) => {
+      if (el.type === "text" || el.tagName === "TEXTAREA") el.value = "";
+      else if (el.type === "checkbox" || el.type === "radio")
+        el.checked = false;
+      else if (el.tagName === "SELECT") el.selectedIndex = 0;
     });
   };
 
@@ -168,16 +269,21 @@ export default function ReConstruction() {
             <h4 className="text-md font-medium mb-1 font-semibold">
               Who is the primary contact person for this LEXIFY Request at your
               company?{" "}
-              <QuestionMarkTooltip tooltipText="All updates and notifications regarding this LEXIFY Request will be sent to the designated person. If you do not see your name listed below, you can add new contact persons on the 'My Account' page (see My Account in the LEXIFY main menu). " />
+              <QuestionMarkTooltip tooltipText="All updates and notifications regarding this LEXIFY Request will be sent to the designated person. If you do not see your name listed below, you can add new contact persons on the 'My Account' page (see My Account in the LEXIFY main menu)." />
             </h4>
             <select
               name="contactPerson"
               className="w-full border p-2"
               onChange={handleChange}
+              value={formData.contactPerson}
+              required
             >
               <option value="">Select</option>
-              <option value="Anna Korhonen">Anna Korhonen</option>
-              <option value="Mika Laine">Mika Laine</option>
+              {contactOptions.map((o) => (
+                <option key={o.value} value={o.value}>
+                  {o.label}
+                </option>
+              ))}
             </select>
           </div>
           <br />
@@ -516,12 +622,8 @@ export default function ReConstruction() {
             >
               <option value="">Select</option>
               <option value="Any rating">No</option>
-              <option value="At least a rating of 3 stars">
-                Yes, at least 3 stars
-              </option>
-              <option value="At least a rating of 4 stars">
-                Yes, at least 4 stars
-              </option>
+              <option value="3">Yes, at least 3 stars</option>
+              <option value="4">Yes, at least 4 stars</option>
             </select>
           </div>
           <br />
@@ -796,7 +898,7 @@ export default function ReConstruction() {
               company as the legal service purchaser and the legal service
               provider submitting the best offer subject to the parameters in my
               LEXIFY Request. The LEXIFY Contract will consist of i) the service
-              description, other specifications and my Supplier Code of Conduct
+              description, other specifications and my Procurement Appendices
               (if applicable) as I have designated in the LEXIFY Request and ii)
               the General Terms and Conditions for LEXIFY Contracts. The LEXIFY
               Contract will not be generated if i) no qualifying offers have
@@ -808,11 +910,18 @@ export default function ReConstruction() {
           <br />
           <div className="flex gap-4">
             <button
-              disabled
               type="submit"
-              className="p-2 bg-[#11999e] text-white rounded cursor-not-allowed disabled:opacity-60"
+              disabled /*</div>={submitting}*/
+              className="p-2 bg-[#11999e] text-white rounded disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
             >
-              Submit LEXIFY Request
+              {submitting ? "Submitting…" : "Submit LEXIFY Request"}
+            </button>
+            <button
+              type="button"
+              onClick={handleClear}
+              className="p-2 bg-gray-300 text-black rounded"
+            >
+              Clear
             </button>
           </div>
         </form>
@@ -854,8 +963,14 @@ export default function ReConstruction() {
               <div id="lexify-preview" className="space-y-6 text-black p-8">
                 {/* Client Name */}
                 <Section title="Client Name, Business Identity Code and Country of Domicile">
-                  {formData.contactPerson
-                    ? `SilverProperties Oy, 445566-2, Finland`
+                  {formData.confboxes.includes(
+                    "Disclosed to Winning Bidder Only"
+                  )
+                    ? "Disclosed to Winning Bidder Only"
+                    : formData.contactPerson
+                    ? [company.name, company.id, company.country]
+                        .filter(Boolean)
+                        .join(", ")
                     : "-"}
                 </Section>
 

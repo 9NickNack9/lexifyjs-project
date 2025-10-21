@@ -95,14 +95,15 @@ model Request {
 }
 
 model Offer {
-  offerId     BigInt   @id @default(autoincrement()) @db.BigInt
-  requestId   BigInt
-  providerId  BigInt
-  offerLawyer String
-  offerPrice  Decimal  @db.Decimal
-  createdAt   DateTime @default(now())
-  offerTitle  String
-  offerStatus String   @default("Pending")
+  offerId             BigInt   @id @default(autoincrement()) @db.BigInt
+  requestId           BigInt
+  providerId          BigInt
+  offerLawyer         String
+  offerPrice          Decimal  @db.Decimal
+  offerExpectedPrice  Decimal  @db.Decimal
+  createdAt           DateTime @default(now())
+  offerTitle          String
+  offerStatus         String   @default("Pending")
 
   request  Request @relation(fields: [requestId], references: [requestId], onDelete: Cascade)
   provider AppUser @relation("ProviderOffers", fields: [providerId], references: [userId], onDelete: Cascade)
