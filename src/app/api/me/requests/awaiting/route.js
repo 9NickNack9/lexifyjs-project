@@ -1,13 +1,27 @@
-// src/app/api/me/requests/awaiting/route.js  (your file)
+// src/app/api/me/requests/awaiting/route.js
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 
-// ...imports unchanged...
+// BigInt-safe JSON helper
+const serialize = (obj) =>
+  JSON.parse(
+    JSON.stringify(obj, (_, v) => (typeof v === "bigint" ? v.toString() : v))
+  );
 
-const toNum = (d) => (d == null ? null : Number(d));
-const safeNumber = (v) => (typeof v === "bigint" ? Number(v) : v);
+const toNum = (v) => {
+  if (v == null) return null;
+  const s = typeof v === "object" && v.toString ? v.toString() : String(v);
+  const n = Number(s.replace?.(/[^\d.]/g, "") ?? s);
+  return Number.isFinite(n) ? n : null;
+};
+
+const maxFromDetails = (details) => {
+  const raw = details?.maximumPrice;
+  if (raw === undefined || raw === null || raw === "") return null;
+  return toNum(raw);
+};
 
 export async function GET() {
   try {
@@ -15,106 +29,84 @@ export async function GET() {
     if (!session?.userId)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const me = await prisma.appUser.findUnique({
-      where: { userId: BigInt(session.userId) },
-      select: { winningOfferSelection: true, companyName: true },
-    });
-
-    // Only relevant when Manual
-    if ((me?.winningOfferSelection || "").toLowerCase() !== "manual") {
-      return NextResponse.json({
-        companyName: me?.companyName || null,
-        requests: [],
-      });
-    }
-
+    const meId = BigInt(session.userId);
     const now = new Date();
 
-    // 🔎 Fetch expired, pending, and WITHOUT contract
     const reqs = await prisma.request.findMany({
       where: {
-        clientId: String(session.userId),
-        dateExpired: { lt: now },
-        requestState: "PENDING",
-        // assumes Request has relation: contracts
-        contract: { none: {} },
+        clientId: meId,
+        requestState: "ON HOLD",
+        acceptDeadline: { gt: now },
       },
       orderBy: { dateCreated: "desc" },
       select: {
         requestId: true,
         title: true,
-        primaryContactPerson: true,
         dateCreated: true,
         dateExpired: true,
+        acceptDeadline: true,
         currency: true,
         details: true,
-        // Pull all offers; we'll compute top-3 in JS
         offers: {
           select: {
+            offerId: true,
             offerPrice: true,
             offerLawyer: true,
-            // assumes relation Offer -> Provider with these fields
             provider: {
               select: {
                 companyName: true,
                 providerTotalRating: true,
-                providerQualityRating: true,
-                providerCommunicationRating: true,
-                providerBillingRating: true,
               },
             },
+            providerId: true,
           },
         },
       },
     });
 
     const shaped = reqs.map((r) => {
-      // maxPrice (a.k.a. "My Max. Price")
-      let maximumPrice = null;
-      const rawMax = r.details?.maximumPrice;
-      if (rawMax !== undefined && rawMax !== null && rawMax !== "") {
-        const mp = Number(String(rawMax).replace(/[^\d.]/g, ""));
-        if (!Number.isNaN(mp)) maximumPrice = mp;
-      }
-
-      // Compute top 3 lowest offers with provider info
+      const maxPrice = maxFromDetails(r.details);
       const offers = (r.offers || [])
         .map((o) => ({
+          // ↓↓↓ Convert BigInts to strings ↓↓↓
+          offerId:
+            typeof o.offerId === "bigint"
+              ? o.offerId.toString()
+              : String(o.offerId),
+          providerId:
+            typeof o.providerId === "bigint"
+              ? o.providerId.toString()
+              : String(o.providerId),
+
           offeredPrice: toNum(o.offerPrice),
+          offerLawyer: o.offerLawyer || "—",
           providerCompanyName: o.provider?.companyName || "—",
-          providerContactPersonName: o.provider?.contactPersonName || "—",
-          providerTotalRating: toNum(o.provider?.providerTotalRating),
-          providerQualityRating: toNum(o.provider?.providerQualityRating),
-          providerCommunicationRating: toNum(
-            o.provider?.providerCommunicationRating
-          ),
-          providerBillingRating: toNum(o.provider?.providerBillingRating),
+          providerTotalRating: toNum(o.provider?.providerTotalRating) ?? null,
         }))
-        .filter(
-          (o) =>
-            typeof o.offeredPrice === "number" && !Number.isNaN(o.offeredPrice)
-        )
+        .filter((o) => typeof o.offeredPrice === "number")
         .sort((a, b) => a.offeredPrice - b.offeredPrice)
         .slice(0, 3);
 
       return {
-        requestId: safeNumber(r.requestId),
-        requestTitle: r.title, // <- table wants requestTitle
-        primaryContactPerson: r.primaryContactPerson,
+        // ↓↓↓ Convert BigInt to string ↓↓↓
+        requestId:
+          typeof r.requestId === "bigint"
+            ? r.requestId.toString()
+            : String(r.requestId),
+
+        requestTitle: r.title,
         dateCreated: r.dateCreated,
         dateExpired: r.dateExpired,
+        acceptDeadline: r.acceptDeadline,
         currency: r.currency,
-        maxPrice: maximumPrice, // <- table wants maxPrice
-        topOffers: offers, // <- 3 best offers with provider info
+        maxPrice, // number | null
+        topOffers: offers,
       };
     });
 
-    return NextResponse.json({
-      companyName: me?.companyName || null,
-      requests: shaped,
-    });
+    return NextResponse.json(serialize({ requests: shaped }));
   } catch (e) {
-    console.error("awaiting list failed:", e);
+    console.error("GET /api/me/requests/awaiting failed:", e);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

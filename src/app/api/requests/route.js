@@ -194,11 +194,15 @@ export async function POST(req) {
   const assignmentType = body.assignmentType ?? null;
 
   const now = new Date();
+  // TEST MODE: set deadline to 1 minutes from now
+  //const offersDeadline = new Date(now.getTime() + 1 * 60 * 1000);
+  //const dateExpired = offersDeadline;
   const [year, month, day] = body.offersDeadline.split("-").map(Number);
   const offersDeadline = new Date(year, month - 1, day, 23, 59, 59);
-  const dateExpired = body.dateExpired
-    ? new Date(body.dateExpired)
-    : offersDeadline;
+  const dateExpired = offersDeadline;
+  const paymentType =
+    body.paymentRate +
+    " The Legal Service Provider shall submit all invoices to the Client in the contract price currency, unless otherwise instructed in writing by the Client.";
 
   const created = await prisma.request.create({
     data: {
@@ -223,10 +227,15 @@ export async function POST(req) {
       providerCompanyAge: body.providerCompanyAge,
       providerMinimumRating: body.providerMinimumRating,
       currency: body.currency,
-      paymentRate: body.paymentRate,
+      paymentRate: paymentType,
       advanceRetainerFee: body.advanceRetainerFee,
-      invoiceType: body.invoiceType,
-      language: body.language,
+      invoiceType:
+        "The Legal Service Provider shall invoice the Client in the following manner: " +
+        body.invoiceType +
+        ". Further details, such as contact person for invoices and method of invoicing (for example, email, e-invoicing or other), related to invoicing shall be agreed separately between the client and the legal service provider.",
+      language:
+        body.language +
+        ". The legal service provider confirms that its representatives involved in the performance of the work have appropriate advanced proficiency in all the languages listed above.",
       offersDeadline,
       title: body.title,
 

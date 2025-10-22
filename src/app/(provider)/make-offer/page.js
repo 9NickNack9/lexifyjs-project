@@ -4,7 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import QuestionMarkTooltip from "../../components/QuestionmarkTooltip";
 
-// ---- small helpers ----
+// ---------------- small helpers ----------------
 const pad2 = (n) => String(n).padStart(2, "0");
 const fmtLocalDDMMYYYY_HHMM = (isoish) => {
   const d = new Date(isoish);
@@ -27,7 +27,6 @@ const formatTimeUntil = (end) => {
   return `${mins} min`;
 };
 
-// ---- PreviewModal-like renderer (reads /previews/all-previews.json) ----
 function Section({ title, children }) {
   return (
     <div>
@@ -41,12 +40,369 @@ function Section({ title, children }) {
   );
 }
 
-function valueAtPath(obj, path) {
-  if (!path) return undefined;
-  return path.split(".").reduce((acc, k) => (acc == null ? acc : acc[k]), obj);
+// ---------------- PreviewModal parity helpers ----------------
+// (Mirrors the resolver logic used in your PreviewModal so values match exactly.)
+function deepGet(obj, dotted) {
+  try {
+    return dotted
+      .split(".")
+      .reduce((o, k) => (o == null ? undefined : o[k]), obj);
+  } catch {
+    return undefined;
+  }
+}
+function isYesString(v) {
+  return typeof v === "string" ? v.trim().toLowerCase() === "yes" : v === true;
+}
+function formatLocalDDMMYYYY_HHMM(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "—";
+  const pad = (n) => String(n).padStart(2, "0");
+  return `${pad(date.getDate())}/${pad(
+    date.getMonth() + 1
+  )}/${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}
+function parseIfDateLike(value, pathHint) {
+  const hint = (pathHint || "").toLowerCase();
+  const looksLikeDateByPath =
+    hint.includes("deadline") ||
+    hint.includes("date") ||
+    hint.includes("expire");
+  if (value instanceof Date) return value;
+  if (typeof value === "number") {
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  if (typeof value === "string") {
+    const s = value.trim();
+    if (
+      looksLikeDateByPath ||
+      /^\d{4}-\d{2}-\d{2}t\d{2}:/i.test(s) ||
+      /z$/i.test(s)
+    ) {
+      const d = new Date(s);
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+    if (/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}(:\d{2})?$/.test(s)) {
+      const d = new Date(s.replace(" ", "T"));
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+  }
+  return looksLikeDateByPath ? new Date(value) : null;
 }
 
-function isProviderReqSection(section) {
+function buildClientLine(row) {
+  const name =
+    row?.client?.companyName ||
+    row.companyName ||
+    row.clientName ||
+    row?.purchaser?.companyName ||
+    null;
+  const id =
+    row?.client?.companyId ||
+    row.companyId ||
+    row.businessId ||
+    row?.purchaser?.companyId ||
+    null;
+  const country =
+    row?.client?.companyCountry ||
+    row.companyCountry ||
+    row.country ||
+    row?.purchaser?.companyCountry ||
+    null;
+  const parts = [name, id, country].filter(Boolean);
+  return parts.length ? parts.join(", ") : "—";
+}
+function getAssignmentType(row) {
+  return row?.assignmentType ?? row?.details?.assignmentType ?? "";
+}
+function winnerOnly(row) {
+  const status = (
+    row?.details?.winnerBidderOnlyStatus ||
+    row?.winnerBidderOnlyStatus ||
+    ""
+  ).trim();
+  const confidentialYes =
+    isYesString(row?.details?.confidential) || isYesString(row?.confidential);
+  if (confidentialYes || status === "Disclosed to Winning Bidder Only") {
+    return "Disclosed to Winning Bidder Only";
+  }
+  return "";
+}
+function counterpartyOrWinnerOnly(row) {
+  const w = winnerOnly(row);
+  if (w) return w;
+  return (
+    row?.details?.breachCompany ||
+    row?.details?.counterparty ||
+    row?.counterparty ||
+    "—"
+  );
+}
+function priceModel(row) {
+  const rate = row.paymentRate || "—";
+  const ccy = row.currency || "";
+  const max =
+    typeof row.maximumPrice === "number"
+      ? ` / Max ${row.maximumPrice.toLocaleString(undefined, {
+          minimumFractionDigits: 0,
+        })}`
+      : "";
+  return `${rate}${ccy ? ` (${ccy})` : ""}${max}`;
+}
+function docsWithOther(row) {
+  const fromDetails =
+    row?.details?.documentTypes ||
+    row?.details?.documents ||
+    row?.scopeOfWork ||
+    "";
+  const other = row?.details?.otherDocument || row?.details?.otherArea || "";
+  return [fromDetails, other].filter(Boolean).join(", ") || "—";
+}
+function supportWithDueDiligence(row) {
+  const base = row?.scopeOfWork || "—";
+  const dd =
+    row?.details?.dueDiligence &&
+    row.details.dueDiligence !== "Legal Due Diligence inspection not needed"
+      ? ` (Due Diligence: ${row.details.dueDiligence})`
+      : "";
+  return `${base}${dd}`;
+}
+function resolvePath(row, path) {
+  if (!path) return "—";
+
+  // Virtuals used in PreviewModal / JSON defs
+  if (path.startsWith("__")) {
+    switch (path) {
+      case "__clientLine__":
+        return buildClientLine(row);
+      case "__clientLineOrDisclosed__":
+        return winnerOnly(row) || buildClientLine(row);
+      case "__counterpartyConfidential__":
+        return counterpartyOrWinnerOnly(row);
+      case "primaryContactPerson":
+      case "details.primaryContactPerson":
+        return (
+          row?.primaryContactPerson ?? row?.details?.primaryContactPerson ?? "—"
+        );
+
+      case "currency":
+      case "details.currency":
+        return row?.currency ?? row?.details?.currency ?? "—";
+
+      case "invoiceType":
+      case "details.invoiceType":
+        return row?.invoiceType ?? row?.details?.invoiceType ?? "—";
+
+      case "advanceRetainerFee":
+      case "details.advanceRetainerFee":
+        return (
+          row?.advanceRetainerFee ?? row?.details?.advanceRetainerFee ?? "—"
+        );
+
+      case "additionalBackgroundInfo":
+      case "details.additionalBackgroundInfo":
+      case "details.background":
+        return (
+          row?.additionalBackgroundInfo ??
+          row?.details?.additionalBackgroundInfo ??
+          row?.details?.background ??
+          "—"
+        );
+
+      case "__currencyMax__":
+        return [
+          row.currency || row?.details?.currency || "—",
+          row.maximumPrice ?? "—",
+        ]
+          .filter(Boolean)
+          .join(" / ");
+      case "__priceModel__":
+      case "__priceModel_LumpSumWithCurrency__":
+      case "__priceModel_HourlyWithCurrency__":
+      case "__priceModel_Arbitration__":
+      case "__priceModel_Court__":
+        return priceModel(row);
+      case "__docsWithOther__":
+        return docsWithOther(row);
+      case "__supportWithDueDiligenceFormat__":
+        return supportWithDueDiligence(row);
+      default:
+        return "—";
+    }
+  }
+
+  // Smart fallbacks for commonly missing fields
+  switch (path) {
+    case "assignmentType":
+      return getAssignmentType(row) || "—";
+
+    case "primaryContactPerson":
+    case "details.primaryContactPerson":
+      return (
+        row?.primaryContactPerson ?? row?.details?.primaryContactPerson ?? "—"
+      );
+
+    case "currency":
+    case "details.currency":
+      return row?.currency ?? row?.details?.currency ?? "—";
+
+    case "invoiceType":
+    case "details.invoiceType":
+      return row?.invoiceType ?? row?.details?.invoiceType ?? "—";
+
+    case "advanceRetainerFee":
+    case "details.advanceRetainerFee":
+      return row?.advanceRetainerFee ?? row?.details?.advanceRetainerFee ?? "—";
+
+    case "additionalBackgroundInfo":
+    case "details.additionalBackgroundInfo":
+    case "details.background":
+      return (
+        row?.additionalBackgroundInfo ??
+        row?.details?.additionalBackgroundInfo ??
+        row?.details?.background ??
+        "—"
+      );
+
+    case "language":
+    case "details.language":
+      // support CSV string or array
+      if (Array.isArray(row?.language)) return row.language.join(", ");
+      if (Array.isArray(row?.details?.language))
+        return row.details.language.join(", ");
+      return row?.language ?? row?.details?.language ?? "—";
+
+    default:
+      // Generic nested getter
+      const v = deepGet(row, path);
+      return v ?? "—";
+  }
+}
+
+function renderValue(v, pathHint) {
+  if (Array.isArray(v)) return v.length ? v.join(", ") : "—";
+  if (v === null || v === undefined || v === "") return "—";
+  const maybeDate = parseIfDateLike(v, pathHint);
+  if (maybeDate) return formatLocalDDMMYYYY_HHMM(maybeDate);
+  return String(v);
+}
+function renderNamedBlock(name, row, deadline) {
+  switch (name) {
+    case "companyHeader":
+      return buildClientLine(row);
+    case "description":
+      return row?.description || "—";
+    case "assignmentType":
+      return getAssignmentType(row) || "—";
+    case "languageCSV":
+      return Array.isArray(row?.language)
+        ? row.language.join(", ")
+        : row?.language || "—";
+    case "date": {
+      const d =
+        parseIfDateLike(row?.offersDeadline, "offersDeadline") ||
+        parseIfDateLike(row?.dateExpired, "dateExpired") ||
+        parseIfDateLike(deadline, "deadline");
+      return d ? formatLocalDDMMYYYY_HHMM(d) : "—";
+    }
+    default:
+      return "—";
+  }
+}
+
+function getFirstByPath(row, paths = []) {
+  for (const p of paths) {
+    const v = p === "." ? row : deepGet(row, p);
+    if (v !== undefined && v !== null && v !== "") return v;
+  }
+  return undefined;
+}
+
+// Label-based alias fallback when the field path misses:
+function resolveByLabel(row, labelRaw) {
+  if (!labelRaw) return undefined;
+  const label = String(labelRaw).trim().toLowerCase();
+
+  if (label === "primary contact person") {
+    return getFirstByPath(row, [
+      "primaryContactPerson",
+      "details.primaryContactPerson",
+      "client.primaryContactPerson",
+      "clientContactPerson",
+      "contactPerson",
+    ]);
+  }
+
+  if (label === "currency") {
+    return getFirstByPath(row, [
+      "currency",
+      "details.currency",
+      "requestCurrency",
+    ]);
+  }
+
+  if (label === "invoice type" || label === "invoicing") {
+    return getFirstByPath(row, [
+      "invoiceType",
+      "details.invoiceType",
+      "paymentTerms",
+    ]);
+  }
+
+  if (label === "advance retainer fee") {
+    return getFirstByPath(row, [
+      "advanceRetainerFee",
+      "details.advanceRetainerFee",
+      "retainerFee",
+    ]);
+  }
+
+  if (label === "assignment type") {
+    // keep using the same resolver you already have
+    return getAssignmentType(row);
+  }
+
+  if (
+    label === "additional background information" ||
+    label === "background information"
+  ) {
+    return getFirstByPath(row, [
+      "additionalBackgroundInfo",
+      "details.additionalBackgroundInfo",
+      "details.background",
+    ]);
+  }
+
+  return undefined;
+}
+
+// -------- filtering (hide provider requirements + five specific fields) -------
+const HIDE_PATHS = new Set([
+  // Provider requirement fields to hide
+  "serviceProviderType",
+  "domesticOffers",
+  "providerSize",
+  "providerCompanyAge",
+  "providerMinimumRating",
+  "details.serviceProviderType",
+  "details.domesticOffers",
+  "details.providerSize",
+  "details.providerCompanyAge",
+  "details.providerMinimumRating",
+
+  // Additional fields to hide
+  "offersDeadline",
+  "details.offersDeadline",
+  "dateExpired",
+  "details.dateExpired",
+  "title",
+  "requestTitle",
+  "requestState",
+  "maximumPrice",
+  "details.maximumPrice",
+]);
+
+function looksLikeProviderReqSection(section) {
   const key = (section?.id || section?.name || section?.title || "")
     .toString()
     .toLowerCase();
@@ -56,44 +412,40 @@ function isProviderReqSection(section) {
   );
 }
 
-function maybeFormatDate(v, pathHint) {
-  const hint = (pathHint || "").toLowerCase();
-  const looksDate =
-    hint.includes("deadline") ||
-    hint.includes("date") ||
-    hint.includes("expire");
-  if (v == null) return null;
-  if (v instanceof Date) return v;
-  if (typeof v === "number") {
-    const d = new Date(v);
-    return Number.isNaN(d.getTime()) ? null : d;
+function shouldHideField(field) {
+  const path = (field?.path || "").toString();
+  if (HIDE_PATHS.has(path)) return true;
+
+  const label = (field?.label || "").toString().toLowerCase();
+
+  // Label-based fallbacks (in case path differs)
+  if (
+    label === "service provider type" ||
+    label === "domestic offers" ||
+    label === "minimum provider size" ||
+    label === "minimum company age" ||
+    label === "minimum rating" ||
+    label.includes("provider size") ||
+    label.includes("company age")
+  ) {
+    return true;
   }
-  if (typeof v === "string") {
-    const s = v.trim();
-    const iso = /^\d{4}-\d{2}-\d{2}t\d{2}:/i.test(s) || /z$/i.test(s);
-    if (iso || looksDate) {
-      const d = new Date(s);
-      return Number.isNaN(d.getTime()) ? null : d;
-    }
-    if (/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}(:\d{2})?$/.test(s)) {
-      const d = new Date(s.replace(" ", "T"));
-      return Number.isNaN(d.getTime()) ? null : d;
-    }
+
+  // Hide these by label too, if present
+  if (
+    label === "offers deadline" ||
+    label === "request title" ||
+    label === "request state" ||
+    label === "date expired" ||
+    label === "maximum price"
+  ) {
+    return true;
   }
-  return null;
+
+  return false;
 }
 
-function renderCell(value, pathHint) {
-  if (Array.isArray(value)) return value.length ? value.join(", ") : "—";
-  if (value === null || value === undefined || value === "") return "—";
-  const maybe = maybeFormatDate(value, pathHint);
-  if (maybe)
-    return `${fmtLocalDDMMYYYY_HHMM(maybe)} (${
-      formatTimeUntil(maybe) || "expired"
-    })`;
-  return String(value);
-}
-
+// ---------------- page ----------------
 export default function MakeOffer() {
   const router = useRouter();
   const params = useSearchParams();
@@ -101,14 +453,15 @@ export default function MakeOffer() {
 
   const [loading, setLoading] = useState(true);
   const [request, setRequest] = useState(null);
-  const [contacts, setContacts] = useState([]); // strings (full names) from /api/me/contacts
-  const [defs, setDefs] = useState(null); // preview definitions JSON
-  const [agree, setAgree] = useState(false);
+  const [contacts, setContacts] = useState([]);
+  const [defs, setDefs] = useState(null);
 
+  // form state (UNCHANGED)
   const [offerLawyer, setOfferLawyer] = useState("");
   const [offerPrice, setOfferPrice] = useState("");
   const [offerExpectedPrice, setOfferExpectedPrice] = useState("");
   const [offerTitle, setOfferTitle] = useState("");
+  const [agree, setAgree] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   const paymentRate = (request?.paymentRate || "").toLowerCase();
@@ -122,7 +475,7 @@ export default function MakeOffer() {
       try {
         setLoading(true);
         const [reqRes, conRes, defRes] = await Promise.all([
-          fetch(`/api/requests/public/${requestId}`, { cache: "no-store" }),
+          fetch(`/api/requests/${requestId}`, { cache: "no-store" }),
           fetch(`/api/me/contacts`, { cache: "no-store" }),
           fetch(`/previews/all-previews.json`, { cache: "no-store" }),
         ]);
@@ -133,7 +486,6 @@ export default function MakeOffer() {
         setRequest(reqJson);
         setContacts(Array.isArray(conJson?.contacts) ? conJson.contacts : []);
         setDefs(defJson);
-        // default offer title
         const baseTitle =
           reqJson?.title || reqJson?.requestTitle || "LEXIFY Offer";
         setOfferTitle(`Offer for ${baseTitle}`);
@@ -152,6 +504,26 @@ export default function MakeOffer() {
     };
   }, [requestId]);
 
+  const def = useMemo(() => {
+    // Always call the hook; handle nulls inside.
+    if (!defs || !request) return null;
+    const list = Array.isArray(defs.requests) ? defs.requests : [];
+    return (
+      list.find(
+        (d) =>
+          (d.category || "") === (request.requestCategory || "") &&
+          (d.subcategory || null) === (request.requestSubcategory ?? null) &&
+          (d.assignmentType || null) === (request.assignmentType ?? null)
+      ) ||
+      list.find(
+        (d) =>
+          (d.category || "") === (request.requestCategory || "") &&
+          (d.subcategory || null) === (request.requestSubcategory ?? null)
+      ) ||
+      list.find((d) => (d.category || "") === (request.requestCategory || ""))
+    );
+  }, [defs, request]);
+
   const canSubmit =
     !!requestId &&
     !!offerLawyer &&
@@ -167,7 +539,7 @@ export default function MakeOffer() {
     try {
       setSubmitting(true);
       const payload = {
-        requestId: Number(requestId),
+        requestId: requestId,
         offerLawyer,
         offerPrice,
         offerTitle,
@@ -185,6 +557,7 @@ export default function MakeOffer() {
         alert(data?.error || `Failed to submit offer (${res.status})`);
         return;
       }
+      alert("Your offer has been successfully submitted!");
       router.push("/provider-request");
     } finally {
       setSubmitting(false);
@@ -209,61 +582,6 @@ export default function MakeOffer() {
     );
   }
 
-  // ---- dynamic preview selection ----
-  // assume definitions are structured with keys by category or generic "default"
-  const categoryKey =
-    request.requestCategory || request.category || request.type || "default";
-
-  const previewDef = defs?.[categoryKey] || defs?.default || null;
-
-  // Basic fallback blocks if definitions missing
-  const fallbackBlocks = [
-    {
-      title: "Client",
-      render: () => {
-        const name =
-          request?.client?.companyName || request?.companyName || "—";
-        const id = request?.client?.companyId || request?.companyId || null;
-        const country =
-          request?.client?.companyCountry || request?.companyCountry || null;
-        return [name, id, country].filter(Boolean).join(", ");
-      },
-    },
-    { title: "Scope of Work", render: () => request?.scopeOfWork || "—" },
-    { title: "Description", render: () => request?.description || "—" },
-    { title: "Payment Rate", render: () => request?.paymentRate || "—" },
-    {
-      title: "Languages",
-      render: () =>
-        Array.isArray(request?.language)
-          ? request.language.join(", ")
-          : request?.language || "—",
-    },
-    {
-      title: "Deadline for Offers",
-      render: () =>
-        deadline
-          ? `${fmtLocalDDMMYYYY_HHMM(deadline)} (${
-              formatTimeUntil(deadline) || "expired"
-            })`
-          : "—",
-    },
-    {
-      title: "Category / Subcategory",
-      render: () =>
-        `${request?.requestCategory || "—"} / ${
-          request?.requestSubcategory || "—"
-        }`,
-    },
-  ];
-
-  const sections = Array.isArray(previewDef?.sections)
-    ? previewDef.sections
-    : null;
-  const filteredSections = sections
-    ? sections.filter((s) => !isProviderReqSection(s))
-    : null;
-
   return (
     <div className="flex flex-col items-center min-h-screen p-6">
       <h1 className="text-3xl font-bold mb-4 text-center">
@@ -271,85 +589,72 @@ export default function MakeOffer() {
       </h1>
 
       <div className="w-full max-w-7xl rounded shadow-2xl bg-white text-black p-0 overflow-hidden">
-        {/* PREVIEW (dynamic like PreviewModal) */}
+        {/* ---------- PREVIEW (PreviewModal-equivalent, with filtering) ---------- */}
         <div className="space-y-6 p-6">
-          {filteredSections
-            ? filteredSections.map((section, idx) => {
-                // section can be { title, rows:[{ label, path | named }] }
+          {!def ? (
+            <div className="p-3 border rounded bg-gray-50 text-black">
+              No matching preview definition found.
+            </div>
+          ) : (
+            (def.preview?.sections || [])
+              .filter((section) => !looksLikeProviderReqSection(section))
+              .map((section, si) => {
+                // If this is a fields-table section, strip hidden fields.
+                const fields = Array.isArray(section.fields)
+                  ? section.fields.filter((f) => !shouldHideField(f))
+                  : null;
+
+                // If all fields got filtered out, skip rendering the section entirely.
+                if (Array.isArray(section.fields) && fields.length === 0)
+                  return null;
+
                 return (
-                  <Section key={idx} title={section.title || "—"}>
-                    {Array.isArray(section.rows) && section.rows.length > 0 ? (
+                  <Section key={si} title={section.title || "—"}>
+                    {Array.isArray(fields) ? (
                       <table className="w-full">
                         <tbody>
-                          {section.rows.map((row, i) => {
-                            // Support either named blocks or path-based
-                            const label = row.label || row.title || "—";
-                            let value = "—";
-                            if (row.named) {
-                              // small named variants that PreviewModal likely has
-                              if (row.named === "companyHeader") {
-                                const name =
-                                  request?.client?.companyName ||
-                                  request?.companyName ||
-                                  null;
-                                const id =
-                                  request?.client?.companyId ||
-                                  request?.companyId ||
-                                  null;
-                                const country =
-                                  request?.client?.companyCountry ||
-                                  request?.companyCountry ||
-                                  null;
-                                const parts = [name, id, country].filter(
-                                  Boolean
-                                );
-                                value = parts.length ? parts.join(", ") : "—";
-                              } else if (row.named === "languageCSV") {
-                                value = Array.isArray(request?.language)
-                                  ? request.language.join(", ")
-                                  : request?.language || "—";
-                              } else if (row.named === "date") {
-                                const d = deadline;
-                                value = d
-                                  ? `${fmtLocalDDMMYYYY_HHMM(d)} (${
-                                      formatTimeUntil(d) || "expired"
-                                    })`
-                                  : "—";
-                              } else {
-                                value = "—";
+                          {fields.map((f, fi) => {
+                            const label = f.label || "—";
+                            // 1) try by path (your resolvePath already checks top-level + details)
+                            let raw = resolvePath(request, f.path);
+                            let display = renderValue(raw, f.path);
+
+                            // 2) if still empty, try by label aliases (pull “straight from the request”)
+                            if (display === "—") {
+                              const byLabel = resolveByLabel(request, label);
+                              if (byLabel !== undefined) {
+                                raw = byLabel;
+                                display = renderValue(raw, f.path);
                               }
-                            } else if (row.path) {
-                              const v = valueAtPath(request, row.path);
-                              value = renderCell(v, row.path);
                             }
+
                             return (
-                              <tr key={i}>
-                                <td className="py-1 pr-4 font-semibold align-top">
+                              <tr key={fi} className="border-t">
+                                <td className="py-1 pr-4 font-semibold align-top w-1/3">
                                   {label}
                                 </td>
-                                <td className="py-1">{value}</td>
+                                <td className="py-1 align-top">{display}</td>
                               </tr>
                             );
                           })}
                         </tbody>
                       </table>
+                    ) : section.value ? (
+                      <div className="p-1">
+                        {renderNamedBlock(section.value, request, deadline)}
+                      </div>
                     ) : (
                       "—"
                     )}
                   </Section>
                 );
               })
-            : // Fallback if no definitions found
-              fallbackBlocks.map((b, i) => (
-                <Section key={i} title={b.title}>
-                  {b.render()}
-                </Section>
-              ))}
+          )}
         </div>
 
         <div className="h-px w-full bg-gray-200" />
 
-        {/* OFFER FORM */}
+        {/* ---------------------- OFFER FORM (unchanged) ---------------------- */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div>
             <label className="block font-semibold mb-2">Offer Title</label>
@@ -384,13 +689,24 @@ export default function MakeOffer() {
 
           <div>
             <label className="block font-semibold mb-2">
-              Offer Price (VAT 0%)
+              {paymentRate === "capped price" ? (
+                <>
+                  Offer Capped Price (VAT 0%){" "}
+                  <QuestionMarkTooltip tooltipText="Capped price refers to your offered maximum price for the work, taking into account all possible unexpected developments in the dispute proceedings such as an unusually high number of rounds of written pleadings." />
+                </>
+              ) : (
+                "Offer Price (VAT 0%)"
+              )}
             </label>
             <input
               type="text"
               inputMode="numeric"
               className="border p-2 w-full rounded"
-              placeholder="Insert offered price"
+              placeholder={
+                paymentRate === "capped price"
+                  ? "Insert your offered capped price"
+                  : "Insert offered price"
+              }
               value={offerPrice}
               onChange={(e) =>
                 setOfferPrice(e.target.value.replace(/[^\d.]/g, ""))

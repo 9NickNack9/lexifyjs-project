@@ -9,7 +9,10 @@
           {
             "title": "Client Name, Business Identity Code and Country of Domicile",
             "fields": [
-              { "label": "Client", "path": "__clientLine__" },
+              {
+                "label": "Client",
+                "path": "__clientLine__"
+              },
               {
                 "label": "Primary contact person",
                 "path": "primaryContactPerson"
@@ -18,22 +21,41 @@
           },
           {
             "title": "Scope of Work",
-            "fields": [{ "label": "What do you need?", "path": "scopeOfWork" }]
+            "fields": [
+              {
+                "label": "What do you need?",
+                "path": "scopeOfWork"
+              }
+            ]
           },
           {
             "title": "Description of Client's Line of Business",
-            "fields": [{ "label": "Description", "path": "description" }]
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
           },
           {
             "title": "Commercial Terms",
             "fields": [
-              { "label": "Payment rate", "path": "paymentRate" },
+              {
+                "label": "Contract Price",
+                "path": "paymentRate"
+              },
               {
                 "label": "Currency / Maximum price",
                 "path": "__currencyMax__"
               },
-              { "label": "Invoice type", "path": "invoiceType" },
-              { "label": "Advance retainer fee", "path": "advanceRetainerFee" }
+              {
+                "label": "Invoice type",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Advance retainer fee",
+                "path": "advanceRetainerFee"
+              }
             ]
           },
           {
@@ -43,16 +65,35 @@
                 "label": "Service provider type",
                 "path": "serviceProviderType"
               },
-              { "label": "Domestic offers", "path": "domesticOffers" },
-              { "label": "Minimum provider size", "path": "providerSize" },
-              { "label": "Minimum company age", "path": "providerCompanyAge" },
-              { "label": "Minimum rating", "path": "providerMinimumRating" }
+              {
+                "label": "Domestic offers",
+                "path": "domesticOffers"
+              },
+              {
+                "label": "Minimum provider size",
+                "path": "providerSize"
+              },
+              {
+                "label": "Minimum company age",
+                "path": "providerCompanyAge"
+              },
+              {
+                "label": "Minimum rating",
+                "path": "providerMinimumRating"
+              }
             ]
           },
           {
             "title": "Attachments",
             "fields": [
-              { "label": "Background files", "path": "backgroundInfoFiles" },
+              {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              },
+              {
+                "label": "Background files",
+                "path": "backgroundInfoFiles"
+              },
               {
                 "label": "Supplier Code of Conduct files",
                 "path": "supplierCodeOfConductFiles"
@@ -62,9 +103,90 @@
           {
             "title": "Meta",
             "fields": [
-              { "label": "Request title", "path": "title" },
-              { "label": "Languages", "path": "language" },
-              { "label": "Offers deadline", "path": "offersDeadline" }
+              {
+                "label": "Request title",
+                "path": "title"
+              },
+              {
+                "label": "Languages",
+                "path": "language"
+              },
+              {
+                "label": "Offers deadline",
+                "path": "offersDeadline"
+              }
+            ]
+          },
+          {
+            "title": "Request State",
+            "fields": [
+              {
+                "label": "Request State",
+                "path": "requestState"
+              }
+            ]
+          },
+          {
+            "title": "Request Category",
+            "fields": [
+              {
+                "label": "Request Category",
+                "path": "requestCategory"
+              }
+            ]
+          },
+          {
+            "title": "Request Subcategory",
+            "fields": [
+              {
+                "label": "Request Subcategory",
+                "path": "requestSubcategory"
+              }
+            ]
+          },
+          {
+            "title": "Currency",
+            "fields": [
+              {
+                "label": "Currency",
+                "path": "currency"
+              }
+            ]
+          },
+          {
+            "title": "Date Expired",
+            "fields": [
+              {
+                "label": "Date Expired",
+                "path": "dateExpired"
+              }
+            ]
+          },
+          {
+            "title": "Details Confidential",
+            "fields": [
+              {
+                "label": "Confidential",
+                "path": "details.confidential"
+              }
+            ]
+          },
+          {
+            "title": "Details Winner Bidder Only Status",
+            "fields": [
+              {
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
+                "path": "details.winnerBidderOnlyStatus"
+              }
+            ]
+          },
+          {
+            "title": "Details Maximum Price",
+            "fields": [
+              {
+                "label": "Maximum Price",
+                "path": "details.maximumPrice"
+              }
             ]
           }
         ]
@@ -99,7 +221,6 @@
         }
       }
     },
-
     {
       "category": "Help with Contracts",
       "subcategory": "B2C Sales",
@@ -109,7 +230,10 @@
           {
             "title": "Client Name, Business Identity Code and Country of Domicile",
             "fields": [
-              { "label": "Client", "path": "__clientLine__" },
+              {
+                "label": "Client",
+                "path": "__clientLine__"
+              },
               {
                 "label": "Primary contact person",
                 "path": "primaryContactPerson"
@@ -118,22 +242,41 @@
           },
           {
             "title": "Scope of Work",
-            "fields": [{ "label": "What do you need?", "path": "scopeOfWork" }]
+            "fields": [
+              {
+                "label": "What do you need?",
+                "path": "scopeOfWork"
+              }
+            ]
           },
           {
             "title": "Description of Client's Line of Business",
-            "fields": [{ "label": "Description", "path": "description" }]
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
           },
           {
             "title": "Commercial Terms",
             "fields": [
-              { "label": "Payment rate", "path": "paymentRate" },
+              {
+                "label": "Contract Price",
+                "path": "paymentRate"
+              },
               {
                 "label": "Currency / Maximum price",
                 "path": "__currencyMax__"
               },
-              { "label": "Invoice type", "path": "invoiceType" },
-              { "label": "Advance retainer fee", "path": "advanceRetainerFee" }
+              {
+                "label": "Invoice type",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Advance retainer fee",
+                "path": "advanceRetainerFee"
+              }
             ]
           },
           {
@@ -143,16 +286,31 @@
                 "label": "Service provider type",
                 "path": "serviceProviderType"
               },
-              { "label": "Domestic offers", "path": "domesticOffers" },
-              { "label": "Minimum provider size", "path": "providerSize" },
-              { "label": "Minimum company age", "path": "providerCompanyAge" },
-              { "label": "Minimum rating", "path": "providerMinimumRating" }
+              {
+                "label": "Domestic offers",
+                "path": "domesticOffers"
+              },
+              {
+                "label": "Minimum provider size",
+                "path": "providerSize"
+              },
+              {
+                "label": "Minimum company age",
+                "path": "providerCompanyAge"
+              },
+              {
+                "label": "Minimum rating",
+                "path": "providerMinimumRating"
+              }
             ]
           },
           {
             "title": "Attachments",
             "fields": [
-              { "label": "Background files", "path": "backgroundInfoFiles" },
+              {
+                "label": "Background files",
+                "path": "backgroundInfoFiles"
+              },
               {
                 "label": "Supplier Code of Conduct files",
                 "path": "supplierCodeOfConductFiles"
@@ -162,9 +320,99 @@
           {
             "title": "Meta",
             "fields": [
-              { "label": "Request title", "path": "title" },
-              { "label": "Languages", "path": "language" },
-              { "label": "Offers deadline", "path": "offersDeadline" }
+              {
+                "label": "Request title",
+                "path": "title"
+              },
+              {
+                "label": "Languages",
+                "path": "language"
+              },
+              {
+                "label": "Offers deadline",
+                "path": "offersDeadline"
+              }
+            ]
+          },
+          {
+            "title": "Request State",
+            "fields": [
+              {
+                "label": "Request State",
+                "path": "requestState"
+              }
+            ]
+          },
+          {
+            "title": "Request Category",
+            "fields": [
+              {
+                "label": "Request Category",
+                "path": "requestCategory"
+              }
+            ]
+          },
+          {
+            "title": "Request Subcategory",
+            "fields": [
+              {
+                "label": "Request Subcategory",
+                "path": "requestSubcategory"
+              }
+            ]
+          },
+          {
+            "title": "Additional Background Info",
+            "fields": [
+              {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              }
+            ]
+          },
+          {
+            "title": "Currency",
+            "fields": [
+              {
+                "label": "Currency",
+                "path": "currency"
+              }
+            ]
+          },
+          {
+            "title": "Date Expired",
+            "fields": [
+              {
+                "label": "Date Expired",
+                "path": "dateExpired"
+              }
+            ]
+          },
+          {
+            "title": "Details Confidential",
+            "fields": [
+              {
+                "label": "Confidential",
+                "path": "details.confidential"
+              }
+            ]
+          },
+          {
+            "title": "Details Winner Bidder Only Status",
+            "fields": [
+              {
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
+                "path": "details.winnerBidderOnlyStatus"
+              }
+            ]
+          },
+          {
+            "title": "Details Maximum Price",
+            "fields": [
+              {
+                "label": "Maximum Price",
+                "path": "details.maximumPrice"
+              }
             ]
           }
         ]
@@ -199,7 +447,6 @@
         }
       }
     },
-
     {
       "category": "Help with Contracts",
       "subcategory": "Real Estate and Construction",
@@ -209,7 +456,10 @@
           {
             "title": "Client Name, Business Identity Code and Country of Domicile",
             "fields": [
-              { "label": "Client", "path": "__clientLineOrDisclosed__" },
+              {
+                "label": "Client",
+                "path": "__clientLineOrDisclosed__"
+              },
               {
                 "label": "Primary contact person",
                 "path": "primaryContactPerson"
@@ -226,21 +476,23 @@
             ]
           },
           {
-            "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
-            "fields": [{ "label": "Price model", "path": "__priceModel__" }]
-          },
-          {
             "title": "Object of Sale",
             "fields": [
-              { "label": "Object", "path": "details.saleObject" },
-              { "label": "Other (specified)", "path": "details.otherObject" }
+              {
+                "label": "Object",
+                "path": "details.saleObject"
+              },
+              {
+                "label": "Other (specified)",
+                "path": "details.otherObject"
+              }
             ]
           },
           {
             "title": "Confidentiality",
             "fields": [
               {
-                "label": "Winner-bidder-only status",
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
                 "path": "details.winnerBidderOnlyStatus"
               }
             ]
@@ -248,10 +500,22 @@
           {
             "title": "Commercial Terms",
             "fields": [
-              { "label": "Payment rate", "path": "paymentRate" },
-              { "label": "Currency", "path": "currency" },
-              { "label": "Invoice type", "path": "invoiceType" },
-              { "label": "Advance retainer fee", "path": "advanceRetainerFee" }
+              {
+                "label": "Contract Price",
+                "path": "paymentRate"
+              },
+              {
+                "label": "Currency",
+                "path": "currency"
+              },
+              {
+                "label": "Invoice type",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Advance retainer fee",
+                "path": "advanceRetainerFee"
+              }
             ]
           },
           {
@@ -261,16 +525,31 @@
                 "label": "Service provider type",
                 "path": "serviceProviderType"
               },
-              { "label": "Domestic offers", "path": "domesticOffers" },
-              { "label": "Minimum provider size", "path": "providerSize" },
-              { "label": "Minimum company age", "path": "providerCompanyAge" },
-              { "label": "Minimum rating", "path": "providerMinimumRating" }
+              {
+                "label": "Domestic offers",
+                "path": "domesticOffers"
+              },
+              {
+                "label": "Minimum provider size",
+                "path": "providerSize"
+              },
+              {
+                "label": "Minimum company age",
+                "path": "providerCompanyAge"
+              },
+              {
+                "label": "Minimum rating",
+                "path": "providerMinimumRating"
+              }
             ]
           },
           {
             "title": "Attachments",
             "fields": [
-              { "label": "Background files", "path": "backgroundInfoFiles" },
+              {
+                "label": "Background files",
+                "path": "backgroundInfoFiles"
+              },
               {
                 "label": "Supplier Code of Conduct files",
                 "path": "supplierCodeOfConductFiles"
@@ -280,9 +559,117 @@
           {
             "title": "Meta",
             "fields": [
-              { "label": "Request title", "path": "title" },
-              { "label": "Languages", "path": "language" },
-              { "label": "Offers deadline", "path": "offersDeadline" }
+              {
+                "label": "Request title",
+                "path": "title"
+              },
+              {
+                "label": "Languages",
+                "path": "language"
+              },
+              {
+                "label": "Offers deadline",
+                "path": "offersDeadline"
+              }
+            ]
+          },
+          {
+            "title": "Request State",
+            "fields": [
+              {
+                "label": "Request State",
+                "path": "requestState"
+              }
+            ]
+          },
+          {
+            "title": "Request Category",
+            "fields": [
+              {
+                "label": "Request Category",
+                "path": "requestCategory"
+              }
+            ]
+          },
+          {
+            "title": "Request Subcategory",
+            "fields": [
+              {
+                "label": "Request Subcategory",
+                "path": "requestSubcategory"
+              }
+            ]
+          },
+          {
+            "title": "Assignment Type",
+            "fields": [
+              {
+                "label": "Assignment Type",
+                "path": "assignmentType"
+              }
+            ]
+          },
+          {
+            "title": "Scope Of Work",
+            "fields": [
+              {
+                "label": "What do you need?",
+                "path": "scopeOfWork"
+              }
+            ]
+          },
+          {
+            "title": "Description",
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
+          },
+          {
+            "title": "Additional Background Info",
+            "fields": [
+              {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              }
+            ]
+          },
+          {
+            "title": "Date Expired",
+            "fields": [
+              {
+                "label": "Date Expired",
+                "path": "dateExpired"
+              }
+            ]
+          },
+          {
+            "title": "Details Confidential",
+            "fields": [
+              {
+                "label": "Confidential",
+                "path": "details.confidential"
+              }
+            ]
+          },
+          {
+            "title": "Details Price Range",
+            "fields": [
+              {
+                "label": "Price Range",
+                "path": "details.priceRange"
+              }
+            ]
+          },
+          {
+            "title": "Details Due Diligence",
+            "fields": [
+              {
+                "label": "Due diligence reporting format",
+                "path": "details.dueDiligence"
+              }
             ]
           }
         ]
@@ -321,7 +708,6 @@
         }
       }
     },
-
     {
       "category": "Help with Contracts",
       "subcategory": "Real Estate and Construction",
@@ -331,7 +717,10 @@
           {
             "title": "Client Name, Business Identity Code and Country of Domicile",
             "fields": [
-              { "label": "Client", "path": "__clientLineOrDisclosed__" },
+              {
+                "label": "Client",
+                "path": "__clientLineOrDisclosed__"
+              },
               {
                 "label": "Primary contact person",
                 "path": "primaryContactPerson"
@@ -349,20 +738,31 @@
           },
           {
             "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
-            "fields": [{ "label": "Price model", "path": "__priceModel__" }]
+            "fields": [
+              {
+                "label": "Price model",
+                "path": "__priceModel__"
+              }
+            ]
           },
           {
             "title": "Object of Sale",
             "fields": [
-              { "label": "Object", "path": "details.saleObject" },
-              { "label": "Other (specified)", "path": "details.otherObject" }
+              {
+                "label": "Object",
+                "path": "details.saleObject"
+              },
+              {
+                "label": "Other (specified)",
+                "path": "details.otherObject"
+              }
             ]
           },
           {
             "title": "Confidentiality",
             "fields": [
               {
-                "label": "Winner-bidder-only status",
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
                 "path": "details.winnerBidderOnlyStatus"
               }
             ]
@@ -370,10 +770,22 @@
           {
             "title": "Commercial Terms",
             "fields": [
-              { "label": "Payment rate", "path": "paymentRate" },
-              { "label": "Currency", "path": "currency" },
-              { "label": "Invoice type", "path": "invoiceType" },
-              { "label": "Advance retainer fee", "path": "advanceRetainerFee" }
+              {
+                "label": "Contract Price",
+                "path": "paymentRate"
+              },
+              {
+                "label": "Currency",
+                "path": "currency"
+              },
+              {
+                "label": "Invoice type",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Advance retainer fee",
+                "path": "advanceRetainerFee"
+              }
             ]
           },
           {
@@ -383,16 +795,31 @@
                 "label": "Service provider type",
                 "path": "serviceProviderType"
               },
-              { "label": "Domestic offers", "path": "domesticOffers" },
-              { "label": "Minimum provider size", "path": "providerSize" },
-              { "label": "Minimum company age", "path": "providerCompanyAge" },
-              { "label": "Minimum rating", "path": "providerMinimumRating" }
+              {
+                "label": "Domestic offers",
+                "path": "domesticOffers"
+              },
+              {
+                "label": "Minimum provider size",
+                "path": "providerSize"
+              },
+              {
+                "label": "Minimum company age",
+                "path": "providerCompanyAge"
+              },
+              {
+                "label": "Minimum rating",
+                "path": "providerMinimumRating"
+              }
             ]
           },
           {
             "title": "Attachments",
             "fields": [
-              { "label": "Background files", "path": "backgroundInfoFiles" },
+              {
+                "label": "Background files",
+                "path": "backgroundInfoFiles"
+              },
               {
                 "label": "Supplier Code of Conduct files",
                 "path": "supplierCodeOfConductFiles"
@@ -402,9 +829,117 @@
           {
             "title": "Meta",
             "fields": [
-              { "label": "Request title", "path": "title" },
-              { "label": "Languages", "path": "language" },
-              { "label": "Offers deadline", "path": "offersDeadline" }
+              {
+                "label": "Request title",
+                "path": "title"
+              },
+              {
+                "label": "Languages",
+                "path": "language"
+              },
+              {
+                "label": "Offers deadline",
+                "path": "offersDeadline"
+              }
+            ]
+          },
+          {
+            "title": "Request State",
+            "fields": [
+              {
+                "label": "Request State",
+                "path": "requestState"
+              }
+            ]
+          },
+          {
+            "title": "Request Category",
+            "fields": [
+              {
+                "label": "Request Category",
+                "path": "requestCategory"
+              }
+            ]
+          },
+          {
+            "title": "Request Subcategory",
+            "fields": [
+              {
+                "label": "Request Subcategory",
+                "path": "requestSubcategory"
+              }
+            ]
+          },
+          {
+            "title": "Assignment Type",
+            "fields": [
+              {
+                "label": "Assignment Type",
+                "path": "assignmentType"
+              }
+            ]
+          },
+          {
+            "title": "Scope Of Work",
+            "fields": [
+              {
+                "label": "What do you need?",
+                "path": "scopeOfWork"
+              }
+            ]
+          },
+          {
+            "title": "Description",
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
+          },
+          {
+            "title": "Additional Background Info",
+            "fields": [
+              {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              }
+            ]
+          },
+          {
+            "title": "Date Expired",
+            "fields": [
+              {
+                "label": "Date Expired",
+                "path": "dateExpired"
+              }
+            ]
+          },
+          {
+            "title": "Details Due Diligence",
+            "fields": [
+              {
+                "label": "Due diligence reporting format",
+                "path": "details.dueDiligence"
+              }
+            ]
+          },
+          {
+            "title": "Details Confidential",
+            "fields": [
+              {
+                "label": "Confidential",
+                "path": "details.confidential"
+              }
+            ]
+          },
+          {
+            "title": "Details Price Range",
+            "fields": [
+              {
+                "label": "Price Range",
+                "path": "details.priceRange"
+              }
             ]
           }
         ]
@@ -452,7 +987,10 @@
           {
             "title": "Client Name, Business Identity Code and Country of Domicile",
             "fields": [
-              { "label": "Client", "path": "__clientLineOrDisclosed__" },
+              {
+                "label": "Client",
+                "path": "__clientLineOrDisclosed__"
+              },
               {
                 "label": "Primary contact person",
                 "path": "primaryContactPerson"
@@ -461,16 +999,29 @@
           },
           {
             "title": "Scope of Work",
-            "fields": [{ "label": "Selected support", "path": "scopeOfWork" }]
+            "fields": [
+              {
+                "label": "What do you need?",
+                "path": "scopeOfWork"
+              }
+            ]
           },
           {
             "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
-            "fields": [{ "label": "Price model", "path": "__priceModel__" }]
+            "fields": [
+              {
+                "label": "Price model",
+                "path": "__priceModel__"
+              }
+            ]
           },
           {
             "title": "Type of Lease Agreement Being Negotiated",
             "fields": [
-              { "label": "Agreement type", "path": "details.agreementType" }
+              {
+                "label": "Agreement type",
+                "path": "details.agreementType"
+              }
             ]
           },
           {
@@ -485,10 +1036,22 @@
           {
             "title": "Commercial Terms",
             "fields": [
-              { "label": "Payment rate", "path": "paymentRate" },
-              { "label": "Currency", "path": "currency" },
-              { "label": "Invoice type", "path": "invoiceType" },
-              { "label": "Advance retainer fee", "path": "advanceRetainerFee" }
+              {
+                "label": "Contract Price",
+                "path": "paymentRate"
+              },
+              {
+                "label": "Currency",
+                "path": "currency"
+              },
+              {
+                "label": "Invoice type",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Advance retainer fee",
+                "path": "advanceRetainerFee"
+              }
             ]
           },
           {
@@ -498,16 +1061,31 @@
                 "label": "Service provider type",
                 "path": "serviceProviderType"
               },
-              { "label": "Domestic offers", "path": "domesticOffers" },
-              { "label": "Minimum provider size", "path": "providerSize" },
-              { "label": "Minimum company age", "path": "providerCompanyAge" },
-              { "label": "Minimum rating", "path": "providerMinimumRating" }
+              {
+                "label": "Domestic offers",
+                "path": "domesticOffers"
+              },
+              {
+                "label": "Minimum provider size",
+                "path": "providerSize"
+              },
+              {
+                "label": "Minimum company age",
+                "path": "providerCompanyAge"
+              },
+              {
+                "label": "Minimum rating",
+                "path": "providerMinimumRating"
+              }
             ]
           },
           {
             "title": "Attachments",
             "fields": [
-              { "label": "Background files", "path": "backgroundInfoFiles" },
+              {
+                "label": "Background files",
+                "path": "backgroundInfoFiles"
+              },
               {
                 "label": "Supplier Code of Conduct files",
                 "path": "supplierCodeOfConductFiles"
@@ -517,9 +1095,117 @@
           {
             "title": "Meta",
             "fields": [
-              { "label": "Request title", "path": "title" },
-              { "label": "Languages", "path": "language" },
-              { "label": "Offers deadline", "path": "offersDeadline" }
+              {
+                "label": "Request title",
+                "path": "title"
+              },
+              {
+                "label": "Languages",
+                "path": "language"
+              },
+              {
+                "label": "Offers deadline",
+                "path": "offersDeadline"
+              }
+            ]
+          },
+          {
+            "title": "Request State",
+            "fields": [
+              {
+                "label": "Request State",
+                "path": "requestState"
+              }
+            ]
+          },
+          {
+            "title": "Request Category",
+            "fields": [
+              {
+                "label": "Request Category",
+                "path": "requestCategory"
+              }
+            ]
+          },
+          {
+            "title": "Request Subcategory",
+            "fields": [
+              {
+                "label": "Request Subcategory",
+                "path": "requestSubcategory"
+              }
+            ]
+          },
+          {
+            "title": "Assignment Type",
+            "fields": [
+              {
+                "label": "Assignment Type",
+                "path": "assignmentType"
+              }
+            ]
+          },
+          {
+            "title": "Description",
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
+          },
+          {
+            "title": "Additional Background Info",
+            "fields": [
+              {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              }
+            ]
+          },
+          {
+            "title": "Date Expired",
+            "fields": [
+              {
+                "label": "Date Expired",
+                "path": "dateExpired"
+              }
+            ]
+          },
+          {
+            "title": "Details Customer Type",
+            "fields": [
+              {
+                "label": "Role",
+                "path": "details.customerType"
+              }
+            ]
+          },
+          {
+            "title": "Details Rent Range",
+            "fields": [
+              {
+                "label": "Rent Range",
+                "path": "details.rentRange"
+              }
+            ]
+          },
+          {
+            "title": "Details Confidential",
+            "fields": [
+              {
+                "label": "Confidential",
+                "path": "details.confidential"
+              }
+            ]
+          },
+          {
+            "title": "Details Winner Bidder Only Status",
+            "fields": [
+              {
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
+                "path": "details.winnerBidderOnlyStatus"
+              }
             ]
           }
         ]
@@ -566,7 +1252,10 @@
           {
             "title": "Client Name, Business Identity Code and Country of Domicile",
             "fields": [
-              { "label": "Client", "path": "__clientLineOrDisclosed__" },
+              {
+                "label": "Client",
+                "path": "__clientLineOrDisclosed__"
+              },
               {
                 "label": "Primary contact person",
                 "path": "primaryContactPerson"
@@ -575,23 +1264,36 @@
           },
           {
             "title": "Scope of Work",
-            "fields": [{ "label": "Selected support", "path": "scopeOfWork" }]
-          },
-          {
-            "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
-            "fields": [{ "label": "Price model", "path": "__priceModel__" }]
-          },
-          {
-            "title": "Type of Lease Agreement Being Negotiated",
             "fields": [
-              { "label": "Agreement type", "path": "details.agreementType" }
+              {
+                "label": "What do you need?",
+                "path": "scopeOfWork"
+              }
             ]
           },
           {
-            "title": "Name and (if applicable) Business Identity Code and Country of Domicile of the Client's Counterparty in the Easement Agreement; Property Identification Codes of the Properties Included in the Easement Agreement",
+            "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
             "fields": [
               {
-                "label": "Counterparty & property ids",
+                "label": "Price model",
+                "path": "__priceModel__"
+              }
+            ]
+          },
+          {
+            "title": "Type of Easement Agreement Being Negotiated",
+            "fields": [
+              {
+                "label": "Agreement type",
+                "path": "details.agreementType"
+              }
+            ]
+          },
+          {
+            "title": "Name, Business Identity Code and Country of Domicile of the Client's Counterparty in the Easement Agreement; Property Identification Codes of the Properties Included in the Easement Agreement",
+            "fields": [
+              {
+                "label": "Counterparty",
                 "path": "__counterpartyConfidential__"
               }
             ]
@@ -599,10 +1301,22 @@
           {
             "title": "Commercial Terms",
             "fields": [
-              { "label": "Payment rate", "path": "paymentRate" },
-              { "label": "Currency", "path": "currency" },
-              { "label": "Invoice type", "path": "invoiceType" },
-              { "label": "Advance retainer fee", "path": "advanceRetainerFee" }
+              {
+                "label": "Contract Price",
+                "path": "paymentRate"
+              },
+              {
+                "label": "Currency",
+                "path": "currency"
+              },
+              {
+                "label": "Invoice type",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Advance retainer fee",
+                "path": "advanceRetainerFee"
+              }
             ]
           },
           {
@@ -612,16 +1326,31 @@
                 "label": "Service provider type",
                 "path": "serviceProviderType"
               },
-              { "label": "Domestic offers", "path": "domesticOffers" },
-              { "label": "Minimum provider size", "path": "providerSize" },
-              { "label": "Minimum company age", "path": "providerCompanyAge" },
-              { "label": "Minimum rating", "path": "providerMinimumRating" }
+              {
+                "label": "Domestic offers",
+                "path": "domesticOffers"
+              },
+              {
+                "label": "Minimum provider size",
+                "path": "providerSize"
+              },
+              {
+                "label": "Minimum company age",
+                "path": "providerCompanyAge"
+              },
+              {
+                "label": "Minimum rating",
+                "path": "providerMinimumRating"
+              }
             ]
           },
           {
             "title": "Attachments",
             "fields": [
-              { "label": "Background files", "path": "backgroundInfoFiles" },
+              {
+                "label": "Background files",
+                "path": "backgroundInfoFiles"
+              },
               {
                 "label": "Supplier Code of Conduct files",
                 "path": "supplierCodeOfConductFiles"
@@ -631,9 +1360,99 @@
           {
             "title": "Meta",
             "fields": [
-              { "label": "Request title", "path": "title" },
-              { "label": "Languages", "path": "language" },
-              { "label": "Offers deadline", "path": "offersDeadline" }
+              {
+                "label": "Request title",
+                "path": "title"
+              },
+              {
+                "label": "Languages",
+                "path": "language"
+              },
+              {
+                "label": "Offers deadline",
+                "path": "offersDeadline"
+              }
+            ]
+          },
+          {
+            "title": "Request State",
+            "fields": [
+              {
+                "label": "Request State",
+                "path": "requestState"
+              }
+            ]
+          },
+          {
+            "title": "Request Category",
+            "fields": [
+              {
+                "label": "Request Category",
+                "path": "requestCategory"
+              }
+            ]
+          },
+          {
+            "title": "Request Subcategory",
+            "fields": [
+              {
+                "label": "Request Subcategory",
+                "path": "requestSubcategory"
+              }
+            ]
+          },
+          {
+            "title": "Assignment Type",
+            "fields": [
+              {
+                "label": "Assignment Type",
+                "path": "assignmentType"
+              }
+            ]
+          },
+          {
+            "title": "Description",
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
+          },
+          {
+            "title": "Additional Background Info",
+            "fields": [
+              {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              }
+            ]
+          },
+          {
+            "title": "Date Expired",
+            "fields": [
+              {
+                "label": "Date Expired",
+                "path": "dateExpired"
+              }
+            ]
+          },
+          {
+            "title": "Details Confidential",
+            "fields": [
+              {
+                "label": "Confidential",
+                "path": "details.confidential"
+              }
+            ]
+          },
+          {
+            "title": "Details Winner Bidder Only Status",
+            "fields": [
+              {
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
+                "path": "details.winnerBidderOnlyStatus"
+              }
             ]
           }
         ]
@@ -677,7 +1496,10 @@
           {
             "title": "Client Name, Business Identity Code and Country of Domicile",
             "fields": [
-              { "label": "Client", "path": "__clientLineOrDisclosed__" },
+              {
+                "label": "Client",
+                "path": "__clientLineOrDisclosed__"
+              },
               {
                 "label": "Primary contact person",
                 "path": "primaryContactPerson"
@@ -686,15 +1508,30 @@
           },
           {
             "title": "Scope of Work",
-            "fields": [{ "label": "Selected support", "path": "scopeOfWork" }]
+            "fields": [
+              {
+                "label": "What do you need?",
+                "path": "scopeOfWork"
+              }
+            ]
           },
           {
             "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
-            "fields": [{ "label": "Price model", "path": "__priceModel__" }]
+            "fields": [
+              {
+                "label": "Price model",
+                "path": "__priceModel__"
+              }
+            ]
           },
           {
             "title": "Client's Role in the Construction Contract",
-            "fields": [{ "label": "Role", "path": "details.customerType" }]
+            "fields": [
+              {
+                "label": "Role",
+                "path": "details.customerType"
+              }
+            ]
           },
           {
             "title": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Construction Contract",
@@ -708,10 +1545,22 @@
           {
             "title": "Commercial Terms",
             "fields": [
-              { "label": "Payment rate", "path": "paymentRate" },
-              { "label": "Currency", "path": "currency" },
-              { "label": "Invoice type", "path": "invoiceType" },
-              { "label": "Advance retainer fee", "path": "advanceRetainerFee" }
+              {
+                "label": "Contract Price",
+                "path": "paymentRate"
+              },
+              {
+                "label": "Currency",
+                "path": "currency"
+              },
+              {
+                "label": "Invoice type",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Advance retainer fee",
+                "path": "advanceRetainerFee"
+              }
             ]
           },
           {
@@ -721,16 +1570,31 @@
                 "label": "Service provider type",
                 "path": "serviceProviderType"
               },
-              { "label": "Domestic offers", "path": "domesticOffers" },
-              { "label": "Minimum provider size", "path": "providerSize" },
-              { "label": "Minimum company age", "path": "providerCompanyAge" },
-              { "label": "Minimum rating", "path": "providerMinimumRating" }
+              {
+                "label": "Domestic offers",
+                "path": "domesticOffers"
+              },
+              {
+                "label": "Minimum provider size",
+                "path": "providerSize"
+              },
+              {
+                "label": "Minimum company age",
+                "path": "providerCompanyAge"
+              },
+              {
+                "label": "Minimum rating",
+                "path": "providerMinimumRating"
+              }
             ]
           },
           {
             "title": "Attachments",
             "fields": [
-              { "label": "Background files", "path": "backgroundInfoFiles" },
+              {
+                "label": "Background files",
+                "path": "backgroundInfoFiles"
+              },
               {
                 "label": "Supplier Code of Conduct files",
                 "path": "supplierCodeOfConductFiles"
@@ -740,9 +1604,108 @@
           {
             "title": "Meta",
             "fields": [
-              { "label": "Request title", "path": "title" },
-              { "label": "Languages", "path": "language" },
-              { "label": "Offers deadline", "path": "offersDeadline" }
+              {
+                "label": "Request title",
+                "path": "title"
+              },
+              {
+                "label": "Languages",
+                "path": "language"
+              },
+              {
+                "label": "Offers deadline",
+                "path": "offersDeadline"
+              }
+            ]
+          },
+          {
+            "title": "Request State",
+            "fields": [
+              {
+                "label": "Request State",
+                "path": "requestState"
+              }
+            ]
+          },
+          {
+            "title": "Request Category",
+            "fields": [
+              {
+                "label": "Request Category",
+                "path": "requestCategory"
+              }
+            ]
+          },
+          {
+            "title": "Request Subcategory",
+            "fields": [
+              {
+                "label": "Request Subcategory",
+                "path": "requestSubcategory"
+              }
+            ]
+          },
+          {
+            "title": "Assignment Type",
+            "fields": [
+              {
+                "label": "Assignment Type",
+                "path": "assignmentType"
+              }
+            ]
+          },
+          {
+            "title": "Description",
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
+          },
+          {
+            "title": "Additional Background Info",
+            "fields": [
+              {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              }
+            ]
+          },
+          {
+            "title": "Date Expired",
+            "fields": [
+              {
+                "label": "Date Expired",
+                "path": "dateExpired"
+              }
+            ]
+          },
+          {
+            "title": "Details Price Range",
+            "fields": [
+              {
+                "label": "Price Range",
+                "path": "details.priceRange"
+              }
+            ]
+          },
+          {
+            "title": "Details Confidential",
+            "fields": [
+              {
+                "label": "Confidential",
+                "path": "details.confidential"
+              }
+            ]
+          },
+          {
+            "title": "Details Winner Bidder Only Status",
+            "fields": [
+              {
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
+                "path": "details.winnerBidderOnlyStatus"
+              }
             ]
           }
         ]
@@ -788,7 +1751,10 @@
           {
             "title": "Client Name, Business Identity Code and Country of Domicile",
             "fields": [
-              { "label": "Client", "path": "__clientLine__" },
+              {
+                "label": "Client",
+                "path": "__clientLine__"
+              },
               {
                 "label": "Primary contact person",
                 "path": "primaryContactPerson"
@@ -798,20 +1764,35 @@
           {
             "title": "Scope of Work",
             "fields": [
-              { "label": "Template type", "path": "scopeOfWork" },
-              { "label": "Description (if customized)", "path": "description" }
+              {
+                "label": "What do you need?",
+                "path": "scopeOfWork"
+              },
+              {
+                "label": "Description",
+                "path": "description"
+              }
             ]
           },
           {
             "title": "Commercial Terms",
             "fields": [
-              { "label": "Payment rate", "path": "paymentRate" },
+              {
+                "label": "Contract Price",
+                "path": "paymentRate"
+              },
               {
                 "label": "Currency / Maximum price",
                 "path": "__currencyMax__"
               },
-              { "label": "Invoice type", "path": "invoiceType" },
-              { "label": "Advance retainer fee", "path": "advanceRetainerFee" }
+              {
+                "label": "Invoice type",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Advance retainer fee",
+                "path": "advanceRetainerFee"
+              }
             ]
           },
           {
@@ -821,16 +1802,31 @@
                 "label": "Service provider type",
                 "path": "serviceProviderType"
               },
-              { "label": "Domestic offers", "path": "domesticOffers" },
-              { "label": "Minimum provider size", "path": "providerSize" },
-              { "label": "Minimum company age", "path": "providerCompanyAge" },
-              { "label": "Minimum rating", "path": "providerMinimumRating" }
+              {
+                "label": "Domestic offers",
+                "path": "domesticOffers"
+              },
+              {
+                "label": "Minimum provider size",
+                "path": "providerSize"
+              },
+              {
+                "label": "Minimum company age",
+                "path": "providerCompanyAge"
+              },
+              {
+                "label": "Minimum rating",
+                "path": "providerMinimumRating"
+              }
             ]
           },
           {
             "title": "Attachments",
             "fields": [
-              { "label": "Background files", "path": "backgroundInfoFiles" },
+              {
+                "label": "Background files",
+                "path": "backgroundInfoFiles"
+              },
               {
                 "label": "Supplier Code of Conduct files",
                 "path": "supplierCodeOfConductFiles"
@@ -840,9 +1836,90 @@
           {
             "title": "Meta",
             "fields": [
-              { "label": "Request title", "path": "title" },
-              { "label": "Languages", "path": "language" },
-              { "label": "Offers deadline", "path": "offersDeadline" }
+              {
+                "label": "Request title",
+                "path": "title"
+              },
+              {
+                "label": "Languages",
+                "path": "language"
+              },
+              {
+                "label": "Offers deadline",
+                "path": "offersDeadline"
+              }
+            ]
+          },
+          {
+            "title": "Request State",
+            "fields": [
+              {
+                "label": "Request State",
+                "path": "requestState"
+              }
+            ]
+          },
+          {
+            "title": "Request Category",
+            "fields": [
+              {
+                "label": "Request Category",
+                "path": "requestCategory"
+              }
+            ]
+          },
+          {
+            "title": "Request Subcategory",
+            "fields": [
+              {
+                "label": "Request Subcategory",
+                "path": "requestSubcategory"
+              }
+            ]
+          },
+          {
+            "title": "Assignment Type",
+            "fields": [
+              {
+                "label": "Assignment Type",
+                "path": "assignmentType"
+              }
+            ]
+          },
+          {
+            "title": "Additional Background Info",
+            "fields": [
+              {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              }
+            ]
+          },
+          {
+            "title": "Currency",
+            "fields": [
+              {
+                "label": "Currency",
+                "path": "currency"
+              }
+            ]
+          },
+          {
+            "title": "Date Expired",
+            "fields": [
+              {
+                "label": "Date Expired",
+                "path": "dateExpired"
+              }
+            ]
+          },
+          {
+            "title": "Details Maximum Price",
+            "fields": [
+              {
+                "label": "Maximum Price",
+                "path": "details.maximumPrice"
+              }
             ]
           }
         ]
@@ -871,7 +1948,9 @@
         "offersDeadline": "2025-10-28",
         "title": "LEXIFY Request title",
         "dateExpired": "2025-10-28",
-        "details": { "maximumPrice": "4000" }
+        "details": {
+          "maximumPrice": "4000"
+        }
       }
     },
     {
@@ -883,7 +1962,10 @@
           {
             "title": "Client Name, Business Identity Code and Country of Domicile",
             "fields": [
-              { "label": "Client", "path": "__clientLineOrDisclosed__" },
+              {
+                "label": "Client",
+                "path": "__clientLineOrDisclosed__"
+              },
               {
                 "label": "Primary contact person",
                 "path": "primaryContactPerson"
@@ -893,8 +1975,14 @@
           {
             "title": "Scope of Work",
             "fields": [
-              { "label": "What is being reviewed", "path": "scopeOfWork" },
-              { "label": "Brief description", "path": "description" }
+              {
+                "label": "What do you need?",
+                "path": "scopeOfWork"
+              },
+              {
+                "label": "Description",
+                "path": "description"
+              }
             ]
           },
           {
@@ -913,10 +2001,22 @@
           {
             "title": "Commercial Terms",
             "fields": [
-              { "label": "Payment rate", "path": "paymentRate" },
-              { "label": "Currency", "path": "currency" },
-              { "label": "Invoice type", "path": "invoiceType" },
-              { "label": "Advance retainer fee", "path": "advanceRetainerFee" }
+              {
+                "label": "Contract Price",
+                "path": "paymentRate"
+              },
+              {
+                "label": "Currency",
+                "path": "currency"
+              },
+              {
+                "label": "Invoice type",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Advance retainer fee",
+                "path": "advanceRetainerFee"
+              }
             ]
           },
           {
@@ -926,16 +2026,31 @@
                 "label": "Service provider type",
                 "path": "serviceProviderType"
               },
-              { "label": "Domestic offers", "path": "domesticOffers" },
-              { "label": "Minimum provider size", "path": "providerSize" },
-              { "label": "Minimum company age", "path": "providerCompanyAge" },
-              { "label": "Minimum rating", "path": "providerMinimumRating" }
+              {
+                "label": "Domestic offers",
+                "path": "domesticOffers"
+              },
+              {
+                "label": "Minimum provider size",
+                "path": "providerSize"
+              },
+              {
+                "label": "Minimum company age",
+                "path": "providerCompanyAge"
+              },
+              {
+                "label": "Minimum rating",
+                "path": "providerMinimumRating"
+              }
             ]
           },
           {
             "title": "Attachments",
             "fields": [
-              { "label": "Background files", "path": "backgroundInfoFiles" },
+              {
+                "label": "Background files",
+                "path": "backgroundInfoFiles"
+              },
               {
                 "label": "Supplier Code of Conduct files",
                 "path": "supplierCodeOfConductFiles"
@@ -945,9 +2060,90 @@
           {
             "title": "Meta",
             "fields": [
-              { "label": "Request title", "path": "title" },
-              { "label": "Languages", "path": "language" },
-              { "label": "Offers deadline", "path": "offersDeadline" }
+              {
+                "label": "Request title",
+                "path": "title"
+              },
+              {
+                "label": "Languages",
+                "path": "language"
+              },
+              {
+                "label": "Offers deadline",
+                "path": "offersDeadline"
+              }
+            ]
+          },
+          {
+            "title": "Request State",
+            "fields": [
+              {
+                "label": "Request State",
+                "path": "requestState"
+              }
+            ]
+          },
+          {
+            "title": "Request Category",
+            "fields": [
+              {
+                "label": "Request Category",
+                "path": "requestCategory"
+              }
+            ]
+          },
+          {
+            "title": "Request Subcategory",
+            "fields": [
+              {
+                "label": "Request Subcategory",
+                "path": "requestSubcategory"
+              }
+            ]
+          },
+          {
+            "title": "Assignment Type",
+            "fields": [
+              {
+                "label": "Assignment Type",
+                "path": "assignmentType"
+              }
+            ]
+          },
+          {
+            "title": "Additional Background Info",
+            "fields": [
+              {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              }
+            ]
+          },
+          {
+            "title": "Date Expired",
+            "fields": [
+              {
+                "label": "Date Expired",
+                "path": "dateExpired"
+              }
+            ]
+          },
+          {
+            "title": "Details Confidential",
+            "fields": [
+              {
+                "label": "Confidential",
+                "path": "details.confidential"
+              }
+            ]
+          },
+          {
+            "title": "Details Winner Bidder Only Status",
+            "fields": [
+              {
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
+                "path": "details.winnerBidderOnlyStatus"
+              }
             ]
           }
         ]
@@ -992,7 +2188,10 @@
           {
             "title": "Client Name, Business Identity Code and Country of Domicile",
             "fields": [
-              { "label": "Client", "path": "__clientLineOrDisclosed__" },
+              {
+                "label": "Client",
+                "path": "__clientLineOrDisclosed__"
+              },
               {
                 "label": "Primary contact person",
                 "path": "primaryContactPerson"
@@ -1002,8 +2201,14 @@
           {
             "title": "Scope of Work",
             "fields": [
-              { "label": "Negotiation scope", "path": "scopeOfWork" },
-              { "label": "Brief description", "path": "description" }
+              {
+                "label": "What do you need?",
+                "path": "scopeOfWork"
+              },
+              {
+                "label": "Description",
+                "path": "description"
+              }
             ]
           },
           {
@@ -1014,7 +2219,7 @@
                 "path": "__counterpartyConfidential__"
               },
               {
-                "label": "Expected value of the contract",
+                "label": "Expected value of the agreement",
                 "path": "details.expectedValue"
               },
               {
@@ -1026,10 +2231,22 @@
           {
             "title": "Commercial Terms",
             "fields": [
-              { "label": "Payment rate", "path": "paymentRate" },
-              { "label": "Currency", "path": "currency" },
-              { "label": "Invoice type", "path": "invoiceType" },
-              { "label": "Advance retainer fee", "path": "advanceRetainerFee" }
+              {
+                "label": "Contract Price",
+                "path": "paymentRate"
+              },
+              {
+                "label": "Currency",
+                "path": "currency"
+              },
+              {
+                "label": "Invoice type",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Advance retainer fee",
+                "path": "advanceRetainerFee"
+              }
             ]
           },
           {
@@ -1039,16 +2256,31 @@
                 "label": "Service provider type",
                 "path": "serviceProviderType"
               },
-              { "label": "Domestic offers", "path": "domesticOffers" },
-              { "label": "Minimum provider size", "path": "providerSize" },
-              { "label": "Minimum company age", "path": "providerCompanyAge" },
-              { "label": "Minimum rating", "path": "providerMinimumRating" }
+              {
+                "label": "Domestic offers",
+                "path": "domesticOffers"
+              },
+              {
+                "label": "Minimum provider size",
+                "path": "providerSize"
+              },
+              {
+                "label": "Minimum company age",
+                "path": "providerCompanyAge"
+              },
+              {
+                "label": "Minimum rating",
+                "path": "providerMinimumRating"
+              }
             ]
           },
           {
             "title": "Attachments",
             "fields": [
-              { "label": "Background files", "path": "backgroundInfoFiles" },
+              {
+                "label": "Background files",
+                "path": "backgroundInfoFiles"
+              },
               {
                 "label": "Supplier Code of Conduct files",
                 "path": "supplierCodeOfConductFiles"
@@ -1058,9 +2290,90 @@
           {
             "title": "Meta",
             "fields": [
-              { "label": "Request title", "path": "title" },
-              { "label": "Languages", "path": "language" },
-              { "label": "Offers deadline", "path": "offersDeadline" }
+              {
+                "label": "Request title",
+                "path": "title"
+              },
+              {
+                "label": "Languages",
+                "path": "language"
+              },
+              {
+                "label": "Offers deadline",
+                "path": "offersDeadline"
+              }
+            ]
+          },
+          {
+            "title": "Request State",
+            "fields": [
+              {
+                "label": "Request State",
+                "path": "requestState"
+              }
+            ]
+          },
+          {
+            "title": "Request Category",
+            "fields": [
+              {
+                "label": "Request Category",
+                "path": "requestCategory"
+              }
+            ]
+          },
+          {
+            "title": "Request Subcategory",
+            "fields": [
+              {
+                "label": "Request Subcategory",
+                "path": "requestSubcategory"
+              }
+            ]
+          },
+          {
+            "title": "Assignment Type",
+            "fields": [
+              {
+                "label": "Assignment Type",
+                "path": "assignmentType"
+              }
+            ]
+          },
+          {
+            "title": "Additional Background Info",
+            "fields": [
+              {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              }
+            ]
+          },
+          {
+            "title": "Date Expired",
+            "fields": [
+              {
+                "label": "Date Expired",
+                "path": "dateExpired"
+              }
+            ]
+          },
+          {
+            "title": "Details Confidential",
+            "fields": [
+              {
+                "label": "Confidential",
+                "path": "details.confidential"
+              }
+            ]
+          },
+          {
+            "title": "Details Winner Bidder Only Status",
+            "fields": [
+              {
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
+                "path": "details.winnerBidderOnlyStatus"
+              }
             ]
           }
         ]
@@ -1106,7 +2419,10 @@
           {
             "title": "Client Name, Business Identity Code and Country of Domicile",
             "fields": [
-              { "label": "Client", "path": "__clientLine__" },
+              {
+                "label": "Client",
+                "path": "__clientLine__"
+              },
               {
                 "label": "Primary contact person",
                 "path": "primaryContactPerson"
@@ -1115,7 +2431,12 @@
           },
           {
             "title": "Scope of Work",
-            "fields": [{ "label": "Template(s)", "path": "scopeOfWork" }]
+            "fields": [
+              {
+                "label": "What do you need?",
+                "path": "scopeOfWork"
+              }
+            ]
           },
           {
             "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
@@ -1128,24 +2449,43 @@
           },
           {
             "title": "Description of Client's Line of Business",
-            "fields": [{ "label": "Description", "path": "description" }]
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
           },
           {
             "title": "Additional Background Information Provided by Client",
             "fields": [
-              { "label": "Notes", "path": "additionalBackgroundInfo" },
-              { "label": "Background files", "path": "backgroundInfoFiles" }
+              {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              },
+              {
+                "label": "Background files",
+                "path": "backgroundInfoFiles"
+              }
             ]
           },
           {
             "title": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
             "fields": [
-              { "label": "Advance retainer fee", "path": "advanceRetainerFee" }
+              {
+                "label": "Advance retainer fee",
+                "path": "advanceRetainerFee"
+              }
             ]
           },
           {
             "title": "Invoice Type",
-            "fields": [{ "label": "How invoiced", "path": "invoiceType" }]
+            "fields": [
+              {
+                "label": "Invoice type",
+                "path": "invoiceType"
+              }
+            ]
           },
           {
             "title": "Provider Requirements",
@@ -1154,18 +2494,120 @@
                 "label": "Service provider type",
                 "path": "serviceProviderType"
               },
-              { "label": "Domestic offers", "path": "domesticOffers" },
-              { "label": "Minimum provider size", "path": "providerSize" },
-              { "label": "Minimum company age", "path": "providerCompanyAge" },
-              { "label": "Minimum rating", "path": "providerMinimumRating" }
+              {
+                "label": "Domestic offers",
+                "path": "domesticOffers"
+              },
+              {
+                "label": "Minimum provider size",
+                "path": "providerSize"
+              },
+              {
+                "label": "Minimum company age",
+                "path": "providerCompanyAge"
+              },
+              {
+                "label": "Minimum rating",
+                "path": "providerMinimumRating"
+              }
             ]
           },
           {
             "title": "Meta",
             "fields": [
-              { "label": "Languages", "path": "language" },
-              { "label": "Offers deadline", "path": "offersDeadline" },
-              { "label": "Request title", "path": "title" }
+              {
+                "label": "Languages",
+                "path": "language"
+              },
+              {
+                "label": "Offers deadline",
+                "path": "offersDeadline"
+              },
+              {
+                "label": "Request title",
+                "path": "title"
+              }
+            ]
+          },
+          {
+            "title": "Request State",
+            "fields": [
+              {
+                "label": "Request State",
+                "path": "requestState"
+              }
+            ]
+          },
+          {
+            "title": "Request Category",
+            "fields": [
+              {
+                "label": "Request Category",
+                "path": "requestCategory"
+              }
+            ]
+          },
+          {
+            "title": "Request Subcategory",
+            "fields": [
+              {
+                "label": "Request Subcategory",
+                "path": "requestSubcategory"
+              }
+            ]
+          },
+          {
+            "title": "Assignment Type",
+            "fields": [
+              {
+                "label": "Assignment Type",
+                "path": "assignmentType"
+              }
+            ]
+          },
+          {
+            "title": "Supplier Code Of Conduct Files",
+            "fields": [
+              {
+                "label": "Supplier Code of Conduct files",
+                "path": "supplierCodeOfConductFiles"
+              }
+            ]
+          },
+          {
+            "title": "Currency",
+            "fields": [
+              {
+                "label": "Currency",
+                "path": "currency"
+              }
+            ]
+          },
+          {
+            "title": "Payment Rate",
+            "fields": [
+              {
+                "label": "Contract Price",
+                "path": "paymentRate"
+              }
+            ]
+          },
+          {
+            "title": "Maximum Price",
+            "fields": [
+              {
+                "label": "Maximum price (VAT 0%)",
+                "path": "maximumPrice"
+              }
+            ]
+          },
+          {
+            "title": "Date Expired",
+            "fields": [
+              {
+                "label": "Date Expired",
+                "path": "dateExpired"
+              }
             ]
           }
         ]
@@ -1207,7 +2649,10 @@
           {
             "title": "Client Name, Business Identity Code and Country of Domicile",
             "fields": [
-              { "label": "Client", "path": "__clientLineOrDisclosed__" },
+              {
+                "label": "Client",
+                "path": "__clientLineOrDisclosed__"
+              },
               {
                 "label": "Primary contact person",
                 "path": "primaryContactPerson"
@@ -1217,7 +2662,10 @@
           {
             "title": "Scope of Work",
             "fields": [
-              { "label": "What is being reviewed", "path": "scopeOfWork" }
+              {
+                "label": "What do you need?",
+                "path": "scopeOfWork"
+              }
             ]
           },
           {
@@ -1231,7 +2679,12 @@
           },
           {
             "title": "Description of the Product or Service the Client is Buying with the Contract under Negotiation; Total Number of Pages of Documentation Requiring Legal Review",
-            "fields": [{ "label": "Description", "path": "description" }]
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
           },
           {
             "title": "Name, Business Identity Code and Country of Domicile of Client's Counterparty (Supplier) in the Matter",
@@ -1245,7 +2698,10 @@
           {
             "title": "Expected Value of the Contract",
             "fields": [
-              { "label": "Expected value", "path": "details.expectedValue" }
+              {
+                "label": "Expected value of the agreement",
+                "path": "details.expectedValue"
+              }
             ]
           },
           {
@@ -1255,16 +2711,31 @@
                 "label": "Service provider type",
                 "path": "serviceProviderType"
               },
-              { "label": "Domestic offers", "path": "domesticOffers" },
-              { "label": "Minimum provider size", "path": "providerSize" },
-              { "label": "Minimum company age", "path": "providerCompanyAge" },
-              { "label": "Minimum rating", "path": "providerMinimumRating" }
+              {
+                "label": "Domestic offers",
+                "path": "domesticOffers"
+              },
+              {
+                "label": "Minimum provider size",
+                "path": "providerSize"
+              },
+              {
+                "label": "Minimum company age",
+                "path": "providerCompanyAge"
+              },
+              {
+                "label": "Minimum rating",
+                "path": "providerMinimumRating"
+              }
             ]
           },
           {
             "title": "Attachments",
             "fields": [
-              { "label": "Background files", "path": "backgroundInfoFiles" },
+              {
+                "label": "Background files",
+                "path": "backgroundInfoFiles"
+              },
               {
                 "label": "Supplier Code of Conduct files",
                 "path": "supplierCodeOfConductFiles"
@@ -1274,9 +2745,135 @@
           {
             "title": "Meta",
             "fields": [
-              { "label": "Languages", "path": "language" },
-              { "label": "Offers deadline", "path": "offersDeadline" },
-              { "label": "Request title", "path": "title" }
+              {
+                "label": "Languages",
+                "path": "language"
+              },
+              {
+                "label": "Offers deadline",
+                "path": "offersDeadline"
+              },
+              {
+                "label": "Request title",
+                "path": "title"
+              }
+            ]
+          },
+          {
+            "title": "Request State",
+            "fields": [
+              {
+                "label": "Request State",
+                "path": "requestState"
+              }
+            ]
+          },
+          {
+            "title": "Request Category",
+            "fields": [
+              {
+                "label": "Request Category",
+                "path": "requestCategory"
+              }
+            ]
+          },
+          {
+            "title": "Request Subcategory",
+            "fields": [
+              {
+                "label": "Request Subcategory",
+                "path": "requestSubcategory"
+              }
+            ]
+          },
+          {
+            "title": "Assignment Type",
+            "fields": [
+              {
+                "label": "Assignment Type",
+                "path": "assignmentType"
+              }
+            ]
+          },
+          {
+            "title": "Additional Background Info",
+            "fields": [
+              {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              }
+            ]
+          },
+          {
+            "title": "Currency",
+            "fields": [
+              {
+                "label": "Currency",
+                "path": "currency"
+              }
+            ]
+          },
+          {
+            "title": "Payment Rate",
+            "fields": [
+              {
+                "label": "Contract Price",
+                "path": "paymentRate"
+              }
+            ]
+          },
+          {
+            "title": "Advance Retainer Fee",
+            "fields": [
+              {
+                "label": "Advance retainer fee",
+                "path": "advanceRetainerFee"
+              }
+            ]
+          },
+          {
+            "title": "Invoice Type",
+            "fields": [
+              {
+                "label": "Invoice type",
+                "path": "invoiceType"
+              }
+            ]
+          },
+          {
+            "title": "Date Expired",
+            "fields": [
+              {
+                "label": "Date Expired",
+                "path": "dateExpired"
+              }
+            ]
+          },
+          {
+            "title": "Details Document Types",
+            "fields": [
+              {
+                "label": "Document Types",
+                "path": "details.documentTypes"
+              }
+            ]
+          },
+          {
+            "title": "Details Confidential",
+            "fields": [
+              {
+                "label": "Confidential",
+                "path": "details.confidential"
+              }
+            ]
+          },
+          {
+            "title": "Details Winner Bidder Only Status",
+            "fields": [
+              {
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
+                "path": "details.winnerBidderOnlyStatus"
+              }
             ]
           }
         ]
@@ -1322,7 +2919,10 @@
           {
             "title": "Client Name, Business Identity Code and Country of Domicile",
             "fields": [
-              { "label": "Client", "path": "__clientLineOrDisclosed__" },
+              {
+                "label": "Client",
+                "path": "__clientLineOrDisclosed__"
+              },
               {
                 "label": "Primary contact person",
                 "path": "primaryContactPerson"
@@ -1332,7 +2932,10 @@
           {
             "title": "Scope of Work",
             "fields": [
-              { "label": "Negotiated document(s)", "path": "scopeOfWork" }
+              {
+                "label": "What do you need?",
+                "path": "scopeOfWork"
+              }
             ]
           },
           {
@@ -1346,7 +2949,12 @@
           },
           {
             "title": "Description of Product or Service Client is Buying or Selling with the Contract under Negotiation",
-            "fields": [{ "label": "Description", "path": "description" }]
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
           },
           {
             "title": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter",
@@ -1360,7 +2968,10 @@
           {
             "title": "Expected Value of the Contract",
             "fields": [
-              { "label": "Expected value", "path": "details.expectedValue" }
+              {
+                "label": "Expected value of the agreement",
+                "path": "details.expectedValue"
+              }
             ]
           },
           {
@@ -1379,16 +2990,31 @@
                 "label": "Service provider type",
                 "path": "serviceProviderType"
               },
-              { "label": "Domestic offers", "path": "domesticOffers" },
-              { "label": "Minimum provider size", "path": "providerSize" },
-              { "label": "Minimum company age", "path": "providerCompanyAge" },
-              { "label": "Minimum rating", "path": "providerMinimumRating" }
+              {
+                "label": "Domestic offers",
+                "path": "domesticOffers"
+              },
+              {
+                "label": "Minimum provider size",
+                "path": "providerSize"
+              },
+              {
+                "label": "Minimum company age",
+                "path": "providerCompanyAge"
+              },
+              {
+                "label": "Minimum rating",
+                "path": "providerMinimumRating"
+              }
             ]
           },
           {
             "title": "Attachments",
             "fields": [
-              { "label": "Background files", "path": "backgroundInfoFiles" },
+              {
+                "label": "Background files",
+                "path": "backgroundInfoFiles"
+              },
               {
                 "label": "Supplier Code of Conduct files",
                 "path": "supplierCodeOfConductFiles"
@@ -1398,9 +3024,135 @@
           {
             "title": "Meta",
             "fields": [
-              { "label": "Languages", "path": "language" },
-              { "label": "Offers deadline", "path": "offersDeadline" },
-              { "label": "Request title", "path": "title" }
+              {
+                "label": "Languages",
+                "path": "language"
+              },
+              {
+                "label": "Offers deadline",
+                "path": "offersDeadline"
+              },
+              {
+                "label": "Request title",
+                "path": "title"
+              }
+            ]
+          },
+          {
+            "title": "Request State",
+            "fields": [
+              {
+                "label": "Request State",
+                "path": "requestState"
+              }
+            ]
+          },
+          {
+            "title": "Request Category",
+            "fields": [
+              {
+                "label": "Request Category",
+                "path": "requestCategory"
+              }
+            ]
+          },
+          {
+            "title": "Request Subcategory",
+            "fields": [
+              {
+                "label": "Request Subcategory",
+                "path": "requestSubcategory"
+              }
+            ]
+          },
+          {
+            "title": "Assignment Type",
+            "fields": [
+              {
+                "label": "Assignment Type",
+                "path": "assignmentType"
+              }
+            ]
+          },
+          {
+            "title": "Additional Background Info",
+            "fields": [
+              {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              }
+            ]
+          },
+          {
+            "title": "Currency",
+            "fields": [
+              {
+                "label": "Currency",
+                "path": "currency"
+              }
+            ]
+          },
+          {
+            "title": "Payment Rate",
+            "fields": [
+              {
+                "label": "Contract Price",
+                "path": "paymentRate"
+              }
+            ]
+          },
+          {
+            "title": "Advance Retainer Fee",
+            "fields": [
+              {
+                "label": "Advance retainer fee",
+                "path": "advanceRetainerFee"
+              }
+            ]
+          },
+          {
+            "title": "Invoice Type",
+            "fields": [
+              {
+                "label": "Invoice type",
+                "path": "invoiceType"
+              }
+            ]
+          },
+          {
+            "title": "Date Expired",
+            "fields": [
+              {
+                "label": "Date Expired",
+                "path": "dateExpired"
+              }
+            ]
+          },
+          {
+            "title": "Details Document Types",
+            "fields": [
+              {
+                "label": "Document Types",
+                "path": "details.documentTypes"
+              }
+            ]
+          },
+          {
+            "title": "Details Confidential",
+            "fields": [
+              {
+                "label": "Confidential",
+                "path": "details.confidential"
+              }
+            ]
+          },
+          {
+            "title": "Details Winner Bidder Only Status",
+            "fields": [
+              {
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
+                "path": "details.winnerBidderOnlyStatus"
+              }
             ]
           }
         ]
@@ -1592,8 +3344,14 @@
               "title": "Minimum Rating of the Legal Service Provider",
               "value": "firmRating"
             },
-            { "title": "Contract Price Currency", "value": "currency" },
-            { "title": "Maximum Price (VAT 0%)", "value": "maxPrice" },
+            {
+              "title": "Contract Price Currency",
+              "value": "currency"
+            },
+            {
+              "title": "Maximum Price (VAT 0%)",
+              "value": "maxPrice"
+            },
             {
               "title": "Deadline for Offers to be Submitted by Legal Service Providers",
               "value": "date"
@@ -1684,8 +3442,14 @@
               "title": "Minimum Rating of the Legal Service Provider",
               "value": "firmRating"
             },
-            { "title": "Contract Price Currency", "value": "currency" },
-            { "title": "Maximum Price (VAT 0%)", "value": "maxPrice" },
+            {
+              "title": "Contract Price Currency",
+              "value": "currency"
+            },
+            {
+              "title": "Maximum Price (VAT 0%)",
+              "value": "maxPrice"
+            },
             {
               "title": "Deadline for Offers to be Submitted by Legal Service Providers",
               "value": "date"
@@ -1781,7 +3545,10 @@
               "title": "Minimum Rating of the Legal Service Provider",
               "value": "firmRating"
             },
-            { "title": "Contract Price Currency", "value": "currency" },
+            {
+              "title": "Contract Price Currency",
+              "value": "currency"
+            },
             {
               "title": "Deadline for Offers to be Submitted by Legal Service Providers",
               "value": "date"
@@ -1811,7 +3578,9 @@
           "offersDeadline": "{{date}}",
           "title": "{{requestTitle}}",
           "dateExpired": "{{date}}",
-          "details": { "contractTypes": "{{areaboxesOtherJoin}}" }
+          "details": {
+            "contractTypes": "{{areaboxesOtherJoin}}"
+          }
         }
       }
     },
@@ -1824,7 +3593,10 @@
           {
             "title": "Client Name, Business Identity Code and Country of Domicile",
             "fields": [
-              { "label": "Client", "path": "__clientLineOrDisclosed__" },
+              {
+                "label": "Client",
+                "path": "__clientLineOrDisclosed__"
+              },
               {
                 "label": "Primary contact person",
                 "path": "primaryContactPerson"
@@ -1835,7 +3607,7 @@
             "title": "Scope of Work",
             "fields": [
               {
-                "label": "What kind of support you need",
+                "label": "What do you need?",
                 "path": "scopeOfWork"
               }
             ]
@@ -1851,19 +3623,33 @@
           },
           {
             "title": "Description of the Matter under Dispute and Current Status of Court Proceedings",
-            "fields": [{ "label": "Description", "path": "description" }]
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
           },
           {
             "title": "Additional Background Information Provided by Client",
             "fields": [
-              { "label": "Notes", "path": "additionalBackgroundInfo" },
-              { "label": "Background files", "path": "backgroundInfoFiles" }
+              {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              },
+              {
+                "label": "Background files",
+                "path": "backgroundInfoFiles"
+              }
             ]
           },
           {
             "title": "Contract Price and Currency",
             "fields": [
-              { "label": "Price model", "path": "__priceModel_Court__" }
+              {
+                "label": "Price model",
+                "path": "__priceModel_Court__"
+              }
             ]
           },
           {
@@ -1873,25 +3659,142 @@
                 "label": "Service provider type",
                 "path": "serviceProviderType"
               },
-              { "label": "Domestic offers", "path": "domesticOffers" },
-              { "label": "Minimum provider size", "path": "providerSize" },
-              { "label": "Minimum company age", "path": "providerCompanyAge" },
-              { "label": "Minimum rating", "path": "providerMinimumRating" }
+              {
+                "label": "Domestic offers",
+                "path": "domesticOffers"
+              },
+              {
+                "label": "Minimum provider size",
+                "path": "providerSize"
+              },
+              {
+                "label": "Minimum company age",
+                "path": "providerCompanyAge"
+              },
+              {
+                "label": "Minimum rating",
+                "path": "providerMinimumRating"
+              }
             ]
           },
           {
             "title": "Billing & Language",
             "fields": [
-              { "label": "Advance retainer fee", "path": "advanceRetainerFee" },
-              { "label": "Invoice type", "path": "invoiceType" },
-              { "label": "Languages", "path": "language" }
+              {
+                "label": "Advance retainer fee",
+                "path": "advanceRetainerFee"
+              },
+              {
+                "label": "Invoice type",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Languages",
+                "path": "language"
+              }
             ]
           },
           {
             "title": "Meta",
             "fields": [
-              { "label": "Offers deadline", "path": "offersDeadline" },
-              { "label": "Request title", "path": "title" }
+              {
+                "label": "Offers deadline",
+                "path": "offersDeadline"
+              },
+              {
+                "label": "Request title",
+                "path": "title"
+              }
+            ]
+          },
+          {
+            "title": "Request State",
+            "fields": [
+              {
+                "label": "Request State",
+                "path": "requestState"
+              }
+            ]
+          },
+          {
+            "title": "Request Category",
+            "fields": [
+              {
+                "label": "Request Category",
+                "path": "requestCategory"
+              }
+            ]
+          },
+          {
+            "title": "Request Subcategory",
+            "fields": [
+              {
+                "label": "Request Subcategory",
+                "path": "requestSubcategory"
+              }
+            ]
+          },
+          {
+            "title": "Supplier Code Of Conduct Files",
+            "fields": [
+              {
+                "label": "Supplier Code of Conduct files",
+                "path": "supplierCodeOfConductFiles"
+              }
+            ]
+          },
+          {
+            "title": "Currency",
+            "fields": [
+              {
+                "label": "Currency",
+                "path": "currency"
+              }
+            ]
+          },
+          {
+            "title": "Payment Rate",
+            "fields": [
+              {
+                "label": "Contract Price",
+                "path": "paymentRate"
+              }
+            ]
+          },
+          {
+            "title": "Maximum Price",
+            "fields": [
+              {
+                "label": "Maximum price (VAT 0%)",
+                "path": "maximumPrice"
+              }
+            ]
+          },
+          {
+            "title": "Date Expired",
+            "fields": [
+              {
+                "label": "Date Expired",
+                "path": "dateExpired"
+              }
+            ]
+          },
+          {
+            "title": "Details Confidential",
+            "fields": [
+              {
+                "label": "Confidential",
+                "path": "details.confidential"
+              }
+            ]
+          },
+          {
+            "title": "Details Winner Bidder Only Status",
+            "fields": [
+              {
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
+                "path": "details.winnerBidderOnlyStatus"
+              }
             ]
           }
         ]
@@ -1935,7 +3838,10 @@
           {
             "title": "Client Name, Business Identity Code and Country of Domicile",
             "fields": [
-              { "label": "Client", "path": "__clientLineOrDisclosed__" },
+              {
+                "label": "Client",
+                "path": "__clientLineOrDisclosed__"
+              },
               {
                 "label": "Primary contact person",
                 "path": "primaryContactPerson"
@@ -1946,7 +3852,7 @@
             "title": "Scope of Work",
             "fields": [
               {
-                "label": "What kind of support you need",
+                "label": "What do you need?",
                 "path": "scopeOfWork"
               }
             ]
@@ -1962,19 +3868,33 @@
           },
           {
             "title": "Description of the Matter under Dispute and Current Status of the Arbitration Proceedings",
-            "fields": [{ "label": "Description", "path": "description" }]
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
           },
           {
             "title": "Additional Background Information Provided by Client",
             "fields": [
-              { "label": "Notes", "path": "additionalBackgroundInfo" },
-              { "label": "Background files", "path": "backgroundInfoFiles" }
+              {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              },
+              {
+                "label": "Background files",
+                "path": "backgroundInfoFiles"
+              }
             ]
           },
           {
             "title": "Contract Price and Currency",
             "fields": [
-              { "label": "Price model", "path": "__priceModel_Arbitration__" }
+              {
+                "label": "Price model",
+                "path": "__priceModel_Arbitration__"
+              }
             ]
           },
           {
@@ -1984,25 +3904,142 @@
                 "label": "Service provider type",
                 "path": "serviceProviderType"
               },
-              { "label": "Domestic offers", "path": "domesticOffers" },
-              { "label": "Minimum provider size", "path": "providerSize" },
-              { "label": "Minimum company age", "path": "providerCompanyAge" },
-              { "label": "Minimum rating", "path": "providerMinimumRating" }
+              {
+                "label": "Domestic offers",
+                "path": "domesticOffers"
+              },
+              {
+                "label": "Minimum provider size",
+                "path": "providerSize"
+              },
+              {
+                "label": "Minimum company age",
+                "path": "providerCompanyAge"
+              },
+              {
+                "label": "Minimum rating",
+                "path": "providerMinimumRating"
+              }
             ]
           },
           {
             "title": "Billing & Language",
             "fields": [
-              { "label": "Advance retainer fee", "path": "advanceRetainerFee" },
-              { "label": "Invoice type", "path": "invoiceType" },
-              { "label": "Languages", "path": "language" }
+              {
+                "label": "Advance retainer fee",
+                "path": "advanceRetainerFee"
+              },
+              {
+                "label": "Invoice type",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Languages",
+                "path": "language"
+              }
             ]
           },
           {
             "title": "Meta",
             "fields": [
-              { "label": "Offers deadline", "path": "offersDeadline" },
-              { "label": "Request title", "path": "title" }
+              {
+                "label": "Offers deadline",
+                "path": "offersDeadline"
+              },
+              {
+                "label": "Request title",
+                "path": "title"
+              }
+            ]
+          },
+          {
+            "title": "Request State",
+            "fields": [
+              {
+                "label": "Request State",
+                "path": "requestState"
+              }
+            ]
+          },
+          {
+            "title": "Request Category",
+            "fields": [
+              {
+                "label": "Request Category",
+                "path": "requestCategory"
+              }
+            ]
+          },
+          {
+            "title": "Request Subcategory",
+            "fields": [
+              {
+                "label": "Request Subcategory",
+                "path": "requestSubcategory"
+              }
+            ]
+          },
+          {
+            "title": "Supplier Code Of Conduct Files",
+            "fields": [
+              {
+                "label": "Supplier Code of Conduct files",
+                "path": "supplierCodeOfConductFiles"
+              }
+            ]
+          },
+          {
+            "title": "Currency",
+            "fields": [
+              {
+                "label": "Currency",
+                "path": "currency"
+              }
+            ]
+          },
+          {
+            "title": "Payment Rate",
+            "fields": [
+              {
+                "label": "Contract Price",
+                "path": "paymentRate"
+              }
+            ]
+          },
+          {
+            "title": "Maximum Price",
+            "fields": [
+              {
+                "label": "Maximum price (VAT 0%)",
+                "path": "maximumPrice"
+              }
+            ]
+          },
+          {
+            "title": "Date Expired",
+            "fields": [
+              {
+                "label": "Date Expired",
+                "path": "dateExpired"
+              }
+            ]
+          },
+          {
+            "title": "Details Confidential",
+            "fields": [
+              {
+                "label": "Confidential",
+                "path": "details.confidential"
+              }
+            ]
+          },
+          {
+            "title": "Details Winner Bidder Only Status",
+            "fields": [
+              {
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
+                "path": "details.winnerBidderOnlyStatus"
+              }
             ]
           }
         ]
@@ -2046,7 +4083,10 @@
           {
             "title": "Client Name, Business Identity Code and Country of Domicile",
             "fields": [
-              { "label": "Client", "path": "__clientLineOrDisclosed__" },
+              {
+                "label": "Client",
+                "path": "__clientLineOrDisclosed__"
+              },
               {
                 "label": "Primary contact person",
                 "path": "primaryContactPerson"
@@ -2057,7 +4097,7 @@
             "title": "Scope of Work",
             "fields": [
               {
-                "label": "What kind of support you need",
+                "label": "What do you need?",
                 "path": "scopeOfWork"
               }
             ]
@@ -2073,19 +4113,33 @@
           },
           {
             "title": "Description of the Matter under Dispute and Current Status of the Settlement Negotiations",
-            "fields": [{ "label": "Description", "path": "description" }]
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
           },
           {
             "title": "Additional Background Information Provided by Client",
             "fields": [
-              { "label": "Notes", "path": "additionalBackgroundInfo" },
-              { "label": "Background files", "path": "backgroundInfoFiles" }
+              {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              },
+              {
+                "label": "Background files",
+                "path": "backgroundInfoFiles"
+              }
             ]
           },
           {
             "title": "Contract Price and Currency",
             "fields": [
-              { "label": "Price model", "path": "__priceModel_Settlement__" }
+              {
+                "label": "Price model",
+                "path": "__priceModel_Settlement__"
+              }
             ]
           },
           {
@@ -2095,25 +4149,142 @@
                 "label": "Service provider type",
                 "path": "serviceProviderType"
               },
-              { "label": "Domestic offers", "path": "domesticOffers" },
-              { "label": "Minimum provider size", "path": "providerSize" },
-              { "label": "Minimum company age", "path": "providerCompanyAge" },
-              { "label": "Minimum rating", "path": "providerMinimumRating" }
+              {
+                "label": "Domestic offers",
+                "path": "domesticOffers"
+              },
+              {
+                "label": "Minimum provider size",
+                "path": "providerSize"
+              },
+              {
+                "label": "Minimum company age",
+                "path": "providerCompanyAge"
+              },
+              {
+                "label": "Minimum rating",
+                "path": "providerMinimumRating"
+              }
             ]
           },
           {
             "title": "Billing & Language",
             "fields": [
-              { "label": "Advance retainer fee", "path": "advanceRetainerFee" },
-              { "label": "Invoice type", "path": "invoiceType" },
-              { "label": "Languages", "path": "language" }
+              {
+                "label": "Advance retainer fee",
+                "path": "advanceRetainerFee"
+              },
+              {
+                "label": "Invoice type",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Languages",
+                "path": "language"
+              }
             ]
           },
           {
             "title": "Meta",
             "fields": [
-              { "label": "Offers deadline", "path": "offersDeadline" },
-              { "label": "Request title", "path": "title" }
+              {
+                "label": "Offers deadline",
+                "path": "offersDeadline"
+              },
+              {
+                "label": "Request title",
+                "path": "title"
+              }
+            ]
+          },
+          {
+            "title": "Request State",
+            "fields": [
+              {
+                "label": "Request State",
+                "path": "requestState"
+              }
+            ]
+          },
+          {
+            "title": "Request Category",
+            "fields": [
+              {
+                "label": "Request Category",
+                "path": "requestCategory"
+              }
+            ]
+          },
+          {
+            "title": "Request Subcategory",
+            "fields": [
+              {
+                "label": "Request Subcategory",
+                "path": "requestSubcategory"
+              }
+            ]
+          },
+          {
+            "title": "Supplier Code Of Conduct Files",
+            "fields": [
+              {
+                "label": "Supplier Code of Conduct files",
+                "path": "supplierCodeOfConductFiles"
+              }
+            ]
+          },
+          {
+            "title": "Currency",
+            "fields": [
+              {
+                "label": "Currency",
+                "path": "currency"
+              }
+            ]
+          },
+          {
+            "title": "Payment Rate",
+            "fields": [
+              {
+                "label": "Contract Price",
+                "path": "paymentRate"
+              }
+            ]
+          },
+          {
+            "title": "Maximum Price",
+            "fields": [
+              {
+                "label": "Maximum price (VAT 0%)",
+                "path": "maximumPrice"
+              }
+            ]
+          },
+          {
+            "title": "Date Expired",
+            "fields": [
+              {
+                "label": "Date Expired",
+                "path": "dateExpired"
+              }
+            ]
+          },
+          {
+            "title": "Details Confidential",
+            "fields": [
+              {
+                "label": "Confidential",
+                "path": "details.confidential"
+              }
+            ]
+          },
+          {
+            "title": "Details Winner Bidder Only Status",
+            "fields": [
+              {
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
+                "path": "details.winnerBidderOnlyStatus"
+              }
             ]
           }
         ]
@@ -2157,7 +4328,10 @@
           {
             "title": "Client Name, Business Identity Code and Country of Domicile",
             "fields": [
-              { "label": "Client", "path": "__clientLineOrDisclosed__" },
+              {
+                "label": "Client",
+                "path": "__clientLineOrDisclosed__"
+              },
               {
                 "label": "Primary contact person",
                 "path": "primaryContactPerson"
@@ -2168,7 +4342,7 @@
             "title": "Scope of Work",
             "fields": [
               {
-                "label": "What kind of support you need",
+                "label": "What do you need?",
                 "path": "scopeOfWork"
               }
             ]
@@ -2177,26 +4351,40 @@
             "title": "Debtor (Debt Collection)",
             "fields": [
               {
-                "label": "Counterparty / Debtor",
+                "label": "Counterparty",
                 "path": "__counterpartyConfidential__"
               }
             ]
           },
           {
             "title": "Description of the Debt and the Collection Process",
-            "fields": [{ "label": "Description", "path": "description" }]
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
           },
           {
             "title": "Additional Background Information Provided by Client",
             "fields": [
-              { "label": "Notes", "path": "additionalBackgroundInfo" },
-              { "label": "Background files", "path": "backgroundInfoFiles" }
+              {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              },
+              {
+                "label": "Background files",
+                "path": "backgroundInfoFiles"
+              }
             ]
           },
           {
             "title": "Contract Price and Currency",
             "fields": [
-              { "label": "Price model", "path": "__priceModel_Debt__" }
+              {
+                "label": "Price model",
+                "path": "__priceModel_Debt__"
+              }
             ]
           },
           {
@@ -2206,25 +4394,142 @@
                 "label": "Service provider type",
                 "path": "serviceProviderType"
               },
-              { "label": "Domestic offers", "path": "domesticOffers" },
-              { "label": "Minimum provider size", "path": "providerSize" },
-              { "label": "Minimum company age", "path": "providerCompanyAge" },
-              { "label": "Minimum rating", "path": "providerMinimumRating" }
+              {
+                "label": "Domestic offers",
+                "path": "domesticOffers"
+              },
+              {
+                "label": "Minimum provider size",
+                "path": "providerSize"
+              },
+              {
+                "label": "Minimum company age",
+                "path": "providerCompanyAge"
+              },
+              {
+                "label": "Minimum rating",
+                "path": "providerMinimumRating"
+              }
             ]
           },
           {
             "title": "Billing & Language",
             "fields": [
-              { "label": "Advance retainer fee", "path": "advanceRetainerFee" },
-              { "label": "Invoice type", "path": "invoiceType" },
-              { "label": "Languages", "path": "language" }
+              {
+                "label": "Advance retainer fee",
+                "path": "advanceRetainerFee"
+              },
+              {
+                "label": "Invoice type",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Languages",
+                "path": "language"
+              }
             ]
           },
           {
             "title": "Meta",
             "fields": [
-              { "label": "Offers deadline", "path": "offersDeadline" },
-              { "label": "Request title", "path": "title" }
+              {
+                "label": "Offers deadline",
+                "path": "offersDeadline"
+              },
+              {
+                "label": "Request title",
+                "path": "title"
+              }
+            ]
+          },
+          {
+            "title": "Request State",
+            "fields": [
+              {
+                "label": "Request State",
+                "path": "requestState"
+              }
+            ]
+          },
+          {
+            "title": "Request Category",
+            "fields": [
+              {
+                "label": "Request Category",
+                "path": "requestCategory"
+              }
+            ]
+          },
+          {
+            "title": "Request Subcategory",
+            "fields": [
+              {
+                "label": "Request Subcategory",
+                "path": "requestSubcategory"
+              }
+            ]
+          },
+          {
+            "title": "Supplier Code Of Conduct Files",
+            "fields": [
+              {
+                "label": "Supplier Code of Conduct files",
+                "path": "supplierCodeOfConductFiles"
+              }
+            ]
+          },
+          {
+            "title": "Currency",
+            "fields": [
+              {
+                "label": "Currency",
+                "path": "currency"
+              }
+            ]
+          },
+          {
+            "title": "Payment Rate",
+            "fields": [
+              {
+                "label": "Contract Price",
+                "path": "paymentRate"
+              }
+            ]
+          },
+          {
+            "title": "Maximum Price",
+            "fields": [
+              {
+                "label": "Maximum price (VAT 0%)",
+                "path": "maximumPrice"
+              }
+            ]
+          },
+          {
+            "title": "Date Expired",
+            "fields": [
+              {
+                "label": "Date Expired",
+                "path": "dateExpired"
+              }
+            ]
+          },
+          {
+            "title": "Details Confidential",
+            "fields": [
+              {
+                "label": "Confidential",
+                "path": "details.confidential"
+              }
+            ]
+          },
+          {
+            "title": "Details Winner Bidder Only Status",
+            "fields": [
+              {
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
+                "path": "details.winnerBidderOnlyStatus"
+              }
             ]
           }
         ]
@@ -2268,7 +4573,10 @@
           {
             "title": "Client Name, Business Identity Code and Country of Domicile",
             "fields": [
-              { "label": "Client", "path": "__clientLineOrDisclosed__" },
+              {
+                "label": "Client",
+                "path": "__clientLineOrDisclosed__"
+              },
               {
                 "label": "Primary contact person",
                 "path": "primaryContactPerson"
@@ -2278,7 +4586,10 @@
           {
             "title": "Scope of Work",
             "fields": [
-              { "label": "Selected support", "path": "scopeOfWork" },
+              {
+                "label": "What do you need?",
+                "path": "scopeOfWork"
+              },
               {
                 "label": "Due diligence reporting format",
                 "path": "details.dueDiligence"
@@ -2287,23 +4598,36 @@
           },
           {
             "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
-            "fields": [{ "label": "Price model", "path": "__priceModel_MA__" }]
+            "fields": [
+              {
+                "label": "Price model",
+                "path": "__priceModel_MA__"
+              }
+            ]
           },
           {
             "title": "Object of Sale",
-            "fields": [{ "label": "Object", "path": "details.objectOfSale" }]
+            "fields": [
+              {
+                "label": "Object",
+                "path": "details.objectOfSale"
+              }
+            ]
           },
           {
             "title": "Buyer or Seller",
             "fields": [
-              { "label": "Client’s role", "path": "details.buyerOrSeller" }
+              {
+                "label": "Client’s role",
+                "path": "details.buyerOrSeller"
+              }
             ]
           },
           {
             "title": "Confidentiality",
             "fields": [
               {
-                "label": "Winner-bidder-only status",
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
                 "path": "details.winnerBidderOnlyStatus"
               }
             ]
@@ -2311,10 +4635,22 @@
           {
             "title": "Commercial Terms",
             "fields": [
-              { "label": "Payment rate", "path": "paymentRate" },
-              { "label": "Currency", "path": "currency" },
-              { "label": "Invoice type", "path": "invoiceType" },
-              { "label": "Advance retainer fee", "path": "advanceRetainerFee" }
+              {
+                "label": "Contract Price",
+                "path": "paymentRate"
+              },
+              {
+                "label": "Currency",
+                "path": "currency"
+              },
+              {
+                "label": "Invoice type",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Advance retainer fee",
+                "path": "advanceRetainerFee"
+              }
             ]
           },
           {
@@ -2324,16 +4660,31 @@
                 "label": "Service provider type",
                 "path": "serviceProviderType"
               },
-              { "label": "Domestic offers", "path": "domesticOffers" },
-              { "label": "Minimum provider size", "path": "providerSize" },
-              { "label": "Minimum company age", "path": "providerCompanyAge" },
-              { "label": "Minimum rating", "path": "providerMinimumRating" }
+              {
+                "label": "Domestic offers",
+                "path": "domesticOffers"
+              },
+              {
+                "label": "Minimum provider size",
+                "path": "providerSize"
+              },
+              {
+                "label": "Minimum company age",
+                "path": "providerCompanyAge"
+              },
+              {
+                "label": "Minimum rating",
+                "path": "providerMinimumRating"
+              }
             ]
           },
           {
             "title": "Attachments",
             "fields": [
-              { "label": "Background files", "path": "backgroundInfoFiles" },
+              {
+                "label": "Background files",
+                "path": "backgroundInfoFiles"
+              },
               {
                 "label": "Supplier Code of Conduct files",
                 "path": "supplierCodeOfConductFiles"
@@ -2343,9 +4694,90 @@
           {
             "title": "Meta",
             "fields": [
-              { "label": "Request title", "path": "title" },
-              { "label": "Languages", "path": "language" },
-              { "label": "Offers deadline", "path": "offersDeadline" }
+              {
+                "label": "Request title",
+                "path": "title"
+              },
+              {
+                "label": "Languages",
+                "path": "language"
+              },
+              {
+                "label": "Offers deadline",
+                "path": "offersDeadline"
+              }
+            ]
+          },
+          {
+            "title": "Request State",
+            "fields": [
+              {
+                "label": "Request State",
+                "path": "requestState"
+              }
+            ]
+          },
+          {
+            "title": "Request Category",
+            "fields": [
+              {
+                "label": "Request Category",
+                "path": "requestCategory"
+              }
+            ]
+          },
+          {
+            "title": "Description",
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
+          },
+          {
+            "title": "Additional Background Info",
+            "fields": [
+              {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              }
+            ]
+          },
+          {
+            "title": "Maximum Price",
+            "fields": [
+              {
+                "label": "Maximum price (VAT 0%)",
+                "path": "maximumPrice"
+              }
+            ]
+          },
+          {
+            "title": "Date Expired",
+            "fields": [
+              {
+                "label": "Date Expired",
+                "path": "dateExpired"
+              }
+            ]
+          },
+          {
+            "title": "Details Price Range",
+            "fields": [
+              {
+                "label": "Price Range",
+                "path": "details.priceRange"
+              }
+            ]
+          },
+          {
+            "title": "Details Confidential",
+            "fields": [
+              {
+                "label": "Confidential",
+                "path": "details.confidential"
+              }
             ]
           }
         ]
@@ -2392,7 +4824,10 @@
           {
             "title": "Client Name, Business Identity Code and Country of Domicile",
             "fields": [
-              { "label": "Client", "path": "__clientLine__" },
+              {
+                "label": "Client",
+                "path": "__clientLine__"
+              },
               {
                 "label": "Primary contact person",
                 "path": "primaryContactPerson"
@@ -2402,7 +4837,10 @@
           {
             "title": "Scope of Work",
             "fields": [
-              { "label": "Selected items", "path": "details.selectedItems" },
+              {
+                "label": "Selected items",
+                "path": "details.selectedItems"
+              },
               {
                 "label": "Purpose of notification/application",
                 "path": "details.applicationPurpose"
@@ -2425,8 +4863,14 @@
           {
             "title": "Additional Background Information Provided by Client",
             "fields": [
-              { "label": "Notes", "path": "additionalBackgroundInfo" },
-              { "label": "Background files", "path": "backgroundInfoFiles" }
+              {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              },
+              {
+                "label": "Background files",
+                "path": "backgroundInfoFiles"
+              }
             ]
           },
           {
@@ -2436,25 +4880,133 @@
                 "label": "Service provider type",
                 "path": "serviceProviderType"
               },
-              { "label": "Domestic offers", "path": "domesticOffers" },
-              { "label": "Minimum provider size", "path": "providerSize" },
-              { "label": "Minimum company age", "path": "providerCompanyAge" },
-              { "label": "Minimum rating", "path": "providerMinimumRating" }
+              {
+                "label": "Domestic offers",
+                "path": "domesticOffers"
+              },
+              {
+                "label": "Minimum provider size",
+                "path": "providerSize"
+              },
+              {
+                "label": "Minimum company age",
+                "path": "providerCompanyAge"
+              },
+              {
+                "label": "Minimum rating",
+                "path": "providerMinimumRating"
+              }
             ]
           },
           {
             "title": "Billing & Language",
             "fields": [
-              { "label": "Advance retainer fee", "path": "advanceRetainerFee" },
-              { "label": "Invoice type", "path": "invoiceType" },
-              { "label": "Languages", "path": "language" }
+              {
+                "label": "Advance retainer fee",
+                "path": "advanceRetainerFee"
+              },
+              {
+                "label": "Invoice type",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Languages",
+                "path": "language"
+              }
             ]
           },
           {
             "title": "Meta",
             "fields": [
-              { "label": "Offers deadline", "path": "offersDeadline" },
-              { "label": "Request title", "path": "title" }
+              {
+                "label": "Offers deadline",
+                "path": "offersDeadline"
+              },
+              {
+                "label": "Request title",
+                "path": "title"
+              }
+            ]
+          },
+          {
+            "title": "Request State",
+            "fields": [
+              {
+                "label": "Request State",
+                "path": "requestState"
+              }
+            ]
+          },
+          {
+            "title": "Request Category",
+            "fields": [
+              {
+                "label": "Request Category",
+                "path": "requestCategory"
+              }
+            ]
+          },
+          {
+            "title": "Scope Of Work",
+            "fields": [
+              {
+                "label": "What do you need?",
+                "path": "scopeOfWork"
+              }
+            ]
+          },
+          {
+            "title": "Description",
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
+          },
+          {
+            "title": "Supplier Code Of Conduct Files",
+            "fields": [
+              {
+                "label": "Supplier Code of Conduct files",
+                "path": "supplierCodeOfConductFiles"
+              }
+            ]
+          },
+          {
+            "title": "Currency",
+            "fields": [
+              {
+                "label": "Currency",
+                "path": "currency"
+              }
+            ]
+          },
+          {
+            "title": "Payment Rate",
+            "fields": [
+              {
+                "label": "Contract Price",
+                "path": "paymentRate"
+              }
+            ]
+          },
+          {
+            "title": "Maximum Price",
+            "fields": [
+              {
+                "label": "Maximum price (VAT 0%)",
+                "path": "maximumPrice"
+              }
+            ]
+          },
+          {
+            "title": "Date Expired",
+            "fields": [
+              {
+                "label": "Date Expired",
+                "path": "dateExpired"
+              }
             ]
           }
         ]
@@ -2498,7 +5050,10 @@
           {
             "title": "Client Name, Business Identity Code and Country of Domicile",
             "fields": [
-              { "label": "Client", "path": "__clientLineOrDisclosed__" },
+              {
+                "label": "Client",
+                "path": "__clientLineOrDisclosed__"
+              },
               {
                 "label": "Primary contact person",
                 "path": "primaryContactPerson"
@@ -2509,24 +5064,29 @@
             "title": "Scope of Work",
             "fields": [
               {
-                "label": "What kind of support you need",
+                "label": "What do you need?",
                 "path": "scopeOfWork"
               }
             ]
           },
           {
             "title": "Description of your Company's Line of Business",
-            "fields": [{ "label": "Description", "path": "description" }]
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
           },
           {
             "title": "Questionnaire & Background",
             "fields": [
               {
-                "label": "Background files (questionnaire)",
+                "label": "Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Additional background info",
+                "label": "Additional Background Information",
                 "path": "additionalBackgroundInfo"
               }
             ]
@@ -2535,7 +5095,7 @@
             "title": "Confidentiality",
             "fields": [
               {
-                "label": "Winner-bidder-only status",
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
                 "path": "details.winnerBidderOnlyStatus"
               }
             ]
@@ -2556,25 +5116,124 @@
                 "label": "Service provider type",
                 "path": "serviceProviderType"
               },
-              { "label": "Domestic offers", "path": "domesticOffers" },
-              { "label": "Minimum provider size", "path": "providerSize" },
-              { "label": "Minimum company age", "path": "providerCompanyAge" },
-              { "label": "Minimum rating", "path": "providerMinimumRating" }
+              {
+                "label": "Domestic offers",
+                "path": "domesticOffers"
+              },
+              {
+                "label": "Minimum provider size",
+                "path": "providerSize"
+              },
+              {
+                "label": "Minimum company age",
+                "path": "providerCompanyAge"
+              },
+              {
+                "label": "Minimum rating",
+                "path": "providerMinimumRating"
+              }
             ]
           },
           {
             "title": "Billing & Language",
             "fields": [
-              { "label": "Advance retainer fee", "path": "advanceRetainerFee" },
-              { "label": "Invoice type", "path": "invoiceType" },
-              { "label": "Languages", "path": "language" }
+              {
+                "label": "Advance retainer fee",
+                "path": "advanceRetainerFee"
+              },
+              {
+                "label": "Invoice type",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Languages",
+                "path": "language"
+              }
             ]
           },
           {
             "title": "Meta",
             "fields": [
-              { "label": "Offers deadline", "path": "offersDeadline" },
-              { "label": "Request title", "path": "title" }
+              {
+                "label": "Offers deadline",
+                "path": "offersDeadline"
+              },
+              {
+                "label": "Request title",
+                "path": "title"
+              }
+            ]
+          },
+          {
+            "title": "Request State",
+            "fields": [
+              {
+                "label": "Request State",
+                "path": "requestState"
+              }
+            ]
+          },
+          {
+            "title": "Request Category",
+            "fields": [
+              {
+                "label": "Request Category",
+                "path": "requestCategory"
+              }
+            ]
+          },
+          {
+            "title": "Supplier Code Of Conduct Files",
+            "fields": [
+              {
+                "label": "Supplier Code of Conduct files",
+                "path": "supplierCodeOfConductFiles"
+              }
+            ]
+          },
+          {
+            "title": "Currency",
+            "fields": [
+              {
+                "label": "Currency",
+                "path": "currency"
+              }
+            ]
+          },
+          {
+            "title": "Payment Rate",
+            "fields": [
+              {
+                "label": "Contract Price",
+                "path": "paymentRate"
+              }
+            ]
+          },
+          {
+            "title": "Maximum Price",
+            "fields": [
+              {
+                "label": "Maximum price (VAT 0%)",
+                "path": "maximumPrice"
+              }
+            ]
+          },
+          {
+            "title": "Date Expired",
+            "fields": [
+              {
+                "label": "Date Expired",
+                "path": "dateExpired"
+              }
+            ]
+          },
+          {
+            "title": "Details Confidential",
+            "fields": [
+              {
+                "label": "Confidential",
+                "path": "details.confidential"
+              }
             ]
           }
         ]
@@ -2617,7 +5276,10 @@
           {
             "title": "Client Name, Business Identity Code and Country of Domicile",
             "fields": [
-              { "label": "Client", "path": "__clientLine__" },
+              {
+                "label": "Client",
+                "path": "__clientLine__"
+              },
               {
                 "label": "Primary contact person",
                 "path": "primaryContactPerson"
@@ -2626,21 +5288,41 @@
           },
           {
             "title": "Scope of Work",
-            "fields": [{ "label": "Training scope", "path": "scopeOfWork" }]
+            "fields": [
+              {
+                "label": "What do you need?",
+                "path": "scopeOfWork"
+              }
+            ]
           },
           {
             "title": "Training Details",
             "fields": [
-              { "label": "Duration", "path": "details.trainingDuration" },
-              { "label": "Date & time", "path": "details.trainingDateTime" },
-              { "label": "Location", "path": "details.trainingLocation" }
+              {
+                "label": "Duration",
+                "path": "details.trainingDuration"
+              },
+              {
+                "label": "Date & time",
+                "path": "details.trainingDateTime"
+              },
+              {
+                "label": "Location",
+                "path": "details.trainingLocation"
+              }
             ]
           },
           {
             "title": "Additional Background Information Provided by Client",
             "fields": [
-              { "label": "Notes", "path": "additionalBackgroundInfo" },
-              { "label": "Background files", "path": "backgroundInfoFiles" }
+              {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              },
+              {
+                "label": "Background files",
+                "path": "backgroundInfoFiles"
+              }
             ]
           },
           {
@@ -2659,25 +5341,124 @@
                 "label": "Service provider type",
                 "path": "serviceProviderType"
               },
-              { "label": "Domestic offers", "path": "domesticOffers" },
-              { "label": "Minimum provider size", "path": "providerSize" },
-              { "label": "Minimum company age", "path": "providerCompanyAge" },
-              { "label": "Minimum rating", "path": "providerMinimumRating" }
+              {
+                "label": "Domestic offers",
+                "path": "domesticOffers"
+              },
+              {
+                "label": "Minimum provider size",
+                "path": "providerSize"
+              },
+              {
+                "label": "Minimum company age",
+                "path": "providerCompanyAge"
+              },
+              {
+                "label": "Minimum rating",
+                "path": "providerMinimumRating"
+              }
             ]
           },
           {
             "title": "Billing & Language",
             "fields": [
-              { "label": "Advance retainer fee", "path": "advanceRetainerFee" },
-              { "label": "Invoice type", "path": "invoiceType" },
-              { "label": "Languages", "path": "language" }
+              {
+                "label": "Advance retainer fee",
+                "path": "advanceRetainerFee"
+              },
+              {
+                "label": "Invoice type",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Languages",
+                "path": "language"
+              }
             ]
           },
           {
             "title": "Meta",
             "fields": [
-              { "label": "Offers deadline", "path": "offersDeadline" },
-              { "label": "Request title", "path": "title" }
+              {
+                "label": "Offers deadline",
+                "path": "offersDeadline"
+              },
+              {
+                "label": "Request title",
+                "path": "title"
+              }
+            ]
+          },
+          {
+            "title": "Request State",
+            "fields": [
+              {
+                "label": "Request State",
+                "path": "requestState"
+              }
+            ]
+          },
+          {
+            "title": "Request Category",
+            "fields": [
+              {
+                "label": "Request Category",
+                "path": "requestCategory"
+              }
+            ]
+          },
+          {
+            "title": "Description",
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
+          },
+          {
+            "title": "Supplier Code Of Conduct Files",
+            "fields": [
+              {
+                "label": "Supplier Code of Conduct files",
+                "path": "supplierCodeOfConductFiles"
+              }
+            ]
+          },
+          {
+            "title": "Currency",
+            "fields": [
+              {
+                "label": "Currency",
+                "path": "currency"
+              }
+            ]
+          },
+          {
+            "title": "Payment Rate",
+            "fields": [
+              {
+                "label": "Contract Price",
+                "path": "paymentRate"
+              }
+            ]
+          },
+          {
+            "title": "Maximum Price",
+            "fields": [
+              {
+                "label": "Maximum price (VAT 0%)",
+                "path": "maximumPrice"
+              }
+            ]
+          },
+          {
+            "title": "Date Expired",
+            "fields": [
+              {
+                "label": "Date Expired",
+                "path": "dateExpired"
+              }
             ]
           }
         ]
@@ -2721,7 +5502,10 @@
           {
             "title": "Client Name, Business Identity Code and Country of Domicile",
             "fields": [
-              { "label": "Client", "path": "__clientLine__" },
+              {
+                "label": "Client",
+                "path": "__clientLine__"
+              },
               {
                 "label": "Primary contact person",
                 "path": "primaryContactPerson"
@@ -2730,18 +5514,37 @@
           },
           {
             "title": "Scope of Work",
-            "fields": [{ "label": "Selected support", "path": "scopeOfWork" }]
+            "fields": [
+              {
+                "label": "What do you need?",
+                "path": "scopeOfWork"
+              }
+            ]
           },
           {
             "title": "Description of Your Company's Line of Business",
-            "fields": [{ "label": "Description", "path": "description" }]
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
           },
           {
             "title": "Company Scale",
             "fields": [
-              { "label": "Annual revenue", "path": "details.companyRevenue" },
-              { "label": "Employees", "path": "details.employeeCount" },
-              { "label": "Customers", "path": "details.customerCount" },
+              {
+                "label": "Annual revenue",
+                "path": "details.companyRevenue"
+              },
+              {
+                "label": "Employees",
+                "path": "details.employeeCount"
+              },
+              {
+                "label": "Customers",
+                "path": "details.customerCount"
+              },
               {
                 "label": "IT applications with personal data",
                 "path": "details.applicationCount"
@@ -2750,7 +5553,10 @@
                 "label": "Products with personal data",
                 "path": "details.productCount"
               },
-              { "label": "Web domains", "path": "details.domainCount" }
+              {
+                "label": "Web domains",
+                "path": "details.domainCount"
+              }
             ]
           },
           {
@@ -2789,7 +5595,10 @@
                 "label": "AI usage description",
                 "path": "details.aiDescription"
               },
-              { "label": "Use of profiling", "path": "details.profiling" },
+              {
+                "label": "Use of profiling",
+                "path": "details.profiling"
+              },
               {
                 "label": "Profiling description",
                 "path": "details.profilingDescription"
@@ -2812,18 +5621,39 @@
           {
             "title": "Additional Background Information Provided by Client",
             "fields": [
-              { "label": "Notes", "path": "additionalBackgroundInfo" },
-              { "label": "Background files", "path": "backgroundInfoFiles" }
+              {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              },
+              {
+                "label": "Background files",
+                "path": "backgroundInfoFiles"
+              }
             ]
           },
           {
             "title": "Commercial Terms",
             "fields": [
-              { "label": "Payment rate", "path": "paymentRate" },
-              { "label": "Currency", "path": "currency" },
-              { "label": "Maximum price (VAT 0%)", "path": "maximumPrice" },
-              { "label": "Invoice type", "path": "invoiceType" },
-              { "label": "Advance retainer fee", "path": "advanceRetainerFee" }
+              {
+                "label": "Contract Price",
+                "path": "paymentRate"
+              },
+              {
+                "label": "Currency",
+                "path": "currency"
+              },
+              {
+                "label": "Maximum price (VAT 0%)",
+                "path": "maximumPrice"
+              },
+              {
+                "label": "Invoice type",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Advance retainer fee",
+                "path": "advanceRetainerFee"
+              }
             ]
           },
           {
@@ -2833,18 +5663,84 @@
                 "label": "Service provider type",
                 "path": "serviceProviderType"
               },
-              { "label": "Domestic offers", "path": "domesticOffers" },
-              { "label": "Minimum provider size", "path": "providerSize" },
-              { "label": "Minimum company age", "path": "providerCompanyAge" },
-              { "label": "Minimum rating", "path": "providerMinimumRating" }
+              {
+                "label": "Domestic offers",
+                "path": "domesticOffers"
+              },
+              {
+                "label": "Minimum provider size",
+                "path": "providerSize"
+              },
+              {
+                "label": "Minimum company age",
+                "path": "providerCompanyAge"
+              },
+              {
+                "label": "Minimum rating",
+                "path": "providerMinimumRating"
+              }
             ]
           },
           {
             "title": "Meta",
             "fields": [
-              { "label": "Languages", "path": "language" },
-              { "label": "Offers deadline", "path": "offersDeadline" },
-              { "label": "Request title", "path": "title" }
+              {
+                "label": "Languages",
+                "path": "language"
+              },
+              {
+                "label": "Offers deadline",
+                "path": "offersDeadline"
+              },
+              {
+                "label": "Request title",
+                "path": "title"
+              }
+            ]
+          },
+          {
+            "title": "Request State",
+            "fields": [
+              {
+                "label": "Request State",
+                "path": "requestState"
+              }
+            ]
+          },
+          {
+            "title": "Request Category",
+            "fields": [
+              {
+                "label": "Request Category",
+                "path": "requestCategory"
+              }
+            ]
+          },
+          {
+            "title": "Request Subcategory",
+            "fields": [
+              {
+                "label": "Request Subcategory",
+                "path": "requestSubcategory"
+              }
+            ]
+          },
+          {
+            "title": "Supplier Code Of Conduct Files",
+            "fields": [
+              {
+                "label": "Supplier Code of Conduct files",
+                "path": "supplierCodeOfConductFiles"
+              }
+            ]
+          },
+          {
+            "title": "Date Expired",
+            "fields": [
+              {
+                "label": "Date Expired",
+                "path": "dateExpired"
+              }
             ]
           }
         ]
@@ -2903,7 +5799,10 @@
           {
             "title": "Client Name, Business Identity Code and Country of Domicile",
             "fields": [
-              { "label": "Client", "path": "__clientLineOrDisclosed__" },
+              {
+                "label": "Client",
+                "path": "__clientLineOrDisclosed__"
+              },
               {
                 "label": "Primary contact person",
                 "path": "primaryContactPerson"
@@ -2912,7 +5811,12 @@
           },
           {
             "title": "Scope of Work",
-            "fields": [{ "label": "Selected support", "path": "scopeOfWork" }]
+            "fields": [
+              {
+                "label": "What do you need?",
+                "path": "scopeOfWork"
+              }
+            ]
           },
           {
             "title": "Breach Details",
@@ -2926,29 +5830,52 @@
                 "path": "details.involvedParties"
               },
               {
-                "label": "Other involved company/companies",
+                "label": "Counterparty",
                 "path": "__counterpartyConfidential__"
               }
             ]
           },
           {
             "title": "Description of Company’s Line of Business",
-            "fields": [{ "label": "Description", "path": "description" }]
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
           },
           {
             "title": "Additional Background Information Provided by Client",
             "fields": [
-              { "label": "Notes", "path": "additionalBackgroundInfo" },
-              { "label": "Background files", "path": "backgroundInfoFiles" }
+              {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              },
+              {
+                "label": "Background files",
+                "path": "backgroundInfoFiles"
+              }
             ]
           },
           {
             "title": "Commercial Terms",
             "fields": [
-              { "label": "Payment rate", "path": "paymentRate" },
-              { "label": "Currency", "path": "currency" },
-              { "label": "Invoice type", "path": "invoiceType" },
-              { "label": "Advance retainer fee", "path": "advanceRetainerFee" }
+              {
+                "label": "Contract Price",
+                "path": "paymentRate"
+              },
+              {
+                "label": "Currency",
+                "path": "currency"
+              },
+              {
+                "label": "Invoice type",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Advance retainer fee",
+                "path": "advanceRetainerFee"
+              }
             ]
           },
           {
@@ -2958,18 +5885,102 @@
                 "label": "Service provider type",
                 "path": "serviceProviderType"
               },
-              { "label": "Domestic offers", "path": "domesticOffers" },
-              { "label": "Minimum provider size", "path": "providerSize" },
-              { "label": "Minimum company age", "path": "providerCompanyAge" },
-              { "label": "Minimum rating", "path": "providerMinimumRating" }
+              {
+                "label": "Domestic offers",
+                "path": "domesticOffers"
+              },
+              {
+                "label": "Minimum provider size",
+                "path": "providerSize"
+              },
+              {
+                "label": "Minimum company age",
+                "path": "providerCompanyAge"
+              },
+              {
+                "label": "Minimum rating",
+                "path": "providerMinimumRating"
+              }
             ]
           },
           {
             "title": "Meta",
             "fields": [
-              { "label": "Languages", "path": "language" },
-              { "label": "Offers deadline", "path": "offersDeadline" },
-              { "label": "Request title", "path": "title" }
+              {
+                "label": "Languages",
+                "path": "language"
+              },
+              {
+                "label": "Offers deadline",
+                "path": "offersDeadline"
+              },
+              {
+                "label": "Request title",
+                "path": "title"
+              }
+            ]
+          },
+          {
+            "title": "Request State",
+            "fields": [
+              {
+                "label": "Request State",
+                "path": "requestState"
+              }
+            ]
+          },
+          {
+            "title": "Request Category",
+            "fields": [
+              {
+                "label": "Request Category",
+                "path": "requestCategory"
+              }
+            ]
+          },
+          {
+            "title": "Request Subcategory",
+            "fields": [
+              {
+                "label": "Request Subcategory",
+                "path": "requestSubcategory"
+              }
+            ]
+          },
+          {
+            "title": "Supplier Code Of Conduct Files",
+            "fields": [
+              {
+                "label": "Supplier Code of Conduct files",
+                "path": "supplierCodeOfConductFiles"
+              }
+            ]
+          },
+          {
+            "title": "Date Expired",
+            "fields": [
+              {
+                "label": "Date Expired",
+                "path": "dateExpired"
+              }
+            ]
+          },
+          {
+            "title": "Details Breach Company",
+            "fields": [
+              {
+                "label": "Breach Company",
+                "path": "details.breachCompany"
+              }
+            ]
+          },
+          {
+            "title": "Details Confidential",
+            "fields": [
+              {
+                "label": "Confidential",
+                "path": "details.confidential"
+              }
             ]
           }
         ]
@@ -3014,7 +6025,10 @@
           {
             "title": "Client Name, Business Identity Code and Country of Domicile",
             "fields": [
-              { "label": "Client", "path": "__clientLine__" },
+              {
+                "label": "Client",
+                "path": "__clientLine__"
+              },
               {
                 "label": "Primary contact person",
                 "path": "primaryContactPerson"
@@ -3023,26 +6037,54 @@
           },
           {
             "title": "Scope of Work",
-            "fields": [{ "label": "Support type", "path": "scopeOfWork" }]
+            "fields": [
+              {
+                "label": "What do you need?",
+                "path": "scopeOfWork"
+              }
+            ]
           },
           {
             "title": "Your Question",
-            "fields": [{ "label": "Question / inquiry", "path": "description" }]
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
           },
           {
             "title": "Additional Background Information Provided by Client",
             "fields": [
-              { "label": "Notes", "path": "additionalBackgroundInfo" },
-              { "label": "Background files", "path": "backgroundInfoFiles" }
+              {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              },
+              {
+                "label": "Background files",
+                "path": "backgroundInfoFiles"
+              }
             ]
           },
           {
             "title": "Commercial Terms",
             "fields": [
-              { "label": "Payment rate", "path": "paymentRate" },
-              { "label": "Currency", "path": "currency" },
-              { "label": "Invoice type", "path": "invoiceType" },
-              { "label": "Advance retainer fee", "path": "advanceRetainerFee" }
+              {
+                "label": "Contract Price",
+                "path": "paymentRate"
+              },
+              {
+                "label": "Currency",
+                "path": "currency"
+              },
+              {
+                "label": "Invoice type",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Advance retainer fee",
+                "path": "advanceRetainerFee"
+              }
             ]
           },
           {
@@ -3052,18 +6094,84 @@
                 "label": "Service provider type",
                 "path": "serviceProviderType"
               },
-              { "label": "Domestic offers", "path": "domesticOffers" },
-              { "label": "Minimum provider size", "path": "providerSize" },
-              { "label": "Minimum company age", "path": "providerCompanyAge" },
-              { "label": "Minimum rating", "path": "providerMinimumRating" }
+              {
+                "label": "Domestic offers",
+                "path": "domesticOffers"
+              },
+              {
+                "label": "Minimum provider size",
+                "path": "providerSize"
+              },
+              {
+                "label": "Minimum company age",
+                "path": "providerCompanyAge"
+              },
+              {
+                "label": "Minimum rating",
+                "path": "providerMinimumRating"
+              }
             ]
           },
           {
             "title": "Meta",
             "fields": [
-              { "label": "Languages", "path": "language" },
-              { "label": "Offers deadline", "path": "offersDeadline" },
-              { "label": "Request title", "path": "title" }
+              {
+                "label": "Languages",
+                "path": "language"
+              },
+              {
+                "label": "Offers deadline",
+                "path": "offersDeadline"
+              },
+              {
+                "label": "Request title",
+                "path": "title"
+              }
+            ]
+          },
+          {
+            "title": "Request State",
+            "fields": [
+              {
+                "label": "Request State",
+                "path": "requestState"
+              }
+            ]
+          },
+          {
+            "title": "Request Category",
+            "fields": [
+              {
+                "label": "Request Category",
+                "path": "requestCategory"
+              }
+            ]
+          },
+          {
+            "title": "Request Subcategory",
+            "fields": [
+              {
+                "label": "Request Subcategory",
+                "path": "requestSubcategory"
+              }
+            ]
+          },
+          {
+            "title": "Supplier Code Of Conduct Files",
+            "fields": [
+              {
+                "label": "Supplier Code of Conduct files",
+                "path": "supplierCodeOfConductFiles"
+              }
+            ]
+          },
+          {
+            "title": "Date Expired",
+            "fields": [
+              {
+                "label": "Date Expired",
+                "path": "dateExpired"
+              }
             ]
           }
         ]
@@ -3103,7 +6211,10 @@
           {
             "title": "Client Name, Business Identity Code and Country of Domicile",
             "fields": [
-              { "label": "Client", "path": "__clientLine__" },
+              {
+                "label": "Client",
+                "path": "__clientLine__"
+              },
               {
                 "label": "Primary contact person",
                 "path": "primaryContactPerson"
@@ -3112,12 +6223,20 @@
           },
           {
             "title": "What kind of document(s) do you need?",
-            "fields": [{ "label": "Document(s)", "path": "__docsWithOther__" }]
+            "fields": [
+              {
+                "label": "Document(s)",
+                "path": "__docsWithOther__"
+              }
+            ]
           },
           {
             "title": "Do you need the above document(s) as empty template(s) only or fully completed…",
             "fields": [
-              { "label": "Document type", "path": "details.documentType" },
+              {
+                "label": "Document type",
+                "path": "details.documentType"
+              },
               {
                 "label": "Context for template use",
                 "path": "details.documentTemplateContext"
@@ -3138,23 +6257,49 @@
           },
           {
             "title": "Description of Your Company's Line of Business",
-            "fields": [{ "label": "Description", "path": "description" }]
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
           },
           {
             "title": "Additional Background Information Provided by Client",
             "fields": [
-              { "label": "Notes", "path": "additionalBackgroundInfo" },
-              { "label": "Background files", "path": "backgroundInfoFiles" }
+              {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              },
+              {
+                "label": "Background files",
+                "path": "backgroundInfoFiles"
+              }
             ]
           },
           {
             "title": "Commercial Terms",
             "fields": [
-              { "label": "Payment rate", "path": "paymentRate" },
-              { "label": "Currency", "path": "currency" },
-              { "label": "Maximum price (VAT 0%)", "path": "maximumPrice" },
-              { "label": "Invoice type", "path": "invoiceType" },
-              { "label": "Advance retainer fee", "path": "advanceRetainerFee" }
+              {
+                "label": "Contract Price",
+                "path": "paymentRate"
+              },
+              {
+                "label": "Currency",
+                "path": "currency"
+              },
+              {
+                "label": "Maximum price (VAT 0%)",
+                "path": "maximumPrice"
+              },
+              {
+                "label": "Invoice type",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Advance retainer fee",
+                "path": "advanceRetainerFee"
+              }
             ]
           },
           {
@@ -3164,18 +6309,120 @@
                 "label": "Service provider type",
                 "path": "serviceProviderType"
               },
-              { "label": "Domestic offers", "path": "domesticOffers" },
-              { "label": "Minimum provider size", "path": "providerSize" },
-              { "label": "Minimum company age", "path": "providerCompanyAge" },
-              { "label": "Minimum rating", "path": "providerMinimumRating" }
+              {
+                "label": "Domestic offers",
+                "path": "domesticOffers"
+              },
+              {
+                "label": "Minimum provider size",
+                "path": "providerSize"
+              },
+              {
+                "label": "Minimum company age",
+                "path": "providerCompanyAge"
+              },
+              {
+                "label": "Minimum rating",
+                "path": "providerMinimumRating"
+              }
             ]
           },
           {
             "title": "Meta",
             "fields": [
-              { "label": "Languages", "path": "language" },
-              { "label": "Offers deadline", "path": "offersDeadline" },
-              { "label": "Request title", "path": "title" }
+              {
+                "label": "Languages",
+                "path": "language"
+              },
+              {
+                "label": "Offers deadline",
+                "path": "offersDeadline"
+              },
+              {
+                "label": "Request title",
+                "path": "title"
+              }
+            ]
+          },
+          {
+            "title": "Request State",
+            "fields": [
+              {
+                "label": "Request State",
+                "path": "requestState"
+              }
+            ]
+          },
+          {
+            "title": "Request Category",
+            "fields": [
+              {
+                "label": "Request Category",
+                "path": "requestCategory"
+              }
+            ]
+          },
+          {
+            "title": "Request Subcategory",
+            "fields": [
+              {
+                "label": "Request Subcategory",
+                "path": "requestSubcategory"
+              }
+            ]
+          },
+          {
+            "title": "Scope Of Work",
+            "fields": [
+              {
+                "label": "What do you need?",
+                "path": "scopeOfWork"
+              }
+            ]
+          },
+          {
+            "title": "Supplier Code Of Conduct Files",
+            "fields": [
+              {
+                "label": "Supplier Code of Conduct files",
+                "path": "supplierCodeOfConductFiles"
+              }
+            ]
+          },
+          {
+            "title": "Date Expired",
+            "fields": [
+              {
+                "label": "Date Expired",
+                "path": "dateExpired"
+              }
+            ]
+          },
+          {
+            "title": "Details Company Revenue",
+            "fields": [
+              {
+                "label": "Annual revenue",
+                "path": "details.companyRevenue"
+              }
+            ]
+          },
+          {
+            "title": "Details Employee Count",
+            "fields": [
+              {
+                "label": "Employees",
+                "path": "details.employeeCount"
+              }
+            ]
+          },
+          {
+            "title": "Details Customer Count",
+            "fields": [
+              {
+                "label": "Customers",
+                "path": "details.customerCount"
+              }
             ]
           }
         ]

@@ -189,7 +189,10 @@ function deepGet(obj, dotted) {
   }
 }
 
-// in PreviewModal.js
+function isYesString(v) {
+  return typeof v === "string" ? v.trim().toLowerCase() === "yes" : v === true;
+}
+
 function buildClientLine(row, companyName) {
   const name =
     companyName ||
@@ -208,14 +211,24 @@ function buildClientLine(row, companyName) {
   return parts.length ? parts.join(", ") : "—";
 }
 
+function getAssignmentType(row) {
+  return row?.assignmentType ?? row?.details?.assignmentType ?? "";
+}
+
 function winnerOnly(row) {
-  const s =
+  const status = (
     row?.details?.winnerBidderOnlyStatus ||
     row?.winnerBidderOnlyStatus ||
-    row?.details?.confidential
-      ? "Disclosed to Winning Bidder Only"
-      : "";
-  return s || "";
+    ""
+  ).trim();
+
+  const confidentialYes =
+    isYesString(row?.details?.confidential) || isYesString(row?.confidential);
+
+  if (confidentialYes || status === "Disclosed to Winning Bidder Only") {
+    return "Disclosed to Winning Bidder Only";
+  }
+  return "";
 }
 
 function counterpartyOrWinnerOnly(row) {
@@ -281,6 +294,8 @@ function renderNamedBlock(name, row, companyName) {
       return buildClientLine(row, companyName);
     case "description":
       return row?.description || "—";
+    case "assignmentType":
+      return getAssignmentType(row) || "—";
     case "languageCSV":
       return Array.isArray(row?.language)
         ? row.language.join(", ")
@@ -292,6 +307,6 @@ function renderNamedBlock(name, row, companyName) {
       return d ? formatLocalDDMMYYYY_HHMM(d) : "—";
     }
     default:
-      return "—";
+      return row?.[path] ?? row?.details?.[path] ?? "—";
   }
 }

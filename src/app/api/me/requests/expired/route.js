@@ -13,12 +13,10 @@ export async function GET() {
     if (!session?.userId)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const now = new Date();
     const reqs = await prisma.request.findMany({
       where: {
         clientId: BigInt(session.userId),
-        dateExpired: { lt: now },
-        requestState: "EXPIRED", // ← changed
+        requestState: "EXPIRED",
       },
       orderBy: { dateCreated: "desc" },
       select: {
@@ -29,9 +27,8 @@ export async function GET() {
         dateExpired: true,
         currency: true,
         paymentRate: true,
-        contractResult: true, // ← added
+        contractResult: true,
         details: true,
-        // offers with provider for names & ratings if needed later
         offers: {
           select: {
             offerPrice: true,
@@ -63,11 +60,11 @@ export async function GET() {
         .sort((a, b) => a.offeredPrice - b.offeredPrice);
 
       const bestOffer = offers[0] || null;
-      const runnerUps = offers.slice(1, 3); // top 2 runner-ups
+      const runnerUps = offers.slice(1, 3); // up to top 2 runner-ups
 
       return {
         requestId: safeNumber(r.requestId),
-        requestTitle: r.title, // table expects "requestTitle"
+        requestTitle: r.title,
         dateCreated: r.dateCreated,
         dateExpired: r.dateExpired,
         contractResult: r.contractResult ?? null,

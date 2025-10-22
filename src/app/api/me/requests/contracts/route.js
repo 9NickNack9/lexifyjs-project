@@ -1,25 +1,88 @@
+// src/app/api/me/contracts/route.js
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 
-const toNum = (d) => (d == null ? null : Number(d));
+// BigInt-safe JSON
+const serialize = (obj) =>
+  JSON.parse(
+    JSON.stringify(obj, (_, v) => (typeof v === "bigint" ? v.toString() : v))
+  );
+
+// Safe number parser for Decimal | number | "5"
+const numify = (v) => {
+  if (v == null) return null;
+  const s = typeof v === "object" && v.toString ? v.toString() : String(v);
+  const n = parseFloat(s);
+  return Number.isFinite(n) ? n : null;
+};
+
 const safeNumber = (v) => (typeof v === "bigint" ? Number(v) : v);
+
+// Pull *your* individual rating from provider.providerIndividualRating
+const findMyIndividualRating = (provider, myUserId, myCompanyName) => {
+  const bag = provider?.providerIndividualRating ?? null;
+  if (!bag) return null;
+
+  // Support object map OR array of entries
+  let entry = null;
+
+  if (Array.isArray(bag)) {
+    entry =
+      bag.find(
+        (e) =>
+          e?.key === String(myUserId) || e?.key === String(myCompanyName || "")
+      ) || null;
+    if (entry && typeof entry === "object") entry = entry.value ?? entry;
+  } else if (typeof bag === "object") {
+    entry = bag[String(myUserId)] || bag[String(myCompanyName || "")] || null;
+  }
+
+  if (!entry || typeof entry !== "object") return null;
+
+  const q = numify(
+    entry.providerQualityRating ?? entry.quality ?? entry.Quality
+  );
+  const c = numify(
+    entry.providerCommunicationRating ??
+      entry.communication ??
+      entry.Communication
+  );
+  const b = numify(
+    entry.providerBillingRating ?? entry.billing ?? entry.Billing
+  );
+
+  const parts = [q, c, b].filter((n) => typeof n === "number");
+  if (!parts.length) return null;
+
+  const avg = Number(
+    (parts.reduce((s, v) => s + v, 0) / parts.length).toFixed(1)
+  );
+
+  return {
+    total: avg,
+    quality: q ?? null,
+    communication: c ?? null,
+    billing: b ?? null,
+  };
+};
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.userId)
+    if (!session?.userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
     const me = await prisma.appUser.findUnique({
       where: { userId: BigInt(session.userId) },
       select: { companyName: true },
     });
 
-    // 1) Fetch ONLY this user's contracts (via the request relation)
+    // IMPORTANT: include provider rating fields in the select
     const contracts = await prisma.contract.findMany({
-      where: { request: { clientId: String(session.userId) } },
+      where: { request: { clientId: BigInt(session.userId) } },
       orderBy: { contractDate: "desc" },
       select: {
         contractId: true,
@@ -27,139 +90,115 @@ export async function GET() {
         contractPrice: true,
         contractPriceCurrency: true,
         contractPriceType: true,
-        providerId: true, // 👈 need this to resolve provider
+        providerId: true,
         request: {
           select: {
             requestId: true,
             title: true,
-            scopeOfWork: true,
             currency: true,
             paymentRate: true,
+            scopeOfWork: true,
             description: true,
             invoiceType: true,
             language: true,
             advanceRetainerFee: true,
           },
         },
-      },
-    });
-
-    // 2) Batch-load provider profiles for company name + TOTAL ratings
-    const providerIds = [
-      ...new Set(
-        contracts
-          .map((c) => c.providerId)
-          .filter((x) => typeof x !== "undefined" && x !== null)
-      ),
-    ];
-
-    const providers = providerIds.length
-      ? await prisma.appUser.findMany({
-          where: { userId: { in: providerIds.map((id) => BigInt(id)) } },
+        provider: {
           select: {
             userId: true,
             companyName: true,
             businessId: true,
             email: true,
             phone: true,
-            // TOTAL (aggregate) ratings on the provider profile
+
+            // ⬇⬇ THESE FOUR ARE THE AGGREGATE RATING FIELDS ⬇⬇
             providerTotalRating: true,
             providerQualityRating: true,
             providerCommunicationRating: true,
             providerBillingRating: true,
+
+            // ⬇ per-user ratings JSON (correct field name)
+            providerIndividualRating: true,
           },
-        })
-      : [];
-
-    const providerMap = new Map(providers.map((p) => [Number(p.userId), p]));
-
-    // 3) (Optional) Load MY individual ratings for these providers, if you have a table for it
-    // If your schema differs, adjust this block or remove it safely.
-    let myRatingsMap = new Map();
-    if (providerIds.length) {
-      const myRatings = await prisma.providerUserRating?.findMany?.({
-        where: {
-          raterUserId: BigInt(session.userId),
-          providerUserId: { in: providerIds.map((id) => BigInt(id)) },
         },
-        select: {
-          providerUserId: true,
-          total: true,
-          quality: true,
-          communication: true,
-          billing: true,
-        },
-      });
-      if (myRatings) {
-        myRatingsMap = new Map(
-          myRatings.map((r) => [Number(r.providerUserId), r])
-        );
-      }
-    }
+      },
+    });
 
-    // 4) Shape rows for the table + modal
     const shaped = contracts.map((c) => {
-      const p = providerMap.get(Number(c.providerId));
-      const mine = myRatingsMap.get(Number(c.providerId)) || null;
+      const p = c.provider || {};
+
+      // Aggregate rating: prefer providerTotalRating, else compute from subs
+      const q = numify(p.providerQualityRating);
+      const co = numify(p.providerCommunicationRating);
+      const b = numify(p.providerBillingRating);
+      const t = numify(p.providerTotalRating);
+
+      const parts = [q, co, b].filter((n) => typeof n === "number");
+      const computedTotal = parts.length
+        ? Number((parts.reduce((s, v) => s + v, 0) / parts.length).toFixed(1))
+        : null;
+
+      const providerRating = {
+        total: t ?? computedTotal,
+        quality: q ?? null,
+        communication: co ?? null,
+        billing: b ?? null,
+      };
+
+      // Your individual rating (if present in providerIndividualRating)
+      const myRating = findMyIndividualRating(
+        p,
+        session.userId,
+        me?.companyName
+      );
 
       return {
         contractId: safeNumber(c.contractId),
         contractDate: c.contractDate,
-        contractPrice: toNum(c.contractPrice),
+        contractPrice: numify(c.contractPrice),
         contractPriceCurrency:
           c.contractPriceCurrency || c.request?.currency || null,
         contractPriceType:
           c.contractPriceType || c.request?.paymentRate || null,
 
-        // shown in the table
-        request: {
-          id: c.request?.requestId || null,
-          title: c.request?.title || "—",
-        },
-
-        // provider for both table + modal
         provider: {
-          userId: c.providerId ? Number(c.providerId) : null,
-          companyName: p?.companyName || "—",
-          businessId: p?.businessId || "—",
-          contactName: p?.contactPersonName || "—",
-          email: p?.email || "—",
-          phone: p?.phone || "—",
+          userId: p.userId ? safeNumber(p.userId) : null,
+          companyName: p.companyName || "—",
+          businessId: p.businessId || "—",
+          email: p.email || "—",
+          phone: p.phone || "—",
+
+          // pass raw rating fields too (useful for debugging/UI)
+          providerTotalRating: t,
+          providerQualityRating: q,
+          providerCommunicationRating: co,
+          providerBillingRating: b,
         },
 
-        // ratings
-        myRating: mine
-          ? {
-              total: toNum(mine.total),
-              quality: toNum(mine.quality),
-              communication: toNum(mine.communication),
-              billing: toNum(mine.billing),
-            }
-          : null,
-        providerRating: {
-          total: toNum(p?.providerTotalRating),
-          quality: toNum(p?.providerQualityRating),
-          communication: toNum(p?.providerCommunicationRating),
-          billing: toNum(p?.providerBillingRating),
-        },
-
-        // keep extra request fields for ContractModal
-        requestDetails: {
+        request: {
+          id: c.request?.requestId ? safeNumber(c.request.requestId) : null,
+          title: c.request?.title || "—",
           scopeOfWork: c.request?.scopeOfWork || "—",
           description: c.request?.description || "—",
           invoiceType: c.request?.invoiceType || "—",
           language: c.request?.language || "—",
           advanceRetainerFee: c.request?.advanceRetainerFee || "—",
         },
+
+        myRating, // null → N/A in UI
+        providerRating, // should be filled now
       };
     });
 
-    return NextResponse.json({
-      companyName: me?.companyName || null,
-      contracts: shaped,
-    });
+    return NextResponse.json(
+      serialize({
+        companyName: me?.companyName || null,
+        contracts: shaped,
+      })
+    );
   } catch (e) {
-    console.error("contracts list failed:", e);
+    console.error("GET /api/me/contracts failed:", e);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

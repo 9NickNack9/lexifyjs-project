@@ -580,8 +580,9 @@ export default function ProviderArchive() {
                 <div id="lexify-preview" className="space-y-6 text-black p-8">
                   <Section title="Client Name, Business ID and Country of Domicile">
                     <p className="text-md mt-2">
-                      {reqPreview.clientName || "—"}, (Business ID: —),
-                      (Country: —)
+                      {reqPreview.clientName || "—"},{" "}
+                      {reqPreview.clientBusinessId || "—"},{" "}
+                      {reqPreview.clientCountry || "—"}
                     </p>
                   </Section>
 

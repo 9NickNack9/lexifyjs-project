@@ -1,210 +1,102 @@
+// src/app/api/me/contracts/route.js
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 
-// ---------- helpers ----------
-const toNum = (d) => (d == null ? null : Number(d));
+// BigInt-safe JSON
+const serialize = (obj) =>
+  JSON.parse(
+    JSON.stringify(obj, (_, v) => (typeof v === "bigint" ? v.toString() : v))
+  );
+
+// Safe number parser for Decimal | number | "5"
+const numify = (v) => {
+  if (v == null) return null;
+  const s = typeof v === "object" && v.toString ? v.toString() : String(v);
+  const n = parseFloat(s);
+  return Number.isFinite(n) ? n : null;
+};
+
 const safeNumber = (v) => (typeof v === "bigint" ? Number(v) : v);
-const isSafeDate = (x) => x instanceof Date && !isNaN(x.getTime());
 
-function toDecimalString(v) {
-  if (v === undefined || v === null || v === "") return null;
-  const s = String(v).replace(/[^\d.]/g, "");
-  return s === "" ? null : s;
-}
+// Pull *your* individual rating from provider.providerIndividualRating
+const findMyIndividualRating = (provider, myUserId, myCompanyName) => {
+  const bag = provider?.providerIndividualRating ?? null;
+  if (!bag) return null;
 
-async function requireSession() {
-  const session = await getServerSession(authOptions);
-  if (!session?.userId) {
-    throw NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  // Support object map OR array of entries { key, value }
+  let entry = null;
+
+  if (Array.isArray(bag)) {
+    entry =
+      bag.find(
+        (e) =>
+          e?.key === String(myUserId) || e?.key === String(myCompanyName || "")
+      ) || null;
+    if (entry && typeof entry === "object") entry = entry.value ?? entry;
+  } else if (typeof bag === "object") {
+    entry = bag[String(myUserId)] || bag[String(myCompanyName || "")] || null;
   }
-  return session;
-}
 
-// ---------- GET /api/me/contracts ----------
+  if (!entry || typeof entry !== "object") return null;
+
+  const q = numify(
+    entry.providerQualityRating ?? entry.quality ?? entry.Quality
+  );
+  const c = numify(
+    entry.providerCommunicationRating ??
+      entry.communication ??
+      entry.Communication
+  );
+  const b = numify(
+    entry.providerBillingRating ?? entry.billing ?? entry.Billing
+  );
+
+  const parts = [q, c, b].filter((n) => typeof n === "number");
+  if (!parts.length) return null;
+
+  const avg = Number(
+    (parts.reduce((s, v) => s + v, 0) / parts.length).toFixed(1)
+  );
+
+  return {
+    total: avg,
+    quality: q ?? null,
+    communication: c ?? null,
+    billing: b ?? null,
+  };
+};
+
 export async function GET() {
   try {
-    const session = await requireSession();
+    const session = await getServerSession(authOptions);
+    if (!session?.userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-    // Company name for Purchaser (for the modal header)
     const me = await prisma.appUser.findUnique({
       where: { userId: BigInt(session.userId) },
       select: { companyName: true },
     });
 
-    // Fetch contracts that belong to this user (via Contract.clientId)
-    const rows = await prisma.contract.findMany({
-      where: { clientId: BigInt(session.userId) },
+    // Only select fields that exist and that we actually need
+    const contracts = await prisma.contract.findMany({
+      where: { request: { clientId: BigInt(session.userId) } },
       orderBy: { contractDate: "desc" },
       select: {
         contractId: true,
         contractDate: true,
-        contractPrice: true, // Decimal
-        requestId: true,
-        // join request to render “B2B-style” preview info
-        request: {
-          select: {
-            title: true,
-            scopeOfWork: true,
-            description: true,
-            currency: true,
-            paymentRate: true,
-            invoiceType: true,
-            language: true,
-            advanceRetainerFee: true,
-          },
-        },
-        // join provider to show provider company/contact
-        provider: {
-          select: {
-            companyName: true,
-            companyId: true, // business ID
-            contactFirstName: true,
-            contactLastName: true,
-            contactEmail: true,
-            contactTelephone: true,
-          },
-        },
-      },
-    });
-
-    const shaped = rows.map((c) => ({
-      contractId: safeNumber(c.contractId),
-      contractDate: c.contractDate,
-      contractPrice: toNum(c.contractPrice),
-      // currency/type come from the originating Request in your schema
-      contractPriceCurrency: c.request?.currency ?? null,
-      contractPriceType: c.request?.paymentRate ?? null,
-      provider: {
-        companyName: c.provider?.companyName ?? "—",
-        businessId: c.provider?.companyId ?? "—",
-        contactName:
-          [c.provider?.contactFirstName, c.provider?.contactLastName]
-            .filter(Boolean)
-            .join(" ") || "—",
-        email: c.provider?.contactEmail ?? "—",
-        phone: c.provider?.contactTelephone ?? "—",
-      },
-      request: {
-        id: safeNumber(c.requestId),
-        title: c.request?.title || "—",
-        scopeOfWork: c.request?.scopeOfWork || "—",
-        description: c.request?.description || "—",
-        invoiceType: c.request?.invoiceType || "—",
-        language: c.request?.language || "—",
-        advanceRetainerFee: c.request?.advanceRetainerFee || "—",
-      },
-    }));
-
-    return NextResponse.json({
-      companyName: me?.companyName || null,
-      contracts: shaped,
-    });
-  } catch (err) {
-    if (err instanceof Response) return err; // from requireSession
-    console.error("GET /api/me/contracts failed:", err);
-    return NextResponse.json(
-      { error: "Server error loading contracts" },
-      { status: 500 }
-    );
-  }
-}
-
-// ---------- PUT /api/me/contracts ----------
-// Body:
-// {
-//   contractId: number,
-//   updates: {
-//     contractPrice?: string|number,   // Decimal
-//     contractDate?: string|Date       // ISO or Date
-//   }
-// }
-// Only the purchaser (clientId === session.userId) can update.
-export async function PUT(req) {
-  try {
-    const session = await requireSession();
-
-    let body;
-    try {
-      body = await req.json();
-    } catch {
-      return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-    }
-
-    const contractId = Number(body?.contractId);
-    const updates = body?.updates || {};
-    if (!Number.isInteger(contractId) || contractId <= 0) {
-      return NextResponse.json(
-        { error: "Missing or invalid contractId" },
-        { status: 400 }
-      );
-    }
-    if (typeof updates !== "object" || updates === null) {
-      return NextResponse.json(
-        { error: "Missing or invalid updates" },
-        { status: 400 }
-      );
-    }
-
-    // Ownership check (contract must belong to this user via clientId)
-    const existing = await prisma.contract.findUnique({
-      where: { contractId: BigInt(contractId) },
-      select: { clientId: true, requestId: true },
-    });
-    if (!existing) {
-      return NextResponse.json(
-        { error: "Contract not found" },
-        { status: 404 }
-      );
-    }
-    if (String(existing.clientId) !== String(session.userId)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-    }
-
-    // Build safe update payload
-    const data = {};
-
-    if (updates.contractPrice !== undefined) {
-      data.contractPrice = toDecimalString(updates.contractPrice);
-    }
-
-    if (updates.contractDate !== undefined) {
-      const cd =
-        updates.contractDate instanceof Date
-          ? updates.contractDate
-          : new Date(updates.contractDate);
-      if (!isSafeDate(cd)) {
-        return NextResponse.json(
-          { error: "Invalid contractDate" },
-          { status: 400 }
-        );
-      }
-      data.contractDate = cd;
-    }
-
-    if (Object.keys(data).length === 0) {
-      return NextResponse.json(
-        { error: "No supported fields to update" },
-        { status: 400 }
-      );
-    }
-
-    const updated = await prisma.contract.update({
-      where: { contractId: BigInt(contractId) },
-      data,
-      select: {
-        contractId: true,
-        contractDate: true,
         contractPrice: true,
-        requestId: true,
+        providerId: true,
         request: {
           select: {
+            requestId: true,
             title: true,
+            currency: true, // used as contractPriceCurrency
+            paymentRate: true, // used as contractPriceType
             scopeOfWork: true,
             description: true,
-            currency: true,
-            paymentRate: true,
             invoiceType: true,
             language: true,
             advanceRetainerFee: true,
@@ -212,57 +104,85 @@ export async function PUT(req) {
         },
         provider: {
           select: {
+            userId: true,
             companyName: true,
-            companyId: true,
-            contactFirstName: true,
-            contactLastName: true,
-            contactEmail: true,
-            contactTelephone: true,
+            providerTotalRating: true,
+            providerQualityRating: true,
+            providerCommunicationRating: true,
+            providerBillingRating: true,
+            providerIndividualRating: true,
           },
         },
       },
     });
 
-    const shaped = {
-      contractId: safeNumber(updated.contractId),
-      contractDate: updated.contractDate,
-      contractPrice: toNum(updated.contractPrice),
-      contractPriceCurrency: updated.request?.currency ?? null,
-      contractPriceType: updated.request?.paymentRate ?? null,
-      provider: {
-        companyName: updated.provider?.companyName ?? "—",
-        businessId: updated.provider?.companyId ?? "—",
-        contactName:
-          [
-            updated.provider?.contactFirstName,
-            updated.provider?.contactLastName,
-          ]
-            .filter(Boolean)
-            .join(" ") || "—",
-        email: updated.provider?.contactEmail ?? "—",
-        phone: updated.provider?.contactTelephone ?? "—",
-      },
-      request: {
-        id: safeNumber(updated.requestId),
-        title: updated.request?.title || "—",
-        scopeOfWork: updated.request?.scopeOfWork || "—",
-        description: updated.request?.description || "—",
-        invoiceType: updated.request?.invoiceType || "—",
-        language: updated.request?.language || "—",
-        advanceRetainerFee: updated.request?.advanceRetainerFee || "—",
-      },
-    };
+    const shaped = contracts.map((c) => {
+      const p = c.provider || {};
 
-    return NextResponse.json({ ok: true, contract: shaped });
-  } catch (err) {
-    if (err instanceof Response) return err;
-    console.error("PUT /api/me/contracts failed:", err);
+      // Aggregate rating: prefer providerTotalRating, else compute from subs
+      const q = numify(p.providerQualityRating);
+      const co = numify(p.providerCommunicationRating);
+      const b = numify(p.providerBillingRating);
+      const t = numify(p.providerTotalRating);
+
+      const parts = [q, co, b].filter((n) => typeof n === "number");
+      const computedTotal = parts.length
+        ? Number((parts.reduce((s, v) => s + v, 0) / parts.length).toFixed(1))
+        : null;
+
+      const providerRating = {
+        total: t ?? computedTotal,
+        quality: q ?? null,
+        communication: co ?? null,
+        billing: b ?? null,
+      };
+
+      // Your individual rating (if present in providerIndividualRating)
+      const myRating = findMyIndividualRating(
+        p,
+        session.userId,
+        me?.companyName
+      );
+
+      return {
+        contractId: safeNumber(c.contractId),
+        contractDate: c.contractDate,
+        contractPrice: numify(c.contractPrice),
+        contractPriceCurrency: c.request?.currency || null, // derived
+        contractPriceType: c.request?.paymentRate || null, // derived
+
+        provider: {
+          userId: p.userId ? safeNumber(p.userId) : null,
+          companyName: p.companyName || "—",
+          providerTotalRating: t,
+          providerQualityRating: q,
+          providerCommunicationRating: co,
+          providerBillingRating: b,
+        },
+
+        request: {
+          id: c.request?.requestId ? safeNumber(c.request.requestId) : null,
+          title: c.request?.title || "—",
+          scopeOfWork: c.request?.scopeOfWork || "—",
+          description: c.request?.description || "—",
+          invoiceType: c.request?.invoiceType || "—",
+          language: c.request?.language || "—",
+          advanceRetainerFee: c.request?.advanceRetainerFee || "—",
+        },
+
+        myRating,
+        providerRating,
+      };
+    });
+
     return NextResponse.json(
-      { error: "Server error updating contract" },
-      { status: 500 }
+      serialize({
+        companyName: me?.companyName || null,
+        contracts: shaped,
+      })
     );
+  } catch (e) {
+    console.error("GET /api/me/contracts failed:", e);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
-
-// Optional (if you ever see caching issues)
-// export const dynamic = "force-dynamic";

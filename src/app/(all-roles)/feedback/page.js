@@ -20,7 +20,9 @@ export default function Feedback() {
         <br />
         We would love to hear about your LEXIFY experience so far - what is
         working well for you and what could we improve? Are there any specific
-        features you would like to see added to LEXIFY?
+        features you would like to see added to LEXIFY? Share your thoughts by
+        sending an email to feedback@lexify.online or by clicking the button
+        below.
       </h2>
       <a
         href={`mailto:feedback@lexify.online?subject=Feedback to LEXIFY by ${encodeURIComponent(

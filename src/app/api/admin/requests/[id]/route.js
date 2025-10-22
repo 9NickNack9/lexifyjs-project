@@ -35,6 +35,10 @@ export async function GET(_req, { params }) {
       scopeOfWork: true,
       description: true,
       additionalBackgroundInfo: true,
+      requestCategory: true,
+      requestSubcategory: true,
+      assignmentType: true,
+      details: true, // include the full details blob
       _count: { select: { offers: true } },
     },
   });
@@ -63,7 +67,6 @@ export async function DELETE(_req, { params }) {
   const id = Number((await params).id);
   if (!id) return NextResponse.json({ error: "Bad id" }, { status: 400 });
 
-  // delete offers first if your FK requires it (onDelete: Cascade would auto-handle)
   await prisma.offer.deleteMany({ where: { requestId: id } }).catch(() => {});
   await prisma.request.delete({ where: { requestId: id } });
 

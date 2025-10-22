@@ -2,7 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { formatTimeUntil } from "@/app/(purchaser)/archive/utils/format"; // <- reuse your existing helper
+import { formatTimeUntil } from "@/app/(purchaser)/archive/utils/format";
+import { FaFileAlt } from "react-icons/fa";
+import NarrowTooltip from "../../components/NarrowTooltip";
 
 const subcategoriesByCategory = {
   "Help with Contracts": [
@@ -206,7 +208,8 @@ export default function ProviderRequest() {
                     Time until Deadline
                   </th>
                   <th className="border p-2 text-center">
-                    Review & Submit Offer
+                    Review LEXIFY Request and Submit Offer{" "}
+                    <NarrowTooltip tooltipText="Only one offer can be submitted for each LEXIFY Request." />
                   </th>
                 </tr>
               </thead>
@@ -240,7 +243,7 @@ export default function ProviderRequest() {
                           href={`/make-offer?requestId=${r.requestId}`}
                           className="bg-[#11999e] text-white px-3 py-1 rounded inline-block"
                         >
-                          Make Offer
+                          <FaFileAlt className="inline-block w-5 h-5" />
                         </Link>
                       </td>
                     </tr>

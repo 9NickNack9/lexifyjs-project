@@ -3,74 +3,83 @@
 import { useEffect, useMemo, useState } from "react";
 import QuestionMarkTooltip from "../../components/QuestionmarkTooltip";
 
-// ⭐ half-star rating widget
-function StarInput({ value, onChange, label }) {
-  // values are 0..5 in steps of 0.5
-  const steps = useMemo(
-    () => Array.from({ length: 10 }, (_, i) => (i + 1) * 0.5),
-    []
-  );
+// RatingSlider.js (or inline in the same file)
+import { useId } from "react";
+
+const clampHalfStep = (n) => {
+  if (n == null) return 0;
+  // round to nearest 0.5 and clamp to [0,5]
+  const rounded = Math.round(n * 2) / 2;
+  return Math.min(5, Math.max(0, rounded));
+};
+
+export function RatingSlider({ label, value, onChange, tooltipText }) {
+  const id = useId();
+  const sliderId = `${id}-slider`;
+  const listId = `${id}-ticks`;
+
+  const display = useMemo(() => clampHalfStep(value).toFixed(1), [value]);
+
+  const handleChange = (e) => {
+    const v = parseFloat(e.target.value);
+    onChange?.(clampHalfStep(v));
+  };
+
   return (
-    <div className="space-y-1">
-      <div className="text-sm font-semibold">{label}</div>
-      <div className="flex items-center gap-1">
-        {steps.map((step) => {
-          const filled = value >= step;
-          return (
-            <button
-              key={step}
-              type="button"
-              onClick={() => onChange(step)}
-              className="p-0.5"
-              aria-label={`${label} ${step} stars`}
-              title={`${step} / 5`}
-            >
-              <svg
-                width="26"
-                height="26"
-                viewBox="0 0 24 24"
-                aria-hidden="true"
-              >
-                <defs>
-                  <clipPath id={`half-${label}-${step}`}>
-                    <rect x="0" y="0" width="12" height="24" />
-                  </clipPath>
-                </defs>
-                <path
-                  d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.401 8.163L12 18.896l-7.335 3.864 1.401-8.163L.132 9.21l8.2-1.192z"
-                  fill="none"
-                  stroke="#999"
-                  strokeWidth="1"
-                />
-                <path
-                  d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.401 8.163L12 18.896l-7.335 3.864 1.401-8.163L.132 9.21l8.2-1.192z"
-                  clipPath={`url(#half-${label}-${step})`}
-                  fill={
-                    value >= Math.floor(step * 2) / 2 - 0.5
-                      ? "#f59e0b"
-                      : "transparent"
-                  }
-                />
-                <path
-                  d="M12 .587l3.668 7.431 8.2 1.192-5.934 5.787 1.401 8.163L12 18.896l-7.335 3.864 1.401-8.163L.132 9.21l8.2-1.192z"
-                  fill={filled ? "#f59e0b" : "transparent"}
-                />
-              </svg>
-            </button>
-          );
-        })}
-        <span className="ml-2 text-sm text-gray-700">
-          {value.toFixed(1)} / 5
-        </span>
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1">
+          <label htmlFor={sliderId} className="text-sm font-semibold">
+            {label}
+          </label>
+          {tooltipText && <QuestionMarkTooltip tooltipText={tooltipText} />}
+        </div>
+        <span className="text-sm text-gray-800">{display} / 5</span>
+      </div>
+
+      <input
+        id={sliderId}
+        type="range"
+        min="0"
+        max="5"
+        step="0.5"
+        list={listId}
+        value={clampHalfStep(value)}
+        onChange={handleChange}
+        className="w-full accent-[#119999]"
+        aria-valuemin={0}
+        aria-valuemax={5}
+        aria-valuenow={clampHalfStep(value)}
+        aria-label={`${label} rating`}
+      />
+
+      {/* Tick marks at 0, 0.5, …, 5 */}
+      <datalist id={listId}>
+        {Array.from({ length: 11 }).map((_, i) => (
+          <option key={i} value={(i * 0.5).toFixed(1)} />
+        ))}
+      </datalist>
+
+      {/* Optional: a tiny bar with tick labels (purely visual) */}
+      <div className="flex justify-between text-[11px] text-gray-500">
+        <span>0</span>
+        <span>1</span>
+        <span>2</span>
+        <span>3</span>
+        <span>4</span>
+        <span>5</span>
       </div>
     </div>
   );
 }
 
-function AggregateRow({ label, value }) {
+function AggregateRow({ label, value, tooltipText }) {
   return (
     <div className="flex items-center justify-between">
-      <span className="text-sm">{label}</span>
+      <div className="flex items-center gap-1">
+        <span className="text-sm">{label}</span>
+        {tooltipText && <QuestionMarkTooltip tooltipText={tooltipText} />}
+      </div>
       <span className="font-semibold">{value?.toFixed(2) ?? "0.00"} / 5</span>
     </div>
   );
@@ -279,9 +288,6 @@ export default function ProviderRatingPage() {
                     <div className="font-medium">
                       {r.companyName || "(no company name)"}
                     </div>
-                    <div className="text-xs text-gray-600">
-                      Username: {r.username}
-                    </div>
                   </div>
                 );
               })
@@ -293,33 +299,37 @@ export default function ProviderRatingPage() {
       {selected && (
         <div className="w-full max-w-3xl p-6 mt-6 rounded shadow-2xl bg-white text-black">
           <h3 className="text-xl font-semibold mb-1">
-            Rate: {selected.companyName}
+            Rate a Legal Service Provider
           </h3>
           <p className="text-sm text-gray-700 mb-4">
-            Click stars (half-stars supported). You can update your rating
-            anytime.
+            Use the sliders to set your rating for {selected.companyName}. You
+            can update your rating anytime.
           </p>
 
           <div className="grid grid-cols-1 gap-4">
-            <StarInput label="Quality of Work" value={qow} onChange={setQow} />{" "}
-            <QuestionMarkTooltip tooltipText="How satisfied were you in general with the quality of the legal advice and documentation provided by the legal service provider?" />
-            <StarInput
+            <RatingSlider
+              label="Quality of Work"
+              value={qow}
+              onChange={setQow}
+              tooltipText="How satisfied were you in general with the quality of the legal advice and documentation provided by the legal service provider?"
+            />{" "}
+            <RatingSlider
               label="Responsiveness & Communication"
               value={resp}
               onChange={setResp}
+              tooltipText="Did you receive timely responses and communications from the legal service provider? Was the advice you received clear and actionable or ambiguous analysis without clear value-adding guidance?"
             />{" "}
-            <QuestionMarkTooltip tooltipText="Did you receive timely responses and communications from the legal service provider? Was the advice you received clear and actionable or ambiguous analysis without clear value-adding guidance?" />
-            <StarInput
+            <RatingSlider
               label="Billing Practices"
               value={bill}
               onChange={setBill}
+              tooltipText="Did the legal service provider send invoices within agreed timeframes and with agreed specifications? In case of hourly rate assignments, did the legal service provider in your opinion invoice a reasonable amount of hours in relation to	the legal support that was required?"
             />{" "}
-            <QuestionMarkTooltip tooltipText="Did the legal service provider send invoices within agreed timeframes and with agreed specifications? In case of hourly rate assignments, did the legal service provider in your opinion invoice a reasonable amount of hours in relation to	the legal support that was required?" />
           </div>
 
           <div className="mt-5 flex items-center gap-3">
             <button
-              className="bg-[#11999e] text-white px-4 py-2 rounded disabled:opacity-50"
+              className="bg-[#11999e] text-white px-4 py-2 rounded disabled:opacity-50 cursor-pointer"
               onClick={saveRating}
               disabled={saving}
             >
@@ -394,18 +404,18 @@ export default function ProviderRatingPage() {
                 <AggregateRow
                   label="Quality of Work"
                   value={aggAny.quality ?? 0}
-                />{" "}
-                <QuestionMarkTooltip tooltipText="How satisfied were you in general with the quality of the legal advice and documentation provided by the legal service provider?" />
+                  tooltipText="How satisfied were you in general with the quality of the legal advice and documentation provided by the legal service provider?"
+                />
                 <AggregateRow
                   label="Responsiveness & Communication"
                   value={aggAny.communication ?? 0}
-                />{" "}
-                <QuestionMarkTooltip tooltipText="Did you receive timely responses and communications from the legal service provider? Was the advice you received clear and actionable or ambiguous analysis without clear value-adding guidance?" />
+                  tooltipText="Did you receive timely responses and communications from the legal service provider? Was the advice you received clear and actionable or ambiguous analysis without clear value-adding guidance?"
+                />
                 <AggregateRow
                   label="Billing Practices"
                   value={aggAny.billing ?? 0}
-                />{" "}
-                <QuestionMarkTooltip tooltipText="Did the legal service provider send invoices within agreed timeframes and with agreed specifications? In case of hourly rate assignments, did the legal service provider in your opinion invoice a reasonable amount of hours in relation to	the legal support that was required?" />
+                  tooltipText="Did the legal service provider send invoices within agreed timeframes and with agreed specifications? In case of hourly rate assignments, did the legal service provider in your opinion invoice a reasonable amount of hours in relation to the legal support that was required?"
+                />
               </div>
             ) : (
               <div className="text-sm text-gray-600">

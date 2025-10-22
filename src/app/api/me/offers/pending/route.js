@@ -12,11 +12,10 @@ export async function GET() {
     if (!session?.userId)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    // Provider user (for default contact name & filtering source)
     const me = await prisma.appUser.findUnique({
       where: { userId: BigInt(session.userId) },
       select: {
-        companyContactPersons: true, // JSON [{firstName,lastName,...}]
+        companyContactPersons: true,
         contactFirstName: true,
         contactLastName: true,
       },
@@ -24,29 +23,26 @@ export async function GET() {
 
     const now = new Date();
 
-    // Find offers by this provider where the Request is still open & before deadline
     const offers = await prisma.offer.findMany({
       where: {
         providerId: BigInt(session.userId),
-        // Optional: add an Offer.state if you have it (e.g. "SUBMITTED"), otherwise rely on Request
         request: {
           requestState: "PENDING",
           dateExpired: { gt: now },
         },
       },
-      orderBy: { createdAt: "desc" }, // or your timestamp field name
+      orderBy: { createdAt: "desc" },
       select: {
         offerId: true,
-        offerPrice: true, // Decimal
-        createdAt: true, // submission date
-        offerLawyer: true, // person who submitted
+        offerPrice: true,
+        createdAt: true,
+        offerLawyer: true,
         requestId: true,
         request: {
           select: {
             title: true,
             dateExpired: true,
             clientId: true,
-            // For preview:
             scopeOfWork: true,
             description: true,
             currency: true,
@@ -62,40 +58,55 @@ export async function GET() {
       },
     });
 
-    // Load client company names in one go
+    // Load client company details (✅ include Business ID & Country)
     const clientIds = Array.from(
       new Set(offers.map((o) => o.request?.clientId).filter(Boolean))
     );
     const clients = clientIds.length
       ? await prisma.appUser.findMany({
           where: { userId: { in: clientIds } },
-          select: { userId: true, companyName: true },
+          select: {
+            userId: true,
+            companyName: true,
+            companyId: true, // ✅ added
+            companyCountry: true, // ✅ added
+          },
         })
       : [];
+
+    // Map userId -> object with name/id/country
     const clientById = new Map(
-      clients.map((c) => [String(c.userId), c.companyName || "—"])
+      clients.map((c) => [
+        String(c.userId),
+        {
+          companyName: c.companyName || "—",
+          companyId: c.companyId || "—",
+          companyCountry: c.companyCountry || "—",
+        },
+      ])
     );
+
+    const defaultName = [me?.contactFirstName, me?.contactLastName]
+      .filter(Boolean)
+      .join(" ");
 
     const shaped = offers.map((o) => {
       const req = o.request || {};
-      const clientName = clientById.get(String(req.clientId)) || "—";
-
-      // “Offer Submitted By” — prefer offer.offerLawyer, else fallback to provider main contact
-      const defaultName = [me?.contactFirstName, me?.contactLastName]
-        .filter(Boolean)
-        .join(" ");
-      const offerSubmittedBy = o.offerLawyer || defaultName || "—";
+      const client = clientById.get(String(req.clientId)) || {
+        companyName: "—",
+        companyId: "—",
+        companyCountry: "—",
+      };
 
       return {
         offerId: safeNumber(o.offerId),
         requestId: safeNumber(o.requestId),
         title: req.title || "—",
-        clientName,
-        offerSubmittedBy,
+        clientName: client.companyName,
+        offerSubmittedBy: o.offerLawyer || defaultName || "—",
         offerSubmissionDate: o.createdAt || null,
         offeredPrice: toNum(o.offerPrice),
-        dateExpired: req.dateExpired, // let UI compute “time until deadline”
-        // Minimal request preview payload (mirrors purchaser preview)
+        dateExpired: req.dateExpired,
         preview: {
           scopeOfWork: req.scopeOfWork || "—",
           currency: req.currency || "—",
@@ -107,12 +118,15 @@ export async function GET() {
           additionalBackgroundInfo: req.additionalBackgroundInfo || "",
           supplierCodeOfConductFiles: req.supplierCodeOfConductFiles || [],
           primaryContactPerson: req.primaryContactPerson || "—",
-          clientName, // for the header line
+
+          // ✅ provide these to the modal preview
+          clientName: client.companyName,
+          clientBusinessId: client.companyId,
+          clientCountry: client.companyCountry,
         },
       };
     });
 
-    // Contact person list for filtering dropdown (full names)
     const contactList = Array.isArray(me?.companyContactPersons)
       ? me.companyContactPersons
           .map((p) =>
@@ -120,11 +134,7 @@ export async function GET() {
           )
           .filter(Boolean)
       : [];
-    // include main contact if not in list
-    const mainName = [me?.contactFirstName, me?.contactLastName]
-      .filter(Boolean)
-      .join(" ")
-      .trim();
+    const mainName = defaultName?.trim();
     if (mainName && !contactList.includes(mainName)) contactList.push(mainName);
 
     return NextResponse.json({

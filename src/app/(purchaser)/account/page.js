@@ -505,7 +505,10 @@ export default function Account() {
                   <th className="border p-2">Title / Position in Company</th>
                   <th className="border p-2">Telephone (with country code)</th>
                   <th className="border p-2">Email</th>
-                  <th className="border p-2">Receive all notifications</th>
+                  <th className="border p-2">
+                    Receive All Notifications{" "}
+                    <NarrowTooltip tooltipText="If 'Receive All Notifications' is checked, the user will receive all automatic notifications related to all LEXIFY Requests made by any representative of your company. If 'Receive All Notifications' is unchecked, the user will receive only automatic notifications related to his/her own LEXIFY Requests." />
+                  </th>
                   <th className="border p-2">Edit</th>
                   <th className="border p-2">Delete</th>
                 </tr>
@@ -768,8 +771,8 @@ export default function Account() {
           7 days from the expiration of each LEXIFY Request to manually select
           the winning offer from the best offers which are shown. If you do not
           select any of the best offers to be the winning offer within 7 days,
-          LEXIFY will automatically select the best offer as the winning offer
-          for the corresponding LEXIFY Contract.{" "}
+          LEXIFY will automatically reject all offers and no LEXIFY Contract
+          will be generated.{" "}
         </h4>
         <br />
       </div>

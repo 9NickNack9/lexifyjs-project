@@ -297,7 +297,10 @@ export default function ProviderAccount() {
                   <th className="border p-2">Title/Position in Company</th>
                   <th className="border p-2">Telephone (with country code)</th>
                   <th className="border p-2">Email</th>
-                  <th className="border p-2">Receive all notifications</th>
+                  <th className="border p-2">
+                    Receive All Notifications{" "}
+                    <NarrowTooltip tooltipText="If 'Receive All Notifications' is checked, the user will receive all automatic notifications related to all offers made by any member of the legal service provider organization. If 'Receive All Notifications' is unchecked, the user will receive only automatic notifications related to his/her own offers." />
+                  </th>
                   <th className="border p-2">Edit/Save</th>
                   <th className="border p-2">Delete</th>
                 </tr>

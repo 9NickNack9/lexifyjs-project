@@ -167,7 +167,9 @@ export default function ReSale() {
 
     setSubmitting(true);
     try {
-      const paymentRate = isHourly ? "Hourly Rate" : "Lump sum fixed price";
+      const paymentRate = isHourly
+        ? "Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the Legal Service Provider. The offered hourly rate will be valid until the transaction has been closed or abandoned, whichever comes first."
+        : "Lump sum fixed price";
       const languageCSV = [
         ...(formData.checkboxes || []).filter((l) => l !== "Other:"),
         formData.otherLang || null,
@@ -203,14 +205,12 @@ export default function ReSale() {
           saleObject: formData.saleObject || "",
           otherObject:
             formData.saleObject === "Other" ? formData.otherObject || "" : "",
-          confidential:
-            !!formData.confidential ||
-            formData.confboxes.includes("Disclosed to Winning Bidder Only"),
-          winnerBidderOnlyStatus: formData.confboxes.includes(
+          confidential: formData.confboxes.includes(
             "Disclosed to Winning Bidder Only"
           )
-            ? "Disclosed to Winning Bidder Only"
-            : formData.confidential || "",
+            ? "Yes"
+            : "No",
+          winnerBidderOnlyStatus: (formData.confidential || "").trim(),
           priceRange: formData.priceRange || "",
           dueDiligence: formData.dueDiligence || "",
         },
@@ -651,13 +651,13 @@ export default function ReSale() {
               <option value="Any size">
                 No, the legal service provider can be of any size
               </option>
-              <option value="Atleast 5 lawyers">
+              <option value="5">
                 Yes, the legal service provider must employ at least 5 lawyers
               </option>
-              <option value="Atleast 15 lawyers">
+              <option value="15">
                 Yes, the legal service provider must employ at least 15 lawyers
               </option>
-              <option value="Atleast 50 lawyers">
+              <option value="40">
                 Yes, the legal service provider must employ at least 40 lawyers
               </option>
             </select>
@@ -988,21 +988,28 @@ export default function ReSale() {
               automatically generate a binding LEXIFY Contract between my
               company as the legal service purchaser and the legal service
               provider submitting the best offer subject to the parameters in my
-              LEXIFY Request. The LEXIFY Contract will consist of i) the service
-              description, other specifications and my Procurement Appendices
-              (if applicable) as I have designated in the LEXIFY Request and ii)
-              the General Terms and Conditions for LEXIFY Contracts. The LEXIFY
-              Contract will not be generated if i) no qualifying offers have
-              been received prior to the expiration of my LEXIFY Request or ii)
-              I as representative of the legal service purchaser cancel the
-              LEXIFY Request before any qualifying offers have been received.
+              LEXIFY Request. If my Winning Offer Selection Method in the
+              &quot;My Account&quot; menu has been set to &quot;Manual&quot;,
+              any automatic generation of a LEXIFY Contract will also require
+              that I actively select the winning service provider. The LEXIFY
+              Contract will consist of i) the service description, other
+              specifications and my Procurement Appendices (if applicable) as I
+              have designated in the LEXIFY Request and ii) the General Terms
+              and Conditions for LEXIFY Contracts. The LEXIFY Contract will not
+              be generated if i) no qualifying offers have been received prior
+              to the expiration of my LEXIFY Request, ii) I as representative of
+              the legal service purchaser cancel the LEXIFY Request or iii) if
+              my Winning Offer Selection Method in the &quot;My Account&quot;
+              menu has been set to &quot;Manual&quot; and I do not actively
+              select any winning service provider within 7 days of the
+              expiration of the LEXIFY Request.
             </em>
           </p>
           <br />
           <div className="flex gap-4">
             <button
               type="submit"
-              disabled /*</div>={submitting}*/
+              disabled={submitting}
               className="p-2 bg-[#11999e] text-white rounded disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
             >
               {submitting ? "Submitting…" : "Submit LEXIFY Request"}
