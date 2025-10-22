@@ -25,9 +25,9 @@ function toNumberOrNull(v) {
 }
 
 function getMaximumPrice(request) {
-  // prefer top-level if your schema has it, else details
+  // Prefer top-level if present (older schemas), else details.*; may be absent entirely
   const raw =
-    request?.maximumPrice ??
+    request?.maximumPrice ?? // not selected; harmless if undefined
     request?.details?.maximumPrice ??
     request?.details?.maxPrice ??
     null;
@@ -69,12 +69,12 @@ export async function POST(req) {
       select: {
         requestId: true,
         dateExpired: true,
-        maximumPrice: true,
+        // ❌ maximumPrice: true,  <-- removed (not a top-level column)
         requestState: true,
         acceptDeadline: true,
         contractResult: true,
         contractStatus: true,
-        details: true,
+        details: true, // keep details so we can read details.maximumPrice
         client: {
           select: {
             userId: true,
@@ -102,7 +102,10 @@ export async function POST(req) {
       const offers = Array.isArray(r.offers) ? r.offers : [];
       const hasOffers = offers.length > 0;
       const winningMode = (r.client?.winningOfferSelection || "").toLowerCase();
+
+      // Safely resolve maximum price from details or null if missing
       const maxPriceNum = getMaximumPrice(r);
+
       // Build an array with numeric prices for comparisons
       const offersWithNum = offers
         .map((o) => ({
@@ -154,7 +157,6 @@ export async function POST(req) {
         if (anyUnderMax) {
           // RULE 3: Automatic + (no maxPrice but has offers) OR (has offer <= maxPrice)
           // Create a Contract for the *lowest* priced offer
-          // Guard: in pathological case all prices failed to parse, fallback to ON HOLD
           const winning = lowest ?? null;
           if (!winning) {
             const accept = new Date(r.dateExpired ?? now);
@@ -167,15 +169,10 @@ export async function POST(req) {
             continue;
           }
 
-          // Create Contract using your relations:
-          //  - requestId (BigInt)
-          //  - clientId  (from request.client.userId)
-          //  - providerId (from winning offer.providerId)
-          //  - contractPrice (Decimal) — pass as string to be safe
+          // Create Contract + mark winner/losers + expire request
           await prisma.$transaction(async (tx) => {
-            // 1) Ensure exactly one contract per requestId
             await tx.contract.upsert({
-              where: { requestId }, // BigInt of the current request
+              where: { requestId }, // assumes unique on requestId
               update: {},
               create: {
                 requestId,
@@ -187,13 +184,11 @@ export async function POST(req) {
               },
             });
 
-            // 2) Mark the winning offer as WON
             await tx.offer.update({
               where: { offerId: winning.offerId },
               data: { offerStatus: "WON" },
             });
 
-            // 3) Mark all other offers on this request as LOST
             await tx.offer.updateMany({
               where: {
                 requestId,
@@ -202,7 +197,6 @@ export async function POST(req) {
               data: { offerStatus: "LOST" },
             });
 
-            // 4) Update the request state and contract result
             await tx.request.update({
               where: { requestId },
               data: { requestState: "EXPIRED" },
@@ -221,7 +215,7 @@ export async function POST(req) {
             }
           });
 
-          // Mark request EXPIRED + contractResult="Yes"
+          // Double-set for safety outside the tx (idempotent)
           await prisma.request.update({
             where: { requestId },
             data: { requestState: "EXPIRED" },
