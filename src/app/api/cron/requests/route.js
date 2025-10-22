@@ -25,33 +25,26 @@ function toNumberOrNull(v) {
 }
 
 function getMaximumPrice(request) {
-  // Prefer top-level if present (older schemas), else details.*; may be absent entirely
+  // May live in details.*; not a top-level column
   const raw =
-    request?.maximumPrice ?? // not selected; harmless if undefined
+    request?.maximumPrice ?? // harmless if undefined
     request?.details?.maximumPrice ??
     request?.details?.maxPrice ??
     null;
   return toNumberOrNull(raw);
 }
 
-// Write "Yes"/"No" to either contractResult or contractStatus (whichever exists)
-async function updateRequestContractYesNo(requestId, yesOrNo) {
-  try {
-    return await prisma.request.update({
-      where: { requestId },
-      data: { contractResult: yesOrNo },
-    });
-  } catch {
-    return await prisma.request.update({
-      where: { requestId },
-      data: { contractStatus: yesOrNo },
-    });
-  }
+// Write "Yes"/"No" to contractResult (schema field)
+async function setContractResult(requestId, yesOrNo) {
+  await prisma.request.update({
+    where: { requestId },
+    data: { contractResult: yesOrNo },
+  });
 }
 
-// Read the current Yes/No from either name
-function readContractYesNo(reqRow) {
-  return (reqRow && (reqRow.contractResult ?? reqRow.contractStatus)) ?? null;
+// Read current Yes/No from contractResult
+function getContractResult(row) {
+  return row?.contractResult ?? null;
 }
 
 export async function POST(req) {
@@ -69,24 +62,21 @@ export async function POST(req) {
       select: {
         requestId: true,
         dateExpired: true,
-        // ❌ maximumPrice: true,  <-- removed (not a top-level column)
         requestState: true,
         acceptDeadline: true,
         contractResult: true,
-        contractStatus: true,
-        details: true, // keep details so we can read details.maximumPrice
+        details: true, // to read details.maximumPrice
         client: {
           select: {
             userId: true,
-            winningOfferSelection: true, // "manual" | "Automatic"
+            winningOfferSelection: true, // "manual" | "automatic"
           },
         },
-        // Only need essential offer fields
         offers: {
           select: {
             offerId: true,
-            offerPrice: true, // Decimal/string OK
-            providerId: true, // BigInt
+            offerPrice: true,
+            providerId: true,
           },
         },
       },
@@ -98,56 +88,47 @@ export async function POST(req) {
     let onHoldAutoOverBudget = 0;
 
     for (const r of pendingExpired) {
-      const requestId = r.requestId; // BigInt (keep as-is)
+      const requestId = r.requestId;
       const offers = Array.isArray(r.offers) ? r.offers : [];
       const hasOffers = offers.length > 0;
       const winningMode = (r.client?.winningOfferSelection || "").toLowerCase();
 
-      // Safely resolve maximum price from details or null if missing
+      // Resolve maximum price safely (may be absent)
       const maxPriceNum = getMaximumPrice(r);
 
-      // Build an array with numeric prices for comparisons
       const offersWithNum = offers
-        .map((o) => ({
-          ...o,
-          priceNum: toNumberOrNull(o.offerPrice),
-        }))
+        .map((o) => ({ ...o, priceNum: toNumberOrNull(o.offerPrice) }))
         .filter((o) => o.priceNum != null);
 
-      // Lowest numeric price (for Automatic)
       const lowest = offersWithNum.reduce(
         (best, cur) =>
           best == null || cur.priceNum < best.priceNum ? cur : best,
         null
       );
 
-      // Any offer under/equal to maxPrice? If no maxPrice, any offer qualifies
       const anyUnderMax =
         maxPriceNum == null
           ? offersWithNum.length > 0
           : offersWithNum.some((o) => o.priceNum <= maxPriceNum);
 
       if (!hasOffers) {
-        // RULE 1: No offers → EXPIRED + contractResult="No"
+        // RULE 1: No offers → EXPIRED + contractResult = "No"
         await prisma.request.update({
           where: { requestId },
           data: { requestState: "EXPIRED" },
         });
-        await updateRequestContractYesNo(requestId, "No");
+        await setContractResult(requestId, "No");
         expiredNoOffers++;
         continue;
       }
 
       if (winningMode === "manual") {
-        // RULE 2: Offers exist & manual → ON HOLD + acceptDeadline = dateExpired + 7 days
+        // RULE 2: Manual → ON HOLD + acceptDeadline = dateExpired + 7 days
         const accept = new Date(r.dateExpired ?? now);
         accept.setDate(accept.getDate() + 7);
         await prisma.request.update({
           where: { requestId },
-          data: {
-            requestState: "ON HOLD",
-            acceptDeadline: accept,
-          },
+          data: { requestState: "ON HOLD", acceptDeadline: accept },
         });
         onHoldManual++;
         continue;
@@ -155,8 +136,7 @@ export async function POST(req) {
 
       if (winningMode === "automatic") {
         if (anyUnderMax) {
-          // RULE 3: Automatic + (no maxPrice but has offers) OR (has offer <= maxPrice)
-          // Create a Contract for the *lowest* priced offer
+          // RULE 3: Automatic + (no maxPrice but has offers) OR (offer <= maxPrice)
           const winning = lowest ?? null;
           if (!winning) {
             const accept = new Date(r.dateExpired ?? now);
@@ -169,14 +149,13 @@ export async function POST(req) {
             continue;
           }
 
-          // Create Contract + mark winner/losers + expire request
           await prisma.$transaction(async (tx) => {
             await tx.contract.upsert({
-              where: { requestId }, // assumes unique on requestId
+              where: { requestId },
               update: {},
               create: {
                 requestId,
-                clientId: r.client.userId, // purchaser from the Request
+                clientId: r.client.userId,
                 providerId: winning.providerId,
                 contractPrice:
                   winning.offerPrice?.toString?.() ??
@@ -190,92 +169,62 @@ export async function POST(req) {
             });
 
             await tx.offer.updateMany({
-              where: {
-                requestId,
-                offerId: { not: winning.offerId },
-              },
+              where: { requestId, offerId: { not: winning.offerId } },
               data: { offerStatus: "LOST" },
             });
 
             await tx.request.update({
               where: { requestId },
-              data: { requestState: "EXPIRED" },
+              data: { requestState: "EXPIRED", contractResult: "Yes" },
             });
-
-            try {
-              await tx.request.update({
-                where: { requestId },
-                data: { contractResult: "Yes" },
-              });
-            } catch {
-              await tx.request.update({
-                where: { requestId },
-                data: { contractStatus: "Yes" },
-              });
-            }
           });
 
-          // Double-set for safety outside the tx (idempotent)
+          // Idempotent double-set outside tx
           await prisma.request.update({
             where: { requestId },
             data: { requestState: "EXPIRED" },
           });
-          await updateRequestContractYesNo(requestId, "Yes");
+          await setContractResult(requestId, "Yes");
 
           autoAwarded++;
         } else {
-          // RULE 4: Automatic + all offers over maxPrice → ON HOLD + acceptDeadline = +7 days
+          // RULE 4: Automatic + all offers over maxPrice → ON HOLD + 7 days
           const accept = new Date(r.dateExpired ?? now);
           accept.setDate(accept.getDate() + 7);
           await prisma.request.update({
             where: { requestId },
-            data: {
-              requestState: "ON HOLD",
-              acceptDeadline: accept,
-            },
+            data: { requestState: "ON HOLD", acceptDeadline: accept },
           });
           onHoldAutoOverBudget++;
         }
         continue;
       }
 
-      // Unknown/missing winningOfferSelection → safe fallback: ON HOLD + 7 days
-      {
-        const accept = new Date(r.dateExpired ?? now);
-        accept.setDate(accept.getDate() + 7);
-        await prisma.request.update({
-          where: { requestId },
-          data: {
-            requestState: "ON HOLD",
-            acceptDeadline: accept,
-          },
-        });
-        onHoldManual++;
-      }
+      // Unknown/missing winningOfferSelection → ON HOLD + 7 days
+      const accept = new Date(r.dateExpired ?? now);
+      accept.setDate(accept.getDate() + 7);
+      await prisma.request.update({
+        where: { requestId },
+        data: { requestState: "ON HOLD", acceptDeadline: accept },
+      });
+      onHoldManual++;
     }
 
-    // RULE 5: Any ON HOLD past acceptDeadline and not contracted → EXPIRED + contract="No"
+    // RULE 5: Any ON HOLD past acceptDeadline & not contracted → EXPIRED + contractResult="No"
     const onHoldPast = await prisma.request.findMany({
-      where: {
-        requestState: "ON HOLD",
-        acceptDeadline: { lte: now },
-      },
-      select: {
-        requestId: true,
-        contractResult: true,
-        contractStatus: true,
-      },
+      where: { requestState: "ON HOLD", acceptDeadline: { lte: now } },
+      select: { requestId: true, contractResult: true },
     });
 
     let onHoldExpired = 0;
     for (const r of onHoldPast) {
-      const yesNo = readContractYesNo(r);
+      const yesNo = getContractResult(r);
       if (String(yesNo || "").toLowerCase() !== "yes") {
         await prisma.request.update({
           where: { requestId: r.requestId },
           data: { requestState: "EXPIRED" },
         });
-        await updateRequestContractYesNo(r.requestId, "No");
+        await setContractResult(r.requestId, "No");
         onHoldExpired++;
       }
     }
@@ -285,10 +234,10 @@ export async function POST(req) {
       ranAt: now.toISOString(),
       stats: {
         pendingExpiredProcessed: pendingExpired.length,
-        expiredNoOffers: expiredNoOffers,
-        onHoldManual: onHoldManual,
+        expiredNoOffers,
+        onHoldManual,
         autoAwardedContracts: autoAwarded,
-        onHoldAutoOverBudget: onHoldAutoOverBudget,
+        onHoldAutoOverBudget,
         onHoldExpiredNoContract: onHoldExpired,
       },
     });
