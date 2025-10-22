@@ -55,7 +55,7 @@ export async function POST(req) {
       select: {
         requestId: true,
         dateExpired: true,
-        maxPrice: true,
+        maximumPrice: true,
         requestState: true,
         acceptDeadline: true,
         contractResult: true,
@@ -87,8 +87,7 @@ export async function POST(req) {
       const offers = Array.isArray(r.offers) ? r.offers : [];
       const hasOffers = offers.length > 0;
       const winningMode = (r.client?.winningOfferSelection || "").toLowerCase();
-      const maxPriceNum = toNumberOrNull(r.maxPrice);
-
+      const maxPriceNum = toNumberOrNull(r.maximumPrice);
       // Build an array with numeric prices for comparisons
       const offersWithNum = offers
         .map((o) => ({
