@@ -14,10 +14,24 @@ function requireCronAuth(req) {
 
 // Convert Decimal|string|number|null → number|null (only for comparisons)
 function toNumberOrNull(v) {
-  if (v == null) return null;
-  const s = typeof v === "object" && v.toString ? v.toString() : String(v);
-  const n = Number(s);
-  return Number.isFinite(n) ? n : null;
+  if (v === null || v === undefined) return null;
+  if (typeof v === "number") return Number.isFinite(v) ? v : null;
+  if (typeof v === "string") {
+    const s = v.replace(/[^\d.,-]/g, "").replace(",", ".");
+    const n = parseFloat(s);
+    return Number.isFinite(n) ? n : null;
+  }
+  return null;
+}
+
+function getMaximumPrice(request) {
+  // prefer top-level if your schema has it, else details
+  const raw =
+    request?.maximumPrice ??
+    request?.details?.maximumPrice ??
+    request?.details?.maxPrice ??
+    null;
+  return toNumberOrNull(raw);
 }
 
 // Write "Yes"/"No" to either contractResult or contractStatus (whichever exists)
@@ -60,6 +74,7 @@ export async function POST(req) {
         acceptDeadline: true,
         contractResult: true,
         contractStatus: true,
+        details: true,
         client: {
           select: {
             userId: true,
@@ -87,7 +102,7 @@ export async function POST(req) {
       const offers = Array.isArray(r.offers) ? r.offers : [];
       const hasOffers = offers.length > 0;
       const winningMode = (r.client?.winningOfferSelection || "").toLowerCase();
-      const maxPriceNum = toNumberOrNull(r.maximumPrice);
+      const maxPriceNum = getMaximumPrice(r);
       // Build an array with numeric prices for comparisons
       const offersWithNum = offers
         .map((o) => ({
