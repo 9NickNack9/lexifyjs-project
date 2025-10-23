@@ -445,7 +445,7 @@ export default function DisputeArbitration() {
               <option value="">Select</option>
               <option value="Attorneys-at-law">Attorneys-at-law</option>
               <option value="Qualified Law firms">Qualified law firms</option>
-              <option value="Both attorneys-at-law & law firms">
+              <option value="All">
                 Both attorneys-at-law & qualified law firms
               </option>
             </select>
@@ -530,15 +530,15 @@ export default function DisputeArbitration() {
               <option value="Any age">
                 No, the legal service provider can be of any age
               </option>
-              <option value="At least 5 years of operation">
+              <option value="5">
                 Yes, the legal service provider has been in operation for at
                 least 5 years
               </option>
-              <option value="At least 10 years of operation">
+              <option value="10">
                 Yes, the legal service provider has been in operation for at
                 least 10 years
               </option>
-              <option value="At least 25 years of operation">
+              <option value="25">
                 Yes, the legal service provider has been in operation for at
                 least 25 years
               </option>

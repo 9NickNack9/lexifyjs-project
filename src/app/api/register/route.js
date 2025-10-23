@@ -18,20 +18,32 @@ const ensureHttps = (url) => {
   if (/^https?:\/\//i.test(url)) return url;
   return `https://${url}`;
 };
+const calcCompanyAge = (foundingYear) => {
+  const y = toIntOrNull(foundingYear);
+  if (!y) return null;
+  const nowY = new Date().getFullYear();
+  const age = nowY - y;
+  return age < 0 ? 0 : age;
+};
 
 /** Base shape (strings, then we refine/transform) */
 const BaseSchema = z.object({
-  role: z.string(), // "provider" | "purchaser" (case-insensitive; normalized below)
+  role: z.string(), // "provider" | "purchaser"
   username: z.string().min(3, "Username must be at least 3 characters"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   companyName: z.string().min(2, "Company name is required"),
-  companyID: z.string().min(2, "Company ID is required"), // maps to companyId in DB
+  companyID: z.string().min(2, "Company ID is required"),
   companyAddress: z.string().min(2, "Address is required"),
   companyPostalCode: z.string().min(1, "Postal code is required"),
   companyCity: z.string().min(1, "City is required"),
   companyCountry: z.string().min(1, "Country is required"),
-  companyWebsite: z.string().optional().nullable(), // now optional
+  companyWebsite: z.string().optional().nullable(),
+
+  // Provider-only inputs (can arrive as strings; we gate them later)
   companyProfessionals: z.union([z.string(), z.number(), z.null()]).optional(),
+  companyFoundingYear: z.union([z.string(), z.number(), z.null()]).optional(),
+  providerType: z.string().optional(),
+
   contactFirstName: z.string().min(1, "First name is required"),
   contactLastName: z.string().min(1, "Last name is required"),
   contactEmail: z.string().email("A valid email is required"),
@@ -97,18 +109,64 @@ const RegisterSchema = BaseSchema.transform((raw) => {
     professionals = null;
   }
 
+  // Provider-only: founding year & providerType
+  let providerType = null;
+  let companyFoundingYear = null;
+  let companyAge = null;
+
+  if (role === "provider") {
+    // providerType required
+    providerType = (s.providerType || "").trim();
+    if (!providerType) {
+      throw new z.ZodError([
+        {
+          code: "custom",
+          message: "Provider type is required",
+          path: ["providerType"],
+        },
+      ]);
+    }
+
+    // founding year required & plausible
+    companyFoundingYear = toIntOrNull(s.companyFoundingYear);
+    const nowY = new Date().getFullYear();
+    if (
+      companyFoundingYear === null ||
+      companyFoundingYear < 1800 ||
+      companyFoundingYear > nowY
+    ) {
+      throw new z.ZodError([
+        {
+          code: "custom",
+          message: `Founding year must be between 1800 and ${nowY}`,
+          path: ["companyFoundingYear"],
+        },
+      ]);
+    }
+
+    // compute companyAge
+    companyAge = calcCompanyAge(companyFoundingYear);
+  }
+
   return {
     role,
     username: s.username,
     password: s.password,
+
     companyName: s.companyName,
-    companyId: s.companyID, // DB field is companyId
+    companyId: s.companyID,
     companyAddress: s.companyAddress,
     companyPostalCode: s.companyPostalCode,
     companyCity: s.companyCity,
     companyCountry: s.companyCountry,
     companyWebsite: website || null,
+
+    // provider-only persisted fields
     companyProfessionals: professionals,
+    providerType,
+    companyFoundingYear,
+    companyAge,
+
     contactFirstName: s.contactFirstName,
     contactLastName: s.contactLastName,
     contactEmail: s.contactEmail,
@@ -137,7 +195,7 @@ export async function POST(req) {
     const data = parsed.data;
 
     // Uniqueness checks
-    const [userTaken, emailTaken, companyTaken] = await Promise.all([
+    const [userTaken, companyTaken] = await Promise.all([
       prisma.appUser.findFirst({
         where: { username: data.username },
         select: { userId: true },
@@ -147,7 +205,6 @@ export async function POST(req) {
         select: { userId: true },
       }),
     ]);
-
     if (userTaken) {
       return NextResponse.json(
         { error: "This username is already taken.", field: "username" },
@@ -163,6 +220,22 @@ export async function POST(req) {
 
     // Hash password
     const hashed = await bcrypt.hash(data.password, 10);
+
+    // Build provider-only fields (nulls for purchasers)
+    const providerOnly =
+      data.role === "provider"
+        ? {
+            companyProfessionals: data.companyProfessionals,
+            providerType: data.providerType,
+            companyFoundingYear: data.companyFoundingYear,
+            companyAge: data.companyAge,
+          }
+        : {
+            companyProfessionals: null,
+            providerType: null,
+            companyFoundingYear: null,
+            companyAge: null,
+          };
 
     // Create user
     const created = await prisma.appUser.create({
@@ -180,7 +253,7 @@ export async function POST(req) {
         companyCountry: data.companyCountry,
         companyWebsite: data.companyWebsite,
 
-        companyProfessionals: data.companyProfessionals,
+        ...providerOnly,
 
         contactFirstName: data.contactFirstName,
         contactLastName: data.contactLastName,

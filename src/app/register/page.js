@@ -24,6 +24,8 @@ export default function Register() {
     companyCity: "",
     companyCountry: "",
     companyWebsite: "",
+    companyFoundingYear: "",
+    providerType: "",
     companyProfessionals: "",
     countryCode: "+358", // default EU country (e.g., Finland)
     phone: "",
@@ -62,6 +64,8 @@ export default function Register() {
       companyCity: formData.companyCity.trim(),
       companyCountry: formData.companyCountry,
       companyWebsite: formData.companyWebsite.trim(),
+      companyFoundingYear: formData.companyFoundingYear.trim(),
+      providerType: formData.providerType.trim(),
       companyProfessionals: formData.companyProfessionals, // only validated if provider
       contactFirstName: formData.contactFirstName.trim(),
       contactLastName: formData.contactLastName.trim(),
@@ -226,6 +230,42 @@ export default function Register() {
             onChange={handleChange}
             required
           />
+          <br />
+          {role === "provider" && (
+            <>
+              <input
+                type="number"
+                name="companyFoundingYear"
+                placeholder="Year Established"
+                className="p-2 border"
+                onChange={handleChange}
+                required
+              />
+              <p className="text-xs pb-2 text-justify">
+                <strong>NOTE: </strong>
+                <em>
+                  Enter the year your company started providing legal services.
+                </em>
+              </p>
+              <br />
+            </>
+          )}
+          <select
+            name="providerType"
+            className="p-2 border"
+            onChange={handleChange}
+            required
+          >
+            <option value="">Professional Regulation Category </option>
+            <option value="Attorneys-at-law">
+              Bar-admitted law firm - attorneys regulated by bar association or
+              law society
+            </option>
+            <option value="Law Firm">
+              Licensed legal service provider - licensed by
+              government/regulatory authority, not bar-regulated
+            </option>
+          </select>
           <br />
           {role === "provider" && (
             <>

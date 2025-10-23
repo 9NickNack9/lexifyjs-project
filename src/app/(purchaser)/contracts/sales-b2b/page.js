@@ -483,9 +483,7 @@ export default function SalesB2B() {
               <option value="">Select</option>
               <option value="Attorneys-at-law">Attorneys-at-law</option>
               <option value="Law firms">Law firms</option>
-              <option value="Both attorneys-at-law & law firms">
-                Both attorneys-at-law & law firms
-              </option>
+              <option value="All">Both attorneys-at-law & law firms</option>
             </select>
           </div>
           <p className="text-xs pt-2">
@@ -575,15 +573,15 @@ export default function SalesB2B() {
               <option value="Any age">
                 No, the legal service provider can be of any age
               </option>
-              <option value="At least 5 years of operation">
+              <option value="5">
                 Yes, the legal service provider has been in operation for at
                 least 5 years
               </option>
-              <option value="At least 10 years of operation">
+              <option value="10">
                 Yes, the legal service provider has been in operation for at
                 least 10 years
               </option>
-              <option value="At least 25 years of operation">
+              <option value="25">
                 Yes, the legal service provider has been in operation for at
                 least 25 years
               </option>

@@ -326,6 +326,24 @@ export default function AdminPage() {
     fetchUsers(true);
   };
 
+  const updateProviderType = async (id, value) => {
+    await fetch(`/api/admin/users/${id}/providerType`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ providerType: value }),
+    });
+    fetchUsers(true);
+  };
+
+  const updateCompanyAge = async (id, value) => {
+    await fetch(`/api/admin/users/${id}/companyAge`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ companyAge: Number(value) }),
+    });
+    fetchUsers(true);
+  };
+
   const deleteUser = async (id) => {
     if (!confirm("Are you sure you want to delete this user?")) return;
     await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
@@ -405,6 +423,8 @@ export default function AdminPage() {
               <th className="border p-2">Company</th>
               <th className="border p-2">Total Rating</th>
               <th className="border p-2">Invoice Fee</th>
+              <th className="border p-2">Company Age</th>
+              <th className="border p-2">Provider Type</th>
               <th className="border p-2">Requests</th>
               <th className="border p-2">Offers</th>
               <th className="border p-2">Contracts</th>
@@ -444,8 +464,34 @@ export default function AdminPage() {
                     type="number"
                     defaultValue={u.invoiceFee}
                     onBlur={(e) => updateInvoiceFee(u.userId, e.target.value)}
-                    className="w-20 border p-1"
+                    className="w-20 border p-1 text-center"
                   />
+                </td>
+                <td className="border p-2">
+                  <input
+                    type="number"
+                    min={0}
+                    defaultValue={u.companyAge ?? 0}
+                    onBlur={(e) => updateCompanyAge(u.userId, e.target.value)}
+                    className="w-24 border p-1 text-center"
+                  />
+                </td>
+                <td className="border p-2">
+                  <select
+                    className="border rounded text-center"
+                    value={
+                      u.providerType && u.providerType.trim()
+                        ? u.providerType
+                        : "N/A"
+                    }
+                    onChange={(e) =>
+                      updateProviderType(u.userId, e.target.value)
+                    }
+                  >
+                    <option value="N/A">N/A</option>
+                    <option value="Attorneys-at-law">Attorneys-at-law</option>
+                    <option value="Law Firm">Law Firm</option>
+                  </select>
                 </td>
                 <td className="border p-2">{u.requestsCount}</td>
                 <td className="border p-2">{u.offersCount}</td>
@@ -498,6 +544,20 @@ export default function AdminPage() {
               </p>
               <p>
                 <strong>Company:</strong> {selectedUser.companyName}
+              </p>
+              +
+              <p>
+                <strong>Company Age:</strong> {selectedUser.companyAge ?? 0}
+              </p>
+              <p>
+                <strong>Founding Year:</strong>{" "}
+                {selectedUser.companyFoundingYear ?? "—"}
+              </p>
+              <p>
+                <strong>Provider Type:</strong>{" "}
+                {selectedUser.providerType && selectedUser.providerType.trim()
+                  ? selectedUser.providerType
+                  : "N/A"}
               </p>
               {selectedUser.role === "PROVIDER" && (
                 <p>

@@ -33,7 +33,10 @@ model AppUser {
   contactPosition                String
   passwordHash                   String
   companyContactPersons          Json
-  notificationPreferences        Json     @default("[\"no_offers\",\"over_max_price\",\"pending_offer_selection\"]")
+  companyFoundingYear            Int?
+  companyAge                     Int?     @default(0)
+  providerType                   String?  @default("")
+  notificationPreferences        Json     @default("[]")
   winningOfferSelection          String   @default("manual")
   blockedServiceProviders        Json     @default("[]")
   preferredLegalServiceProviders Json     @default("[]")

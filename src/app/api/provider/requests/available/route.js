@@ -3,13 +3,38 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 
+// Parse "Any", "Any Age", "≥5", "5" → number (min years) or 0 for Any
 function parseMinFromLabel(label) {
-  // Accepts values like "Any", "Any / …", "≥5", ">=15", "5", 5, null
   if (label == null) return null;
   const s = String(label).trim();
-  if (/^any/i.test(s)) return 0; // "Any" always passes
+  if (/^any(\s+age)?/i.test(s)) return 0; // "Any" or "Any Age"
   const m = s.match(/(\d+)/);
   return m ? Number(m[1]) : null;
+}
+
+function parseMinAge(val) {
+  if (val == null) return null;
+  if (typeof val === "number") return Number.isFinite(val) ? val : null;
+  return parseMinFromLabel(String(val));
+}
+
+// Normalize provider type to a canonical token
+function normalizeProviderType(value) {
+  const s = (value || "").toString().toLowerCase().trim();
+  if (!s) return "";
+  if (s === "all") return "all";
+
+  // remove duplicate whitespace/hyphens for pattern checks
+  const simple = s.replace(/[_-]+/g, "-").replace(/\s+/g, " ").trim();
+
+  if (simple.includes("attorney")) return "attorneys-at-law";
+  if (simple.startsWith("law firm") || simple.startsWith("law-firm"))
+    return "law firm";
+  if (simple.startsWith("law firms") || simple.startsWith("law-firms"))
+    return "law firm"; // plural → singular
+
+  // fall back to raw simplified string
+  return simple;
 }
 
 export async function GET(req) {
@@ -22,44 +47,41 @@ export async function GET(req) {
   const category = searchParams.get("category") || "";
   const subcategory = searchParams.get("subcategory") || "";
   const assignment = searchParams.get("assignment") || "";
-
   const now = new Date();
 
-  // Pull role + provider capability numbers
+  // Current user
   const me = await prisma.appUser.findUnique({
     where: { userId: Number(session.userId) },
     select: {
       role: true,
       companyProfessionals: true,
       providerTotalRating: true,
+      companyAge: true,
+      providerType: true,
     },
   });
 
   const myRole = (session.role || me?.role || "").toUpperCase();
 
-  // If PROVIDER, compute providerId (BigInt) and collect requestIds already offered by this provider
+  // Providers: collect requestIds they've already offered on
   let alreadyOfferedIds = [];
   if (myRole === "PROVIDER") {
     let providerIdBigInt;
     try {
       providerIdBigInt = BigInt(String(session.userId));
     } catch {
-      // Can't validate without a valid provider id
       return NextResponse.json({ requests: [] });
     }
-
     const myOffers = await prisma.offer.findMany({
       where: { provider: { userId: providerIdBigInt } },
       select: { request: { select: { requestId: true } } },
     });
-
     alreadyOfferedIds = myOffers
       .map((o) => o.request?.requestId)
       .filter((id) => id != null);
   }
 
-  // Base WHERE: only requests that are PENDING and expire in the future
-  // Add category/subcategory/assignment filters; if PROVIDER, exclude ones already offered
+  // Base where
   const baseWhere = {
     requestState: "PENDING",
     dateExpired: { gt: now },
@@ -78,7 +100,7 @@ export async function GET(req) {
       ? { ...baseWhere, requestId: { notIn: alreadyOfferedIds } }
       : baseWhere;
 
-  // Fetch rows
+  // Fetch
   const rows = await prisma.request.findMany({
     where,
     orderBy: { dateCreated: "desc" },
@@ -90,30 +112,65 @@ export async function GET(req) {
       dateExpired: true,
       providerSize: true,
       providerMinimumRating: true,
+      providerCompanyAge: true, // may be string label like "Any Age" or a number
+      serviceProviderType: true, // "All" | "Law firm(s)" | "Attorneys-at-law" | ""
       details: true,
       client: { select: { companyName: true } },
     },
   });
 
-  // If PROVIDER, enforce capability filters (size/rating)
-  let visible = rows;
-  if (myRole === "PROVIDER") {
-    if (me?.companyProfessionals == null || me?.providerTotalRating == null) {
-      return NextResponse.json({ requests: [] });
-    }
-    const myPros = Number(me.companyProfessionals);
-    const myRating = Number(me.providerTotalRating);
-
-    visible = rows.filter((r) => {
-      const minPros = parseMinFromLabel(r.providerSize);
-      const minRating = parseMinFromLabel(r.providerMinimumRating);
-      const passPros = (minPros ?? 0) <= myPros;
-      const passRating = (minRating ?? 0) <= myRating;
-      return passPros && passRating;
-    });
+  // Admins: skip provider gating
+  if (myRole !== "PROVIDER") {
+    const shaped = rows.map((r) => ({
+      requestId: r.requestId?.toString?.() ?? String(r.requestId),
+      category: r.requestCategory || "—",
+      subcategory: r.requestSubcategory || "—",
+      assignmentType: r.assignmentType || r.details?.assignmentType || "—",
+      clientCompanyName: r.client?.companyName || "—",
+      offersDeadline: r.details?.offersDeadline || r.dateExpired || null,
+    }));
+    return NextResponse.json({ requests: shaped });
   }
 
-  // Shape response (return requestId as string to avoid BigInt JSON issues)
+  // Provider gating
+  if (
+    me?.companyProfessionals == null ||
+    me?.providerTotalRating == null ||
+    me?.companyAge == null
+  ) {
+    return NextResponse.json({ requests: [] });
+  }
+
+  const myPros = Number(me.companyProfessionals);
+  const myRating = Number(me.providerTotalRating);
+  const myAge = Number(me.companyAge) || 0;
+  const myTypeNorm = normalizeProviderType(me.providerType);
+
+  const visible = rows.filter((r) => {
+    // size/rating gates you already had
+    const minPros = parseMinFromLabel(r.providerSize);
+    const minRating = parseMinFromLabel(r.providerMinimumRating);
+    const passPros = (minPros ?? 0) <= myPros;
+    const passRating = (minRating ?? 0) <= myRating;
+
+    // age gate with "Any Age" pass
+    const reqAgeRaw =
+      r.providerCompanyAge ?? r.details?.providerCompanyAge ?? null;
+    const isAnyAge =
+      typeof reqAgeRaw === "string" && /^any(\s+age)?/i.test(reqAgeRaw.trim());
+    const minAge = isAnyAge ? 0 : parseMinAge(reqAgeRaw);
+    const passAge = isAnyAge ? true : (minAge ?? 0) <= myAge;
+
+    // type gate with plural/synonym normalization
+    const reqTypeRaw =
+      r.serviceProviderType ?? r.details?.serviceProviderType ?? "";
+    const reqTypeNorm = normalizeProviderType(reqTypeRaw);
+    const passType =
+      reqTypeNorm === "" || reqTypeNorm === "all" || reqTypeNorm === myTypeNorm;
+
+    return passPros && passRating && passAge && passType;
+  });
+
   const shaped = visible.map((r) => ({
     requestId: r.requestId?.toString?.() ?? String(r.requestId),
     category: r.requestCategory || "—",

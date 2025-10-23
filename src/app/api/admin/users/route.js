@@ -27,6 +27,9 @@ export async function GET(req) {
       role: true,
       registerStatus: true,
       companyName: true,
+      companyAge: true,
+      providerType: true,
+      companyFoundingYear: true,
       providerTotalRating: true,
       invoiceFee: true,
       _count: {
@@ -41,15 +44,24 @@ export async function GET(req) {
   });
 
   const total = await prisma.appUser.count({ where });
+  const currentYear = new Date().getFullYear();
 
   return NextResponse.json({
-    users: users.map((u) => ({
-      ...u,
-      userId: String(u.userId), // ✅ convert BigInt
-      requestsCount: u._count.requests,
-      offersCount: u._count.offers,
-      contractsCount: u._count.contractsClient + u._count.contractsProv,
-    })),
+    users: users.map((u) => {
+      const computedAge =
+        typeof u.companyFoundingYear === "number"
+          ? Math.max(0, currentYear - u.companyFoundingYear)
+          : u.companyAge ?? 0; // fallback to stored age if no founding year
+
+      return {
+        ...u,
+        userId: String(u.userId), // old
+        companyAge: computedAge, // ← always send computed when foundingYear exists
+        requestsCount: u._count.requests,
+        offersCount: u._count.offers,
+        contractsCount: u._count.contractsClient + u._count.contractsProv,
+      };
+    }),
     hasMore: skip + take < total,
   });
 }
