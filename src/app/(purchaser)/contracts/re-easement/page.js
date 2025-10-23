@@ -157,7 +157,7 @@ export default function ReEasement() {
     setSubmitting(true);
     try {
       const paymentRate = isHourly
-        ? "Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the Legal Service Provider. The offered hourly rate will be valid until the transaction has been closed or abandoned, whichever comes first."
+        ? "Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the Legal Service Provider. The offered hourly rate will be valid until the easement agreement has been signed (and the easement registered in the relevant official register, if applicable) or abandoned."
         : "Lump sum fixed price";
       const languageCSV = [
         ...(formData.checkboxes || []).filter((l) => l !== "Other:"),
@@ -940,9 +940,10 @@ export default function ReEasement() {
                         The total price of the service will be calculated by
                         multiplying the hourly rate with the number of hours of
                         legal support provided by the Legal Service Provider.
-                        The offered hourly rate will be valid until the
-                        transaction has been closed or abandoned, whichever
-                        comes first.
+                        The offered hourly rate will be valid until the easement
+                        agreement has been signed (and the easement registered
+                        in the relevant official register, if applicable) or
+                        abandoned.
                       </p>
                     </>
                   ) : (

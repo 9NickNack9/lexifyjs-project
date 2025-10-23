@@ -159,7 +159,7 @@ export default function ReConstruction() {
     setSubmitting(true);
     try {
       const paymentRate = isHourly
-        ? "Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the Legal Service Provider. The offered hourly rate will be valid until the transaction has been closed or abandoned, whichever comes first."
+        ? "Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the Legal Service Provider. The offered hourly rate will be valid until the construction contract has been signed or abandoned."
         : "Lump sum fixed price";
       const languageCSV = [
         ...(formData.checkboxes || []).filter((l) => l !== "Other:"),
@@ -1000,8 +1000,7 @@ export default function ReConstruction() {
                         multiplying the hourly rate with the number of hours of
                         legal support provided by the Legal Service Provider.
                         The offered hourly rate will be valid until the
-                        transaction has been closed or abandoned, whichever
-                        comes first.
+                        construction contract has been signed or abandoned.
                       </p>
                     </>
                   ) : (

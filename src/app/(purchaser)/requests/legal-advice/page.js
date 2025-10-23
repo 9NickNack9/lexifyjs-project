@@ -213,7 +213,7 @@ export default function LegalAdvice() {
         requestState: "PENDING",
         requestCategory: "Day-to-day Legal Advice",
         primaryContactPerson: formData.contactPerson,
-        scopeOfWork: formData.need,
+        scopeOfWork: formData.need + ": " + topics,
         description: formData.description || "",
         additionalBackgroundInfo: formData.background || "",
         backgroundInfoFiles: [], // actual files appended separately
@@ -226,7 +226,7 @@ export default function LegalAdvice() {
         currency: formData.currency,
         paymentRate: isMonthly
           ? "Lump sum fixed price per month"
-          : "Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the legal service provider submitting the winning offer. The offered hourly rate will be valid until the relevant customer contract has been signed or abandoned, whichever comes first.",
+          : "Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the legal service provider submitting the winning offer. The offered hourly rate will be valid for 12 calendar months from the date of the LEXIFY Contract between you as the legal service purchaser and the legal service provider submitting the winning offer.",
         advanceRetainerFee: formData.retainerFee,
         invoiceType: formData.paymentTerms,
         language: languageCSV,
@@ -234,7 +234,6 @@ export default function LegalAdvice() {
         title: formData.requestTitle,
         dateExpired: formData.date,
         details: {
-          topics,
           monthlyHours:
             isMonthly &&
             (formData.hourAmount === "Other"
@@ -1025,7 +1024,14 @@ export default function LegalAdvice() {
                 <Section title="Scope of Work">
                   {formData.need ===
                   "Occasional day-to-day legal advice on specific areas of law, as needed from time to time." ? (
-                    <p>{formData.need}</p>
+                    <>
+                      <p>{formData.need}</p>
+                      <p>
+                        The Legal Service Provider will provider legal advice to
+                        the Client in the following areas of law:{" "}
+                        {formData.areaboxes.join(", ")}
+                      </p>
+                    </>
                   ) : formData.need ===
                     "A fixed monthly number of hours of day-to-day legal support on specific areas of law, as needed from time to time." ? (
                     <>
@@ -1082,8 +1088,10 @@ export default function LegalAdvice() {
                         multiplying the hourly rate with the number of hours of
                         legal support provided by the legal service provider
                         submitting the winning offer. The offered hourly rate
-                        will be valid until the relevant customer contract has
-                        been signed or abandoned, whichever comes first.
+                        will be valid for 12 calendar months from the date of
+                        the LEXIFY Contract between you as the legal service
+                        purchaser and the legal service provider submitting the
+                        winning offer.
                       </p>
                     </>
                   )}
