@@ -186,7 +186,7 @@ export default function DisputeSettlement() {
         currency: formData.currency,
         paymentRate: isFull
           ? "Lump sum fixed price"
-          : "Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the legal service provider submitting the winning offer. The offered hourly rate will be valid until the relevant customer contract has been signed or abandoned, whichever comes first.",
+          : "Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the legal service provider submitting the winning offer. The offered hourly rate will be valid until a settlement agreement has been signed or until the pending settlement negotiations have otherwise concluded.",
         maximumPrice: isFull ? formData.maxPrice || "" : "",
         advanceRetainerFee: formData.retainerFee,
         invoiceType: formData.paymentTerms,
@@ -945,8 +945,9 @@ export default function DisputeSettlement() {
                         multiplying the hourly rate with the number of hours of
                         legal support provided by the legal service provider
                         submitting the winning offer. The offered hourly rate
-                        will be valid until the relevant customer contract has
-                        been signed or abandoned, whichever comes first.
+                        will be valid until a settlement agreement has been
+                        signed or until the pending settlement negotiations have
+                        otherwise concluded.
                       </p>
                     </>
                   )}

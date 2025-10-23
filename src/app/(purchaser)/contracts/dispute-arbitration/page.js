@@ -186,7 +186,7 @@ export default function DisputeArbitration() {
         currency: formData.currency,
         paymentRate: isFull
           ? "Capped Price. The capped price covers the pending proceedings in one court instance only and does not include fees or charges possibly levied by the competent court which fees and charges, if any, will be invoiced separately."
-          : "Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the legal service provider submitting the winning offer. The offered hourly rate will be valid until the relevant customer contract has been signed or abandoned, whichever comes first.",
+          : "Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the legal service provider submitting the winning offer. The offered hourly rate will be valid until the pending arbitration proceedings have concluded.",
         maximumPrice: isFull ? formData.maxPrice || "" : "",
         advanceRetainerFee: formData.retainerFee,
         invoiceType: formData.paymentTerms,
@@ -950,8 +950,8 @@ export default function DisputeArbitration() {
                         multiplying the hourly rate with the number of hours of
                         legal support provided by the legal service provider
                         submitting the winning offer. The offered hourly rate
-                        will be valid until the relevant customer contract has
-                        been signed or abandoned, whichever comes first.
+                        will be valid until the pending arbitration proceedings
+                        have concluded.
                       </p>
                     </>
                   )}

@@ -226,7 +226,7 @@ export default function LegalAdvice() {
         currency: formData.currency,
         paymentRate: isMonthly
           ? "Lump sum fixed price per month"
-          : "Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the legal service provider submitting the winning offer. The offered hourly rate will be valid for 12 calendar months from the date of the LEXIFY Contract between you as the legal service purchaser and the legal service provider submitting the winning offer.",
+          : "Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the legal service provider submitting the winning offer. The offered hourly rate will be valid for 12 calendar months from the date of the LEXIFY Contract between the Client and the legal service provider.",
         advanceRetainerFee: formData.retainerFee,
         invoiceType: formData.paymentTerms,
         language: languageCSV,
@@ -1089,9 +1089,8 @@ export default function LegalAdvice() {
                         legal support provided by the legal service provider
                         submitting the winning offer. The offered hourly rate
                         will be valid for 12 calendar months from the date of
-                        the LEXIFY Contract between you as the legal service
-                        purchaser and the legal service provider submitting the
-                        winning offer.
+                        the LEXIFY Contract between the Client and the legal
+                        service provider.
                       </p>
                     </>
                   )}

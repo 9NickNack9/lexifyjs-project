@@ -328,6 +328,19 @@ export default function DataBreach() {
               {option}
             </label>
           ))}
+          <p className="text-xs">
+            <strong>NOTE:</strong>{" "}
+            <em>
+              Any offers you receive will provide an applicable hourly rate
+              only. The total price of the service will be calculated by
+              multiplying the hourly rate with the number of hours of legal
+              support provided by the legal service provider submitting the
+              winning offer. The offered hourly rate will be valid for 12
+              calendar months from the date of the LEXIFY Contract between you
+              as the legal service purchaser and the legal service provider
+              submitting the winning offer.
+            </em>
+          </p>
           {[
             "Legal guidance for the Client on how to react to a personal data breach that has already occurred",
             "Legal support for the Client with authority communications related to a personal data breach",
@@ -397,19 +410,6 @@ export default function DataBreach() {
               )}
             </>
           )}
-          <p className="text-xs">
-            <strong>NOTE:</strong>{" "}
-            <em>
-              Any offers you receive will provide an applicable hourly rate
-              only. The total price of the service will be calculated by
-              multiplying the hourly rate with the number of hours of legal
-              support provided by the legal service provider submitting the
-              winning offer. The offered hourly rate will be valid for 12
-              calendar months from the date of the LEXIFY Contract between you
-              as the legal service purchaser and the legal service provider
-              submitting the winning offer.
-            </em>
-          </p>
           <br />
           <hr />
           <br />

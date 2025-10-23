@@ -529,7 +529,8 @@ export default function MakeOffer() {
     !!offerLawyer &&
     !!offerPrice &&
     !!offerTitle &&
-    (paymentRate !== "capped price" || !!offerExpectedPrice) &&
+    (paymentRate.toLowerCase().startsWith("capped price") ||
+      !!offerExpectedPrice) &&
     agree &&
     !submitting;
 
@@ -544,7 +545,7 @@ export default function MakeOffer() {
         offerPrice,
         offerTitle,
       };
-      if (paymentRate === "capped price") {
+      if (paymentRate.toLowerCase().startsWith("capped price")) {
         payload.offerExpectedPrice = offerExpectedPrice;
       }
       const res = await fetch(`/api/offers`, {
@@ -657,7 +658,14 @@ export default function MakeOffer() {
         {/* ---------------------- OFFER FORM (unchanged) ---------------------- */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div>
-            <label className="block font-semibold mb-2">Offer Title</label>
+            <label className="block font-semibold mb-2">
+              Offer Title{" "}
+              <QuestionMarkTooltip
+                tooltipText="This title will not be shown to the client and will only be used
+              in your personal offer archive (see My Dashboard in the LEXIFY
+              main menu)."
+              />
+            </label>
             <input
               type="text"
               className="border p-2 w-full rounded"
@@ -689,13 +697,13 @@ export default function MakeOffer() {
 
           <div>
             <label className="block font-semibold mb-2">
-              {paymentRate === "capped price" ? (
+              {paymentRate.toLowerCase().startsWith("capped price") ? (
                 <>
-                  Offer Capped Price (VAT 0%){" "}
+                  Insert Your Offered Capped Price (VAT 0%){" "}
                   <QuestionMarkTooltip tooltipText="Capped price refers to your offered maximum price for the work, taking into account all possible unexpected developments in the dispute proceedings such as an unusually high number of rounds of written pleadings." />
                 </>
               ) : (
-                "Offer Price (VAT 0%)"
+                "Insert Your Offered Price (VAT 0%)"
               )}
             </label>
             <input
@@ -715,10 +723,10 @@ export default function MakeOffer() {
             />
           </div>
 
-          {paymentRate === "capped price" && (
+          {paymentRate.toLowerCase().startsWith("capped price") && (
             <div>
               <label className="block font-semibold mb-2">
-                Insert your expected price for the work (VAT 0%){" "}
+                Insert Your Expected Price (VAT 0%){" "}
                 <QuestionMarkTooltip tooltipText="Expected price refers to your expected price for the work if the dispute proceedings do not involve any unexpected developments (such as an unusually high number of rounds of written pleadings)." />
               </label>
               <input
@@ -746,7 +754,22 @@ export default function MakeOffer() {
             I have carefully reviewed the LEXIFY Request and I am ready to
             submit my offer.
           </label>
-
+          <p className="text-xs">
+            <em>
+              <strong>
+                By submitting my offer I accept that, if my offer becomes the
+                winning offer upon the expiration of the related LEXIFY Request,
+                LEXIFY will automatically generate a binding LEXIFY Contract
+                between my company as the legal service provider and the client
+                as the legal service purchaser. Such LEXIFY Contract will
+                consist of i) the service description, other specifications and
+                the client&apos;s Supplier Code of Conduct and other procurement
+                related requirements (if applicable) as designated by the client
+                in the related LEXIFY Request and ii) the General Terms and
+                Conditions for LEXIFY Contracts.
+              </strong>
+            </em>
+          </p>
           <div className="flex gap-4">
             <button
               type="submit"
