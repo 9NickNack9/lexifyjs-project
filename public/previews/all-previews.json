@@ -3622,6 +3622,15 @@
             ]
           },
           {
+            "title": "Disclosed to Winning Bidder Only",
+            "fields": [
+              {
+                "label": "Confidential",
+                "path": "details.confidential"
+              }
+            ]
+          },
+          {
             "title": "Description of the Matter under Dispute and Current Status of Court Proceedings",
             "fields": [
               {
@@ -3647,7 +3656,7 @@
             "title": "Contract Price and Currency",
             "fields": [
               {
-                "label": "Price model",
+                "label": "Contract Price and Currency",
                 "path": "__priceModel_Court__"
               }
             ]
@@ -3753,15 +3762,6 @@
             ]
           },
           {
-            "title": "Payment Rate",
-            "fields": [
-              {
-                "label": "Contract Price",
-                "path": "paymentRate"
-              }
-            ]
-          },
-          {
             "title": "Maximum Price",
             "fields": [
               {
@@ -3780,16 +3780,7 @@
             ]
           },
           {
-            "title": "Details Confidential",
-            "fields": [
-              {
-                "label": "Confidential",
-                "path": "details.confidential"
-              }
-            ]
-          },
-          {
-            "title": "Details Winner Bidder Only Status",
+            "title": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
             "fields": [
               {
                 "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",

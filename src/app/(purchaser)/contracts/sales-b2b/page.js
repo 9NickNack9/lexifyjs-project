@@ -230,7 +230,6 @@ export default function SalesB2B() {
         form.append("supplierFiles", f, f.name);
 
       const res = await fetch("/api/requests", { method: "POST", body: form });
-      // in SalesB2B handleSubmit, right after fetch(...)
       const text = await res.text();
       let json = null;
       try {

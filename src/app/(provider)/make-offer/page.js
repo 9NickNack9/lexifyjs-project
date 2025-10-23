@@ -134,6 +134,7 @@ function counterpartyOrWinnerOnly(row) {
   return (
     row?.details?.breachCompany ||
     row?.details?.counterparty ||
+    row?.details?.winnerBidderOnlyStatus ||
     row?.counterparty ||
     "—"
   );
@@ -465,6 +466,7 @@ export default function MakeOffer() {
   const [submitting, setSubmitting] = useState(false);
 
   const paymentRate = (request?.paymentRate || "").toLowerCase();
+  const isCapped = paymentRate.startsWith("capped price");
   const deadline =
     request?.details?.offersDeadline || request?.dateExpired || null;
 
@@ -529,8 +531,7 @@ export default function MakeOffer() {
     !!offerLawyer &&
     !!offerPrice &&
     !!offerTitle &&
-    (paymentRate.toLowerCase().startsWith("capped price") ||
-      !!offerExpectedPrice) &&
+    (!isCapped || !!offerExpectedPrice) && // ← only require when capped
     agree &&
     !submitting;
 
@@ -545,7 +546,7 @@ export default function MakeOffer() {
         offerPrice,
         offerTitle,
       };
-      if (paymentRate.toLowerCase().startsWith("capped price")) {
+      if (isCapped) {
         payload.offerExpectedPrice = offerExpectedPrice;
       }
       const res = await fetch(`/api/offers`, {
@@ -697,7 +698,7 @@ export default function MakeOffer() {
 
           <div>
             <label className="block font-semibold mb-2">
-              {paymentRate.toLowerCase().startsWith("capped price") ? (
+              {isCapped ? (
                 <>
                   Insert Your Offered Capped Price (VAT 0%){" "}
                   <QuestionMarkTooltip tooltipText="Capped price refers to your offered maximum price for the work, taking into account all possible unexpected developments in the dispute proceedings such as an unusually high number of rounds of written pleadings." />
@@ -723,7 +724,7 @@ export default function MakeOffer() {
             />
           </div>
 
-          {paymentRate.toLowerCase().startsWith("capped price") && (
+          {isCapped && (
             <div>
               <label className="block font-semibold mb-2">
                 Insert Your Expected Price (VAT 0%){" "}

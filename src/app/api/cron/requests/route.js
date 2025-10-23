@@ -150,29 +150,41 @@ export async function POST(req) {
           }
 
           await prisma.$transaction(async (tx) => {
-            await tx.contract.upsert({
-              where: { requestId },
-              update: {},
-              create: {
-                requestId,
-                clientId: r.client.userId,
-                providerId: winning.providerId,
-                contractPrice:
-                  winning.offerPrice?.toString?.() ??
-                  String(winning.offerPrice),
-              },
+            // ✅ 1) Ensure exactly one contract per requestId without throwing
+            const existing = await tx.contract.findUnique({
+              where: { requestId }, // Contract.requestId is @unique
+              select: { contractId: true },
             });
 
+            if (!existing) {
+              await tx.contract.create({
+                data: {
+                  requestId,
+                  clientId: r.client.userId, // purchaser
+                  providerId: winning.providerId, // winning offer's provider
+                  contractPrice:
+                    winning.offerPrice?.toString?.() ??
+                    String(winning.offerPrice),
+                },
+              });
+            }
+
+            // ✅ 2) Mark the winning offer as WON
             await tx.offer.update({
               where: { offerId: winning.offerId },
               data: { offerStatus: "WON" },
             });
 
+            // ✅ 3) Mark all other offers on this request as LOST
             await tx.offer.updateMany({
-              where: { requestId, offerId: { not: winning.offerId } },
+              where: {
+                requestId,
+                offerId: { not: winning.offerId },
+              },
               data: { offerStatus: "LOST" },
             });
 
+            // ✅ 4) Update the request state and contract result (schema field)
             await tx.request.update({
               where: { requestId },
               data: { requestState: "EXPIRED", contractResult: "Yes" },

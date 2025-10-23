@@ -30,17 +30,10 @@ const maxFromDetails = (details) => {
 };
 
 async function updateRequestContractYesNo(requestId, yesOrNo) {
-  try {
-    await prisma.request.update({
-      where: { requestId },
-      data: { contractResult: yesOrNo },
-    });
-  } catch {
-    await prisma.request.update({
-      where: { requestId },
-      data: { contractStatus: yesOrNo },
-    });
-  }
+  await prisma.request.update({
+    where: { requestId },
+    data: { contractResult: yesOrNo },
+  });
 }
 
 export async function GET() {
@@ -144,18 +137,23 @@ export async function GET() {
         // Create Contract (client = purchaser, provider = winning offer maker)
         // Auto-award (create once per requestId)
         await prisma.$transaction(async (tx) => {
-          // 1) Ensure exactly one contract per requestId
-          await tx.contract.upsert({
-            where: { requestId: r.requestId }, // requires @unique on Contract.requestId
-            update: {},
-            create: {
-              requestId: r.requestId,
-              clientId: meIdBig, // purchaser
-              providerId: lowest.providerId, // winner's provider
-              contractPrice:
-                lowest.offerPrice?.toString?.() ?? String(lowest.offerPrice),
-            },
+          // 1) Ensure exactly one contract per requestId without throwing
+          const existing = await tx.contract.findUnique({
+            where: { requestId: r.requestId }, // requestId is @unique on Contract
+            select: { contractId: true },
           });
+
+          if (!existing) {
+            await tx.contract.create({
+              data: {
+                requestId: r.requestId,
+                clientId: meIdBig, // purchaser
+                providerId: lowest.providerId, // winner's provider
+                contractPrice:
+                  lowest.offerPrice?.toString?.() ?? String(lowest.offerPrice),
+              },
+            });
+          }
 
           // 2) Mark the winning offer as WON
           await tx.offer.update({
@@ -172,24 +170,11 @@ export async function GET() {
             data: { offerStatus: "LOST" },
           });
 
-          // 4) Update the request state and contract result
+          // 4) Update the request state and contract result (schema field)
           await tx.request.update({
             where: { requestId: r.requestId },
-            data: { requestState: "EXPIRED" },
+            data: { requestState: "EXPIRED", contractResult: "Yes" },
           });
-
-          // contractResult or contractStatus = "Yes"
-          try {
-            await tx.request.update({
-              where: { requestId: r.requestId },
-              data: { contractResult: "Yes" },
-            });
-          } catch {
-            await tx.request.update({
-              where: { requestId: r.requestId },
-              data: { contractStatus: "Yes" },
-            });
-          }
         });
 
         await prisma.request.update({
