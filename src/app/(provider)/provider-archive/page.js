@@ -10,20 +10,25 @@ function EmptyBox({ children }) {
   );
 }
 
-function formatTimeUntil(expiryISO) {
-  const now = new Date();
-  const expiry = new Date(expiryISO);
-  const diffMs = expiry.getTime() - now.getTime();
-  if (diffMs <= 0) return "00:00:00";
+function formatTimeUntil(deadlineISO) {
+  if (!deadlineISO) return "";
+  const end = new Date(deadlineISO).getTime();
+  if (Number.isNaN(end)) return "";
+  const diffMs = end - Date.now();
+  if (diffMs <= 0) return "Expired.";
 
-  const minutes = Math.floor(diffMs / (60 * 1000));
-  const days = Math.floor(minutes / 1440);
-  const hours = Math.floor((minutes % 1440) / 60);
-  const mins = minutes % 60;
-  return `${String(days).padStart(2, "0")}:${String(hours).padStart(
-    2,
-    "0"
-  )}:${String(mins).padStart(2, "0")}`;
+  const totalMinutes = Math.floor(diffMs / 60000);
+  const days = Math.floor(totalMinutes / (60 * 24));
+  const hours = Math.floor((totalMinutes % (60 * 24)) / 60);
+  const minutes = totalMinutes % 60;
+
+  if (days > 0 && hours > 0)
+    return `${days} day${days !== 1 ? "s" : ""} ${hours} hour${
+      hours !== 1 ? "s" : ""
+    }`;
+  if (days > 0) return `${days} day${days !== 1 ? "s" : ""}`;
+  if (hours > 0) return `${hours} hour${hours !== 1 ? "s" : ""}`;
+  return `${minutes} minute${minutes !== 1 ? "s" : ""}`;
 }
 
 function fmtMoney(num, suffix = "€") {
@@ -40,6 +45,373 @@ function Section({ title, children }) {
       <div className="p-4">{children}</div>
     </div>
   );
+}
+
+// ---------- helpers from PreviewModal ----------
+
+function deepGet(obj, dotted) {
+  try {
+    return dotted
+      .split(".")
+      .reduce((o, k) => (o == null ? undefined : o[k]), obj);
+  } catch {
+    return undefined;
+  }
+}
+
+function isYesString(v) {
+  return typeof v === "string" ? v.trim().toLowerCase() === "yes" : v === true;
+}
+
+function buildClientLine(row, companyName) {
+  const name =
+    companyName ||
+    row.companyName ||
+    row.clientName ||
+    row?.purchaser?.companyName ||
+    row?.client?.companyName ||
+    null;
+
+  const id =
+    row.companyId ||
+    row.businessId ||
+    row?.purchaser?.companyId ||
+    row?.client?.companyId ||
+    null;
+
+  const country =
+    row.companyCountry ||
+    row.country ||
+    row?.purchaser?.companyCountry ||
+    row?.client?.companyCountry ||
+    null;
+
+  const parts = [name, id, country].filter(Boolean);
+  return parts.length ? parts.join(", ") : "—";
+}
+
+function getAssignmentType(row) {
+  return row?.assignmentType ?? row?.details?.assignmentType ?? "";
+}
+
+function winnerOnly(row) {
+  const status = (
+    row?.details?.winnerBidderOnlyStatus ||
+    row?.winnerBidderOnlyStatus ||
+    ""
+  ).trim();
+
+  const confidentialYes =
+    isYesString(row?.details?.confidential) || isYesString(row?.confidential);
+
+  if (confidentialYes || status === "Disclosed to Winning Bidder Only") {
+    return "Disclosed to Winning Bidder Only";
+  }
+  return "";
+}
+
+function counterpartyOrWinnerOnly(row) {
+  const w = winnerOnly(row);
+  if (w) return w;
+  return (
+    row?.details?.breachCompany ||
+    row?.details?.counterparty ||
+    row?.counterparty ||
+    "—"
+  );
+}
+
+function priceModel(row) {
+  const rate = row.paymentRate || "—";
+  const ccy = row.currency || "";
+  const max =
+    typeof row.maximumPrice === "number"
+      ? ` / Max ${fmtMoney(row.maximumPrice, ccy)}`
+      : "";
+  return `${rate}${ccy ? ` (${ccy})` : ""}${max}`;
+}
+
+function docsWithOther(row) {
+  const fromDetails =
+    row?.details?.documentTypes ||
+    row?.details?.documents ||
+    row?.scopeOfWork ||
+    "";
+  const other = row?.details?.otherDocument || row?.details?.otherArea || "";
+  return [fromDetails, other].filter(Boolean).join(", ") || "—";
+}
+
+function supportWithDueDiligence(row) {
+  const base = row?.scopeOfWork || "—";
+  const dd =
+    row?.details?.dueDiligence &&
+    row.details.dueDiligence !== "Legal Due Diligence inspection not needed"
+      ? ` (Due Diligence: ${row.details.dueDiligence})`
+      : "";
+  return `${base}${dd}`;
+}
+
+function formatLocalDDMMYYYY_HHMM(date) {
+  if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "—";
+  const pad = (n) => String(n).padStart(2, "0");
+  const dd = pad(date.getDate());
+  const mm = pad(date.getMonth() + 1);
+  const yyyy = date.getFullYear();
+  const HH = pad(date.getHours());
+  const MM = pad(date.getMinutes());
+  return `${dd}/${mm}/${yyyy} ${HH}:${MM}`;
+}
+
+function parseIfDateLike(value, pathHint) {
+  const hint = (pathHint || "").toLowerCase();
+  const looksLikeDateByPath =
+    hint.includes("deadline") ||
+    hint.includes("date") ||
+    hint.includes("expire");
+
+  if (value instanceof Date) return value;
+  if (typeof value === "number") {
+    const d = new Date(value);
+    return Number.isNaN(d.getTime()) ? null : d;
+  }
+  if (typeof value === "string") {
+    const s = value.trim();
+    if (
+      looksLikeDateByPath ||
+      /^\d{4}-\d{2}-\d{2}t\d{2}:/i.test(s) ||
+      /z$/i.test(s)
+    ) {
+      const d = new Date(s);
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+    if (/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}(:\d{2})?$/.test(s)) {
+      const d = new Date(s.replace(" ", "T"));
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+  }
+  return looksLikeDateByPath ? new Date(value) : null;
+}
+
+function resolvePath(row, path) {
+  if (!path) return "—";
+  if (path.startsWith("__")) {
+    switch (path) {
+      case "__clientLine__":
+        return buildClientLine(row);
+      case "__clientLineOrDisclosed__":
+        return winnerOnly(row) || buildClientLine(row);
+      case "__counterpartyConfidential__":
+        return counterpartyOrWinnerOnly(row);
+      case "__currencyMax__":
+        return [row.currency || "—", fmtMoney(row.maximumPrice, row.currency)]
+          .filter(Boolean)
+          .join(" / ");
+      case "__priceModel__":
+      case "__priceModel_LumpSumWithCurrency__":
+      case "__priceModel_HourlyWithCurrency__":
+      case "__priceModel_Arbitration__":
+      case "__priceModel_Court__":
+        return priceModel(row);
+      case "__docsWithOther__":
+        return docsWithOther(row);
+      case "__supportWithDueDiligenceFormat__":
+        return supportWithDueDiligence(row);
+      default:
+        return "—";
+    }
+  }
+  return deepGet(row, path) ?? "—";
+}
+
+function renderValue(v, pathHint) {
+  if (
+    pathHint === "backgroundInfoFiles" ||
+    pathHint === "supplierCodeOfConductFiles"
+  ) {
+    if (Array.isArray(v) && v.length > 0) {
+      return (
+        <div className="space-y-1">
+          {v.map((file, idx) => (
+            <div key={idx}>
+              <a
+                href={file.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 hover:underline"
+              >
+                {file.name || `File ${idx + 1}`}
+              </a>
+              {file.size && (
+                <span className="text-gray-500 text-sm ml-2">
+                  ({(file.size / 1024).toFixed(1)} KB)
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      );
+    }
+    return "—";
+  }
+
+  if (Array.isArray(v)) {
+    return v.length ? v.join(", ") : "—";
+  }
+  if (v === null || v === undefined || v === "") return "—";
+
+  const maybeDate = parseIfDateLike(v, pathHint);
+  if (maybeDate) return formatLocalDDMMYYYY_HHMM(maybeDate);
+
+  return String(v);
+}
+
+function renderNamedBlock(name, row) {
+  switch (name) {
+    case "companyHeader":
+      return buildClientLine(row);
+    case "description":
+      return row?.description || "—";
+    case "assignmentType":
+      return getAssignmentType(row) || "—";
+    case "languageCSV":
+      return Array.isArray(row?.language)
+        ? row.language.join(", ")
+        : row?.language || "—";
+    case "date": {
+      const d =
+        parseIfDateLike(row?.offersDeadline, "offersDeadline") ||
+        parseIfDateLike(row?.dateExpired, "dateExpired");
+      return d ? formatLocalDDMMYYYY_HHMM(d) : "—";
+    }
+    default:
+      return "—";
+  }
+}
+
+function getFirstByPath(row, paths = []) {
+  for (const p of paths) {
+    const v = p === "." ? row : deepGet(row, p);
+    if (v !== undefined && v !== null && v !== "") return v;
+  }
+  return undefined;
+}
+
+function resolveByLabel(row, labelRaw) {
+  if (!labelRaw) return undefined;
+  const label = String(labelRaw).trim().toLowerCase();
+
+  if (label === "primary contact person") {
+    return getFirstByPath(row, [
+      "primaryContactPerson",
+      "details.primaryContactPerson",
+      "client.primaryContactPerson",
+      "clientContactPerson",
+      "contactPerson",
+    ]);
+  }
+
+  if (label === "currency") {
+    return getFirstByPath(row, [
+      "currency",
+      "details.currency",
+      "requestCurrency",
+    ]);
+  }
+
+  if (label === "invoice type" || label === "invoicing") {
+    return getFirstByPath(row, [
+      "invoiceType",
+      "details.invoiceType",
+      "paymentTerms",
+    ]);
+  }
+
+  if (label === "advance retainer fee") {
+    return getFirstByPath(row, [
+      "advanceRetainerFee",
+      "details.advanceRetainerFee",
+      "retainerFee",
+    ]);
+  }
+
+  if (label === "assignment type") {
+    return getAssignmentType(row);
+  }
+
+  if (
+    label === "additional background information" ||
+    label === "background information"
+  ) {
+    return getFirstByPath(row, [
+      "additionalBackgroundInfo",
+      "details.additionalBackgroundInfo",
+      "details.background",
+    ]);
+  }
+
+  return undefined;
+}
+
+// -------- filtering (hide provider requirements + five specific fields) -------
+const HIDE_PATHS = new Set([
+  "serviceProviderType",
+  "domesticOffers",
+  "providerSize",
+  "providerCompanyAge",
+  "providerMinimumRating",
+  "details.serviceProviderType",
+  "details.domesticOffers",
+  "details.providerSize",
+  "details.providerCompanyAge",
+  "details.providerMinimumRating",
+
+  "offersDeadline",
+  "details.offersDeadline",
+  "dateExpired",
+  "details.dateExpired",
+  "title",
+  "requestTitle",
+  "requestState",
+  "maximumPrice",
+  "details.maximumPrice",
+]);
+
+function looksLikeProviderReqSection(section) {
+  const key = (section?.id || section?.name || section?.title || "")
+    .toString()
+    .toLowerCase();
+  return (
+    key.includes("provider requirement") ||
+    key.includes("provider_requirements")
+  );
+}
+
+function shouldHideField(field) {
+  const path = (field?.path || "").toString();
+  if (HIDE_PATHS.has(path)) return true;
+
+  const label = (field?.label || "").toString().toLowerCase();
+  if (
+    label === "service provider type" ||
+    label === "domestic offers" ||
+    label === "minimum provider size" ||
+    label === "minimum company age" ||
+    label === "minimum rating" ||
+    label.includes("provider size") ||
+    label.includes("company age")
+  )
+    return true;
+
+  if (
+    label === "offers deadline" ||
+    label === "request title" ||
+    label === "request state" ||
+    label === "date expired" ||
+    label === "maximum price"
+  )
+    return true;
+
+  return false;
 }
 
 export default function ProviderArchive() {
@@ -64,9 +436,12 @@ export default function ProviderArchive() {
     dir: "asc",
   });
 
+  // Preview defs
+  const [defs, setDefs] = useState(null);
+
   // Modals
   const [showReq, setShowReq] = useState(false);
-  const [reqPreview, setReqPreview] = useState(null);
+  const [reqPreview, setReqPreview] = useState(null); // Will hold full request row
 
   const [showContract, setShowContract] = useState(false);
   const [contractPreview, setContractPreview] = useState(null);
@@ -76,9 +451,10 @@ export default function ProviderArchive() {
       try {
         setLoading(true);
 
-        const [offRes, conRes] = await Promise.all([
+        const [offRes, conRes, defsRes] = await Promise.all([
           fetch("/api/me/offers/pending", { cache: "no-store" }),
           fetch("/api/me/contracts/provider", { cache: "no-store" }),
+          fetch("/previews/all-previews.json", { cache: "no-store" }),
         ]);
 
         const read = async (r) => {
@@ -88,7 +464,11 @@ export default function ProviderArchive() {
             : { error: await r.text() };
         };
 
-        const [off, con] = await Promise.all([read(offRes), read(conRes)]);
+        const [off, con, jsonDefs] = await Promise.all([
+          read(offRes),
+          read(conRes),
+          read(defsRes),
+        ]);
 
         if (!offRes.ok)
           throw new Error(off?.error || "Failed to load pending offers");
@@ -97,6 +477,7 @@ export default function ProviderArchive() {
 
         setOffers(off.offers || []);
         setContracts(con.contracts || []);
+        setDefs(jsonDefs);
 
         // Merge contact options from both endpoints
         const list = Array.from(
@@ -113,6 +494,20 @@ export default function ProviderArchive() {
       }
     })();
   }, []);
+
+  const handleViewRequest = async (requestId) => {
+    try {
+      const res = await fetch(`/api/requests/${requestId}`, {
+        cache: "no-store",
+      });
+      const json = await res.json();
+      if (!res.ok) throw new Error(json?.error || "Failed to load request");
+      setReqPreview(json);
+      setShowReq(true);
+    } catch (e) {
+      alert(e.message);
+    }
+  };
 
   // Sorting helpers
   const sortGeneric = (arr, key, dir) => {
@@ -162,6 +557,27 @@ export default function ProviderArchive() {
     return sortGeneric(f, contractSort.key, contractSort.dir);
   }, [contracts, contactFilterContracts, contractSort]);
 
+  const def = useMemo(() => {
+    if (!defs || !reqPreview) return null;
+    const list = Array.isArray(defs.requests) ? defs.requests : [];
+    return (
+      list.find(
+        (d) =>
+          (d.category || "") === (reqPreview.requestCategory || "") &&
+          (d.subcategory || null) === (reqPreview.requestSubcategory ?? null) &&
+          (d.assignmentType || null) === (reqPreview.assignmentType ?? null)
+      ) ||
+      list.find(
+        (d) =>
+          (d.category || "") === (reqPreview.requestCategory || "") &&
+          (d.subcategory || null) === (reqPreview.requestSubcategory ?? null)
+      ) ||
+      list.find(
+        (d) => (d.category || "") === (reqPreview.requestCategory || "")
+      )
+    );
+  }, [defs, reqPreview]);
+
   return (
     <div className="flex flex-col items-center min-h-screen p-8">
       <h1 className="text-3xl font-bold mb-6">My Dashboard</h1>
@@ -210,9 +626,6 @@ export default function ProviderArchive() {
                         : ""}
                     </th>
                     <th className="border p-2 text-center">
-                      Offer Submitted in Response to
-                    </th>
-                    <th className="border p-2 text-center">
                       Offer Submitted By
                     </th>
                     <th
@@ -256,12 +669,15 @@ export default function ProviderArchive() {
                         }))
                       }
                     >
-                      Time until Deadline (dd/hh/mm){" "}
+                      Time until Deadline for Offers{" "}
                       {pendingSort.key === "deadline"
                         ? pendingSort.dir === "asc"
                           ? "↑"
                           : "↓"
                         : ""}
+                    </th>
+                    <th className="border p-2 text-center">
+                      Offer Submitted in Response to
                     </th>
                   </tr>
                 </thead>
@@ -271,29 +687,24 @@ export default function ProviderArchive() {
                       <td className="border p-2 text-center">{o.title}</td>
                       <td className="border p-2 text-center">{o.clientName}</td>
                       <td className="border p-2 text-center">
-                        <button
-                          className="bg-[#11999e] text-white px-3 py-1 rounded cursor-pointer"
-                          onClick={() => {
-                            setReqPreview(o.preview);
-                            setShowReq(true);
-                          }}
-                        >
-                          View LEXIFY Request
-                        </button>
+                        {o.offerSubmittedBy}
                       </td>
                       <td className="border p-2 text-center">
-                        {o.offerSubmittedBy || "—"}
-                      </td>
-                      <td className="border p-2 text-center">
-                        {o.offerSubmissionDate
-                          ? new Date(o.offerSubmissionDate).toLocaleDateString()
-                          : "—"}
+                        {new Date(o.offerSubmissionDate).toLocaleDateString()}
                       </td>
                       <td className="border p-2 text-center">
                         {fmtMoney(o.offeredPrice)}
                       </td>
                       <td className="border p-2 text-center">
                         {formatTimeUntil(o.dateExpired)}
+                      </td>
+                      <td className="border p-2 text-center">
+                        <button
+                          className="bg-[#11999e] text-white px-3 py-1 rounded cursor-pointer"
+                          onClick={() => handleViewRequest(o.requestId)}
+                        >
+                          View LEXIFY Request
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -313,7 +724,7 @@ export default function ProviderArchive() {
             >
               {contactOptions.map((n) => (
                 <option key={n} value={n}>
-                  {n === "All" ? "Filter Contracts By Contract Owner" : n}
+                  {n === "All" ? "Filter Contracts by Contract Owner" : n}
                 </option>
               ))}
             </select>
@@ -341,6 +752,10 @@ export default function ProviderArchive() {
                           : "↓"
                         : ""}
                     </th>
+                    <th className="border p-2 text-center">
+                      Contract Awarded in Response to
+                    </th>
+                    <th className="border p-2 text-center">Contract Owner</th>
                     <th
                       className="border p-2 text-center cursor-pointer"
                       onClick={() =>
@@ -350,7 +765,7 @@ export default function ProviderArchive() {
                         }))
                       }
                     >
-                      Date of Contract{" "}
+                      Contract Date{" "}
                       {contractSort.key === "contractDate"
                         ? contractSort.dir === "asc"
                           ? "↑"
@@ -373,7 +788,6 @@ export default function ProviderArchive() {
                           : "↓"
                         : ""}
                     </th>
-                    <th className="border p-2 text-center">Contract Owner</th>
                     <th className="border p-2 text-center">
                       View LEXIFY Contract
                     </th>
@@ -385,21 +799,22 @@ export default function ProviderArchive() {
                       <td className="border p-2 text-center">{c.title}</td>
                       <td className="border p-2 text-center">{c.clientName}</td>
                       <td className="border p-2 text-center">
-                        {c.contractDate
-                          ? new Date(c.contractDate).toLocaleDateString()
-                          : "—"}
+                        {c.requestTitle || "—"}
+                      </td>
+                      <td className="border p-2 text-center">
+                        {c.contractOwner}
+                      </td>
+                      <td className="border p-2 text-center">
+                        {new Date(c.contractDate).toLocaleDateString()}
                       </td>
                       <td className="border p-2 text-center">
                         {fmtMoney(c.contractPrice)}
                       </td>
                       <td className="border p-2 text-center">
-                        {c.contractOwner || "—"}
-                      </td>
-                      <td className="border p-2 text-center">
                         <button
                           className="bg-[#11999e] text-white px-3 py-1 rounded cursor-pointer"
                           onClick={() => {
-                            setContractPreview(c.contract);
+                            setContractPreview(c);
                             setShowContract(true);
                           }}
                         >
@@ -411,152 +826,10 @@ export default function ProviderArchive() {
                 </tbody>
               </table>
             )}
-
-            {/* Contract Modal */}
-            {showContract && contractPreview && (
-              <div className="fixed inset-0 bg-[#11999e] bg-opacity-50 flex justify-center items-center z-50 transition-opacity duration-300">
-                <div className="bg-white w-11/12 max-w-3xl shadow-lg overflow-y-auto max-h-[90vh] relative border border-black">
-                  <div className="bg-[#11999e] w-full p-2 flex flex-col items-center">
-                    <img
-                      src="/lexify.png"
-                      alt="LEXIFY Logo"
-                      className="h-16 mb-2 w-64 h-32"
-                    />
-                    <h2 className="text-2xl font-bold text-white">
-                      LEXIFY Contract
-                    </h2>
-                  </div>
-
-                  <button
-                    onClick={() => setShowContract(false)}
-                    className="absolute top-4 right-4 text-white bg-[#3a3a3c] rounded-full w-8 h-8 flex items-center justify-center text-xl hover:bg-red-600 transition cursor-pointer"
-                  >
-                    &times;
-                  </button>
-
-                  <div className="p-4 text-black space-y-3 text-md">
-                    <p>
-                      <strong>Contract Date:</strong>{" "}
-                      <u>
-                        {contractPreview.contractDate
-                          ? new Date(
-                              contractPreview.contractDate
-                            ).toLocaleDateString()
-                          : "—"}
-                      </u>
-                    </p>
-
-                    <br />
-                    <h3 className="font-semibold text-lg">
-                      LEGAL SERVICE PROVIDER
-                    </h3>
-                    {/* Provider is current user — if you want to show your own company, you can fetch and render it here */}
-                    <p>
-                      <strong>Company Name:</strong> <u>—</u>
-                    </p>
-                    <p>
-                      <strong>Business ID:</strong> <u>—</u>
-                    </p>
-                    <p>
-                      <strong>Representative Name:</strong> <u>—</u>
-                    </p>
-                    <p>
-                      <strong>Email:</strong> <u>—</u>
-                    </p>
-                    <p>
-                      <strong>Telephone:</strong> <u>—</u>
-                    </p>
-
-                    <hr />
-
-                    <h3 className="font-semibold text-lg">
-                      LEGAL SERVICE PURCHASER
-                    </h3>
-                    <p>
-                      <strong>Company Name:</strong>{" "}
-                      <u>{contractPreview.client?.companyName || "—"}</u>
-                    </p>
-                    <p>
-                      <strong>Business ID:</strong>{" "}
-                      <u>{contractPreview.client?.businessId || "—"}</u>
-                    </p>
-
-                    <p className="italic text-sm">
-                      The Legal Service Purchaser may also be referred to as
-                      &quot;Client&quot; in this contract.
-                    </p>
-
-                    <hr />
-
-                    <p>
-                      <strong>Contract Price (VAT 0%):</strong>{" "}
-                      <u>{fmtMoney(contractPreview.contractPrice)}</u>
-                    </p>
-                    <p>
-                      <strong>Contract Price Currency:</strong>{" "}
-                      <u>{contractPreview.contractPriceCurrency || "—"}</u>
-                    </p>
-                    <p>
-                      <strong>Contract Price Type:</strong>{" "}
-                      <u>{contractPreview.contractPriceType || "—"}</u>
-                    </p>
-
-                    <hr />
-                  </div>
-
-                  <h3 className="font-semibold text-lg text-black pt-8 pl-8">
-                    2. The LEXIFY Request
-                  </h3>
-                  <div id="lexify-preview" className="space-y-6 text-black p-8">
-                    <Section title="Scope of Work">
-                      <p className="text-md mt-2">
-                        {contractPreview.request?.scopeOfWork || "—"}
-                      </p>
-                    </Section>
-                    <Section title="Contract Price Type and Currency">
-                      <p className="text-md mt-2">
-                        {contractPreview.contractPriceType || "—"}
-                      </p>
-                      <p className="text-md mt-2">
-                        Currency: {contractPreview.contractPriceCurrency || "—"}
-                      </p>
-                    </Section>
-                    <Section title="Description of Client's Line of Business">
-                      <p className="text-md mt-2">
-                        {contractPreview.request?.description || "—"}
-                      </p>
-                    </Section>
-                    <Section title="Invoicing">
-                      <p className="text-md mt-2">
-                        The Legal Service Provider shall invoice the Client as
-                        follows:
-                      </p>
-                      <p className="text-md mt-2">
-                        {contractPreview.request?.invoiceType || "—"}
-                      </p>
-                    </Section>
-                    <Section title="Languages Required for the Performance of the Work">
-                      <p className="text-md mt-2">
-                        {contractPreview.request?.language || "—"}
-                      </p>
-                    </Section>
-                  </div>
-
-                  <div className="m-4">
-                    <button
-                      onClick={() => setShowContract(false)}
-                      className="text-white bg-[#3a3a3c] rounded px-4 py-2 hover:bg-red-600 transition cursor-pointer"
-                    >
-                      Close
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
           </div>
 
-          {/* Request Preview Modal */}
-          {showReq && reqPreview && (
+          {/* Contract Preview Modal */}
+          {showContract && contractPreview && (
             <div className="fixed inset-0 bg-[#11999e] bg-opacity-50 flex justify-center items-center z-50 transition-opacity duration-300">
               <div className="bg-white w-11/12 max-w-4xl shadow-lg overflow-y-auto max-h-[90vh] relative">
                 <div className="w-full p-4 flex flex-col items-center bg-[#11999e]">
@@ -566,88 +839,209 @@ export default function ProviderArchive() {
                     className="h-16 mb-2"
                   />
                   <h2 className="text-2xl font-bold text-white">
-                    LEXIFY Request Preview
+                    LEXIFY Contract Preview
                   </h2>
                 </div>
 
                 <button
-                  onClick={() => setShowReq(false)}
+                  onClick={() => setShowContract(false)}
                   className="absolute top-4 right-4 text-white bg-[#3a3a3c] rounded-full w-8 h-8 flex items-center justify-center text-xl hover:bg-red-600 transition cursor-pointer"
                 >
                   &times;
                 </button>
 
-                <div id="lexify-preview" className="space-y-6 text-black p-8">
-                  <Section title="Client Name, Business ID and Country of Domicile">
-                    <p className="text-md mt-2">
-                      {reqPreview.clientName || "—"},{" "}
-                      {reqPreview.clientBusinessId || "—"},{" "}
-                      {reqPreview.clientCountry || "—"}
-                    </p>
-                  </Section>
+                <div className="text-black p-8 space-y-4">
+                  <h3 className="font-semibold text-lg text-black">
+                    1. Parties to the LEXIFY Contract
+                  </h3>
 
+                  <p>
+                    <strong>Legal Service Provider:</strong>{" "}
+                    <u>{contractPreview.providerName}</u>
+                  </p>
+                  <p>
+                    <strong>Legal Service Purchaser:</strong>{" "}
+                    <u>{contractPreview.clientName}</u> hereinafter referred to
+                    as &quot;Client&quot; in this contract.
+                  </p>
+
+                  <hr />
+
+                  <p>
+                    <strong>Contract Price (VAT 0%):</strong>{" "}
+                    <u>{fmtMoney(contractPreview.contractPrice)}</u>
+                  </p>
+                  <p>
+                    <strong>Contract Price Currency:</strong>{" "}
+                    <u>{contractPreview.contractPriceCurrency || "—"}</u>
+                  </p>
+                  <p>
+                    <strong>Contract Price Type:</strong>{" "}
+                    <u>{contractPreview.contractPriceType || "—"}</u>
+                  </p>
+
+                  <hr />
+                </div>
+
+                <h3 className="font-semibold text-lg text-black pt-8 pl-8">
+                  2. The LEXIFY Request
+                </h3>
+                <div id="lexify-preview" className="space-y-6 text-black p-8">
                   <Section title="Scope of Work">
                     <p className="text-md mt-2">
-                      {reqPreview.scopeOfWork || "—"}
+                      {contractPreview.request?.scopeOfWork || "—"}
                     </p>
                   </Section>
-
-                  <Section title="Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency">
+                  <Section title="Contract Price Type and Currency">
                     <p className="text-md mt-2">
-                      {reqPreview.paymentRate || "—"}
+                      {contractPreview.contractPriceType || "—"}
                     </p>
                     <p className="text-md mt-2">
-                      Currency: {reqPreview.currency || "—"}
+                      Currency: {contractPreview.contractPriceCurrency || "—"}
                     </p>
                   </Section>
-
                   <Section title="Description of Client's Line of Business">
                     <p className="text-md mt-2">
-                      {reqPreview.description || "—"}
+                      {contractPreview.request?.description || "—"}
                     </p>
                   </Section>
-
-                  <Section title="Additional Background Information Provided by Client">
-                    <p className="text-md mt-2">
-                      {reqPreview.additionalBackgroundInfo || "—"}
-                    </p>
-                    {Array.isArray(reqPreview.supplierCodeOfConductFiles) &&
-                      reqPreview.supplierCodeOfConductFiles.length > 0 && (
-                        <ul className="list-disc pl-6 mt-2">
-                          {reqPreview.supplierCodeOfConductFiles.map((f, i) => (
-                            <li key={i}>{f?.name || "Attachment"}</li>
-                          ))}
-                        </ul>
-                      )}
-                  </Section>
-
-                  <Section title="Is an Advance Retainer Fee Paid to the Legal Service Provider?">
-                    <p className="text-md mt-2">
-                      {reqPreview.advanceRetainerFee || "—"}
-                    </p>
-                  </Section>
-
                   <Section title="Invoicing">
                     <p className="text-md mt-2">
                       The Legal Service Provider shall invoice the Client as
                       follows:
                     </p>
                     <p className="text-md mt-2">
-                      {reqPreview.invoiceType || "—"}
+                      {contractPreview.request?.invoiceType || "—"}
                     </p>
                   </Section>
-
                   <Section title="Languages Required for the Performance of the Work">
-                    <p className="text-md mt-2">{reqPreview.language || "—"}</p>
+                    <p className="text-md mt-2">
+                      {contractPreview.request?.language || "—"}
+                    </p>
                   </Section>
                 </div>
 
-                <button
-                  onClick={() => setShowReq(false)}
-                  className="m-4 text-white bg-[#3a3a3c] rounded px-4 py-2 hover:bg-red-600 transition cursor-pointer"
-                >
-                  Close Preview
-                </button>
+                <div className="m-4">
+                  <button
+                    onClick={() => setShowContract(false)}
+                    className="text-white bg-[#3a3a3c] rounded px-4 py-2 hover:bg-red-600 transition cursor-pointer"
+                  >
+                    Close
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Request Preview Modal */}
+          {showReq && reqPreview && (
+            <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+              <div className="w-[min(900px,95vw)] max-h-[90vh] overflow-auto rounded-xl bg-white text-black p-6 shadow-xl">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-xl font-semibold">
+                    Preview — {reqPreview.title || "LEXIFY Request"}
+                  </h3>
+                  <button
+                    className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300"
+                    onClick={() => setShowReq(false)}
+                  >
+                    Close
+                  </button>
+                </div>
+
+                {!def ? (
+                  <div className="p-3 border rounded bg-gray-50">
+                    No matching preview definition found.
+                  </div>
+                ) : (
+                  <div className="space-y-6">
+                    {!def ? (
+                      <div className="p-3 border rounded bg-gray-50">
+                        No matching preview definition found.
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        {(def.preview?.sections || [])
+                          .filter(
+                            (section) => !looksLikeProviderReqSection(section)
+                          )
+                          .map((section, si) => {
+                            // If this is a fields-table section, strip hidden fields.
+                            const fields = Array.isArray(section.fields)
+                              ? section.fields.filter(
+                                  (f) => !shouldHideField(f)
+                                )
+                              : null;
+
+                            // Skip empty sections after filtering
+                            if (
+                              Array.isArray(section.fields) &&
+                              fields.length === 0
+                            )
+                              return null;
+
+                            return (
+                              <div key={si} className="border rounded-lg">
+                                <div className="px-4 py-2 font-medium bg-[#119999] text-black rounded-lg">
+                                  {section.title}
+                                </div>
+
+                                {Array.isArray(fields) ? (
+                                  <table className="w-full">
+                                    <tbody>
+                                      {fields.map((f, fi) => {
+                                        const label = f.label || "—";
+                                        // 1) primary: resolve by path
+                                        let raw = resolvePath(
+                                          reqPreview,
+                                          f.path
+                                        );
+                                        let display = renderValue(raw, f.path);
+
+                                        // 2) fallback: resolve by label (for parity with Make Offer)
+                                        if (display === "—") {
+                                          const byLabel = resolveByLabel(
+                                            reqPreview,
+                                            label
+                                          );
+                                          if (byLabel !== undefined) {
+                                            raw = byLabel;
+                                            display = renderValue(raw, f.path);
+                                          }
+                                        }
+
+                                        return (
+                                          <tr key={fi} className="border-t">
+                                            <td className="p-3 align-top w-1/3 font-medium">
+                                              {label}
+                                            </td>
+                                            <td className="p-3 align-top">
+                                              {display}
+                                            </td>
+                                          </tr>
+                                        );
+                                      })}
+                                    </tbody>
+                                  </table>
+                                ) : section.value ? (
+                                  <div className="p-3">
+                                    {renderNamedBlock(
+                                      section.value,
+                                      reqPreview
+                                    )}
+                                  </div>
+                                ) : (
+                                  <div className="p-3 text-sm text-gray-500">
+                                    —
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             </div>
           )}

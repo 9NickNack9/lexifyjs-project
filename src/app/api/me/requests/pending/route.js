@@ -216,6 +216,7 @@ export async function GET() {
         scopeOfWork: true,
         description: true,
         additionalBackgroundInfo: true,
+        backgroundInfoFiles: true,
         supplierCodeOfConductFiles: true,
         invoiceType: true,
         advanceRetainerFee: true,
@@ -226,6 +227,7 @@ export async function GET() {
         providerMinimumRating: true,
         requestCategory: true,
         requestSubcategory: true,
+        assignmentType: true, //
         offers: {
           select: { offerPrice: true },
         },
@@ -254,6 +256,7 @@ export async function GET() {
         scopeOfWork: r.scopeOfWork,
         description: r.description,
         additionalBackgroundInfo: r.additionalBackgroundInfo || "",
+        backgroundInfoFiles: r.backgroundInfoFiles || [],
         supplierCodeOfConductFiles: r.supplierCodeOfConductFiles || [],
         paymentRate: r.paymentRate,
         currency: r.currency,
@@ -267,6 +270,7 @@ export async function GET() {
         providerMinimumRating: r.providerMinimumRating,
         requestCategory: r.requestCategory,
         requestSubcategory: r.requestSubcategory || null,
+        assignmentType: r.assignmentType || null, //
         companyName: me?.companyName || null,
         companyId: me?.companyId || null,
         companyCountry: me?.companyCountry || null,

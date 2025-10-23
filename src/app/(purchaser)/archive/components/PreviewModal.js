@@ -276,6 +276,37 @@ function supportWithDueDiligence(row) {
 }
 
 function renderValue(v, pathHint) {
+  // Special handling for file arrays
+  if (
+    pathHint === "backgroundInfoFiles" ||
+    pathHint === "supplierCodeOfConductFiles"
+  ) {
+    if (Array.isArray(v) && v.length > 0) {
+      return (
+        <div className="space-y-1">
+          {v.map((file, idx) => (
+            <div key={idx}>
+              <a
+                href={file.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:text-blue-800 hover:underline"
+              >
+                {file.name || `File ${idx + 1}`}
+              </a>
+              {file.size && (
+                <span className="text-gray-500 text-sm ml-2">
+                  ({(file.size / 1024).toFixed(1)} KB)
+                </span>
+              )}
+            </div>
+          ))}
+        </div>
+      );
+    }
+    return "—";
+  }
+
   if (Array.isArray(v)) {
     return v.length ? v.join(", ") : "—";
   }

@@ -45,8 +45,8 @@
                 "path": "paymentRate"
               },
               {
-                "label": "Currency / Maximum price",
-                "path": "__currencyMax__"
+                "label": "Currency",
+                "path": "currency"
               },
               {
                 "label": "Invoice type",
@@ -145,15 +145,6 @@
             ]
           },
           {
-            "title": "Currency",
-            "fields": [
-              {
-                "label": "Currency",
-                "path": "currency"
-              }
-            ]
-          },
-          {
             "title": "Date Expired",
             "fields": [
               {
@@ -163,7 +154,7 @@
             ]
           },
           {
-            "title": "Details Confidential",
+            "title": "Confidential",
             "fields": [
               {
                 "label": "Confidential",
@@ -172,7 +163,7 @@
             ]
           },
           {
-            "title": "Details Winner Bidder Only Status",
+            "title": "Winner Bidder Only Status",
             "fields": [
               {
                 "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",

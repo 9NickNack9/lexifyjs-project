@@ -52,6 +52,8 @@ export async function GET(_req, { params }) {
         scopeOfWork: true,
         description: true,
         additionalBackgroundInfo: true,
+        backgroundInfoFiles: true,
+        supplierCodeOfConductFiles: true,
 
         // pricing & invoicing
         paymentRate: true,
@@ -103,6 +105,8 @@ export async function GET(_req, { params }) {
     const out = {
       ...r,
       requestId: r.requestId?.toString(),
+      backgroundInfoFiles: r.backgroundInfoFiles || [],
+      supplierCodeOfConductFiles: r.supplierCodeOfConductFiles || [],
 
       // normalize common fields to prefer top-level, fallback to details.*
       primaryContactPerson:
