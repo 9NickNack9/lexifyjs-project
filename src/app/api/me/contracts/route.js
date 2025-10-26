@@ -17,56 +17,74 @@ const numify = (v) => {
   const n = parseFloat(s);
   return Number.isFinite(n) ? n : null;
 };
-
 const safeNumber = (v) => (typeof v === "bigint" ? Number(v) : v);
 
-// Pull *your* individual rating from provider.providerIndividualRating
-const findMyIndividualRating = (provider, myUserId, myCompanyName) => {
-  const bag = provider?.providerIndividualRating ?? null;
-  if (!bag) return null;
+// helpers to match contacts by name
+const normalize = (s) => (s || "").toString().trim().toLowerCase();
+const fullName = (c) =>
+  [c?.firstName, c?.lastName].filter(Boolean).join(" ").trim();
 
-  // Support object map OR array of entries { key, value }
-  let entry = null;
+function matchContactByName(contacts, name) {
+  if (!Array.isArray(contacts) || !name) return null;
+  const want = normalize(name);
+  // exact full name first, then startsWith by either part
+  return (
+    contacts.find((c) => normalize(fullName(c)) === want) ||
+    contacts.find(
+      (c) =>
+        normalize(c?.firstName).startsWith(want) ||
+        normalize(c?.lastName).startsWith(want)
+    ) ||
+    null
+  );
+}
 
-  if (Array.isArray(bag)) {
-    entry =
-      bag.find(
-        (e) =>
-          e?.key === String(myUserId) || e?.key === String(myCompanyName || "")
-      ) || null;
-    if (entry && typeof entry === "object") entry = entry.value ?? entry;
-  } else if (typeof bag === "object") {
-    entry = bag[String(myUserId)] || bag[String(myCompanyName || "")] || null;
+// helper near top
+const joinName = (p) =>
+  [p?.firstName, p?.lastName].filter(Boolean).join(" ").trim();
+
+function resolvePurchaserContact(req) {
+  // 1) request.primaryContactPerson
+  if (
+    req?.primaryContactPerson &&
+    (req.primaryContactPerson.email || req.primaryContactPerson.telephone)
+  ) {
+    const pc = req.primaryContactPerson;
+    return {
+      contactName: joinName(pc) || "—",
+      email: pc.email || "—",
+      phone: pc.telephone || "—",
+      raw: pc,
+    };
   }
-
-  if (!entry || typeof entry !== "object") return null;
-
-  const q = numify(
-    entry.providerQualityRating ?? entry.quality ?? entry.Quality
-  );
-  const c = numify(
-    entry.providerCommunicationRating ??
-      entry.communication ??
-      entry.Communication
-  );
-  const b = numify(
-    entry.providerBillingRating ?? entry.billing ?? entry.Billing
-  );
-
-  const parts = [q, c, b].filter((n) => typeof n === "number");
-  if (!parts.length) return null;
-
-  const avg = Number(
-    (parts.reduce((s, v) => s + v, 0) / parts.length).toFixed(1)
-  );
-
-  return {
-    total: avg,
-    quality: q ?? null,
-    communication: c ?? null,
-    billing: b ?? null,
-  };
-};
+  // 2) details.primaryContactPerson
+  const dpc = req?.details?.primaryContactPerson;
+  if (dpc && (dpc.email || dpc.telephone)) {
+    return {
+      contactName: joinName(dpc) || "—",
+      email: dpc.email || "—",
+      phone: dpc.telephone || "—",
+      raw: dpc,
+    };
+  }
+  // 3) fallback to client contact persons
+  const list = req?.client?.companyContactPersons || [];
+  if (Array.isArray(list) && list.length) {
+    const primaryLike =
+      list.find((c) =>
+        String(c?.position || "")
+          .toLowerCase()
+          .includes("primary")
+      ) || list[0];
+    return {
+      contactName: joinName(primaryLike) || "—",
+      email: primaryLike?.email || "—",
+      phone: primaryLike?.telephone || "—",
+      raw: primaryLike,
+    };
+  }
+  return { contactName: "—", email: "—", phone: "—", raw: null };
+}
 
 export async function GET() {
   try {
@@ -80,7 +98,7 @@ export async function GET() {
       select: { companyName: true },
     });
 
-    // Only select fields that exist and that we actually need
+    // NOTE: no 'offer' relation on Contract — read offers via the linked request
     const contracts = await prisma.contract.findMany({
       where: { request: { clientId: BigInt(session.userId) } },
       orderBy: { contractDate: "desc" },
@@ -89,28 +107,59 @@ export async function GET() {
         contractDate: true,
         contractPrice: true,
         providerId: true,
+
         request: {
           select: {
             requestId: true,
+            requestCategory: true,
+            requestSubcategory: true,
+            assignmentType: true,
             title: true,
-            currency: true, // used as contractPriceCurrency
-            paymentRate: true, // used as contractPriceType
+            currency: true, // -> contractPriceCurrency
+            paymentRate: true, // -> contractPriceType
             scopeOfWork: true,
             description: true,
             invoiceType: true,
             language: true,
             advanceRetainerFee: true,
+            additionalBackgroundInfo: true,
+            backgroundInfoFiles: true,
+            supplierCodeOfConductFiles: true,
+
+            // purchaser representative + company info
+            primaryContactPerson: true, // { firstName,lastName,email,telephone }
+            details: true, // may contain .primaryContactPerson
+            client: {
+              select: {
+                companyName: true,
+                companyId: true,
+                companyCountry: true,
+                companyContactPersons: true, // [{firstName,lastName,email,telephone,position}]
+              },
+            },
+
+            // gather all offers; we will pick the one from this provider
+            offers: {
+              select: {
+                providerId: true,
+                offerLawyer: true,
+                offerStatus: true, // "WON" | "LOST" | ...
+              },
+            },
           },
         },
+
         provider: {
           select: {
             userId: true,
             companyName: true,
+            companyId: true, // provider business id
             providerTotalRating: true,
             providerQualityRating: true,
             providerCommunicationRating: true,
             providerBillingRating: true,
             providerIndividualRating: true,
+            companyContactPersons: true, // [{ firstName,lastName,email,telephone,position }]
           },
         },
       },
@@ -119,12 +168,10 @@ export async function GET() {
     const shaped = contracts.map((c) => {
       const p = c.provider || {};
 
-      // Aggregate rating: prefer providerTotalRating, else compute from subs
       const q = numify(p.providerQualityRating);
       const co = numify(p.providerCommunicationRating);
       const b = numify(p.providerBillingRating);
       const t = numify(p.providerTotalRating);
-
       const parts = [q, co, b].filter((n) => typeof n === "number");
       const computedTotal = parts.length
         ? Number((parts.reduce((s, v) => s + v, 0) / parts.length).toFixed(1))
@@ -137,49 +184,104 @@ export async function GET() {
         billing: b ?? null,
       };
 
-      // Your individual rating (if present in providerIndividualRating)
-      const myRating = findMyIndividualRating(
-        p,
-        session.userId,
-        me?.companyName
+      // ---- find the offerLawyer from offers on the same request by this provider ----
+      const offers = Array.isArray(c.request?.offers) ? c.request.offers : [];
+      const byProvider = offers.filter(
+        (o) => String(o.providerId) === String(c.providerId)
       );
+      const won =
+        byProvider.find((o) => (o.offerStatus || "").toUpperCase() === "WON") ||
+        byProvider[0] ||
+        null;
+      const offerLawyerName = won?.offerLawyer?.toString?.().trim() || null;
+
+      // ---- match provider company contact by offerLawyer name ----
+      const matched =
+        matchContactByName(p.companyContactPersons, offerLawyerName) || null;
+
+      const provider = {
+        userId: p.userId ? safeNumber(p.userId) : null,
+        companyName: p.companyName || "—",
+        businessId: p.companyId || "—",
+        // representative from matched contact (fallback to the offerLawyer name)
+        contactName: matched ? fullName(matched) : offerLawyerName || "—",
+        email: matched?.email || "—",
+        phone: matched?.telephone || "—",
+      };
+
+      // ---- purchaser representative with fallbacks (request field → details → client contacts) ----
+      const purchaserContact = resolvePurchaserContact(c.request);
+      const purchaser = {
+        companyName: c.request?.client?.companyName || me?.companyName || "—",
+        businessId: c.request?.client?.companyId || "—",
+        contactName: purchaserContact.contactName,
+        email: purchaserContact.email,
+        phone: purchaserContact.phone,
+      };
 
       return {
         contractId: safeNumber(c.contractId),
         contractDate: c.contractDate,
         contractPrice: numify(c.contractPrice),
-        contractPriceCurrency: c.request?.currency || null, // derived
-        contractPriceType: c.request?.paymentRate || null, // derived
+        contractPriceCurrency: c.request?.currency || null,
+        contractPriceType: c.request?.paymentRate || null,
 
-        provider: {
-          userId: p.userId ? safeNumber(p.userId) : null,
-          companyName: p.companyName || "—",
-          providerTotalRating: t,
-          providerQualityRating: q,
-          providerCommunicationRating: co,
-          providerBillingRating: b,
-        },
+        provider,
+        purchaser,
 
         request: {
           id: c.request?.requestId ? safeNumber(c.request.requestId) : null,
+          requestCategory: c.request?.requestCategory || null,
+          requestSubcategory: c.request?.requestSubcategory || null,
+          assignmentType: c.request?.assignmentType || null,
+
           title: c.request?.title || "—",
           scopeOfWork: c.request?.scopeOfWork || "—",
           description: c.request?.description || "—",
           invoiceType: c.request?.invoiceType || "—",
           language: c.request?.language || "—",
           advanceRetainerFee: c.request?.advanceRetainerFee || "—",
+
+          currency: c.request?.currency || null,
+          paymentRate: c.request?.paymentRate || null,
+          // derive from details.maximumPrice since it's not a top-level column
+          maximumPrice:
+            typeof c.request?.details?.maximumPrice === "number"
+              ? c.request.details.maximumPrice
+              : null,
+
+          additionalBackgroundInfo:
+            c.request?.additionalBackgroundInfo ??
+            c.request?.details?.additionalBackgroundInfo ??
+            null,
+          backgroundInfoFiles:
+            c.request?.backgroundInfoFiles ??
+            c.request?.details?.backgroundInfoFiles ??
+            [],
+          supplierCodeOfConductFiles:
+            c.request?.supplierCodeOfConductFiles ??
+            c.request?.details?.supplierCodeOfConductFiles ??
+            [],
+          // ✅ expose the actual primary contact for the preview section
+          primaryContactPerson: purchaserContact.raw || null,
+
+          // include details so the modal preview can resolve nested paths (e.g., details.*)
+          details: c.request?.details || {},
+
+          // expose client so the preview can build "Client, BIC, Country"
+          client: {
+            companyName: c.request?.client?.companyName || null,
+            companyId: c.request?.client?.companyId || null,
+            companyCountry: c.request?.client?.companyCountry || null,
+          },
         },
 
-        myRating,
         providerRating,
       };
     });
 
     return NextResponse.json(
-      serialize({
-        companyName: me?.companyName || null,
-        contracts: shaped,
-      })
+      serialize({ companyName: me?.companyName || null, contracts: shaped })
     );
   } catch (e) {
     console.error("GET /api/me/contracts failed:", e);

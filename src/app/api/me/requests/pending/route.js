@@ -1,8 +1,15 @@
 // src/app/api/me/requests/pending/route.js
+export const runtime = "nodejs";
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { htmlToPdfBuffer } from "@/lib/contractPdf.js";
+import { sendContractEmail } from "@/lib/mailer.js";
+import { filesToAttachments } from "@/lib/fetchFiles.js";
+import ContractPrint from "@/emails/ContractPrint.jsx";
+import { promises as fs } from "fs";
+import path from "path";
 
 // ---- helpers ----
 const toNum = (d) => (d == null ? null : Number(d));
@@ -33,6 +40,285 @@ async function updateRequestContractYesNo(requestId, yesOrNo) {
   await prisma.request.update({
     where: { requestId },
     data: { contractResult: yesOrNo },
+  });
+}
+
+async function sendContractPackageEmail(prisma, requestId) {
+  // 1) Load contract + offer + reps like your /api/me/contracts does (same selects)
+  const contract = await prisma.contract.findUnique({
+    where: { requestId },
+    select: {
+      contractId: true,
+      contractDate: true,
+      contractPrice: true,
+      providerId: true,
+      request: {
+        select: {
+          requestId: true,
+          requestCategory: true,
+          requestSubcategory: true,
+          assignmentType: true,
+          title: true,
+          currency: true,
+          paymentRate: true,
+          scopeOfWork: true,
+          description: true,
+          invoiceType: true,
+          language: true,
+          advanceRetainerFee: true,
+          additionalBackgroundInfo: true,
+          backgroundInfoFiles: true,
+          supplierCodeOfConductFiles: true,
+          primaryContactPerson: true,
+          details: true,
+          client: {
+            select: {
+              companyName: true,
+              companyId: true,
+              companyCountry: true,
+              companyContactPersons: true,
+              userId: true,
+            },
+          },
+          offers: {
+            select: { providerId: true, offerLawyer: true, offerStatus: true },
+          },
+        },
+      },
+      provider: {
+        select: {
+          userId: true,
+          companyName: true,
+          companyId: true,
+          companyContactPersons: true,
+        },
+      },
+    },
+  });
+
+  if (!contract) return;
+
+  // 2) Shape to the same structure your ContractModal consumes
+  const normalize = (s) => (s || "").toString().trim().toLowerCase();
+  const fullName = (c) =>
+    [c?.firstName, c?.lastName].filter(Boolean).join(" ").trim();
+
+  // provider rep = offerLawyer matched to provider companyContactPersons
+  const offers = Array.isArray(contract.request?.offers)
+    ? contract.request.offers
+    : [];
+  const byProvider = offers.filter(
+    (o) => String(o.providerId) === String(contract.providerId)
+  );
+  const won =
+    byProvider.find((o) => (o.offerStatus || "").toUpperCase() === "WON") ||
+    byProvider[0] ||
+    null;
+  const offerLawyerName = won?.offerLawyer?.toString?.().trim() || "";
+  const contacts = contract.provider?.companyContactPersons || [];
+  const match =
+    contacts.find(
+      (c) => normalize(fullName(c)) === normalize(offerLawyerName)
+    ) ||
+    contacts.find(
+      (c) =>
+        normalize(c?.firstName).startsWith(normalize(offerLawyerName)) ||
+        normalize(c?.lastName).startsWith(normalize(offerLawyerName))
+    ) ||
+    null;
+
+  const provider = {
+    userId: contract.provider?.userId ?? null,
+    companyName: contract.provider?.companyName || "—",
+    businessId: contract.provider?.companyId || "—",
+    contactName: match ? fullName(match) : offerLawyerName || "—",
+    email: match?.email || "—",
+    phone: match?.telephone || "—",
+  };
+
+  // purchaser rep (primary contact) with fallbacks
+  const pcDirect =
+    contract.request?.primaryContactPerson ||
+    contract.request?.details?.primaryContactPerson ||
+    null;
+  const fallbackList = Array.isArray(
+    contract.request?.client?.companyContactPersons
+  )
+    ? contract.request.client.companyContactPersons
+    : [];
+  const pc =
+    pcDirect &&
+    (pcDirect.firstName ||
+      pcDirect.lastName ||
+      pcDirect.email ||
+      pcDirect.telephone)
+      ? pcDirect
+      : fallbackList[0] || null;
+
+  const purchaser = {
+    companyName: contract.request?.client?.companyName || "—",
+    businessId: contract.request?.client?.companyId || "—",
+    contactName: pc ? fullName(pc) : "—",
+    email: pc?.email || "—",
+    phone: pc?.telephone || "—",
+  };
+
+  const shaped = {
+    contractDate: contract.contractDate,
+    contractPrice:
+      Number(
+        contract.contractPrice?.toString?.() ?? contract.contractPrice ?? 0
+      ) || null,
+    contractPriceCurrency: contract.request?.currency || null,
+    contractPriceType: contract.request?.paymentRate || null,
+    provider,
+    purchaser,
+    request: {
+      id: contract.request?.requestId || null,
+      requestCategory: contract.request?.requestCategory || null,
+      requestSubcategory: contract.request?.requestSubcategory || null,
+      assignmentType: contract.request?.assignmentType || null,
+      title: contract.request?.title || "—",
+      scopeOfWork: contract.request?.scopeOfWork || "—",
+      description: contract.request?.description || "—",
+      invoiceType: contract.request?.invoiceType || "—",
+      language: contract.request?.language || "—",
+      advanceRetainerFee: contract.request?.advanceRetainerFee || "—",
+      currency: contract.request?.currency || null,
+      paymentRate: contract.request?.paymentRate || null,
+      maximumPrice:
+        typeof contract.request?.details?.maximumPrice === "number"
+          ? contract.request.details.maximumPrice
+          : null,
+      additionalBackgroundInfo:
+        contract.request?.additionalBackgroundInfo ??
+        contract.request?.details?.additionalBackgroundInfo ??
+        null,
+      backgroundInfoFiles:
+        contract.request?.backgroundInfoFiles ??
+        contract.request?.details?.backgroundInfoFiles ??
+        [],
+      supplierCodeOfConductFiles:
+        contract.request?.supplierCodeOfConductFiles ??
+        contract.request?.details?.supplierCodeOfConductFiles ??
+        [],
+      details: contract.request?.details || {},
+      primaryContactPerson: pc || null,
+      client: {
+        companyName: contract.request?.client?.companyName || null,
+        companyId: contract.request?.client?.companyId || null,
+        companyCountry: contract.request?.client?.companyCountry || null,
+      },
+    },
+  };
+
+  // 3) Load preview definitions (server-safe)
+  let defs = null;
+  const origin = process.env.APP_ORIGIN; // e.g. http://localhost:3000 or your prod origin
+  if (origin) {
+    try {
+      const res = await fetch(`${origin}/previews/all-previews.json`, {
+        cache: "no-store",
+      });
+      if (res.ok) defs = await res.json();
+    } catch {}
+  }
+  if (!defs) {
+    // Fallback: read from /public/previews/all-previews.json
+    try {
+      const p = path.join(
+        process.cwd(),
+        "public",
+        "previews",
+        "all-previews.json"
+      );
+      const raw = await fs.readFile(p, "utf8");
+      defs = JSON.parse(raw);
+    } catch {}
+  }
+
+  const matchDef = () => {
+    if (!defs?.requests) return null;
+    const list = defs.requests;
+    const norm = (s) => (s ?? "").toString().trim().toLowerCase();
+    const cat =
+      norm(shaped.request.requestCategory) ||
+      norm(shaped.request?.details?.requestCategory);
+    const sub =
+      norm(shaped.request.requestSubcategory) ||
+      norm(shaped.request?.details?.requestSubcategory);
+    const asg =
+      norm(shaped.request.assignmentType) ||
+      norm(shaped.request?.details?.assignmentType);
+    return (
+      list.find(
+        (d) =>
+          norm(d.category) === cat &&
+          norm(d.subcategory) === sub &&
+          norm(d.assignmentType) === asg
+      ) ||
+      list.find(
+        (d) => norm(d.category) === cat && norm(d.subcategory) === sub
+      ) ||
+      list.find((d) => norm(d.category) === cat) ||
+      null
+    );
+  };
+  const previewDef = matchDef();
+
+  // 4) Render HTML (same as modal visuals) & make PDF
+  const html = ContractPrint({
+    contract: shaped,
+    companyName: shaped.purchaser.companyName,
+    previewDef,
+  });
+  const pdf = await htmlToPdfBuffer(html);
+
+  // 5) Collect attachments (contract PDF + request files)
+  const fileAtts = [
+    ...(await filesToAttachments(shaped.request.backgroundInfoFiles || [], {
+      origin: process.env.APP_ORIGIN,
+    })),
+    ...(await filesToAttachments(
+      shaped.request.supplierCodeOfConductFiles || [],
+      { origin: process.env.APP_ORIGIN }
+    )),
+  ];
+  const attachments = [
+    {
+      filename: `LEXIFY-Contract-${requestId}.pdf`,
+      content: pdf.toString("base64"),
+    },
+    ...fileAtts,
+  ];
+
+  // 6) Email both reps
+  const to = [provider.email, purchaser.email].filter(Boolean);
+  const subject = `LEXIFY Contract - ${
+    shaped.request.title || shaped.purchaser.companyName || ""
+  }`;
+  const intro =
+    "Attached is your LEXIFY Contract cover page as a PDF along with the request's attachments.";
+  const inlineNotice =
+    "If attachments are large, some email clients may truncate the message.";
+  const emailHtml = `
+    <div style="font-family:Arial,Helvetica,sans-serif">
+      <p>${intro}</p>
+      <p><strong>Provider Representative:</strong> ${
+        provider.contactName
+      } &lt;${provider.email || ""}&gt;</p>
+      <p><strong>Purchaser Representative:</strong> ${
+        purchaser.contactName
+      } &lt;${purchaser.email || ""}&gt;</p>
+    </div>
+  `;
+
+  await sendContractEmail({
+    to,
+    bcc: ["support@lexify.online"],
+    subject,
+    html: emailHtml,
+    attachments,
   });
 }
 
@@ -134,54 +420,45 @@ export async function GET() {
           : offersWithNum.some((o) => o.priceNum <= maxPriceNum);
 
       if (anyUnderMax && lowest) {
-        // Create Contract (client = purchaser, provider = winning offer maker)
-        // Auto-award (create once per requestId)
-        await prisma.$transaction(async (tx) => {
-          // 1) Ensure exactly one contract per requestId without throwing
-          const existing = await tx.contract.findUnique({
-            where: { requestId: r.requestId }, // requestId is @unique on Contract
-            select: { contractId: true },
-          });
+        // 1) Create the contract once, OUTSIDE any transaction (no throw on dup)
+        const createResult = await prisma.contract.createMany({
+          data: [
+            {
+              requestId: r.requestId,
+              clientId: meIdBig, // purchaser
+              providerId: lowest.providerId, // winner provider
+              contractPrice:
+                lowest.offerPrice?.toString?.() ?? String(lowest.offerPrice),
+            },
+          ],
+          skipDuplicates: true, // ✅ no error if it already exists
+        });
+        const createdNow = (createResult?.count || 0) > 0;
 
-          if (!existing) {
-            await tx.contract.create({
-              data: {
-                requestId: r.requestId,
-                clientId: meIdBig, // purchaser
-                providerId: lowest.providerId, // winner's provider
-                contractPrice:
-                  lowest.offerPrice?.toString?.() ?? String(lowest.offerPrice),
-              },
-            });
-          }
-
-          // 2) Mark the winning offer as WON
-          await tx.offer.update({
+        // 2) Now safely update statuses in a clean transaction
+        await prisma.$transaction([
+          prisma.offer.update({
             where: { offerId: lowest.offerId },
             data: { offerStatus: "WON" },
-          });
-
-          // 3) Mark all other offers on this request as LOST
-          await tx.offer.updateMany({
-            where: {
-              requestId: r.requestId,
-              offerId: { not: lowest.offerId },
-            },
+          }),
+          prisma.offer.updateMany({
+            where: { requestId: r.requestId, offerId: { not: lowest.offerId } },
             data: { offerStatus: "LOST" },
-          });
-
-          // 4) Update the request state and contract result (schema field)
-          await tx.request.update({
+          }),
+          prisma.request.update({
             where: { requestId: r.requestId },
             data: { requestState: "EXPIRED", contractResult: "Yes" },
-          });
-        });
+          }),
+        ]);
 
-        await prisma.request.update({
-          where: { requestId: r.requestId },
-          data: { requestState: "EXPIRED" },
-        });
-        await updateRequestContractYesNo(r.requestId, "Yes");
+        // 3) Email only when a new contract was actually created
+        if (createdNow) {
+          try {
+            await sendContractPackageEmail(prisma, r.requestId);
+          } catch (e) {
+            console.error("Emailing contract package failed", e);
+          }
+        }
       } else {
         // ON HOLD + acceptDeadline = dateExpired + 7 days
         const base = r.dateExpired ? new Date(r.dateExpired) : now;

@@ -3214,36 +3214,20 @@
               "value": "retainerFeeWithNote"
             },
             {
-              "title": "How is the Client Invoiced by the Legal Service Provider?",
+              "title": "How will the Client be Invoiced by the Legal Service Provider?",
               "value": "paymentTerms"
             },
             {
-              "title": "What is the Language of Legal Services Provided to the Client?",
+              "title": "Languages Required for the Performance of the Work",
               "value": "languageCSV"
-            },
-            {
-              "title": "In Which Country/Countries is the Legal Service Provider Domiciled?",
-              "value": "providerCountry"
-            },
-            {
-              "title": "Which Legal Service Providers May Offer in Response to this LEXIFY Request?",
-              "value": "offerer"
-            },
-            {
-              "title": "Minimum Number of Lawyers Employed by the Legal Service Provider",
-              "value": "lawyerCount"
-            },
-            {
-              "title": "Minimum Length of Time the Legal Service Provider Must Have Been in Operation",
-              "value": "firmAge"
-            },
-            {
-              "title": "Minimum Rating of the Legal Service Provider",
-              "value": "firmRating"
             },
             {
               "title": "Deadline for Offers to be Submitted by Legal Service Providers",
               "value": "date"
+            },
+            {
+              "title": "Is the Legal Service Provider Required to Comply with a Supplier Code of Conduct and/or Other Procurement related Requirements of the Client?",
+              "value": "supplierCodeOfConductFiles"
             }
           ]
         },

@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
+import { notifySupportNewRegistration } from "@/lib/mailer";
 
 /** Helpers */
 const trim = (s) => (typeof s === "string" ? s.trim() : s);
@@ -162,10 +163,11 @@ const RegisterSchema = BaseSchema.transform((raw) => {
     companyWebsite: website || null,
 
     // provider-only persisted fields
-    companyProfessionals: professionals,
-    providerType,
-    companyFoundingYear,
-    companyAge,
+    // provider-only persisted fields (undefined when not provider)
+    companyProfessionals: role === "provider" ? professionals : undefined,
+    providerType: role === "provider" ? providerType : undefined,
+    companyFoundingYear: role === "provider" ? companyFoundingYear : undefined,
+    companyAge: role === "provider" ? companyAge : undefined,
 
     contactFirstName: s.contactFirstName,
     contactLastName: s.contactLastName,
@@ -231,10 +233,10 @@ export async function POST(req) {
             companyAge: data.companyAge,
           }
         : {
-            companyProfessionals: null,
-            providerType: null,
-            companyFoundingYear: null,
-            companyAge: null,
+            companyProfessionals: data.companyProfessionals,
+            providerType: data.providerType,
+            companyFoundingYear: data.companyFoundingYear,
+            companyAge: data.companyAge,
           };
 
     // Create user
@@ -295,6 +297,16 @@ export async function POST(req) {
       },
       select: { userId: true },
     });
+
+    // Fire-and-forget support notification (don’t fail the registration if email fails)
+    try {
+      await notifySupportNewRegistration({
+        role: data.role, // "provider" | "purchaser" as selected by user
+        companyName: data.companyName, // company name from the form
+      });
+    } catch (e) {
+      console.error("New registration support email failed:", e);
+    }
 
     return NextResponse.json(
       { ok: true, userId: String(created.userId) },

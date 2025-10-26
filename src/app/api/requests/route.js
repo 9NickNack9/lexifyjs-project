@@ -6,6 +6,7 @@ import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { randomBytes } from "crypto";
 import { promises as fs } from "fs";
 import path from "path";
+import { notifyProvidersNewAvailableRequest } from "@/lib/mailer";
 
 function toDecimalString(v) {
   if (v === undefined || v === null || v === "") return null;
@@ -247,6 +248,78 @@ export async function POST(req) {
       details: body.details ?? {},
     },
   });
+
+  // Build the "requestCategory" string for the template
+  const categoryParts = [
+    body.requestCategory?.toString()?.trim(),
+    (requestSubcategory ?? body.requestSubcategory)?.toString()?.trim(),
+    (assignmentType ?? body.assignmentType)?.toString()?.trim(),
+  ].filter(Boolean);
+  const requestCategoryJoined = categoryParts.join(" / ");
+
+  // Fetch Providers and filter by notificationPreferences includes "new-available-request"
+  function toStringArray(val) {
+    if (Array.isArray(val)) return val.filter((v) => typeof v === "string");
+    if (val && typeof val === "object") {
+      if (Array.isArray(val.set))
+        return val.set.filter((v) => typeof v === "string");
+      if (Array.isArray(val.value))
+        return val.value.filter((v) => typeof v === "string");
+    }
+    if (typeof val === "string") {
+      try {
+        const parsed = JSON.parse(val);
+        if (Array.isArray(parsed))
+          return parsed.filter((v) => typeof v === "string");
+        return val ? [val] : [];
+      } catch {
+        return val ? [val] : [];
+      }
+    }
+    return [];
+  }
+
+  const providers = await prisma.appUser.findMany({
+    where: { role: "PROVIDER" },
+    select: {
+      companyContactPersons: true, // [{ firstName,lastName,email,telephone,position }]
+      notificationPreferences: true,
+    },
+  });
+
+  // Extract and dedupe all contact emails of opted-in providers
+  const emailSet = new Set();
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  for (const p of providers) {
+    const prefs = toStringArray(p?.notificationPreferences);
+    if (!prefs.includes("new-available-request")) continue;
+
+    const contacts = Array.isArray(p?.companyContactPersons)
+      ? p.companyContactPersons
+      : [];
+
+    for (const c of contacts) {
+      const e = (c?.email || "").trim();
+      if (e && EMAIL_RE.test(e)) emailSet.add(e);
+    }
+  }
+
+  const recipients = Array.from(emailSet);
+
+  // Fire-and-forget: send in batches to be safe (e.g., 900 per send)
+  try {
+    const BATCH = 900;
+    for (let i = 0; i < recipients.length; i += BATCH) {
+      const chunk = recipients.slice(i, i + BATCH);
+      await notifyProvidersNewAvailableRequest({
+        to: chunk,
+        requestCategory: requestCategoryJoined,
+      });
+    }
+  } catch (e) {
+    console.error("New-available-request email failed:", e);
+  }
 
   return NextResponse.json(
     { ok: true, requestId: String(created.requestId) },

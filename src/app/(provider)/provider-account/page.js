@@ -19,6 +19,52 @@ export default function ProviderAccount() {
   const [invoiceContacts, setInvoiceContacts] = useState([]);
   const [busyInvoice, setBusyInvoice] = useState(false);
 
+  // Notifications (Provider)
+  const [notificationPrefs, setNotificationPrefs] = useState([]);
+  const hasPref = (key) => notificationPrefs.includes(key);
+
+  const setPref = async (key, enabled) => {
+    // optimistic UI
+    setNotificationPrefs((xs) => {
+      const has = xs.includes(key);
+      if (enabled && !has) return [...xs, key];
+      if (!enabled && has) return xs.filter((k) => k !== key);
+      return xs;
+    });
+
+    try {
+      const res = await fetch("/api/me/notification-preferences/provider", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key, enabled }),
+      });
+      if (!res.ok) {
+        // revert on error
+        setNotificationPrefs((xs) =>
+          enabled
+            ? xs.filter((k) => k !== key)
+            : Array.from(new Set([...xs, key]))
+        );
+        const err = await res.json().catch(() => ({}));
+        alert(err?.error || "Failed to update notification preference.");
+        return;
+      }
+      const json = await res.json();
+      setNotificationPrefs(
+        Array.isArray(json.notificationPreferences)
+          ? json.notificationPreferences
+          : []
+      );
+    } catch {
+      setNotificationPrefs((xs) =>
+        enabled
+          ? xs.filter((k) => k !== key)
+          : Array.from(new Set([...xs, key]))
+      );
+      alert("Network error while updating notification preference.");
+    }
+  };
+
   useEffect(() => {
     (async () => {
       try {
@@ -56,6 +102,20 @@ export default function ProviderAccount() {
             isEditing: false,
           }))
         );
+
+        try {
+          const pr = await fetch("/api/me/notification-preferences/provider", {
+            cache: "no-store",
+          });
+          const pj = await pr.json();
+          setNotificationPrefs(
+            Array.isArray(pj.notificationPreferences)
+              ? pj.notificationPreferences
+              : []
+          );
+        } catch {
+          setNotificationPrefs([]);
+        }
       } catch (e) {
         console.error(e);
       } finally {
@@ -449,28 +509,58 @@ export default function ProviderAccount() {
           Requests. Please select the notifications you want to receive:
         </h4>
         <br />
-        <label className="inline-flex items-center cursor-pointer">
+        {/* 1) no-winning-offer */}
+        <label
+          htmlFor="prov-no-winning-offer"
+          className="inline-flex items-center cursor-pointer"
+        >
           <input
+            id="prov-no-winning-offer"
             type="checkbox"
-            value=""
-            className="sr-only peer"
-            defaultChecked
+            className="sr-only"
+            checked={hasPref("no-winning-offer")}
+            onChange={(e) => setPref("no-winning-offer", e.target.checked)}
           />
-          <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600 dark:peer-checked:bg-green-600"></div>
+          <div
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              hasPref("no-winning-offer") ? "bg-green-600" : "bg-gray-700"
+            }`}
+          >
+            <div
+              className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
+                hasPref("no-winning-offer") ? "translate-x-full" : ""
+              }`}
+            />
+          </div>
           <span className="ms-3 text-sm text-black dark:text-black">
             A pending LEXIFY Request expires and the offer I have submitted is
             not the winning offer
           </span>
         </label>
         <br />
-        <label className="inline-flex items-center cursor-pointer pt-2">
+        {/* 2) winner-conflict-check */}
+        <label
+          htmlFor="prov-winner-conflict-check"
+          className="inline-flex items-center cursor-pointer pt-2"
+        >
           <input
+            id="prov-winner-conflict-check"
             type="checkbox"
-            value=""
-            className="sr-only peer"
-            defaultChecked
+            className="sr-only"
+            checked={hasPref("winner-conflict-check")}
+            onChange={(e) => setPref("winner-conflict-check", e.target.checked)}
           />
-          <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600 dark:peer-checked:bg-green-600"></div>
+          <div
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              hasPref("winner-conflict-check") ? "bg-green-600" : "bg-gray-700"
+            }`}
+          >
+            <div
+              className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
+                hasPref("winner-conflict-check") ? "translate-x-full" : ""
+              }`}
+            />
+          </div>
           <span className="ms-3 text-sm text-black dark:text-black">
             A pending LEXIFY Request expires and the offer I have submitted is
             the winning offer subject to clearance of remaining conflict checks{" "}
@@ -478,27 +568,57 @@ export default function ProviderAccount() {
           </span>
         </label>
         <br />
-        <label className="inline-flex items-center cursor-pointer pt-2">
+        {/* 3) request-cancelled */}
+        <label
+          htmlFor="prov-request-cancelled"
+          className="inline-flex items-center cursor-pointer pt-2"
+        >
           <input
+            id="prov-request-cancelled"
             type="checkbox"
-            value=""
-            className="sr-only peer"
-            defaultChecked
+            className="sr-only"
+            checked={hasPref("request-cancelled")}
+            onChange={(e) => setPref("request-cancelled", e.target.checked)}
           />
-          <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600 dark:peer-checked:bg-green-600"></div>
+          <div
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              hasPref("request-cancelled") ? "bg-green-600" : "bg-gray-700"
+            }`}
+          >
+            <div
+              className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
+                hasPref("request-cancelled") ? "translate-x-full" : ""
+              }`}
+            />
+          </div>
           <span className="ms-3 text-sm text-black dark:text-black">
             A pending LEXIFY Request is cancelled by the client after I have
             submitted an offer
           </span>
         </label>
-        <label className="inline-flex items-center cursor-pointer pt-2">
+        {/* 4) new-available-request */}
+        <label
+          htmlFor="prov-new-available-request"
+          className="inline-flex items-center cursor-pointer pt-2"
+        >
           <input
+            id="prov-new-available-request"
             type="checkbox"
-            value=""
-            className="sr-only peer"
-            defaultChecked
+            className="sr-only"
+            checked={hasPref("new-available-request")}
+            onChange={(e) => setPref("new-available-request", e.target.checked)}
           />
-          <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600 dark:peer-checked:bg-green-600"></div>
+          <div
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              hasPref("new-available-request") ? "bg-green-600" : "bg-gray-700"
+            }`}
+          >
+            <div
+              className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
+                hasPref("new-available-request") ? "translate-x-full" : ""
+              }`}
+            />
+          </div>
           <span className="ms-3 text-sm text-black dark:text-black">
             A new LEXIFY Request has been published and is awaiting offers
           </span>

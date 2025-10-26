@@ -193,6 +193,9 @@ export default function LegalAdvice() {
       formData.need ===
       "A fixed monthly number of hours of day-to-day legal support on specific areas of law, as needed from time to time.";
 
+    const scopeOfWorkSuffix =
+      "The Legal Service Provider will provider legal advice to the Client in the following areas of law:";
+
     setSubmitting(true);
     try {
       const languageCSV = [
@@ -209,11 +212,28 @@ export default function LegalAdvice() {
         .filter(Boolean)
         .join(", ");
 
+      const scopePayload1 =
+        "Number of hours of legal support needed per month: " +
+        (formData.hourAmount === "Other"
+          ? formData.otherHour
+          : formData.hourAmount) +
+        " Duration of the arrangement in months: " +
+        formData.monthAmount +
+        " The duration of the arrangement will be calculated from the date of the LEXIFY Contract between the Client and the Legal Service Provider. Any unused legal support hours remaining at the end of each month will carry over to the remaining duration of the arrangement. Any unused legal support hours remaining at the end of the arrangement will expire simultaneously with the arrangement. No refund will be issued by the Legal Service Provider for any such expiring legal support hours." +
+        " The Legal Service Provider will provider legal advice to the Client in the following areas of law: " +
+        topics;
+
+      const scopePayload2 =
+        " The Legal Service Provider will provider legal advice to the Client in the following areas of law: " +
+        topics;
+
       const payload = {
         requestState: "PENDING",
         requestCategory: "Day-to-day Legal Advice",
         primaryContactPerson: formData.contactPerson,
-        scopeOfWork: formData.need + ": " + topics,
+        scopeOfWork: isMonthly
+          ? formData.need + scopePayload1
+          : formData.need + scopePayload2,
         description: formData.description || "",
         additionalBackgroundInfo: formData.background || "",
         backgroundInfoFiles: [], // actual files appended separately

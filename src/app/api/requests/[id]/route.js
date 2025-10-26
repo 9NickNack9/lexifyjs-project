@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { notifyProvidersRequestCancelled } from "@/lib/mailer";
 
 // Only used by PATCH below
 const RequestPatch = z.object({
@@ -143,6 +144,28 @@ export async function GET(_req, { params }) {
   }
 }
 
+// normalize Json / legacy {set:[]} / string → string[]
+function toStringArray(val) {
+  if (Array.isArray(val)) return val.filter((v) => typeof v === "string");
+  if (val && typeof val === "object") {
+    if (Array.isArray(val.set))
+      return val.set.filter((v) => typeof v === "string");
+    if (Array.isArray(val.value))
+      return val.value.filter((v) => typeof v === "string");
+  }
+  if (typeof val === "string") {
+    try {
+      const parsed = JSON.parse(val);
+      if (Array.isArray(parsed))
+        return parsed.filter((v) => typeof v === "string");
+      return val ? [val] : [];
+    } catch {
+      return val ? [val] : [];
+    }
+  }
+  return [];
+}
+
 // ---------- PATCH /api/requests/:id ----------
 export async function PATCH(req, { params }) {
   try {
@@ -225,6 +248,71 @@ export async function DELETE(_, { params }) {
     );
   }
 
+  // --- collect recipient emails for all offers on this request ---
+  // Load offers with provider relation and contact persons
+  const offers = await prisma.offer.findMany({
+    where: { requestId: id },
+    select: {
+      offerLawyer: true,
+      provider: {
+        select: {
+          companyContactPersons: true, // [{firstName,lastName,email,telephone,position}]
+          notificationPreferences: true,
+        },
+      },
+    },
+  });
+
+  // Name normalization helpers
+  const norm = (s) => (s ?? "").toString().trim().toLowerCase();
+  const full = (p) =>
+    [p?.firstName, p?.lastName].filter(Boolean).join(" ").trim();
+
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const emailSet = new Set();
+
+  for (const o of offers) {
+    const prefs = toStringArray(o?.provider?.notificationPreferences);
+    if (!prefs.includes("request-cancelled")) continue;
+    const lawyerName = norm(o?.offerLawyer);
+    if (!lawyerName) continue;
+
+    const contacts = Array.isArray(o?.provider?.companyContactPersons)
+      ? o.provider.companyContactPersons
+      : [];
+
+    // exact full-name match first
+    let match =
+      contacts.find((c) => norm(full(c)) === lawyerName) ||
+      // then a relaxed startsWith on either first or last name
+      contacts.find(
+        (c) =>
+          norm(c?.firstName).startsWith(lawyerName) ||
+          norm(c?.lastName).startsWith(lawyerName)
+      ) ||
+      null;
+
+    const email = (match?.email || "").trim();
+    if (email && EMAIL_RE.test(email)) emailSet.add(email);
+  }
+
+  const recipients = Array.from(emailSet);
+
+  // Send dynamic template (fire-and-forget, batched)
+  if (recipients.length > 0) {
+    try {
+      const BATCH = 900; // safe chunk size
+      for (let i = 0; i < recipients.length; i += BATCH) {
+        await notifyProvidersRequestCancelled({
+          to: recipients.slice(i, i + BATCH),
+        });
+      }
+    } catch (e) {
+      console.error("Request-cancelled email failed:", e);
+    }
+  }
+
+  // Finally delete the request
   await prisma.request.delete({ where: { requestId: id } });
   return NextResponse.json({ ok: true });
 }

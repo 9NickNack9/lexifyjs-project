@@ -19,6 +19,9 @@ export default function Account() {
   const [contacts, setContacts] = useState([]);
   const [busy, setBusy] = useState(false); // network guard
 
+  // Notifications
+  const [notificationPrefs, setNotificationPrefs] = useState([]);
+
   // Search UI state
   const [bpQuery, setBpQuery] = useState("");
   const [bpResults, setBpResults] = useState([]);
@@ -60,6 +63,42 @@ export default function Account() {
     "Legal Training for Management and/or Personnel",
   ];
   const [selectedAreas, setSelectedAreas] = useState([]);
+
+  // Notification helpers
+  const hasPref = (key) => notificationPrefs.includes(key);
+
+  const setPref = async (key, enabled) => {
+    // optimistic UI
+    setNotificationPrefs((xs) => {
+      const has = xs.includes(key);
+      if (enabled && !has) return [...xs, key];
+      if (!enabled && has) return xs.filter((k) => k !== key);
+      return xs;
+    });
+
+    // server call
+    const res = await fetch("/api/me/notification-preferences/purchaser", {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ key, enabled }),
+    });
+
+    if (!res.ok) {
+      // revert on error
+      setNotificationPrefs((xs) => {
+        if (enabled) return xs.filter((k) => k !== key);
+        return Array.from(new Set([...xs, key]));
+      });
+      return;
+    }
+
+    const json = await res.json();
+    setNotificationPrefs(
+      Array.isArray(json.notificationPreferences)
+        ? json.notificationPreferences
+        : []
+    );
+  };
 
   useEffect(() => {
     const onDocClick = (e) => {
@@ -111,6 +150,20 @@ export default function Account() {
             isEditing: false,
           }))
         );
+        // fetch notification preferences
+        try {
+          const pr = await fetch("/api/me/notification-preferences/purchaser", {
+            cache: "no-store",
+          });
+          const pj = await pr.json();
+          setNotificationPrefs(
+            Array.isArray(pj.notificationPreferences)
+              ? pj.notificationPreferences
+              : []
+          );
+        } catch {
+          setNotificationPrefs([]);
+        }
       } catch (e) {
         console.error(e);
       } finally {
@@ -657,27 +710,58 @@ export default function Account() {
           want to receive:
         </h4>
         <br />
-        <label className="inline-flex items-center cursor-pointer">
+        {/* 1) No qualifying offers */}
+        <label
+          htmlFor="pref-no_offers"
+          className="inline-flex items-center cursor-pointer"
+        >
           <input
+            id="pref-no_offers"
+            // IMPORTANT: keep it a checkbox and avoid shared "name"
             type="checkbox"
-            value=""
-            className="sr-only peer"
-            defaultChecked
+            className="sr-only"
+            checked={hasPref("no_offers")}
+            onChange={(e) => setPref("no_offers", e.target.checked)}
           />
-          <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600 dark:peer-checked:bg-green-600"></div>
+          <div
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              hasPref("no_offers") ? "bg-green-600" : "bg-gray-700"
+            }`}
+          >
+            <div
+              className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
+                hasPref("no_offers") ? "translate-x-full" : ""
+              }`}
+            />
+          </div>
           <span className="ms-3 text-sm text-black dark:text-black">
             My LEXIFY Request expires and I have received no qualifying offers
           </span>
         </label>
         <br />
-        <label className="inline-flex items-center cursor-pointer pt-2">
+        {/* 2) Best offer over max price */}
+        <label
+          htmlFor="pref-over_max_price"
+          className="inline-flex items-center cursor-pointer pt-2"
+        >
           <input
+            id="pref-over_max_price"
             type="checkbox"
-            value=""
-            className="sr-only peer"
-            defaultChecked
+            className="sr-only"
+            checked={hasPref("over_max_price")}
+            onChange={(e) => setPref("over_max_price", e.target.checked)}
           />
-          <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600 dark:peer-checked:bg-green-600"></div>
+          <div
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              hasPref("over_max_price") ? "bg-green-600" : "bg-gray-700"
+            }`}
+          >
+            <div
+              className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
+                hasPref("over_max_price") ? "translate-x-full" : ""
+              }`}
+            />
+          </div>
           <span className="ms-3 text-sm text-black dark:text-black">
             My LEXIFY Request expires and qualifying offers have been received,
             but the best offer exceeds the maximum price in my LEXIFY Request{" "}
@@ -685,21 +769,37 @@ export default function Account() {
           </span>
         </label>
         <br />
-        <label className="inline-flex items-center cursor-pointer pt-2">
+        {/* 3) Pending offer selection (manual) */}
+        <label
+          htmlFor="pref-pending_offer_selection"
+          className="inline-flex items-center cursor-pointer pt-2"
+        >
           <input
+            id="pref-pending_offer_selection"
             type="checkbox"
-            value=""
-            className="sr-only peer"
-            defaultChecked
+            className="sr-only"
+            checked={hasPref("pending_offer_selection")}
+            onChange={(e) =>
+              setPref("pending_offer_selection", e.target.checked)
+            }
           />
-          <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-green-600 dark:peer-checked:bg-green-600"></div>
+          <div
+            className={`relative w-11 h-6 rounded-full transition-colors ${
+              hasPref("pending_offer_selection")
+                ? "bg-green-600"
+                : "bg-gray-700"
+            }`}
+          >
+            <div
+              className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
+                hasPref("pending_offer_selection") ? "translate-x-full" : ""
+              }`}
+            />
+          </div>
           <span className="ms-3 text-sm text-black dark:text-black">
             My LEXIFY Request expires, qualifying offers have been received and
             I need to select the winning service provider{" "}
-            <NarrowTooltip
-              tooltipText="Applicable only if Winning Offer Selection Method is set to
-              'Manual'"
-            />
+            <NarrowTooltip tooltipText="Applicable only if Winning Offer Selection Method is set to 'Manual'" />
           </span>
         </label>
       </div>

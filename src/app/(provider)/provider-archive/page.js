@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import ContractModal from "../../(purchaser)/archive/components/ContractModal";
 
 function EmptyBox({ children }) {
   return (
@@ -752,9 +753,6 @@ export default function ProviderArchive() {
                           : "↓"
                         : ""}
                     </th>
-                    <th className="border p-2 text-center">
-                      Contract Awarded in Response to
-                    </th>
                     <th className="border p-2 text-center">Contract Owner</th>
                     <th
                       className="border p-2 text-center cursor-pointer"
@@ -799,9 +797,6 @@ export default function ProviderArchive() {
                       <td className="border p-2 text-center">{c.title}</td>
                       <td className="border p-2 text-center">{c.clientName}</td>
                       <td className="border p-2 text-center">
-                        {c.requestTitle || "—"}
-                      </td>
-                      <td className="border p-2 text-center">
                         {c.contractOwner}
                       </td>
                       <td className="border p-2 text-center">
@@ -814,7 +809,7 @@ export default function ProviderArchive() {
                         <button
                           className="bg-[#11999e] text-white px-3 py-1 rounded cursor-pointer"
                           onClick={() => {
-                            setContractPreview(c);
+                            setContractPreview(c.contract);
                             setShowContract(true);
                           }}
                         >
@@ -830,107 +825,12 @@ export default function ProviderArchive() {
 
           {/* Contract Preview Modal */}
           {showContract && contractPreview && (
-            <div className="fixed inset-0 bg-[#11999e] bg-opacity-50 flex justify-center items-center z-50 transition-opacity duration-300">
-              <div className="bg-white w-11/12 max-w-4xl shadow-lg overflow-y-auto max-h-[90vh] relative">
-                <div className="w-full p-4 flex flex-col items-center bg-[#11999e]">
-                  <img
-                    src="/lexify.png"
-                    alt="LEXIFY Logo"
-                    className="h-16 mb-2"
-                  />
-                  <h2 className="text-2xl font-bold text-white">
-                    LEXIFY Contract Preview
-                  </h2>
-                </div>
-
-                <button
-                  onClick={() => setShowContract(false)}
-                  className="absolute top-4 right-4 text-white bg-[#3a3a3c] rounded-full w-8 h-8 flex items-center justify-center text-xl hover:bg-red-600 transition cursor-pointer"
-                >
-                  &times;
-                </button>
-
-                <div className="text-black p-8 space-y-4">
-                  <h3 className="font-semibold text-lg text-black">
-                    1. Parties to the LEXIFY Contract
-                  </h3>
-
-                  <p>
-                    <strong>Legal Service Provider:</strong>{" "}
-                    <u>{contractPreview.providerName}</u>
-                  </p>
-                  <p>
-                    <strong>Legal Service Purchaser:</strong>{" "}
-                    <u>{contractPreview.clientName}</u> hereinafter referred to
-                    as &quot;Client&quot; in this contract.
-                  </p>
-
-                  <hr />
-
-                  <p>
-                    <strong>Contract Price (VAT 0%):</strong>{" "}
-                    <u>{fmtMoney(contractPreview.contractPrice)}</u>
-                  </p>
-                  <p>
-                    <strong>Contract Price Currency:</strong>{" "}
-                    <u>{contractPreview.contractPriceCurrency || "—"}</u>
-                  </p>
-                  <p>
-                    <strong>Contract Price Type:</strong>{" "}
-                    <u>{contractPreview.contractPriceType || "—"}</u>
-                  </p>
-
-                  <hr />
-                </div>
-
-                <h3 className="font-semibold text-lg text-black pt-8 pl-8">
-                  2. The LEXIFY Request
-                </h3>
-                <div id="lexify-preview" className="space-y-6 text-black p-8">
-                  <Section title="Scope of Work">
-                    <p className="text-md mt-2">
-                      {contractPreview.request?.scopeOfWork || "—"}
-                    </p>
-                  </Section>
-                  <Section title="Contract Price Type and Currency">
-                    <p className="text-md mt-2">
-                      {contractPreview.contractPriceType || "—"}
-                    </p>
-                    <p className="text-md mt-2">
-                      Currency: {contractPreview.contractPriceCurrency || "—"}
-                    </p>
-                  </Section>
-                  <Section title="Description of Client's Line of Business">
-                    <p className="text-md mt-2">
-                      {contractPreview.request?.description || "—"}
-                    </p>
-                  </Section>
-                  <Section title="Invoicing">
-                    <p className="text-md mt-2">
-                      The Legal Service Provider shall invoice the Client as
-                      follows:
-                    </p>
-                    <p className="text-md mt-2">
-                      {contractPreview.request?.invoiceType || "—"}
-                    </p>
-                  </Section>
-                  <Section title="Languages Required for the Performance of the Work">
-                    <p className="text-md mt-2">
-                      {contractPreview.request?.language || "—"}
-                    </p>
-                  </Section>
-                </div>
-
-                <div className="m-4">
-                  <button
-                    onClick={() => setShowContract(false)}
-                    className="text-white bg-[#3a3a3c] rounded px-4 py-2 hover:bg-red-600 transition cursor-pointer"
-                  >
-                    Close
-                  </button>
-                </div>
-              </div>
-            </div>
+            <ContractModal
+              open={showContract}
+              onClose={() => setShowContract(false)}
+              contract={contractPreview}
+              companyName={contractPreview?.purchaser?.companyName}
+            />
           )}
 
           {/* Request Preview Modal */}

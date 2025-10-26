@@ -1,11 +1,77 @@
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
+
 export default function ContractModal({
   open,
   onClose,
   contract,
   companyName,
 }) {
+  const [defs, setDefs] = useState(null);
+  const [defsErr, setDefsErr] = useState(null);
+  useEffect(() => {
+    if (!open) return;
+    let cancelled = false;
+
+    async function load() {
+      setDefsErr(null);
+      // 1) try explicit basePath if present
+      const base = process.env.NEXT_PUBLIC_BASE_PATH || "";
+      const candidates = [
+        `${base}/previews/all-previews.json`,
+        "/previews/all-previews.json", // typical public/ location
+        "/all-previews.json", // safety fallback if file is at public root
+      ];
+      let lastErr = null;
+      for (const url of candidates) {
+        try {
+          const res = await fetch(url, {
+            cache: "no-store",
+            headers: { "cache-control": "no-cache" },
+          });
+          if (!res.ok) {
+            lastErr = new Error(`Fetch ${url} -> ${res.status}`);
+            continue;
+          }
+          const json = await res.json();
+          if (!cancelled) setDefs(json);
+          return;
+        } catch (e) {
+          lastErr = e;
+        }
+      }
+      if (!cancelled)
+        setDefsErr(lastErr || new Error("Failed to load previews"));
+    }
+    load();
+    return () => {
+      cancelled = true;
+    };
+  }, [open]);
+  const def = useMemo(() => {
+    if (!defs || !contract?.request) return null;
+    const row = contract.request;
+    const list = Array.isArray(defs.requests) ? defs.requests : [];
+    const norm = (s) => (s ?? "").toString().trim().toLowerCase();
+    const cat = norm(row.requestCategory);
+    const sub = norm(row.requestSubcategory);
+    const asg = norm(row.assignmentType);
+    return (
+      list.find(
+        (d) =>
+          norm(d.category) === cat &&
+          norm(d.subcategory) === sub &&
+          norm(d.assignmentType) === asg
+      ) ||
+      list.find(
+        (d) => norm(d.category) === cat && norm(d.subcategory) === sub
+      ) ||
+      list.find((d) => norm(d.category) === cat) ||
+      null
+    );
+  }, [defs, contract]);
+
   if (!open || !contract) return null;
 
   const Section = ({ title, children }) => (
@@ -16,6 +82,315 @@ export default function ContractModal({
       <div className="p-4">{children}</div>
     </div>
   );
+
+  // ---- Helpers borrowed from Provider Archive preview ----
+  function deepGet(obj, dotted) {
+    try {
+      return dotted
+        .split(".")
+        .reduce((o, k) => (o == null ? undefined : o[k]), obj);
+    } catch {
+      return undefined;
+    }
+  }
+  function isYesString(v) {
+    return typeof v === "string"
+      ? v.trim().toLowerCase() === "yes"
+      : v === true;
+  }
+  function buildClientLine(row, companyName) {
+    const name =
+      companyName ||
+      row.companyName ||
+      row.clientName ||
+      row?.purchaser?.companyName ||
+      row?.client?.companyName ||
+      null;
+    const id =
+      row.companyId ||
+      row.businessId ||
+      row?.purchaser?.companyId ||
+      row?.client?.companyId ||
+      null;
+    const country =
+      row.companyCountry ||
+      row.country ||
+      row?.purchaser?.companyCountry ||
+      row?.client?.companyCountry ||
+      null;
+    const parts = [name, id, country].filter(Boolean);
+    return parts.length ? parts.join(", ") : "—";
+  }
+  function getAssignmentType(row) {
+    return row?.assignmentType ?? row?.details?.assignmentType ?? "";
+  }
+  function winnerOnly(row) {
+    const status = (
+      row?.details?.winnerBidderOnlyStatus ||
+      row?.winnerBidderOnlyStatus ||
+      ""
+    ).trim();
+    const confidentialYes =
+      isYesString(row?.details?.confidential) || isYesString(row?.confidential);
+    return confidentialYes || status === "Disclosed to Winning Bidder Only"
+      ? "Disclosed to Winning Bidder Only"
+      : "";
+  }
+  function counterpartyOrWinnerOnly(row) {
+    const w = winnerOnly(row);
+    if (w) return w;
+    return (
+      row?.details?.breachCompany ||
+      row?.details?.counterparty ||
+      row?.counterparty ||
+      "—"
+    );
+  }
+  function fmtMoney(num, suffix = "") {
+    if (typeof num !== "number") return "—";
+    return `${num.toLocaleString("fi-FI").replace(/\s/g, " ")}${
+      suffix ? ` ${suffix}` : ""
+    }`;
+  }
+  function priceModel(row) {
+    const rate = row.paymentRate || "—";
+    const ccy = row.currency || "";
+    const max =
+      typeof row.maximumPrice === "number"
+        ? ` / Max ${fmtMoney(row.maximumPrice, ccy)}`
+        : "";
+    return `${rate}${ccy ? ` (${ccy})` : ""}${max}`;
+  }
+  function docsWithOther(row) {
+    const fromDetails =
+      row?.details?.documentTypes ||
+      row?.details?.documents ||
+      row?.scopeOfWork ||
+      "";
+    const other = row?.details?.otherDocument || row?.details?.otherArea || "";
+    return [fromDetails, other].filter(Boolean).join(", ") || "—";
+  }
+  function supportWithDueDiligence(row) {
+    const base = row?.scopeOfWork || "—";
+    const dd =
+      row?.details?.dueDiligence &&
+      row.details.dueDiligence !== "Legal Due Diligence inspection not needed"
+        ? ` (Due Diligence: ${row.details.dueDiligence})`
+        : "";
+    return `${base}${dd}`;
+  }
+  function formatLocalDDMMYYYY_HHMM(date) {
+    if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "—";
+    const pad = (n) => String(n).padStart(2, "0");
+    return `${pad(date.getDate())}/${pad(
+      date.getMonth() + 1
+    )}/${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
+  }
+  function parseIfDateLike(value, pathHint) {
+    const hint = (pathHint || "").toLowerCase();
+    const looksLikeDateByPath =
+      hint.includes("deadline") ||
+      hint.includes("date") ||
+      hint.includes("expire");
+    if (value instanceof Date) return value;
+    if (typeof value === "number") {
+      const d = new Date(value);
+      return Number.isNaN(d.getTime()) ? null : d;
+    }
+    if (typeof value === "string") {
+      const s = value.trim();
+      if (
+        looksLikeDateByPath ||
+        /^\d{4}-\d{2}-\d{2}t\d{2}:/i.test(s) ||
+        /z$/i.test(s)
+      ) {
+        const d = new Date(s);
+        return Number.isNaN(d.getTime()) ? null : d;
+      }
+      if (/^\d{4}-\d{2}-\d{2}\s+\d{2}:\d{2}(:\d{2})?$/.test(s)) {
+        const d = new Date(s.replace(" ", "T"));
+        return Number.isNaN(d.getTime()) ? null : d;
+      }
+    }
+    return looksLikeDateByPath ? new Date(value) : null;
+  }
+  function resolvePath(row, path, companyName) {
+    if (!path) return "—";
+    if (path.startsWith("__")) {
+      switch (path) {
+        case "__clientLine__":
+          return buildClientLine(row, companyName);
+        case "__clientLineOrDisclosed__":
+          return winnerOnly(row) || buildClientLine(row, companyName);
+        case "__counterpartyConfidential__":
+          return counterpartyOrWinnerOnly(row);
+        case "__currencyMax__":
+          return [row.currency || "—", fmtMoney(row.maximumPrice, row.currency)]
+            .filter(Boolean)
+            .join(" / ");
+        case "__priceModel__":
+        case "__priceModel_LumpSumWithCurrency__":
+        case "__priceModel_HourlyWithCurrency__":
+        case "__priceModel_Arbitration__":
+        case "__priceModel_Court__":
+          return priceModel(row);
+        case "__docsWithOther__":
+          return docsWithOther(row);
+        case "__supportWithDueDiligenceFormat__":
+          return supportWithDueDiligence(row);
+        default:
+          return "—";
+      }
+    }
+    return deepGet(row, path) ?? "—";
+  }
+  function renderValue(v, pathHint) {
+    // Pretty-print a PrimaryContactPerson object if present
+    if ((pathHint || "").toLowerCase().includes("primarycontactperson")) {
+      const p = v || {};
+      const name = [p.firstName, p.lastName].filter(Boolean).join(" ").trim();
+      return name || "—";
+    }
+    if (
+      pathHint === "backgroundInfoFiles" ||
+      pathHint === "supplierCodeOfConductFiles"
+    ) {
+      if (Array.isArray(v) && v.length > 0) {
+        return (
+          <div className="space-y-1">
+            {v.map((file, idx) => (
+              <div key={idx}>
+                <a
+                  href={file.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:text-blue-800 hover:underline"
+                >
+                  {file.name || `File ${idx + 1}`}
+                </a>
+                {file.size && (
+                  <span className="text-gray-500 text-sm ml-2">
+                    ({(file.size / 1024).toFixed(1)} KB)
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        );
+      }
+      return "—";
+    }
+
+    if (Array.isArray(v)) return v.length ? v.join(", ") : "—";
+    if (v === null || v === undefined || v === "") return "—";
+    const maybeDate = parseIfDateLike(v, pathHint);
+    if (maybeDate) return formatLocalDDMMYYYY_HHMM(maybeDate);
+    return String(v);
+  }
+  function getFirstByPath(row, paths = []) {
+    for (const p of paths) {
+      const v = p === "." ? row : deepGet(row, p);
+      if (v !== undefined && v !== null && v !== "") return v;
+    }
+    return undefined;
+  }
+  function resolveByLabel(row, labelRaw) {
+    if (!labelRaw) return undefined;
+    const label = String(labelRaw).trim().toLowerCase();
+    if (label === "primary contact person") {
+      return getFirstByPath(row, [
+        "primaryContactPerson",
+        "details.primaryContactPerson",
+        "client.primaryContactPerson",
+        "clientContactPerson",
+        "contactPerson",
+      ]);
+    }
+    if (label === "currency") {
+      return getFirstByPath(row, [
+        "currency",
+        "details.currency",
+        "requestCurrency",
+      ]);
+    }
+    if (label === "invoice type" || label === "invoicing") {
+      return getFirstByPath(row, [
+        "invoiceType",
+        "details.invoiceType",
+        "paymentTerms",
+      ]);
+    }
+    if (label === "advance retainer fee") {
+      return getFirstByPath(row, [
+        "advanceRetainerFee",
+        "details.advanceRetainerFee",
+        "retainerFee",
+      ]);
+    }
+    if (label === "assignment type") {
+      return getAssignmentType(row);
+    }
+    if (
+      label === "additional background information" ||
+      label === "background information"
+    ) {
+      return getFirstByPath(row, [
+        "additionalBackgroundInfo",
+        "details.additionalBackgroundInfo",
+        "details.background",
+      ]);
+    }
+    return undefined;
+  }
+  // Hide provider-requirement + meta fields (same as archive)
+  const HIDE_PATHS = new Set([
+    "serviceProviderType",
+    "domesticOffers",
+    "providerSize",
+    "providerCompanyAge",
+    "providerMinimumRating",
+    "details.serviceProviderType",
+    "details.domesticOffers",
+    "details.providerSize",
+    "details.providerCompanyAge",
+    "details.providerMinimumRating",
+    "offersDeadline",
+    "details.offersDeadline",
+    "dateExpired",
+    "details.dateExpired",
+    "title",
+    "requestTitle",
+    "requestState",
+    "maximumPrice",
+    "details.maximumPrice",
+  ]);
+  function looksLikeProviderReqSection(section) {
+    const key = (section?.id || section?.name || section?.title || "")
+      .toString()
+      .toLowerCase();
+    return (
+      key.includes("provider requirement") ||
+      key.includes("provider_requirements")
+    );
+  }
+  function shouldHideField(field) {
+    const path = (field?.path || "").toString();
+    if (HIDE_PATHS.has(path)) return true;
+    const label = (field?.label || "").toString().toLowerCase();
+    if (
+      label === "service provider type" ||
+      label === "domestic offers" ||
+      label.includes("provider size") ||
+      label.includes("company age") ||
+      label === "minimum rating" ||
+      label === "offers deadline" ||
+      label === "request title" ||
+      label === "request state" ||
+      label === "maximum price"
+    )
+      return true;
+    return false;
+  }
 
   return (
     <div className="fixed inset-0 bg-[#11999e] bg-opacity-50 flex justify-center items-center z-50 transition-opacity duration-300">
@@ -67,19 +442,23 @@ export default function ContractModal({
 
           <h3 className="font-semibold text-lg">LEGAL SERVICE PURCHASER</h3>
           <p>
-            <strong>Company Name:</strong> <u>{companyName || "—"}</u>
+            <strong>Company Name:</strong>{" "}
+            <u>{contract.purchaser?.companyName || companyName || "—"}</u>
           </p>
           <p>
-            <strong>Business ID:</strong> <u>—</u>
+            <strong>Business ID:</strong>{" "}
+            <u>{contract.purchaser?.businessId || "—"}</u>
           </p>
           <p>
-            <strong>Representative Name:</strong> <u>—</u>
+            <strong>Representative Name:</strong>{" "}
+            <u>{contract.purchaser?.contactName || "—"}</u>
           </p>
           <p>
-            <strong>Email:</strong> <u>—</u>
+            <strong>Email:</strong> <u>{contract.purchaser?.email || "—"}</u>
           </p>
           <p>
-            <strong>Telephone:</strong> <u>—</u>
+            <strong>Telephone:</strong>{" "}
+            <u>{contract.purchaser?.phone || "—"}</u>
           </p>
 
           <p className="italic text-sm">
@@ -125,10 +504,6 @@ export default function ContractModal({
             <li>
               General Terms and Conditions for LEXIFY Contracts (attached)
             </li>
-            <li>
-              Supplier Code of Conduct and/or other procurement requirements
-              (attached, if applicable)
-            </li>
           </ol>
 
           <p className="italic text-sm">
@@ -137,40 +512,90 @@ export default function ContractModal({
           <hr className="text-[#3a3a3c]" />
         </div>
 
-        {/* Section 2: The LEXIFY Request (from request fields we fetched into contract.request) */}
+        {/* Section 2: The LEXIFY Request — JSON-driven preview (same as Provider Archive) */}
         <h3 className="font-semibold text-lg text-black pt-8 pl-8">
           2. The LEXIFY Request
         </h3>
         <div id="lexify-preview" className="space-y-6 text-black p-8">
-          <Section title="Scope of Work">
-            <p className="text-md mt-2">
-              {contract.request?.scopeOfWork || "—"}
-            </p>
-          </Section>
-          <Section title="Contract Price Type and Currency">
-            <p className="text-md mt-2">{contract.contractPriceType || "—"}</p>
-            <p className="text-md mt-2">
-              Currency: {contract.contractPriceCurrency || "—"}
-            </p>
-          </Section>
-          <Section title="Description of Client's Line of Business">
-            <p className="text-md mt-2">
-              {contract.request?.description || "—"}
-            </p>
-          </Section>
-          <Section title="Invoicing">
-            <p className="text-md mt-2">
-              The Legal Service Provider shall invoice the Client as follows:
-            </p>
-            <p className="text-md mt-2">
-              {contract.request?.invoiceType || "—"}
-            </p>
-          </Section>
-          <Section title="Languages Required for the Performance of the Work">
-            <p className="text-md mt-2">{contract.request?.language || "—"}</p>
-          </Section>
+          {!def ? (
+            <div className="p-3 border rounded bg-gray-50">
+              No matching preview definition found.
+            </div>
+          ) : (
+            <div className="space-y-6">
+              {(def.preview?.sections || [])
+                .filter((section) => !looksLikeProviderReqSection(section))
+                .map((section, si) => {
+                  // If this is a fields-table section, strip hidden fields.
+                  const fields = Array.isArray(section.fields)
+                    ? section.fields.filter((f) => !shouldHideField(f))
+                    : null;
+                  // Skip empty sections after filtering
+                  if (Array.isArray(section.fields) && fields.length === 0)
+                    return null;
+                  return (
+                    <div key={si} className="border rounded-lg">
+                      <div className="px-4 py-2 font-medium bg-[#119999] text-black rounded-lg">
+                        {section.title}
+                      </div>
+                      {Array.isArray(fields) ? (
+                        <table className="w-full">
+                          <tbody>
+                            {fields.map((f, fi) => {
+                              const label = f.label || "—";
+                              // 1) primary path
+                              let raw = resolvePath(
+                                contract.request,
+                                f.path,
+                                companyName
+                              );
+                              let display = renderValue(raw, f.path);
+                              // 2) fallback by label
+                              if (display === "—") {
+                                const byLabel = resolveByLabel(
+                                  contract.request,
+                                  label
+                                );
+                                if (byLabel !== undefined) {
+                                  raw = byLabel;
+                                  display = renderValue(raw, f.path);
+                                }
+                              }
+                              return (
+                                <tr key={fi} className="border-t">
+                                  <td className="p-3 align-top w-1/3 font-medium">
+                                    {label}
+                                  </td>
+                                  <td className="p-3 align-top">{display}</td>
+                                </tr>
+                              );
+                            })}
+                          </tbody>
+                        </table>
+                      ) : section.value ? (
+                        <div className="p-3">
+                          {/* named blocks reuse the same helpers */}
+                          {renderValue(
+                            resolvePath(
+                              contract.request,
+                              section.value,
+                              companyName
+                            ),
+                            section.value
+                          )}
+                        </div>
+                      ) : (
+                        <div className="p-3 text-sm text-gray-500">—</div>
+                      )}
+                    </div>
+                  );
+                })}
+            </div>
+          )}
         </div>
-
+        <div className="p-4 text-black space-y-3 text-md">
+          <hr className="text-[#3a3a3c] pl-4" />
+        </div>
         <h3 className="font-semibold text-lg text-black pt-8 pl-4">
           3. General Terms and Conditions for LEXIFY Contracts
         </h3>
