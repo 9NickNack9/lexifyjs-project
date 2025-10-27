@@ -287,10 +287,21 @@ export async function POST(req) {
     },
   });
 
-  // Extract and dedupe all contact emails of opted-in providers
-  const emailSet = new Set();
+  // --- helpers copied from other routes for parity ---
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const isEmail = (s) => typeof s === "string" && EMAIL_RE.test(s.trim());
+  function expandWithAllNotificationContacts(primary, contacts) {
+    const primaryEmail =
+      typeof primary === "string" ? primary : primary?.email || "";
+    const base = new Set();
+    if (isEmail(primaryEmail)) base.add(primaryEmail.trim());
+    (Array.isArray(contacts) ? contacts : [])
+      .filter((c) => c && c.allNotifications === true && isEmail(c.email))
+      .forEach((c) => base.add(c.email.trim()));
+    return Array.from(base);
+  }
 
+  // Personal emails per provider: primary + all-notification contacts
   for (const p of providers) {
     const prefs = toStringArray(p?.notificationPreferences);
     if (!prefs.includes("new-available-request")) continue;
@@ -299,26 +310,20 @@ export async function POST(req) {
       ? p.companyContactPersons
       : [];
 
-    for (const c of contacts) {
-      const e = (c?.email || "").trim();
-      if (e && EMAIL_RE.test(e)) emailSet.add(e);
-    }
-  }
+    // pick a sensible primary: first contact with a valid email
+    const primary =
+      contacts.find((c) => isEmail((c?.email || "").trim())) || null;
+    if (!primary) continue; // nothing to send to for this provider
 
-  const recipients = Array.from(emailSet);
-
-  // Fire-and-forget: send in batches to be safe (e.g., 900 per send)
-  try {
-    const BATCH = 900;
-    for (let i = 0; i < recipients.length; i += BATCH) {
-      const chunk = recipients.slice(i, i + BATCH);
+    const toGroup = expandWithAllNotificationContacts(primary, contacts);
+    try {
       await notifyProvidersNewAvailableRequest({
-        to: chunk,
+        to: toGroup, // personal per provider (primary + allNotifications)
         requestCategory: requestCategoryJoined,
       });
+    } catch (e) {
+      console.error("New-available-request email failed for provider:", e);
     }
-  } catch (e) {
-    console.error("New-available-request email failed:", e);
   }
 
   return NextResponse.json(

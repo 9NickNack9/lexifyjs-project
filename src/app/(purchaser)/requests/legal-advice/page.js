@@ -213,18 +213,18 @@ export default function LegalAdvice() {
         .join(", ");
 
       const scopePayload1 =
-        "Number of hours of legal support needed per month: " +
+        " Number of hours of legal support needed per month: " +
         (formData.hourAmount === "Other"
           ? formData.otherHour
           : formData.hourAmount) +
-        " Duration of the arrangement in months: " +
+        ". Duration of the arrangement in months: " +
         formData.monthAmount +
         " The duration of the arrangement will be calculated from the date of the LEXIFY Contract between the Client and the Legal Service Provider. Any unused legal support hours remaining at the end of each month will carry over to the remaining duration of the arrangement. Any unused legal support hours remaining at the end of the arrangement will expire simultaneously with the arrangement. No refund will be issued by the Legal Service Provider for any such expiring legal support hours." +
-        " The Legal Service Provider will provider legal advice to the Client in the following areas of law: " +
+        " The Legal Service Provider will provide legal advice to the Client in the following areas of law: " +
         topics;
 
       const scopePayload2 =
-        " The Legal Service Provider will provider legal advice to the Client in the following areas of law: " +
+        " The Legal Service Provider will provide legal advice to the Client in the following areas of law: " +
         topics;
 
       const payload = {
@@ -728,7 +728,7 @@ export default function LegalAdvice() {
           <br />
           <div>
             {[
-              "I want a lump sum monthly price for a fixed number of hours of legal support per month",
+              "A fixed monthly number of hours of day-to-day legal support on specific areas of law, as needed from time to time.",
             ].includes(formData.need) && (
               <div>
                 <h4 className="text-md font-medium mb-1 font-semibold">

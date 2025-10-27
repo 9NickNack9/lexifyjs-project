@@ -12,10 +12,6 @@
               {
                 "label": "Client",
                 "path": "__clientLine__"
-              },
-              {
-                "label": "Primary contact person",
-                "path": "primaryContactPerson"
               }
             ]
           },
@@ -23,7 +19,7 @@
             "title": "Scope of Work",
             "fields": [
               {
-                "label": "What do you need?",
+                "label": "Scope of Work",
                 "path": "scopeOfWork"
               }
             ]
@@ -38,7 +34,7 @@
             ]
           },
           {
-            "title": "Commercial Terms",
+            "title": "How will the Client be Invoiced by the Legal Service Provider?",
             "fields": [
               {
                 "label": "Contract Price",
@@ -49,37 +45,12 @@
                 "path": "currency"
               },
               {
-                "label": "Invoice type",
+                "label": "Invoicing",
                 "path": "invoiceType"
               },
               {
-                "label": "Advance retainer fee",
+                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
                 "path": "advanceRetainerFee"
-              }
-            ]
-          },
-          {
-            "title": "Provider Requirements",
-            "fields": [
-              {
-                "label": "Service provider type",
-                "path": "serviceProviderType"
-              },
-              {
-                "label": "Domestic offers",
-                "path": "domesticOffers"
-              },
-              {
-                "label": "Minimum provider size",
-                "path": "providerSize"
-              },
-              {
-                "label": "Minimum company age",
-                "path": "providerCompanyAge"
-              },
-              {
-                "label": "Minimum rating",
-                "path": "providerMinimumRating"
               }
             ]
           },
@@ -95,34 +66,17 @@
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct files",
+                "label": "Supplier Code of Conduct and/or other procurement related files",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
           },
           {
-            "title": "Meta",
+            "title": "Languages Required for the Performance of the Work",
             "fields": [
-              {
-                "label": "Request title",
-                "path": "title"
-              },
               {
                 "label": "Languages",
                 "path": "language"
-              },
-              {
-                "label": "Offers deadline",
-                "path": "offersDeadline"
-              }
-            ]
-          },
-          {
-            "title": "Request State",
-            "fields": [
-              {
-                "label": "Request State",
-                "path": "requestState"
               }
             ]
           },
@@ -145,38 +99,15 @@
             ]
           },
           {
-            "title": "Date Expired",
-            "fields": [
-              {
-                "label": "Date Expired",
-                "path": "dateExpired"
-              }
-            ]
-          },
-          {
-            "title": "Confidential",
-            "fields": [
-              {
-                "label": "Confidential",
-                "path": "details.confidential"
-              }
-            ]
-          },
-          {
-            "title": "Winner Bidder Only Status",
+            "title": "Counterparty/Confidentiality",
             "fields": [
               {
                 "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
                 "path": "details.winnerBidderOnlyStatus"
-              }
-            ]
-          },
-          {
-            "title": "Details Maximum Price",
-            "fields": [
+              },
               {
-                "label": "Maximum Price",
-                "path": "details.maximumPrice"
+                "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
+                "path": "details.confidential"
               }
             ]
           }
@@ -224,10 +155,6 @@
               {
                 "label": "Client",
                 "path": "__clientLine__"
-              },
-              {
-                "label": "Primary contact person",
-                "path": "primaryContactPerson"
               }
             ]
           },
@@ -235,7 +162,7 @@
             "title": "Scope of Work",
             "fields": [
               {
-                "label": "What do you need?",
+                "label": "Scope of Work",
                 "path": "scopeOfWork"
               }
             ]
@@ -250,48 +177,23 @@
             ]
           },
           {
-            "title": "Commercial Terms",
+            "title": "How will the Client be Invoiced by the Legal Service Provider?",
             "fields": [
               {
                 "label": "Contract Price",
                 "path": "paymentRate"
               },
               {
-                "label": "Currency / Maximum price",
-                "path": "__currencyMax__"
+                "label": "Currency",
+                "path": "currency"
               },
               {
-                "label": "Invoice type",
+                "label": "Invoicing",
                 "path": "invoiceType"
               },
               {
-                "label": "Advance retainer fee",
+                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
                 "path": "advanceRetainerFee"
-              }
-            ]
-          },
-          {
-            "title": "Provider Requirements",
-            "fields": [
-              {
-                "label": "Service provider type",
-                "path": "serviceProviderType"
-              },
-              {
-                "label": "Domestic offers",
-                "path": "domesticOffers"
-              },
-              {
-                "label": "Minimum provider size",
-                "path": "providerSize"
-              },
-              {
-                "label": "Minimum company age",
-                "path": "providerCompanyAge"
-              },
-              {
-                "label": "Minimum rating",
-                "path": "providerMinimumRating"
               }
             ]
           },
@@ -299,38 +201,25 @@
             "title": "Attachments",
             "fields": [
               {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              },
+              {
                 "label": "Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct files",
+                "label": "Supplier Code of Conduct and/or other procurement related files",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
           },
           {
-            "title": "Meta",
+            "title": "Languages Required for the Performance of the Work",
             "fields": [
-              {
-                "label": "Request title",
-                "path": "title"
-              },
               {
                 "label": "Languages",
                 "path": "language"
-              },
-              {
-                "label": "Offers deadline",
-                "path": "offersDeadline"
-              }
-            ]
-          },
-          {
-            "title": "Request State",
-            "fields": [
-              {
-                "label": "Request State",
-                "path": "requestState"
               }
             ]
           },
@@ -353,56 +242,15 @@
             ]
           },
           {
-            "title": "Additional Background Info",
-            "fields": [
-              {
-                "label": "Additional Background Information",
-                "path": "additionalBackgroundInfo"
-              }
-            ]
-          },
-          {
-            "title": "Currency",
-            "fields": [
-              {
-                "label": "Currency",
-                "path": "currency"
-              }
-            ]
-          },
-          {
-            "title": "Date Expired",
-            "fields": [
-              {
-                "label": "Date Expired",
-                "path": "dateExpired"
-              }
-            ]
-          },
-          {
-            "title": "Details Confidential",
-            "fields": [
-              {
-                "label": "Confidential",
-                "path": "details.confidential"
-              }
-            ]
-          },
-          {
-            "title": "Details Winner Bidder Only Status",
+            "title": "Counterparty/Confidentiality",
             "fields": [
               {
                 "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
                 "path": "details.winnerBidderOnlyStatus"
-              }
-            ]
-          },
-          {
-            "title": "Details Maximum Price",
-            "fields": [
+              },
               {
-                "label": "Maximum Price",
-                "path": "details.maximumPrice"
+                "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
+                "path": "details.confidential"
               }
             ]
           }
@@ -461,8 +309,13 @@
             "title": "Scope of Work",
             "fields": [
               {
-                "label": "Selected support",
+                "label": "Scope of Work",
                 "path": "__supportWithDueDiligenceFormat__"
+              },
+
+              {
+                "label": "Due diligence reporting format",
+                "path": "details.dueDiligence"
               }
             ]
           },
@@ -470,26 +323,53 @@
             "title": "Object of Sale",
             "fields": [
               {
-                "label": "Object",
+                "label": "Object of Sale",
                 "path": "details.saleObject"
-              },
-              {
-                "label": "Other (specified)",
-                "path": "details.otherObject"
               }
             ]
           },
           {
-            "title": "Confidentiality",
+            "title": "Counterparty/Confidentiality",
             "fields": [
               {
-                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter",
                 "path": "details.winnerBidderOnlyStatus"
+              },
+              {
+                "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
+                "path": "details.confidential"
               }
             ]
           },
           {
-            "title": "Commercial Terms",
+            "title": "Is the Client Buying or Selling in the Transaction?",
+            "fields": [
+              {
+                "label": "Buying or Selling?",
+                "path": "details.customerType"
+              }
+            ]
+          },
+          {
+            "title": "Description of the Target Property",
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
+          },
+          {
+            "title": "Range of Expected Purchase price (Cash and Debt Free)",
+            "fields": [
+              {
+                "label": "Price Range",
+                "path": "details.priceRange"
+              }
+            ]
+          },
+          {
+            "title": "How will the Client be Invoiced by the Legal Service Provider?",
             "fields": [
               {
                 "label": "Contract Price",
@@ -500,37 +380,12 @@
                 "path": "currency"
               },
               {
-                "label": "Invoice type",
+                "label": "Invoicing",
                 "path": "invoiceType"
               },
               {
-                "label": "Advance retainer fee",
+                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
                 "path": "advanceRetainerFee"
-              }
-            ]
-          },
-          {
-            "title": "Provider Requirements",
-            "fields": [
-              {
-                "label": "Service provider type",
-                "path": "serviceProviderType"
-              },
-              {
-                "label": "Domestic offers",
-                "path": "domesticOffers"
-              },
-              {
-                "label": "Minimum provider size",
-                "path": "providerSize"
-              },
-              {
-                "label": "Minimum company age",
-                "path": "providerCompanyAge"
-              },
-              {
-                "label": "Minimum rating",
-                "path": "providerMinimumRating"
               }
             ]
           },
@@ -538,38 +393,25 @@
             "title": "Attachments",
             "fields": [
               {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              },
+              {
                 "label": "Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct files",
+                "label": "Supplier Code of Conduct and/or other procurement related files",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
           },
           {
-            "title": "Meta",
+            "title": "Languages Required for the Performance of the Work",
             "fields": [
-              {
-                "label": "Request title",
-                "path": "title"
-              },
               {
                 "label": "Languages",
                 "path": "language"
-              },
-              {
-                "label": "Offers deadline",
-                "path": "offersDeadline"
-              }
-            ]
-          },
-          {
-            "title": "Request State",
-            "fields": [
-              {
-                "label": "Request State",
-                "path": "requestState"
               }
             ]
           },
@@ -597,69 +439,6 @@
               {
                 "label": "Assignment Type",
                 "path": "assignmentType"
-              }
-            ]
-          },
-          {
-            "title": "Scope Of Work",
-            "fields": [
-              {
-                "label": "What do you need?",
-                "path": "scopeOfWork"
-              }
-            ]
-          },
-          {
-            "title": "Description",
-            "fields": [
-              {
-                "label": "Description",
-                "path": "description"
-              }
-            ]
-          },
-          {
-            "title": "Additional Background Info",
-            "fields": [
-              {
-                "label": "Additional Background Information",
-                "path": "additionalBackgroundInfo"
-              }
-            ]
-          },
-          {
-            "title": "Date Expired",
-            "fields": [
-              {
-                "label": "Date Expired",
-                "path": "dateExpired"
-              }
-            ]
-          },
-          {
-            "title": "Details Confidential",
-            "fields": [
-              {
-                "label": "Confidential",
-                "path": "details.confidential"
-              }
-            ]
-          },
-          {
-            "title": "Details Price Range",
-            "fields": [
-              {
-                "label": "Price Range",
-                "path": "details.priceRange"
-              }
-            ]
-          },
-          {
-            "title": "Details Due Diligence",
-            "fields": [
-              {
-                "label": "Due diligence reporting format",
-                "path": "details.dueDiligence"
               }
             ]
           }
@@ -3182,380 +2961,413 @@
       }
     },
     {
-      "dayToDayLegalAdvice": {
-        "category": "Day-to-day Legal Advice",
-        "subcategory": null,
-        "preview": {
-          "sections": [
-            {
-              "title": "Client Name, Business Identity Code and Country of Domicile",
-              "value": "companyHeader"
-            },
-            {
-              "title": "Scope of Work",
-              "value": "dynamic",
-              "notes": "If 'Occasional...' → just that text. If 'Fixed monthly hours...' → also show hours/month (otherHour if 'Other') and duration monthAmount, plus the explanatory italic note, and the list of selected topics."
-            },
-            {
-              "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
-              "value": "dynamic",
-              "notes": "If 'Fixed monthly hours...' → Lump sum fixed monthly price (show currency). Else → Flat hourly rate (show currency) with the explanatory paragraph."
-            },
-            {
-              "title": "Description of the Client's Line of Business",
-              "value": "description"
-            },
-            {
-              "title": "Additional Background Information Provided by Client",
-              "value": "backgroundWithFiles"
-            },
-            {
-              "title": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
-              "value": "retainerFeeWithNote"
-            },
-            {
-              "title": "How will the Client be Invoiced by the Legal Service Provider?",
-              "value": "paymentTerms"
-            },
-            {
-              "title": "Languages Required for the Performance of the Work",
-              "value": "languageCSV"
-            },
-            {
-              "title": "Deadline for Offers to be Submitted by Legal Service Providers",
-              "value": "date"
-            },
-            {
-              "title": "Is the Legal Service Provider Required to Comply with a Supplier Code of Conduct and/or Other Procurement related Requirements of the Client?",
-              "value": "supplierCodeOfConductFiles"
-            }
-          ]
-        },
-        "payloadTemplate": {
-          "requestState": "PENDING",
-          "requestCategory": "Day-to-day Legal Advice",
-          "requestSubcategory": null,
-          "primaryContactPerson": "{{contactPerson}}",
-          "scopeOfWork": "{{need}}",
-          "description": "{{description}}",
-          "additionalBackgroundInfo": "{{background}}",
-          "backgroundInfoFiles": [],
-          "supplierCodeOfConductFiles": [],
-          "serviceProviderType": "{{offerer}}",
-          "domesticOffers": "{{providerCountry}}",
-          "providerSize": "{{lawyerCount}}",
-          "providerCompanyAge": "{{firmAge}}",
-          "providerMinimumRating": "{{firmRating}}",
-          "currency": "{{currency}}",
-          "paymentRate": "{{need.includes('fixed monthly') ? 'Lump sum fixed price' : 'Hourly Rate'}}",
-          "maximumPrice": null,
-          "advanceRetainerFee": "{{retainerFee}}",
-          "invoiceType": "{{paymentTerms}}",
-          "language": "{{languageCSV}}",
-          "offersDeadline": "{{date}}",
-          "title": "{{requestTitle}}",
-          "dateExpired": "{{date}}",
-          "details": {}
-        }
-      }
-    },
-    {
-      "employmentContractTemplates": {
-        "category": "Help with Employment related Documents",
-        "subcategory": "Employment Contract Template",
-        "preview": {
-          "sections": [
-            {
-              "title": "Client Name, Business Identity Code and Country of Domicile",
-              "value": "companyHeader"
-            },
-            {
-              "title": "Scope of Work",
-              "value": "static+list",
-              "notes": "Intro: 'Preparation of the following employment contract templates for the Client:' then join areaboxes"
-            },
-            {
-              "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
-              "value": "lumpSumWithCurrency",
-              "notes": "Includes the line about revisions based on Client's feedback"
-            },
-            {
-              "title": "Description of Position and Tasks of the Employee or Employee Group for whom the Contract Template(s) is Prepared",
-              "value": "description"
-            },
-            {
-              "title": "Additional Background Information Provided by Client",
-              "value": "backgroundWithFiles"
-            },
-            {
-              "title": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
-              "value": "retainerFeeWithNote"
-            },
-            {
-              "title": "How is the Client Invoiced by the Legal Service Provider?",
-              "value": "paymentTerms"
-            },
-            {
-              "title": "What is the Language of Legal Services Provided to the Client?",
-              "value": "languageCSV"
-            },
-            {
-              "title": "Which Legal Service Providers May Offer in Response to this LEXIFY Request?",
-              "value": "offerer"
-            },
-            {
-              "title": "In Which Country/Countries is the Legal Service Provider Domiciled?",
-              "value": "providerCountry"
-            },
-            {
-              "title": "Minimum Number of Lawyers Employed by the Legal Service Provider",
-              "value": "lawyerCount"
-            },
-            {
-              "title": "Minimum Length of Time the Legal Service Provider Must Have Been in Operation",
-              "value": "firmAge"
-            },
-            {
-              "title": "Minimum Rating of the Legal Service Provider",
-              "value": "firmRating"
-            },
-            {
-              "title": "Contract Price Currency",
-              "value": "currency"
-            },
-            {
-              "title": "Maximum Price (VAT 0%)",
-              "value": "maxPrice"
-            },
-            {
-              "title": "Deadline for Offers to be Submitted by Legal Service Providers",
-              "value": "date"
-            }
-          ]
-        },
-        "payloadTemplate": {
-          "requestState": "PENDING",
-          "requestCategory": "Help with Employment related Documents",
-          "requestSubcategory": "Employment Contract Template",
-          "primaryContactPerson": "{{contactPerson}}",
-          "scopeOfWork": "{{areaboxes.join(', ')}}",
-          "description": "{{description}}",
-          "additionalBackgroundInfo": "{{background}}",
-          "backgroundInfoFiles": [],
-          "supplierCodeOfConductFiles": [],
-          "serviceProviderType": "{{offerer}}",
-          "domesticOffers": "{{providerCountry}}",
-          "providerSize": "{{lawyerCount}}",
-          "providerCompanyAge": "{{firmAge}}",
-          "providerMinimumRating": "{{firmRating}}",
-          "currency": "{{currency}}",
-          "paymentRate": "Lump sum fixed price",
-          "maximumPrice": "{{maxPrice}}",
-          "advanceRetainerFee": "{{retainerFee}}",
-          "invoiceType": "{{paymentTerms}}",
-          "language": "{{languageCSV}}",
-          "offersDeadline": "{{date}}",
-          "title": "{{requestTitle}}",
-          "dateExpired": "{{date}}",
-          "details": {}
-        }
-      }
-    },
-    {
-      "employmentDocumentTemplates": {
-        "category": "Help with Employment related Documents",
-        "subcategory": "Employment related Document Templates",
-        "preview": {
-          "sections": [
-            {
-              "title": "Client Name, Business Identity Code and Country of Domicile",
-              "value": "companyHeader"
-            },
-            {
-              "title": "Scope of Work",
-              "value": "static+list",
-              "notes": "Intro: 'Preparation of the following employment related document templates for the Client:' then areaboxes; if 'Other Template(s)' include otherArea"
-            },
-            {
-              "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
-              "value": "lumpSumWithCurrency",
-              "notes": "Includes the standard invoicing note"
-            },
-            {
-              "title": "Additional Background Information Provided by Client",
-              "value": "backgroundWithFiles"
-            },
-            {
-              "title": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
-              "value": "retainerFeeWithNote"
-            },
-            {
-              "title": "How is the Client Invoiced by the Legal Service Provider?",
-              "value": "paymentTerms"
-            },
-            {
-              "title": "What is the Language of Legal Services Provided to the Client?",
-              "value": "languageCSV"
-            },
-            {
-              "title": "Which Legal Service Providers May Offer in Response to this LEXIFY Request?",
-              "value": "offerer"
-            },
-            {
-              "title": "In Which Country/Countries is the Legal Service Provider Domiciled?",
-              "value": "providerCountry"
-            },
-            {
-              "title": "Minimum Number of Lawyers Employed by the Legal Service Provider",
-              "value": "lawyerCount"
-            },
-            {
-              "title": "Minimum Length of Time the Legal Service Provider Must Have Been in Operation",
-              "value": "firmAge"
-            },
-            {
-              "title": "Minimum Rating of the Legal Service Provider",
-              "value": "firmRating"
-            },
-            {
-              "title": "Contract Price Currency",
-              "value": "currency"
-            },
-            {
-              "title": "Maximum Price (VAT 0%)",
-              "value": "maxPrice"
-            },
-            {
-              "title": "Deadline for Offers to be Submitted by Legal Service Providers",
-              "value": "date"
-            }
-          ]
-        },
-        "payloadTemplate": {
-          "requestState": "PENDING",
-          "requestCategory": "Help with Employment related Documents",
-          "requestSubcategory": "Employment related Document Templates",
-          "primaryContactPerson": "{{contactPerson}}",
-          "scopeOfWork": "{{areaboxesFilteredJoin}}",
-          "description": "",
-          "additionalBackgroundInfo": "{{background}}",
-          "backgroundInfoFiles": [],
-          "supplierCodeOfConductFiles": [],
-          "serviceProviderType": "{{offerer}}",
-          "domesticOffers": "{{providerCountry}}",
-          "providerSize": "{{lawyerCount}}",
-          "providerCompanyAge": "{{firmAge}}",
-          "providerMinimumRating": "{{firmRating}}",
-          "currency": "{{currency}}",
-          "paymentRate": "Lump sum fixed price",
-          "maximumPrice": "{{maxPrice}}",
-          "advanceRetainerFee": "{{retainerFee}}",
-          "invoiceType": "{{paymentTerms}}",
-          "language": "{{languageCSV}}",
-          "offersDeadline": "{{date}}",
-          "title": "{{requestTitle}}",
-          "dateExpired": "{{date}}",
-          "details": {}
-        }
-      }
-    },
-    {
-      "employmentNegotiationSupport": {
-        "category": "Help with Employment related Documents",
-        "subcategory": "Negotiation Support",
-        "preview": {
-          "sections": [
-            {
-              "title": "Client Name, Business Identity Code and Country of Domicile",
-              "value": "companyHeader"
-            },
-            {
-              "title": "Scope of Work",
-              "value": "static+list",
-              "notes": "Intro: 'Legal support with negotiating the following contract(s) with an employee or a director:' then areaboxes; if 'Other' include otherTopic"
-            },
-            {
-              "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
-              "value": "flatHourlyWithCurrency",
-              "notes": "Includes the validity-until-negotiations-conclude note"
-            },
-            {
-              "title": "Please provide the name and position (in your company) of the employee with whom you are negotiating",
-              "value": "description",
-              "notes": "Shown with the page’s privacy note"
-            },
-            {
-              "title": "Additional Background Information Provided by Client",
-              "value": "backgroundWithFiles"
-            },
-            {
-              "title": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
-              "value": "retainerFeeWithNote"
-            },
-            {
-              "title": "How is the Client Invoiced by the Legal Service Provider?",
-              "value": "paymentTerms"
-            },
-            {
-              "title": "What is the Language of Legal Services Provided to the Client?",
-              "value": "languageCSV"
-            },
-            {
-              "title": "In Which Country/Countries is the Legal Service Provider Domiciled?",
-              "value": "providerCountry"
-            },
-            {
-              "title": "Which Legal Service Providers May Offer in Response to this LEXIFY Request?",
-              "value": "offerer"
-            },
-            {
-              "title": "Minimum Number of Lawyers Employed by the Legal Service Provider",
-              "value": "lawyerCount"
-            },
-            {
-              "title": "Minimum Length of Time the Legal Service Provider Must Have Been in Operation",
-              "value": "firmAge"
-            },
-            {
-              "title": "Minimum Rating of the Legal Service Provider",
-              "value": "firmRating"
-            },
-            {
-              "title": "Contract Price Currency",
-              "value": "currency"
-            },
-            {
-              "title": "Deadline for Offers to be Submitted by Legal Service Providers",
-              "value": "date"
-            }
-          ]
-        },
-        "payloadTemplate": {
-          "requestState": "PENDING",
-          "requestCategory": "Help with Employment related Documents",
-          "requestSubcategory": "Negotiation Support",
-          "primaryContactPerson": "{{contactPerson}}",
-          "scopeOfWork": "Occasional legal support during negotiation (commenting and advice as needed).",
-          "description": "{{description}}",
-          "additionalBackgroundInfo": "{{background}}",
-          "backgroundInfoFiles": [],
-          "supplierCodeOfConductFiles": [],
-          "serviceProviderType": "{{offerer}}",
-          "domesticOffers": "{{providerCountry}}",
-          "providerSize": "{{lawyerCount}}",
-          "providerCompanyAge": "{{firmAge}}",
-          "providerMinimumRating": "{{firmRating}}",
-          "currency": "{{currency}}",
-          "paymentRate": "Hourly Rate",
-          "advanceRetainerFee": "{{retainerFee}}",
-          "invoiceType": "{{paymentTerms}}",
-          "language": "{{languageCSV}}",
-          "offersDeadline": "{{date}}",
-          "title": "{{requestTitle}}",
-          "dateExpired": "{{date}}",
-          "details": {
-            "contractTypes": "{{areaboxesOtherJoin}}"
+      "category": "Day-to-day Legal Advice",
+      "subcategory": null,
+      "preview": {
+        "sections": [
+          {
+            "title": "Client Name, Business Identity Code and Country of Domicile",
+            "fields": [
+              {
+                "label": "Client",
+                "path": "__clientLine__"
+              }
+            ]
+          },
+          {
+            "title": "Scope of Work",
+            "fields": [
+              {
+                "label": "Scope of Work",
+                "path": "scopeOfWork"
+              }
+            ]
+          },
+          {
+            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "fields": [
+              {
+                "label": "Contract Price",
+                "path": "paymentRate"
+              },
+              {
+                "label": "Currency",
+                "path": "currency"
+              },
+              {
+                "label": "Invoicing",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
+                "path": "advanceRetainerFee"
+              }
+            ]
+          },
+          {
+            "title": "Description of Client's Line of Business",
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
+          },
+          {
+            "title": "Attachments",
+            "fields": [
+              {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              },
+              {
+                "label": "Background files",
+                "path": "backgroundInfoFiles"
+              },
+              {
+                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "path": "supplierCodeOfConductFiles"
+              }
+            ]
+          },
+          {
+            "title": "Languages Required for the Performance of the Work",
+            "fields": [
+              {
+                "label": "Languages",
+                "path": "language"
+              }
+            ]
+          },
+          {
+            "title": "Request Category",
+            "fields": [
+              {
+                "label": "Request Category",
+                "path": "requestCategory"
+              }
+            ]
           }
+        ]
+      },
+      "payloadTemplate": {
+        "requestState": "PENDING",
+        "requestCategory": "Day-to-day Legal Advice",
+        "requestSubcategory": null,
+        "primaryContactPerson": "{{contactPerson}}",
+        "scopeOfWork": "{{need}}",
+        "description": "{{description}}",
+        "additionalBackgroundInfo": "{{background}}",
+        "backgroundInfoFiles": [],
+        "supplierCodeOfConductFiles": [],
+        "serviceProviderType": "{{offerer}}",
+        "domesticOffers": "{{providerCountry}}",
+        "providerSize": "{{lawyerCount}}",
+        "providerCompanyAge": "{{firmAge}}",
+        "providerMinimumRating": "{{firmRating}}",
+        "currency": "{{currency}}",
+        "paymentRate": "{{need.includes('fixed monthly') ? 'Lump sum fixed price' : 'Hourly Rate'}}",
+        "maximumPrice": null,
+        "advanceRetainerFee": "{{retainerFee}}",
+        "invoiceType": "{{paymentTerms}}",
+        "language": "{{languageCSV}}",
+        "offersDeadline": "{{date}}",
+        "title": "{{requestTitle}}",
+        "dateExpired": "{{date}}",
+        "details": {}
+      }
+    },
+    {
+      "category": "Help with Employment related Documents",
+      "subcategory": "Employment Contract Template",
+      "preview": {
+        "sections": [
+          {
+            "title": "Client Name, Business Identity Code and Country of Domicile",
+            "value": "companyHeader"
+          },
+          {
+            "title": "Scope of Work",
+            "value": "static+list",
+            "notes": "Intro: 'Preparation of the following employment contract templates for the Client:' then join areaboxes"
+          },
+          {
+            "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
+            "value": "lumpSumWithCurrency",
+            "notes": "Includes the line about revisions based on Client's feedback"
+          },
+          {
+            "title": "Description of Position and Tasks of the Employee or Employee Group for whom the Contract Template(s) is Prepared",
+            "value": "description"
+          },
+          {
+            "title": "Additional Background Information Provided by Client",
+            "value": "backgroundWithFiles"
+          },
+          {
+            "title": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
+            "value": "retainerFeeWithNote"
+          },
+          {
+            "title": "How is the Client Invoiced by the Legal Service Provider?",
+            "value": "paymentTerms"
+          },
+          {
+            "title": "What is the Language of Legal Services Provided to the Client?",
+            "value": "languageCSV"
+          },
+          {
+            "title": "Which Legal Service Providers May Offer in Response to this LEXIFY Request?",
+            "value": "offerer"
+          },
+          {
+            "title": "In Which Country/Countries is the Legal Service Provider Domiciled?",
+            "value": "providerCountry"
+          },
+          {
+            "title": "Minimum Number of Lawyers Employed by the Legal Service Provider",
+            "value": "lawyerCount"
+          },
+          {
+            "title": "Minimum Length of Time the Legal Service Provider Must Have Been in Operation",
+            "value": "firmAge"
+          },
+          {
+            "title": "Minimum Rating of the Legal Service Provider",
+            "value": "firmRating"
+          },
+          {
+            "title": "Contract Price Currency",
+            "value": "currency"
+          },
+          {
+            "title": "Maximum Price (VAT 0%)",
+            "value": "maxPrice"
+          },
+          {
+            "title": "Deadline for Offers to be Submitted by Legal Service Providers",
+            "value": "date"
+          }
+        ]
+      },
+      "payloadTemplate": {
+        "requestState": "PENDING",
+        "requestCategory": "Help with Employment related Documents",
+        "requestSubcategory": "Employment Contract Template",
+        "primaryContactPerson": "{{contactPerson}}",
+        "scopeOfWork": "{{areaboxes.join(', ')}}",
+        "description": "{{description}}",
+        "additionalBackgroundInfo": "{{background}}",
+        "backgroundInfoFiles": [],
+        "supplierCodeOfConductFiles": [],
+        "serviceProviderType": "{{offerer}}",
+        "domesticOffers": "{{providerCountry}}",
+        "providerSize": "{{lawyerCount}}",
+        "providerCompanyAge": "{{firmAge}}",
+        "providerMinimumRating": "{{firmRating}}",
+        "currency": "{{currency}}",
+        "paymentRate": "Lump sum fixed price",
+        "maximumPrice": "{{maxPrice}}",
+        "advanceRetainerFee": "{{retainerFee}}",
+        "invoiceType": "{{paymentTerms}}",
+        "language": "{{languageCSV}}",
+        "offersDeadline": "{{date}}",
+        "title": "{{requestTitle}}",
+        "dateExpired": "{{date}}",
+        "details": {}
+      }
+    },
+    {
+      "category": "Help with Employment related Documents",
+      "subcategory": "Employment related Document Templates",
+      "preview": {
+        "sections": [
+          {
+            "title": "Client Name, Business Identity Code and Country of Domicile",
+            "value": "companyHeader"
+          },
+          {
+            "title": "Scope of Work",
+            "value": "static+list",
+            "notes": "Intro: 'Preparation of the following employment related document templates for the Client:' then areaboxes; if 'Other Template(s)' include otherArea"
+          },
+          {
+            "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
+            "value": "lumpSumWithCurrency",
+            "notes": "Includes the standard invoicing note"
+          },
+          {
+            "title": "Additional Background Information Provided by Client",
+            "value": "backgroundWithFiles"
+          },
+          {
+            "title": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
+            "value": "retainerFeeWithNote"
+          },
+          {
+            "title": "How is the Client Invoiced by the Legal Service Provider?",
+            "value": "paymentTerms"
+          },
+          {
+            "title": "What is the Language of Legal Services Provided to the Client?",
+            "value": "languageCSV"
+          },
+          {
+            "title": "Which Legal Service Providers May Offer in Response to this LEXIFY Request?",
+            "value": "offerer"
+          },
+          {
+            "title": "In Which Country/Countries is the Legal Service Provider Domiciled?",
+            "value": "providerCountry"
+          },
+          {
+            "title": "Minimum Number of Lawyers Employed by the Legal Service Provider",
+            "value": "lawyerCount"
+          },
+          {
+            "title": "Minimum Length of Time the Legal Service Provider Must Have Been in Operation",
+            "value": "firmAge"
+          },
+          {
+            "title": "Minimum Rating of the Legal Service Provider",
+            "value": "firmRating"
+          },
+          {
+            "title": "Contract Price Currency",
+            "value": "currency"
+          },
+          {
+            "title": "Maximum Price (VAT 0%)",
+            "value": "maxPrice"
+          },
+          {
+            "title": "Deadline for Offers to be Submitted by Legal Service Providers",
+            "value": "date"
+          }
+        ]
+      },
+      "payloadTemplate": {
+        "requestState": "PENDING",
+        "requestCategory": "Help with Employment related Documents",
+        "requestSubcategory": "Employment related Document Templates",
+        "primaryContactPerson": "{{contactPerson}}",
+        "scopeOfWork": "{{areaboxesFilteredJoin}}",
+        "description": "",
+        "additionalBackgroundInfo": "{{background}}",
+        "backgroundInfoFiles": [],
+        "supplierCodeOfConductFiles": [],
+        "serviceProviderType": "{{offerer}}",
+        "domesticOffers": "{{providerCountry}}",
+        "providerSize": "{{lawyerCount}}",
+        "providerCompanyAge": "{{firmAge}}",
+        "providerMinimumRating": "{{firmRating}}",
+        "currency": "{{currency}}",
+        "paymentRate": "Lump sum fixed price",
+        "maximumPrice": "{{maxPrice}}",
+        "advanceRetainerFee": "{{retainerFee}}",
+        "invoiceType": "{{paymentTerms}}",
+        "language": "{{languageCSV}}",
+        "offersDeadline": "{{date}}",
+        "title": "{{requestTitle}}",
+        "dateExpired": "{{date}}",
+        "details": {}
+      }
+    },
+    {
+      "category": "Help with Employment related Documents",
+      "subcategory": "Negotiation Support",
+      "preview": {
+        "sections": [
+          {
+            "title": "Client Name, Business Identity Code and Country of Domicile",
+            "value": "companyHeader"
+          },
+          {
+            "title": "Scope of Work",
+            "value": "static+list",
+            "notes": "Intro: 'Legal support with negotiating the following contract(s) with an employee or a director:' then areaboxes; if 'Other' include otherTopic"
+          },
+          {
+            "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
+            "value": "flatHourlyWithCurrency",
+            "notes": "Includes the validity-until-negotiations-conclude note"
+          },
+          {
+            "title": "Please provide the name and position (in your company) of the employee with whom you are negotiating",
+            "value": "description",
+            "notes": "Shown with the page’s privacy note"
+          },
+          {
+            "title": "Additional Background Information Provided by Client",
+            "value": "backgroundWithFiles"
+          },
+          {
+            "title": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
+            "value": "retainerFeeWithNote"
+          },
+          {
+            "title": "How is the Client Invoiced by the Legal Service Provider?",
+            "value": "paymentTerms"
+          },
+          {
+            "title": "What is the Language of Legal Services Provided to the Client?",
+            "value": "languageCSV"
+          },
+          {
+            "title": "In Which Country/Countries is the Legal Service Provider Domiciled?",
+            "value": "providerCountry"
+          },
+          {
+            "title": "Which Legal Service Providers May Offer in Response to this LEXIFY Request?",
+            "value": "offerer"
+          },
+          {
+            "title": "Minimum Number of Lawyers Employed by the Legal Service Provider",
+            "value": "lawyerCount"
+          },
+          {
+            "title": "Minimum Length of Time the Legal Service Provider Must Have Been in Operation",
+            "value": "firmAge"
+          },
+          {
+            "title": "Minimum Rating of the Legal Service Provider",
+            "value": "firmRating"
+          },
+          {
+            "title": "Contract Price Currency",
+            "value": "currency"
+          },
+          {
+            "title": "Deadline for Offers to be Submitted by Legal Service Providers",
+            "value": "date"
+          }
+        ]
+      },
+      "payloadTemplate": {
+        "requestState": "PENDING",
+        "requestCategory": "Help with Employment related Documents",
+        "requestSubcategory": "Negotiation Support",
+        "primaryContactPerson": "{{contactPerson}}",
+        "scopeOfWork": "Occasional legal support during negotiation (commenting and advice as needed).",
+        "description": "{{description}}",
+        "additionalBackgroundInfo": "{{background}}",
+        "backgroundInfoFiles": [],
+        "supplierCodeOfConductFiles": [],
+        "serviceProviderType": "{{offerer}}",
+        "domesticOffers": "{{providerCountry}}",
+        "providerSize": "{{lawyerCount}}",
+        "providerCompanyAge": "{{firmAge}}",
+        "providerMinimumRating": "{{firmRating}}",
+        "currency": "{{currency}}",
+        "paymentRate": "Hourly Rate",
+        "advanceRetainerFee": "{{retainerFee}}",
+        "invoiceType": "{{paymentTerms}}",
+        "language": "{{languageCSV}}",
+        "offersDeadline": "{{date}}",
+        "title": "{{requestTitle}}",
+        "dateExpired": "{{date}}",
+        "details": {
+          "contractTypes": "{{areaboxesOtherJoin}}"
         }
       }
     },

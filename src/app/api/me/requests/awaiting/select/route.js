@@ -243,7 +243,17 @@ async function sendContractPackageEmail(prisma, requestId) {
     ...fileAtts,
   ];
 
-  const to = [provider.email, purchaser.email].filter(Boolean);
+  const to = [
+    ...expandWithAllNotificationContacts(
+      { email: provider.email },
+      contract.provider?.companyContactPersons || []
+    ),
+    ...expandWithAllNotificationContacts(
+      { email: purchaser.email },
+      contract.request?.client?.companyContactPersons || []
+    ),
+  ];
+
   const subject = `LEXIFY Contract - ${
     shaped.request.title || shaped.purchaser.companyName || ""
   }`;
@@ -264,6 +274,42 @@ async function sendContractPackageEmail(prisma, requestId) {
     html: emailHtml,
     attachments,
   });
+}
+
+// --- email helpers (place near other helpers) ---
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const isEmail = (s) => typeof s === "string" && EMAIL_RE.test(s.trim());
+
+// Find the primary contact person object (not just email) by offerLawyer name
+function findPrimaryContactByLawyer(offerLawyer, contacts) {
+  const norm = (s) => (s ?? "").toString().trim().toLowerCase();
+  const full = (p) =>
+    [p?.firstName, p?.lastName].filter(Boolean).join(" ").trim();
+  const name = norm(offerLawyer);
+  if (!Array.isArray(contacts)) return null;
+
+  return (
+    contacts.find((c) => norm(full(c)) === name) ||
+    contacts.find(
+      (c) => norm(c?.firstName) === name || norm(c?.lastName) === name
+    ) ||
+    null
+  );
+}
+
+// Given a primary contact (or email) + the same user's contacts,
+// return [primaryEmail, ...all allNotifications=true emails (excluding primary)]
+function expandWithAllNotificationContacts(primary, contacts) {
+  const primaryEmail =
+    typeof primary === "string" ? primary : primary?.email || "";
+  const base = new Set();
+  if (isEmail(primaryEmail)) base.add(primaryEmail.trim());
+
+  (Array.isArray(contacts) ? contacts : [])
+    .filter((c) => c && c.allNotifications === true && isEmail(c.email))
+    .forEach((c) => base.add(c.email.trim()));
+
+  return Array.from(base);
 }
 
 // normalize Json / legacy {set:[]} / string → string[]
@@ -447,8 +493,12 @@ export async function POST(req) {
           purchaserEmail = (purchaserContacts[0]?.email || "").trim();
         }
         if (purchaserEmail) {
+          const toGroup = expandWithAllNotificationContacts(
+            { email: purchaserEmail },
+            purchaserContacts
+          );
           await notifyPurchaserContractFormed({
-            to: purchaserEmail,
+            to: toGroup,
             requestTitle: data?.title || "",
           });
         }
@@ -480,12 +530,21 @@ export async function POST(req) {
           (o) => (o.offerStatus || "").toUpperCase() === "WON"
         );
         if (winner) {
-          const wContacts =
-            contactsByProvider.get(String(winner.providerId)) || [];
-          const wEmail = findLawyerEmail(winner.offerLawyer, wContacts);
-          if (wEmail) {
+          const wMeta = providerMeta.get(String(winner.providerId)) || {
+            contacts: [],
+            prefs: [],
+          };
+          const wPrimary = findPrimaryContactByLawyer(
+            winner.offerLawyer,
+            wMeta.contacts
+          );
+          if (wPrimary?.email && isEmail(wPrimary.email)) {
+            const toGroup = expandWithAllNotificationContacts(
+              wPrimary,
+              wMeta.contacts
+            );
             await notifyWinningLawyerContractFormed({
-              to: wEmail,
+              to: toGroup,
               offerTitle: winner.offerTitle || "",
             });
           }
@@ -499,10 +558,18 @@ export async function POST(req) {
             prefs: [],
           };
           if (!meta.prefs.includes("no-winning-offer")) continue;
-          const email = findLawyerEmail(o.offerLawyer, meta.contacts);
-          if (email) {
+
+          const primary = findPrimaryContactByLawyer(
+            o.offerLawyer,
+            meta.contacts
+          );
+          if (primary?.email && isEmail(primary.email)) {
+            const toGroup = expandWithAllNotificationContacts(
+              primary,
+              meta.contacts
+            );
             await notifyLosingLawyerNotSelected({
-              to: email,
+              to: toGroup,
               offerTitle: o.offerTitle || "",
             });
           }

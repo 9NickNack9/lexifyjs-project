@@ -63,20 +63,26 @@ export default function PreviewModal({ open, onClose, row, companyName }) {
   const def = useMemo(() => {
     if (!defs || !row) return null;
     const list = Array.isArray(defs.requests) ? defs.requests : [];
-    // Match by category + subcategory + assignmentType (fallbacks included)
+    const norm = (s) => (s ?? "").toString().trim().toLowerCase();
+
+    const cat =
+      norm(row.requestCategory) || norm(row?.details?.requestCategory);
+    const sub =
+      norm(row.requestSubcategory) || norm(row?.details?.requestSubcategory);
+    const asg = norm(row.assignmentType) || norm(row?.details?.assignmentType);
+
     return (
       list.find(
         (d) =>
-          (d.category || "") === (row.requestCategory || "") &&
-          (d.subcategory || null) === (row.requestSubcategory ?? null) &&
-          (d.assignmentType || null) === (row.assignmentType ?? null)
+          norm(d.category) === cat &&
+          norm(d.subcategory) === sub &&
+          norm(d.assignmentType) === asg
       ) ||
       list.find(
-        (d) =>
-          (d.category || "") === (row.requestCategory || "") &&
-          (d.subcategory || null) === (row.requestSubcategory ?? null)
+        (d) => norm(d.category) === cat && norm(d.subcategory) === sub
       ) ||
-      list.find((d) => (d.category || "") === (row.requestCategory || ""))
+      list.find((d) => norm(d.category) === cat) ||
+      null
     );
   }, [defs, row]);
 

@@ -76,11 +76,16 @@ export async function notifyProvidersNewAvailableRequest({
   requestCategory,
 }) {
   const templateId = "d-17a045e0c243403eb84ac7a0d0136674";
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const isEmail = (s) => typeof s === "string" && EMAIL_RE.test(s.trim());
+  const list = Array.isArray(to)
+    ? Array.from(new Set(to.filter(isEmail)))
+    : isEmail(to)
+    ? [to]
+    : [];
 
-  // normalize arrays and dedupe
-  const bcc = Array.isArray(to) ? Array.from(new Set(to)) : [];
-  if (bcc.length === 0) {
-    // still notify support even if nobody to bcc
+  // If we somehow have nobody, still ping Support so the event is tracked
+  if (list.length === 0) {
     await sendDynamicTemplateEmail({
       to: "support@lexify.online",
       templateId,
@@ -89,9 +94,10 @@ export async function notifyProvidersNewAvailableRequest({
     return;
   }
 
+  const [primary, ...cc] = list;
   await sendDynamicTemplateEmail({
-    to: "support@lexify.online", // <-- visible recipient
-    bcc, // <-- everyone else hidden
+    to: primary, // personal: send directly to the primary
+    cc, // CC other allNotification contacts
     templateId,
     dynamicTemplateData: { requestCategory },
   });
@@ -100,9 +106,15 @@ export async function notifyProvidersNewAvailableRequest({
 /** Providers — Request Cancelled convenience helper */
 export async function notifyProvidersRequestCancelled({ to }) {
   const templateId = "d-11ffd9181c6f498c90b05adb65701ef2";
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const isEmail = (s) => typeof s === "string" && EMAIL_RE.test(s.trim());
+  const list = Array.isArray(to)
+    ? Array.from(new Set(to.filter(isEmail)))
+    : isEmail(to)
+    ? [to]
+    : [];
 
-  const bcc = Array.isArray(to) ? Array.from(new Set(to)) : [];
-  if (bcc.length === 0) {
+  if (list.length === 0) {
     await sendDynamicTemplateEmail({
       to: "support@lexify.online",
       templateId,
@@ -111,11 +123,12 @@ export async function notifyProvidersRequestCancelled({ to }) {
     return;
   }
 
+  const [primary, ...cc] = list;
   await sendDynamicTemplateEmail({
-    to: "support@lexify.online", // <-- visible recipient
-    bcc, // <-- hidden recipients
+    to: primary, // personal to primary
+    cc, // CC other allNotification contacts
     templateId,
-    dynamicTemplateData: {}, // no values needed
+    dynamicTemplateData: {},
   });
 }
 

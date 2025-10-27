@@ -202,7 +202,10 @@ export default function ReSale() {
         title: formData.requestTitle,
         dateExpired: formData.date,
         details: {
-          saleObject: formData.saleObject || "",
+          saleObject:
+            formData.saleObject === "Other"
+              ? formData.otherObject
+              : formData.saleObject,
           otherObject:
             formData.saleObject === "Other" ? formData.otherObject || "" : "",
           confidential: formData.confboxes.includes(
@@ -213,6 +216,7 @@ export default function ReSale() {
           winnerBidderOnlyStatus: (formData.confidential || "").trim(),
           priceRange: formData.priceRange || "",
           dueDiligence: formData.dueDiligence || "",
+          customerType: formData.customerType || "",
         },
       };
 

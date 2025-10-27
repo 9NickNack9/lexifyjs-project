@@ -26,6 +26,42 @@ function requireCronAuth(req) {
   }
 }
 
+// --- email helpers (place near other helpers) ---
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const isEmail = (s) => typeof s === "string" && EMAIL_RE.test(s.trim());
+
+// Find the primary contact person object (not just email) by offerLawyer name
+function findPrimaryContactByLawyer(offerLawyer, contacts) {
+  const norm = (s) => (s ?? "").toString().trim().toLowerCase();
+  const full = (p) =>
+    [p?.firstName, p?.lastName].filter(Boolean).join(" ").trim();
+  const name = norm(offerLawyer);
+  if (!Array.isArray(contacts)) return null;
+
+  return (
+    contacts.find((c) => norm(full(c)) === name) ||
+    contacts.find(
+      (c) => norm(c?.firstName) === name || norm(c?.lastName) === name
+    ) ||
+    null
+  );
+}
+
+// Given a primary contact (or email) + the same user's contacts,
+// return [primaryEmail, ...all allNotifications=true emails (excluding primary)]
+function expandWithAllNotificationContacts(primary, contacts) {
+  const primaryEmail =
+    typeof primary === "string" ? primary : primary?.email || "";
+  const base = new Set();
+  if (isEmail(primaryEmail)) base.add(primaryEmail.trim());
+
+  (Array.isArray(contacts) ? contacts : [])
+    .filter((c) => c && c.allNotifications === true && isEmail(c.email))
+    .forEach((c) => base.add(c.email.trim()));
+
+  return Array.from(base);
+}
+
 // normalize Json / legacy {set:[]} / string → string[]
 function toStringArray(val) {
   if (Array.isArray(val)) return val.filter((v) => typeof v === "string");
@@ -352,7 +388,17 @@ async function sendContractPackageEmail(prisma, requestId) {
   ];
 
   // 6) Email both reps
-  const to = [provider.email, purchaser.email].filter(Boolean);
+  const to = [
+    ...expandWithAllNotificationContacts(
+      { email: provider.email }, // primary is the matched rep
+      contract.provider?.companyContactPersons || []
+    ),
+    ...expandWithAllNotificationContacts(
+      { email: purchaser.email }, // primary is purchaser primary contact
+      contract.request?.client?.companyContactPersons || []
+    ),
+  ];
+
   const subject = `LEXIFY Contract - ${
     shaped.request.title || shaped.purchaser.companyName || ""
   }`;
@@ -509,9 +555,13 @@ export async function POST(req) {
             r.client?.notificationPreferences
           );
           if (toEmail && purchaserPrefs.includes("no_offers")) {
+            const toGroup = expandWithAllNotificationContacts(
+              { email: toEmail },
+              contacts // purchaser's companyContactPersons you already loaded
+            );
             await notifyPurchaserPendingExpiredNoOffers({
-              to: toEmail,
-              requestTitle: r.title || "", // pass the request title to the template
+              to: toGroup,
+              requestTitle: r.title || "",
             });
           }
         } catch (e) {
@@ -575,8 +625,12 @@ export async function POST(req) {
               r.client?.notificationPreferences
             );
             if (toEmail && purchaserPrefs.includes("pending_offer_selection")) {
+              const toGroup = expandWithAllNotificationContacts(
+                { email: toEmail },
+                contacts // purchaser's companyContactPersons you already loaded
+              );
               await notifyPurchaserManualUnderMaxExpired({
-                to: toEmail,
+                to: toGroup,
                 requestTitle: r.title || "",
               });
             }
@@ -629,8 +683,12 @@ export async function POST(req) {
               r.client?.notificationPreferences
             );
             if (toEmail && purchaserPrefs.includes("over_max_price")) {
+              const toGroup = expandWithAllNotificationContacts(
+                { email: toEmail },
+                contacts // purchaser's companyContactPersons you already loaded
+              );
               await notifyPurchaserManualAllOverMaxExpired({
-                to: toEmail,
+                to: toGroup,
                 requestTitle: r.title || "",
               });
             }
@@ -755,16 +813,20 @@ export async function POST(req) {
                   (o) => String(o.providerId) === winningProviderId
                 );
                 if (winnerOffer) {
-                  const winnerContacts =
-                    contactsByProvider.get(String(winnerOffer.providerId)) ||
-                    [];
-                  const winnerEmail = findLawyerEmail(
+                  const wMeta = providerMeta.get(
+                    String(winning.providerId)
+                  ) || { contacts: [], prefs: [] };
+                  const wPrimary = findPrimaryContactByLawyer(
                     winnerOffer.offerLawyer,
-                    winnerContacts
+                    wMeta.contacts
                   );
-                  if (winnerEmail) {
+                  if (wPrimary?.email && isEmail(wPrimary.email)) {
+                    const toGroup = expandWithAllNotificationContacts(
+                      wPrimary,
+                      wMeta.contacts
+                    );
                     await notifyWinningLawyerContractFormed({
-                      to: winnerEmail,
+                      to: toGroup,
                       offerTitle: winnerOffer.offerTitle || "",
                     });
                   }
@@ -772,16 +834,23 @@ export async function POST(req) {
 
                 // Losers
                 for (const o of r.offers || []) {
-                  if (String(o.providerId) === winningProviderId) continue;
                   const meta = providerMeta.get(String(o.providerId)) || {
                     contacts: [],
                     prefs: [],
                   };
                   if (!meta.prefs.includes("no-winning-offer")) continue;
-                  const email = findLawyerEmail(o.offerLawyer, meta.contacts);
-                  if (email) {
+
+                  const primary = findPrimaryContactByLawyer(
+                    o.offerLawyer,
+                    meta.contacts
+                  );
+                  if (primary?.email && isEmail(primary.email)) {
+                    const toGroup = expandWithAllNotificationContacts(
+                      primary,
+                      meta.contacts
+                    );
                     await notifyLosingLawyerNotSelected({
-                      to: email,
+                      to: toGroup,
                       offerTitle: o.offerTitle || "",
                     });
                   }

@@ -6,6 +6,42 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { notifyProvidersRequestCancelled } from "@/lib/mailer";
 
+// --- email helpers (place near other helpers) ---
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const isEmail = (s) => typeof s === "string" && EMAIL_RE.test(s.trim());
+
+// Find the primary contact person object (not just email) by offerLawyer name
+function findPrimaryContactByLawyer(offerLawyer, contacts) {
+  const norm = (s) => (s ?? "").toString().trim().toLowerCase();
+  const full = (p) =>
+    [p?.firstName, p?.lastName].filter(Boolean).join(" ").trim();
+  const name = norm(offerLawyer);
+  if (!Array.isArray(contacts)) return null;
+
+  return (
+    contacts.find((c) => norm(full(c)) === name) ||
+    contacts.find(
+      (c) => norm(c?.firstName) === name || norm(c?.lastName) === name
+    ) ||
+    null
+  );
+}
+
+// Given a primary contact (or email) + the same user's contacts,
+// return [primaryEmail, ...all allNotifications=true emails (excluding primary)]
+function expandWithAllNotificationContacts(primary, contacts) {
+  const primaryEmail =
+    typeof primary === "string" ? primary : primary?.email || "";
+  const base = new Set();
+  if (isEmail(primaryEmail)) base.add(primaryEmail.trim());
+
+  (Array.isArray(contacts) ? contacts : [])
+    .filter((c) => c && c.allNotifications === true && isEmail(c.email))
+    .forEach((c) => base.add(c.email.trim()));
+
+  return Array.from(base);
+}
+
 // Only used by PATCH below
 const RequestPatch = z.object({
   requestState: z.string().optional(),
@@ -26,7 +62,7 @@ async function requireSession() {
 }
 
 // ---------- GET /api/requests/:id ----------
-export async function GET(_req, { params }) {
+export async function GET(_req, ctx) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.userId) {
@@ -35,7 +71,8 @@ export async function GET(_req, { params }) {
 
     let id;
     try {
-      id = BigInt(params.id);
+      const { id: idParam } = await ctx.params; // Next.js: params is now async
+      id = BigInt(idParam);
     } catch {
       return NextResponse.json({ error: "Bad request" }, { status: 400 });
     }
@@ -167,13 +204,14 @@ function toStringArray(val) {
 }
 
 // ---------- PATCH /api/requests/:id ----------
-export async function PATCH(req, { params }) {
+export async function PATCH(req, ctx) {
   try {
     const session = await requireSession();
 
     let id;
     try {
-      id = BigInt(params.id);
+      const { id: idParam } = await ctx.params;
+      id = BigInt(idParam);
     } catch {
       return NextResponse.json({ error: "Bad request" }, { status: 400 });
     }
@@ -224,11 +262,12 @@ export async function PATCH(req, { params }) {
 }
 
 // ---------- DELETE /api/requests/:id ----------
-export async function DELETE(_, { params }) {
+export async function DELETE(_, ctx) {
   const session = await requireSession();
   let id;
   try {
-    id = BigInt(params.id);
+    const { id: idParam } = await ctx.params;
+    id = BigInt(idParam);
   } catch {
     return NextResponse.json({ error: "Bad request" }, { status: 400 });
   }
@@ -254,6 +293,7 @@ export async function DELETE(_, { params }) {
     where: { requestId: id },
     select: {
       offerLawyer: true,
+      offerTitle: true,
       provider: {
         select: {
           companyContactPersons: true, // [{firstName,lastName,email,telephone,position}]
@@ -263,52 +303,29 @@ export async function DELETE(_, { params }) {
     },
   });
 
-  // Name normalization helpers
-  const norm = (s) => (s ?? "").toString().trim().toLowerCase();
-  const full = (p) =>
-    [p?.firstName, p?.lastName].filter(Boolean).join(" ").trim();
-
-  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const emailSet = new Set();
-
+  // send grouped personal emails per provider (primary + all-notification contacts)
   for (const o of offers) {
     const prefs = toStringArray(o?.provider?.notificationPreferences);
     if (!prefs.includes("request-cancelled")) continue;
-    const lawyerName = norm(o?.offerLawyer);
-    if (!lawyerName) continue;
 
     const contacts = Array.isArray(o?.provider?.companyContactPersons)
       ? o.provider.companyContactPersons
       : [];
 
-    // exact full-name match first
-    let match =
-      contacts.find((c) => norm(full(c)) === lawyerName) ||
-      // then a relaxed startsWith on either first or last name
-      contacts.find(
-        (c) =>
-          norm(c?.firstName).startsWith(lawyerName) ||
-          norm(c?.lastName).startsWith(lawyerName)
-      ) ||
-      null;
+    const primaryContact = findPrimaryContactByLawyer(o?.offerLawyer, contacts);
+    const primaryEmail = (primaryContact?.email || "").trim();
 
-    const email = (match?.email || "").trim();
-    if (email && EMAIL_RE.test(email)) emailSet.add(email);
-  }
+    if (!isEmail(primaryEmail)) continue;
 
-  const recipients = Array.from(emailSet);
+    const toGroup = expandWithAllNotificationContacts(primaryContact, contacts);
 
-  // Send dynamic template (fire-and-forget, batched)
-  if (recipients.length > 0) {
     try {
-      const BATCH = 900; // safe chunk size
-      for (let i = 0; i < recipients.length; i += BATCH) {
-        await notifyProvidersRequestCancelled({
-          to: recipients.slice(i, i + BATCH),
-        });
-      }
+      await notifyProvidersRequestCancelled({
+        to: toGroup, // personal per provider, grouped with all-notifs
+        offerTitle: o?.offerTitle || "",
+      });
     } catch (e) {
-      console.error("Request-cancelled email failed:", e);
+      console.error("Request-cancelled email failed for provider:", e);
     }
   }
 

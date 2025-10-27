@@ -525,9 +525,6 @@ export default function MakeOffer() {
         setRequest(reqJson);
         setContacts(Array.isArray(conJson?.contacts) ? conJson.contacts : []);
         setDefs(defJson);
-        const baseTitle =
-          reqJson?.title || reqJson?.requestTitle || "LEXIFY Offer";
-        setOfferTitle(`Offer for ${baseTitle}`);
       } catch {
         if (!active) return;
         setRequest(null);
@@ -709,7 +706,7 @@ export default function MakeOffer() {
               className="border p-2 w-full rounded"
               value={offerTitle}
               onChange={(e) => setOfferTitle(e.target.value)}
-              placeholder="Offer title (displayed to client)"
+              placeholder="Insert Offer title"
               required
             />
           </div>
