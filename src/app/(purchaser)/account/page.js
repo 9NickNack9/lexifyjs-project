@@ -1012,17 +1012,17 @@ export default function Account() {
           criteria of a specific LEXIFY Request (for example, if they are a
           smaller law firm than what you require in the LEXIFY Request)? Not a
           problem! You can designate a legal service provider to be a preferred
-          provider who is able to review every LEXIFY Request you submit. Simply
-          enter the name of the relevant legal service provider in the search
-          field below, click the name of the service provider, select the areas
-          of law you want the service provider to be preferred in and then click
-          &quot;Assign Preferred Status&quot;. You can edit a service
-          provider&apos;s preferred areas of law anytime with the &quot;Select
-          Areas of Law&quot; button (remember to click &quot;Save&quot; after
-          changing the areas of law). If you later want to remove the preferred
-          provider status from a legal service provider, just click the
-          “Unassign Preferred Status” button next to the name of that legal
-          service provider.{" "}
+          provider who is able to review every LEXIFY Request you submit in the
+          selected areas of law. Simply enter the name of the relevant legal
+          service provider in the search field below, click the name of the
+          service provider, select the areas of law you want the service
+          provider to be preferred in and then click &quot;Assign Preferred
+          Status&quot;. You can edit a service provider&apos;s preferred areas
+          of law anytime with the &quot;Select Areas of Law&quot; button
+          (remember to click &quot;Save&quot; after changing the areas of law).
+          If you later want to remove the preferred provider status from a legal
+          service provider, just click the “Unassign Preferred Status” button
+          next to the name of that legal service provider.{" "}
           <NarrowTooltip tooltipText="If you do not find a specific legal service provider when entering its name below, that legal service provider is not yet a registered user of LEXIFY. " />
         </h4>
         <br />
@@ -1274,7 +1274,7 @@ export default function Account() {
                         className="bg-red-600 text-white px-3 py-1 rounded cursor-pointer"
                         onClick={() => removeFromLegalPanel(name)}
                       >
-                        Remove
+                        Unassign Legal Panel Status
                       </button>
                     </td>
                   </tr>
