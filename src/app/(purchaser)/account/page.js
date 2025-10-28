@@ -1009,20 +1009,18 @@ export default function Account() {
         <h4 className="text-md">
           Do you have one or more legal service providers that you would like to
           be able to see your LEXIFY Requests even when they don&apos;t meet the
-          criteria of a specific LEXIFY Request (for example, if they are a
-          smaller law firm than what you require in the LEXIFY Request)? Not a
-          problem! You can designate a legal service provider to be a preferred
-          provider who is able to review every LEXIFY Request you submit in the
-          selected areas of law. Simply enter the name of the relevant legal
-          service provider in the search field below, click the name of the
-          service provider, select the areas of law you want the service
-          provider to be preferred in and then click &quot;Assign Preferred
-          Status&quot;. You can edit a service provider&apos;s preferred areas
-          of law anytime with the &quot;Select Areas of Law&quot; button
-          (remember to click &quot;Save&quot; after changing the areas of law).
-          If you later want to remove the preferred provider status from a legal
-          service provider, just click the “Unassign Preferred Status” button
-          next to the name of that legal service provider.{" "}
+          criteria of a specific request (for example, if they are a smaller law
+          firm than what you normally require)? Not a problem! You can designate
+          any legal service provider as a preferred provider, allowing them to
+          review all your LEXIFY Requests in the selected areas of law. Simply
+          enter the provider&apos;s name in the search field below, click their
+          name, select the areas of law you want them to have preferred provider
+          status in, and then click &quot;Assign Preferred Status.&quot; You can
+          edit a provider&apos;s preferred status using the &quot;Select Areas
+          of Law&quot; button (remember to click &quot;Save&quot; afterward). If
+          you later want to remove the preferred provider status entirely, just
+          click the &quot;Unassign Preferred Status&quot; button next to the
+          provider&apos;s name.{" "}
           <NarrowTooltip tooltipText="If you do not find a specific legal service provider when entering its name below, that legal service provider is not yet a registered user of LEXIFY. " />
         </h4>
         <br />

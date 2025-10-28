@@ -211,7 +211,9 @@ export async function GET(req) {
     const panel = Array.isArray(maker.legalPanelServiceProviders)
       ? maker.legalPanelServiceProviders
       : [];
-    if (panel.length > 0 && myCompanyName && !panel.includes(myCompanyName)) {
+    const iAmOnPanel =
+      panel.length > 0 && myCompanyName && panel.includes(myCompanyName);
+    if (panel.length > 0 && myCompanyName && !iAmOnPanel) {
       return false;
     }
 
@@ -239,7 +241,10 @@ export async function GET(req) {
       reqTypeNorm === "" || reqTypeNorm === "all" || reqTypeNorm === myTypeNorm;
 
     // Preferred override: if I'm preferred for this category, auto-pass all capability gates
-    if (iAmPreferred) {
+    // Capability override:
+    // - Preferred for this category  → auto-pass
+    // - OR on the client's legal panel → auto-pass
+    if (iAmPreferred || iAmOnPanel) {
       passPros = passRating = passAge = passType = true;
     }
 
