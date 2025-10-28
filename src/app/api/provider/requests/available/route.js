@@ -58,10 +58,12 @@ export async function GET(req) {
       providerTotalRating: true,
       companyAge: true,
       providerType: true,
+      companyName: true, // needed for blocked/preferred/panel checks
     },
   });
 
   const myRole = (session.role || me?.role || "").toUpperCase();
+  const myCompanyName = (me?.companyName || "").trim();
 
   // Providers: collect requestIds they've already offered on
   let alreadyOfferedIds = [];
@@ -115,7 +117,14 @@ export async function GET(req) {
       providerCompanyAge: true, // may be string label like "Any Age" or a number
       serviceProviderType: true, // "All" | "Law firm(s)" | "Attorneys-at-law" | ""
       details: true,
-      client: { select: { companyName: true } },
+      client: {
+        select: {
+          companyName: true,
+          blockedServiceProviders: true, // string[]
+          preferredLegalServiceProviders: true, // may be legacy array, single string, or { [area]: string[] }
+          legalPanelServiceProviders: true, // string[]
+        },
+      },
     },
   });
 
@@ -132,41 +141,107 @@ export async function GET(req) {
     return NextResponse.json({ requests: shaped });
   }
 
-  // Provider gating
-  if (
-    me?.companyProfessionals == null ||
-    me?.providerTotalRating == null ||
-    me?.companyAge == null
-  ) {
-    return NextResponse.json({ requests: [] });
-  }
-
-  const myPros = Number(me.companyProfessionals);
-  const myRating = Number(me.providerTotalRating);
-  const myAge = Number(me.companyAge) || 0;
+  // Provider metrics (null-safe; preferred can override these)
+  const myPros = Number.isFinite(Number(me?.companyProfessionals))
+    ? Number(me.companyProfessionals)
+    : 0;
+  const myRating = Number.isFinite(Number(me?.providerTotalRating))
+    ? Number(me.providerTotalRating)
+    : 0;
+  const myAge = Number.isFinite(Number(me?.companyAge))
+    ? Number(me.companyAge)
+    : 0;
   const myTypeNorm = normalizeProviderType(me.providerType);
 
+  // --- Helpers for preferred providers normalization ---
+  const toPreferredAreaMap = (value) => {
+    const out = {};
+    if (!value) return out;
+    if (Array.isArray(value)) {
+      // legacy: [{ companyName, areasOfLaw: [] }]
+      for (const row of value) {
+        const c = row?.companyName;
+        for (const a of row?.areasOfLaw || []) {
+          if (!a || !c) continue;
+          if (!Array.isArray(out[a])) out[a] = [];
+          if (!out[a].includes(c)) out[a].push(c);
+        }
+      }
+      return out;
+    }
+    if (typeof value === "object") {
+      for (const [area, v] of Object.entries(value)) {
+        if (!area) continue;
+        if (Array.isArray(v)) {
+          const uniq = [];
+          for (const s of v)
+            if (typeof s === "string" && s && !uniq.includes(s)) uniq.push(s);
+          if (uniq.length) out[area] = uniq;
+        } else if (typeof v === "string" && v.trim()) {
+          out[area] = [v.trim()];
+        }
+      }
+    }
+    return out;
+  };
+
   const visible = rows.filter((r) => {
-    // size/rating gates you already had
+    // ---------- Client-based gating first (blocked/panel) ----------
+    const maker = r.client || {};
+
+    // 1) Blocked: if maker has blocked me → hide
+    const blocked = Array.isArray(maker.blockedServiceProviders)
+      ? maker.blockedServiceProviders
+      : [];
+    if (myCompanyName && blocked.includes(myCompanyName)) return false;
+
+    // 2) Preferred-by-category: if maker has preferred list for this category AND I'm in that list → hide
+    // Normalize preferred data
+    const prefMap = toPreferredAreaMap(maker.preferredLegalServiceProviders);
+    const cat = r.requestCategory || "";
+    const preferredForCategory = Array.isArray(prefMap[cat])
+      ? prefMap[cat]
+      : [];
+    const iAmPreferred =
+      preferredForCategory.length > 0 &&
+      myCompanyName &&
+      preferredForCategory.includes(myCompanyName);
+
+    // 3) Legal panel: if maker has a non-empty panel and I'm NOT on it → hide
+    const panel = Array.isArray(maker.legalPanelServiceProviders)
+      ? maker.legalPanelServiceProviders
+      : [];
+    if (panel.length > 0 && myCompanyName && !panel.includes(myCompanyName)) {
+      return false;
+    }
+
+    // ---------- Capability gates (with preferred override) ----------
+    // size/rating gates
     const minPros = parseMinFromLabel(r.providerSize);
     const minRating = parseMinFromLabel(r.providerMinimumRating);
-    const passPros = (minPros ?? 0) <= myPros;
-    const passRating = (minRating ?? 0) <= myRating;
+    let passPros = (minPros ?? 0) <= myPros;
+    let passRating = (minRating ?? 0) <= myRating;
 
     // age gate with "Any Age" pass
     const reqAgeRaw =
       r.providerCompanyAge ?? r.details?.providerCompanyAge ?? null;
     const isAnyAge =
-      typeof reqAgeRaw === "string" && /^any(\s+age)?/i.test(reqAgeRaw.trim());
+      typeof reqAgeRaw === "string" &&
+      /^any(\s+age)?/i.test(reqAgeRaw?.trim?.() || "");
     const minAge = isAnyAge ? 0 : parseMinAge(reqAgeRaw);
-    const passAge = isAnyAge ? true : (minAge ?? 0) <= myAge;
+    let passAge = isAnyAge ? true : (minAge ?? 0) <= myAge;
 
     // type gate with plural/synonym normalization
     const reqTypeRaw =
       r.serviceProviderType ?? r.details?.serviceProviderType ?? "";
     const reqTypeNorm = normalizeProviderType(reqTypeRaw);
-    const passType =
+    let passType =
       reqTypeNorm === "" || reqTypeNorm === "all" || reqTypeNorm === myTypeNorm;
+
+    // Preferred override: if I'm preferred for this category, auto-pass all capability gates
+    if (iAmPreferred) {
+      passPros = passRating = passAge = passType = true;
+    }
 
     return passPros && passRating && passAge && passType;
   });

@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { Pencil, Save } from "lucide-react";
+import { Pencil, Save, CheckCircle } from "lucide-react";
 import NarrowTooltip from "../../components/NarrowTooltip";
 import Link from "next/link";
 
@@ -52,14 +52,14 @@ export default function Account() {
 
   // tickbox selection
   const AREAS_OF_LAW = [
-    "Contracts",
+    "Help with Contracts",
     "Day-to-day Legal Advice",
-    "Employment related Documents",
-    "Dispute Resolution and Debt Collection",
-    "Mergers & Acquisitions",
-    "Corporate Governance",
-    "Personal Data Protection",
-    "KYC or Compliance Questionnaires",
+    "Help with Employment related Documents",
+    "Help with Dispute Resolution or Debt Collection",
+    "Help with Mergers & Acquisitions",
+    "Help with Corporate Governance",
+    "Help with Personal Data Protection",
+    "Help with KYC (Know Your Customer) or Compliance related Questionnaire",
     "Legal Training for Management and/or Personnel",
   ];
   const [selectedAreas, setSelectedAreas] = useState([]);
@@ -513,6 +513,34 @@ export default function Account() {
     return <div className="p-6">Loading your account…</div>;
   }
 
+  // Result row with hover + selected visuals and keyboard support
+  const ResultRow = ({ item, isSelected, onSelect }) => (
+    <div
+      role="option"
+      aria-selected={isSelected}
+      tabIndex={0}
+      onClick={() => onSelect(item)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") onSelect(item);
+      }}
+      className={[
+        "group relative p-2 text-sm cursor-pointer select-none",
+        "transition-all duration-150 ease-out",
+        "hover:bg-[#f3f8f8] hover:pl-3 active:scale-[.99]",
+        isSelected
+          ? "bg-[#e6f7f7] ring-2 ring-[#11999e] ring-offset-1 border-l-4 border-[#11999e]"
+          : "border-l-4 border-transparent",
+      ].join(" ")}
+    >
+      <div className="flex items-center justify-between">
+        <div className={`font-medium ${isSelected ? "text-[#0b6d70]" : ""}`}>
+          {item.companyName || "(no company name)"}
+        </div>
+        {isSelected && <CheckCircle size={16} className="text-[#11999e]" />}
+      </div>
+    </div>
+  );
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-6">
       <h1 className="text-3xl font-bold mb-6">My LEXIFY Account</h1>
@@ -915,22 +943,14 @@ export default function Account() {
                 No matching provider found.
               </div>
             ) : (
-              bpResults.map((r) => {
-                const isSelected = bpSelected?.userId === r.userId;
-                return (
-                  <div
-                    key={String(r.userId)}
-                    className={`p-2 text-sm cursor-pointer hover:bg-gray-100 ${
-                      isSelected ? "bg-gray-100" : ""
-                    }`}
-                    onClick={() => setBpSelected(r)}
-                  >
-                    <div className="font-medium">
-                      {r.companyName || "(no company name)"}
-                    </div>
-                  </div>
-                );
-              })
+              bpResults.map((r) => (
+                <ResultRow
+                  key={String(r.userId)}
+                  item={r}
+                  isSelected={bpSelected?.userId === r.userId}
+                  onSelect={setBpSelected}
+                />
+              ))
             )}
           </div>
         )}
@@ -959,7 +979,7 @@ export default function Account() {
                   <th className="border p-2 text-left">
                     Legal Service Provider Company Name
                   </th>
-                  <th className="border p-2">Unblock</th>
+                  <th className="border p-2">Unblock Service Provider</th>
                 </tr>
               </thead>
               <tbody>
@@ -971,7 +991,7 @@ export default function Account() {
                         className="bg-green-600 text-white px-3 py-1 rounded cursor-pointer"
                         onClick={() => unblockProvider(name)}
                       >
-                        Unblock Legal Service Provider
+                        Unblock Service Provider
                       </button>
                     </td>
                   </tr>
@@ -994,13 +1014,15 @@ export default function Account() {
           problem! You can designate a legal service provider to be a preferred
           provider who is able to review every LEXIFY Request you submit. Simply
           enter the name of the relevant legal service provider in the search
-          field below, click the name of the service provider and then click
-          &quot;Assign Preferred Status&quot;. If you want, you can also limit
-          the preferred provider access to specific areas of law only with the
-          &quot;Select Areas of Law&quot; button. If you later want to remove
-          the preferred provider status from a legal service provider, just
-          click the “Unassign Preferred Status” button next to the name of that
-          legal service provider.{" "}
+          field below, click the name of the service provider, select the areas
+          of law you want the service provider to be preferred in and then click
+          &quot;Assign Preferred Status&quot;. You can edit a service
+          provider&apos;s preferred areas of law anytime with the &quot;Select
+          Areas of Law&quot; button (remember to click &quot;Save&quot; after
+          changing the areas of law). If you later want to remove the preferred
+          provider status from a legal service provider, just click the
+          “Unassign Preferred Status” button next to the name of that legal
+          service provider.{" "}
           <NarrowTooltip tooltipText="If you do not find a specific legal service provider when entering its name below, that legal service provider is not yet a registered user of LEXIFY. " />
         </h4>
         <br />
@@ -1021,22 +1043,14 @@ export default function Account() {
                 No matching provider found.
               </div>
             ) : (
-              ppResults.map((r) => {
-                const isSelected = ppSelected?.userId === r.userId;
-                return (
-                  <div
-                    key={String(r.userId)}
-                    className={`p-2 text-sm cursor-pointer hover:bg-gray-100 ${
-                      isSelected ? "bg-gray-100" : ""
-                    }`}
-                    onClick={() => setPpSelected(r)}
-                  >
-                    <div className="font-medium">
-                      {r.companyName || "(no company name)"}
-                    </div>
-                  </div>
-                );
-              })
+              ppResults.map((r) => (
+                <ResultRow
+                  key={String(r.userId)}
+                  item={r}
+                  isSelected={ppSelected?.userId === r.userId}
+                  onSelect={setPpSelected}
+                />
+              ))
             )}
           </div>
         )}
@@ -1086,13 +1100,14 @@ export default function Account() {
             <table className="w-full border border-gray-300 text-sm">
               <thead className="bg-gray-200">
                 <tr className="bg-[#3a3a3c] text-white">
-                  <th className="border p-2 text-left">
+                  <th className="border p-2 text-center">
                     Provider Company Name
                   </th>
-                  <th className="border p-2 text-left">
+                  <th className="border p-2 text-center">
                     Preferred Areas of Law
                   </th>
-                  <th className="border p-2">Actions</th>
+                  <th className="border p-2">Select Areas of Law</th>
+                  <th className="border p-2">Unassign Preferred Status</th>
                 </tr>
               </thead>
               <tbody>
@@ -1131,14 +1146,14 @@ export default function Account() {
                           <div className="flex items-center justify-center gap-2">
                             <button
                               disabled={ppBusy}
-                              className="bg-green-600 text-white px-3 py-1 rounded disabled:opacity-50"
+                              className="bg-green-600 text-white px-3 py-1 rounded disabled:opacity-50 cursor-pointer"
                               onClick={() => saveEditedAreas(p.companyName)}
                             >
                               Save
                             </button>
                             <button
                               disabled={ppBusy}
-                              className="bg-gray-400 text-white px-3 py-1 rounded disabled:opacity-50"
+                              className="bg-gray-400 text-white px-3 py-1 rounded disabled:opacity-50 cursor-pointer"
                               onClick={cancelEdit}
                             >
                               Cancel
@@ -1147,21 +1162,23 @@ export default function Account() {
                         ) : (
                           <div className="flex items-center justify-center gap-2">
                             <button
-                              className="bg-blue-600 text-white px-3 py-1 rounded"
+                              className="bg-blue-600 text-white px-3 py-1 rounded cursor-pointer"
                               onClick={() => startEdit(p)}
                             >
-                              Edit
-                            </button>
-                            <button
-                              className="bg-red-600 text-white px-3 py-1 rounded"
-                              onClick={() =>
-                                unassignPreferredProvider(p.companyName)
-                              }
-                            >
-                              Unassign
+                              Select Areas of Law
                             </button>
                           </div>
                         )}
+                      </td>
+                      <td className="border p-2 text-center">
+                        <button
+                          className="bg-red-600 text-white px-3 py-1 rounded cursor-pointer"
+                          onClick={() =>
+                            unassignPreferredProvider(p.companyName)
+                          }
+                        >
+                          Unassign Preferred Status
+                        </button>
                       </td>
                     </tr>
                   );
@@ -1212,22 +1229,14 @@ export default function Account() {
                 No matching provider found.
               </div>
             ) : (
-              lpResults.map((r) => {
-                const isSelected = lpSelected?.userId === r.userId;
-                return (
-                  <div
-                    key={String(r.userId)}
-                    className={`p-2 text-sm cursor-pointer hover:bg-gray-100 ${
-                      isSelected ? "bg-gray-100" : ""
-                    }`}
-                    onClick={() => setLpSelected(r)}
-                  >
-                    <div className="font-medium">
-                      {r.companyName || "(no company name)"}
-                    </div>
-                  </div>
-                );
-              })
+              lpResults.map((r) => (
+                <ResultRow
+                  key={String(r.userId)}
+                  item={r}
+                  isSelected={lpSelected?.userId === r.userId}
+                  onSelect={setLpSelected}
+                />
+              ))
             )}
           </div>
         )}
@@ -1253,7 +1262,7 @@ export default function Account() {
                   <th className="border p-2 text-left">
                     Provider Company Name
                   </th>
-                  <th className="border p-2">Remove</th>
+                  <th className="border p-2">Unassign Legal Panel Status</th>
                 </tr>
               </thead>
               <tbody>

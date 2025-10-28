@@ -5,31 +5,53 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 
 export async function GET(req) {
-  const session = await getServerSession(authOptions);
-  if (!session?.userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { searchParams } = new URL(req.url);
+    const q = (searchParams.get("q") || "").trim();
+    if (!q) return NextResponse.json([]);
+
+    const results = await prisma.appUser.findMany({
+      where: {
+        role: "PROVIDER",
+        companyName: { contains: q, mode: "insensitive" },
+      },
+      select: {
+        userId: true, // likely BIGINT in Postgres → BigInt in JS
+        username: true,
+        companyName: true,
+      },
+      take: 25,
+      orderBy: [{ companyName: "asc" }, { username: "asc" }],
+    });
+
+    // Serialize BigInt → string to avoid TypeError
+    const payload = results.map((r) => ({
+      ...r,
+      userId: r.userId != null ? String(r.userId) : null,
+    }));
+
+    return NextResponse.json(payload);
+  } catch (err) {
+    // Fallback serializer in case any nested BigInt sneaks in
+    try {
+      return new NextResponse(
+        JSON.stringify(
+          err?.message
+            ? { error: err.message }
+            : { error: "Internal Server Error" }
+        ),
+        { status: 500, headers: { "content-type": "application/json" } }
+      );
+    } catch {
+      return NextResponse.json(
+        { error: "Internal Server Error" },
+        { status: 500 }
+      );
+    }
   }
-
-  const { searchParams } = new URL(req.url);
-  const q = (searchParams.get("q") || "").trim();
-
-  // Robust provider search by companyName; avoid hardcoding role value that may differ in DB.
-  // If you *must* filter by role, use: role: { in: ["PROVIDER","LEGAL_SERVICE_PROVIDER","SERVICE_PROVIDER"] }
-  const where = {
-    companyName: q ? { contains: q, mode: "insensitive" } : { not: null }, // allow listing when user starts typing
-    role: { in: ["PROVIDER", "LEGAL_SERVICE_PROVIDER", "SERVICE_PROVIDER"] }, // <- optional, only if your enum supports these values
-  };
-
-  const results = await prisma.appUser.findMany({
-    where,
-    select: {
-      userId: true,
-      username: true,
-      companyName: true,
-    },
-    take: 25,
-    orderBy: [{ companyName: "asc" }, { username: "asc" }],
-  });
-
-  return NextResponse.json(results);
 }
