@@ -250,23 +250,27 @@ export default function Register() {
               <br />
             </>
           )}
-          <select
-            name="providerType"
-            className="p-2 border"
-            onChange={handleChange}
-            required
-          >
-            <option value="">Professional Regulation Category </option>
-            <option value="Attorneys-at-law">
-              Bar-admitted law firm - attorneys regulated by bar association or
-              law society
-            </option>
-            <option value="Law Firm">
-              Licensed legal service provider - licensed by
-              government/regulatory authority, not bar-regulated
-            </option>
-          </select>
-          <br />
+          {role === "provider" && (
+            <>
+              <select
+                name="providerType"
+                className="p-2 border"
+                onChange={handleChange}
+                required
+              >
+                <option value="">Professional Regulation Category </option>
+                <option value="Attorneys-at-law">
+                  Bar-admitted law firm - attorneys regulated by bar association
+                  or law society
+                </option>
+                <option value="Law Firm">
+                  Licensed legal service provider - licensed by
+                  government/regulatory authority, not bar-regulated
+                </option>
+              </select>
+              <br />
+            </>
+          )}
           {role === "provider" && (
             <>
               <input
