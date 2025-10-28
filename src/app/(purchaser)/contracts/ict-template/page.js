@@ -583,7 +583,7 @@ export default function IctTemplate() {
                 service providers and will only be used to disqualify any offer
                 that exceeds your maximum price. If the best offer you receive
                 exceeds the maximum price, you can still choose to accept such
-                offer by confirming your acceptance within 48 hours of the
+                offer by confirming your acceptance within 7 days of the
                 expiration of your LEXIFY Request.
               </em>
             </p>
