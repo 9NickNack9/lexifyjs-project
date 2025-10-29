@@ -75,16 +75,21 @@ export async function notifyProvidersNewAvailableRequest({
   to,
   requestCategory,
 }) {
-  const templateId = "d-17a045e0c243403eb84ac7a0d0136674";
+  const templateId =
+    process.env.SENDGRID_TEMPLATE_NEW_AVAILABLE_REQUEST ||
+    "d-17a045e0c243403eb84ac7a0d0136674";
+
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const isEmail = (s) => typeof s === "string" && EMAIL_RE.test(s.trim());
+
+  // Normalize: allow string or array, validate & dedupe
   const list = Array.isArray(to)
-    ? Array.from(new Set(to.filter(isEmail)))
+    ? Array.from(new Set(to.filter(isEmail).map((e) => e.trim())))
     : isEmail(to)
-    ? [to]
+    ? [to.trim()]
     : [];
 
-  // If we somehow have nobody, still ping Support so the event is tracked
+  // If nobody valid, still notify Support so the event is tracked
   if (list.length === 0) {
     await sendDynamicTemplateEmail({
       to: "support@lexify.online",
@@ -94,13 +99,15 @@ export async function notifyProvidersNewAvailableRequest({
     return;
   }
 
-  const [primary, ...cc] = list;
-  await sendDynamicTemplateEmail({
-    to: primary, // personal: send directly to the primary
-    cc, // CC other allNotification contacts
-    templateId,
-    dynamicTemplateData: { requestCategory },
-  });
+  // Send ONE email per recipient (parallel, tolerate partial failures)
+  const sends = list.map((email) =>
+    sendDynamicTemplateEmail({
+      to: email,
+      templateId,
+      dynamicTemplateData: { requestCategory },
+    })
+  );
+  await Promise.allSettled(sends);
 }
 
 /** Providers — Request Cancelled convenience helper */

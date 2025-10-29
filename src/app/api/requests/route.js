@@ -382,6 +382,16 @@ export async function POST(req) {
     }
   }
 
+  // Also notify Lexify support (single email)
+  try {
+    await notifyProvidersNewAvailableRequest({
+      to: ["support@lexify.online"],
+      requestCategory: requestCategoryJoined,
+    });
+  } catch (e) {
+    console.error("Support notification failed:", e);
+  }
+
   return NextResponse.json(
     { ok: true, requestId: String(created.requestId) },
     { status: 201 }
