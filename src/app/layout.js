@@ -22,6 +22,8 @@ export default function RootLayout({ children }) {
     "/register-screening",
     "/about",
     "/contact",
+    "/forgot-password",
+    "/reset-password",
   ];
 
   return (
@@ -36,7 +38,7 @@ export default function RootLayout({ children }) {
       </head>
       <body className={poppins.className}>
         <SessionProvider>
-          {!noNavPages.includes(pathname) && <Navbar />}
+          {!noNavPages.some((p) => pathname.startsWith(p)) && <Navbar />}
           {children}
           <FooterBanner />
         </SessionProvider>

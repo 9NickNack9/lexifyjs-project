@@ -113,7 +113,10 @@ export default function Login() {
           >
             Register
           </button>
-          <button className="text-[#11999e] cursor-pointer">
+          <button
+            onClick={() => router.push("/forgot-password")}
+            className="text-[#11999e] cursor-pointer"
+          >
             Forgot Password?
           </button>
         </div>

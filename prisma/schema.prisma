@@ -53,6 +53,7 @@ model AppUser {
   offers          Offer[]    @relation("ProviderOffers")
   contractsClient Contract[] @relation("ClientContracts")
   contractsProv   Contract[] @relation("ProviderContracts")
+  passwordResetTokens PasswordResetToken[] @relation("PasswordResetTokens")
 }
 
 model Request {
@@ -127,3 +128,18 @@ model Contract {
   client   AppUser @relation("ClientContracts", fields: [clientId], references: [userId], onDelete: Cascade)
   provider AppUser @relation("ProviderContracts", fields: [providerId], references: [userId], onDelete: Cascade)
 }
+
+model PasswordResetToken {
+  id        String   @id @default(cuid())
+  userId    BigInt
+  token     String   @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime @default(now())
+
+  user AppUser @relation("PasswordResetTokens", fields: [userId], references: [userId], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+

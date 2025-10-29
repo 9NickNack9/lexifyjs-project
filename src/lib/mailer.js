@@ -220,3 +220,25 @@ export async function notifyLosingLawyerNotSelected({ to, offerTitle }) {
     dynamicTemplateData: { offerTitle },
   });
 }
+
+export async function notifyUserPasswordReset({ to, resetUrl }) {
+  const templateId = "d-bf8354e1ef3545bd90c1bda5bc99d5f5";
+
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const email =
+    typeof to === "string" && EMAIL_RE.test(to.trim()) ? to.trim() : null;
+
+  // Fail-safe: if no valid recipient, notify support
+  const recipients = email ? [email] : ["support@lexify.online"];
+
+  await Promise.allSettled(
+    recipients.map((addr) =>
+      sendDynamicTemplateEmail({
+        to: addr,
+        templateId,
+        // Your template should include a button/link placeholder for resetUrl
+        dynamicTemplateData: { resetUrl },
+      })
+    )
+  );
+}
