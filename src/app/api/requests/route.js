@@ -14,6 +14,34 @@ function toDecimalString(v) {
   return s === "" ? null : s;
 }
 
+// ---- helpers for capability gates ----
+function normalizeProviderType(s) {
+  const t = (s || "").toString().trim().toLowerCase();
+  if (!t || t === "all") return "all";
+  if (t.startsWith("law")) return "lawfirm"; // e.g., "Law firm(s)"
+  if (t.includes("attorney")) return "attorneys"; // "Attorneys-at-law"
+  return t;
+}
+
+function parseMinFromLabel(label) {
+  if (label == null) return 0;
+  const raw = String(label).trim();
+  if (!raw) return 0;
+  if (/^any\b/i.test(raw)) return 0;
+  const m = raw.match(/(\d+(\.\d+)?)/);
+  return m ? Number(m[1]) : Number(raw) || 0;
+}
+
+function parseMinAge(val) {
+  // Accept "Any Age", "≥5", "5", number-like
+  if (val == null) return 0;
+  const raw = String(val).trim();
+  if (!raw) return 0;
+  if (/^any(\s+age)?$/i.test(raw)) return 0;
+  const m = raw.match(/(\d+(\.\d+)?)/);
+  return m ? Number(m[1]) : Number(raw) || 0;
+}
+
 const s3 = new S3Client({
   region: process.env.S3_REGION,
   endpoint: process.env.S3_ENDPOINT || undefined,
@@ -257,7 +285,13 @@ export async function POST(req) {
   ].filter(Boolean);
   const requestCategoryJoined = categoryParts.join(" / ");
 
-  // Fetch Providers and filter by notificationPreferences includes "new-available-request"
+  // ---- Build request-side minimums and type for capability gates ----
+  const reqMinPros = parseMinFromLabel(body.providerSize);
+  const reqMinRating = parseMinFromLabel(body.providerMinimumRating);
+  const reqMinAge = parseMinAge(body.providerCompanyAge);
+  const reqTypeNorm = normalizeProviderType(body.serviceProviderType);
+
+  // Fetch Providers with fields needed for gating and notifications
   function toStringArray(val) {
     if (Array.isArray(val)) return val.filter((v) => typeof v === "string");
     if (val && typeof val === "object") {
@@ -282,47 +316,69 @@ export async function POST(req) {
   const providers = await prisma.appUser.findMany({
     where: { role: "PROVIDER" },
     select: {
-      companyContactPersons: true, // [{ firstName,lastName,email,telephone,position }]
+      companyContactPersons: true, // [{ firstName,lastName,email,telephone,position, allNotifications? }]
       notificationPreferences: true,
+      companyAge: true,
+      companyProfessionals: true,
+      providerType: true,
+      providerTotalRating: true,
     },
   });
 
-  // --- helpers copied from other routes for parity ---
+  // Build unique email list across all qualified providers, then send separately to each
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const isEmail = (s) => typeof s === "string" && EMAIL_RE.test(s.trim());
-  function expandWithAllNotificationContacts(primary, contacts) {
-    const primaryEmail =
-      typeof primary === "string" ? primary : primary?.email || "";
-    const base = new Set();
-    if (isEmail(primaryEmail)) base.add(primaryEmail.trim());
-    (Array.isArray(contacts) ? contacts : [])
-      .filter((c) => c && c.allNotifications === true && isEmail(c.email))
-      .forEach((c) => base.add(c.email.trim()));
-    return Array.from(base);
-  }
+  const allRecipients = new Set();
 
-  // Personal emails per provider: primary + all-notification contacts
   for (const p of providers) {
+    // notifications preference gate
     const prefs = toStringArray(p?.notificationPreferences);
     if (!prefs.includes("new-available-request")) continue;
 
+    // capability gates against request minimums
+    const pAge = Number.isFinite(Number(p?.companyAge))
+      ? Number(p.companyAge)
+      : 0;
+    const pPros = Number.isFinite(Number(p?.companyProfessionals))
+      ? Number(p.companyProfessionals)
+      : 0;
+    const pRating = Number.isFinite(Number(p?.providerTotalRating))
+      ? Number(p.providerTotalRating)
+      : 0;
+    const pTypeNorm = normalizeProviderType(p?.providerType);
+
+    // providerType match: if request says "all" or empty → allow any; else must equal
+    const typePass =
+      reqTypeNorm === "all" || reqTypeNorm === "" || reqTypeNorm === pTypeNorm;
+    if (
+      !(
+        pAge >= reqMinAge &&
+        pPros >= reqMinPros &&
+        pRating >= reqMinRating &&
+        typePass
+      )
+    ) {
+      continue;
+    }
+
+    // collect every contact person's email for this provider
     const contacts = Array.isArray(p?.companyContactPersons)
       ? p.companyContactPersons
       : [];
+    for (const c of contacts) {
+      const em = (c?.email || "").trim();
+      if (isEmail(em)) allRecipients.add(em);
+    }
+  }
 
-    // pick a sensible primary: first contact with a valid email
-    const primary =
-      contacts.find((c) => isEmail((c?.email || "").trim())) || null;
-    if (!primary) continue; // nothing to send to for this provider
-
-    const toGroup = expandWithAllNotificationContacts(primary, contacts);
+  for (const email of allRecipients) {
     try {
       await notifyProvidersNewAvailableRequest({
-        to: toGroup, // personal per provider (primary + allNotifications)
+        to: [email], // separate email to each recipient
         requestCategory: requestCategoryJoined,
       });
     } catch (e) {
-      console.error("New-available-request email failed for provider:", e);
+      console.error("New-available-request email failed for", email, e);
     }
   }
 
