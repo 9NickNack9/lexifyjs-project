@@ -689,12 +689,53 @@ export default function AdminPage() {
                     <td className="border p-2">{r.offersCount ?? 0}</td>
                     <td className="border p-2">{timeLabel}</td>
                     <td className="border p-2">
-                      <button
-                        onClick={() => deleteRequest(r.requestId)}
-                        className="bg-red-500 text-white px-2 py-1 rounded"
-                      >
-                        Delete
-                      </button>
+                      {r.requestState === "CONFLICT_CHECK" ? (
+                        <div className="flex gap-2 justify-center">
+                          <button
+                            className="bg-green-600 text-white px-2 py-1 rounded"
+                            onClick={async () => {
+                              await fetch(
+                                `/api/admin/requests/${r.requestId}/conflict`,
+                                {
+                                  method: "PUT",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                  },
+                                  body: JSON.stringify({ decision: "accept" }),
+                                }
+                              );
+                              fetchRequests(true);
+                            }}
+                          >
+                            Approve Conflict Check
+                          </button>
+                          <button
+                            className="bg-red-600 text-white px-2 py-1 rounded"
+                            onClick={async () => {
+                              await fetch(
+                                `/api/admin/requests/${r.requestId}/conflict`,
+                                {
+                                  method: "PUT",
+                                  headers: {
+                                    "Content-Type": "application/json",
+                                  },
+                                  body: JSON.stringify({ decision: "deny" }),
+                                }
+                              );
+                              fetchRequests(true);
+                            }}
+                          >
+                            Deny & Replace Offer
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => deleteRequest(r.requestId)}
+                          className="bg-red-500 text-white px-2 py-1 rounded"
+                        >
+                          Delete
+                        </button>
+                      )}
                     </td>
                   </tr>
                 );

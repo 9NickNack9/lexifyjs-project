@@ -327,6 +327,15 @@ export async function DELETE(_, ctx) {
     } catch (e) {
       console.error("Request-cancelled email failed for provider:", e);
     }
+
+    try {
+      await notifyProvidersRequestCancelled({
+        to: ["support@lexify.online"], // support noti of cancellation
+        offerTitle: id || "",
+      });
+    } catch (e) {
+      console.error("Request-cancelled email failed for support:", e);
+    }
   }
 
   // Finally delete the request

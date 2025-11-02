@@ -139,6 +139,16 @@ function counterpartyOrWinnerOnly(row) {
     "—"
   );
 }
+
+function primaryContactPersonConfidential(row) {
+  const confidential =
+    row?.details?.confidential?.toString().toLowerCase() === "yes";
+
+  if (confidential) return "Disclosed to Winning Bidder Only";
+
+  return row?.primaryContactPerson ?? row?.details?.primaryContactPerson ?? "—";
+}
+
 function priceModel(row) {
   const rate = row.paymentRate || "—";
   const ccy = row.currency || "";
@@ -180,6 +190,9 @@ function resolvePath(row, path) {
         return winnerOnly(row) || buildClientLine(row);
       case "__counterpartyConfidential__":
         return counterpartyOrWinnerOnly(row);
+      case "__primaryContactPersonConfidential__":
+        return primaryContactPersonConfidential(row);
+
       case "primaryContactPerson":
       case "details.primaryContactPerson":
         return (

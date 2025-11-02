@@ -136,11 +136,24 @@ export default function ContractModal({
       ? "Disclosed to Winning Bidder Only"
       : "";
   }
+
+  function primaryContactPersonConfidential(row) {
+    const confidential =
+      row?.details?.confidential?.toString().toLowerCase() === "yes";
+
+    if (confidential) return "Disclosed to Winning Bidder Only";
+
+    return (
+      row?.primaryContactPerson ?? row?.details?.primaryContactPerson ?? "—"
+    );
+  }
+
   function counterpartyOrWinnerOnly(row) {
     const w = winnerOnly(row);
     if (w) return w;
     return (
       row?.details?.breachCompany ||
+      row?.details?.winnerBidderOnlyStatus ||
       row?.details?.counterparty ||
       row?.counterparty ||
       "—"
@@ -228,6 +241,9 @@ export default function ContractModal({
           return [row.currency || "—", fmtMoney(row.maximumPrice, row.currency)]
             .filter(Boolean)
             .join(" / ");
+        case "__primaryContactPersonConfidential__":
+          return primaryContactPersonConfidential(row);
+
         case "__priceModel__":
         case "__priceModel_LumpSumWithCurrency__":
         case "__priceModel_HourlyWithCurrency__":

@@ -57,19 +57,23 @@ model AppUser {
 }
 
 model Request {
-  requestId                    BigInt       @id @default(autoincrement())  // ← present in every request
-  clientId                     BigInt                                  // ← session.userId
-  requestState                 String                                  // e.g. "OPEN", "CLOSED"
-  requestCategory              String
-  requestSubcategory           String?                                 // not relevant to all
-  assignmentType               String?                                 // not relevant to all
-  clientCompanyName            String?
-  primaryContactPerson         String
-  scopeOfWork                  String                                  // what was requested
-  description                  String                                  // your “company line of business”
-  additionalBackgroundInfo     String     @default("")                 // present but can be empty
-  backgroundInfoFiles          Json       @default("[]")              // present but can be empty
-  supplierCodeOfConductFiles   Json       @default("[]")              // present but can be empty
+  requestId                          BigInt       @id @default(autoincrement())  // ← present in every request
+  clientId                           BigInt                                      // ← session.userId
+  requestState                       String                                      // e.g. "PENDING", "EXPIRED", "ON HOLD", "CONFLICT CHECK"
+  selectedOfferId                    BigInt?                                    // offer picked, awaiting conflict decision
+  acceptDeadlinePausedRemainingMs    Int?                                       // how much time was left when we paused
+  acceptDeadlinePausedAt             DateTime?                                  // auditing only
+  disqualifiedOfferIds               Json?                                      // [offerId, offerId, ...] (BigInt serialized as strings ok)
+  requestCategory                    String
+  requestSubcategory                 String?                                 // not relevant to all
+  assignmentType                     String?                                 // not relevant to all
+  clientCompanyName                  String?
+  primaryContactPerson               String
+  scopeOfWork                        String                                  // what was requested
+  description                        String                                  // your “company line of business”
+  additionalBackgroundInfo           String     @default("")                 // present but can be empty
+  backgroundInfoFiles                Json       @default("[]")              // present but can be empty
+  supplierCodeOfConductFiles         Json       @default("[]")              // present but can be empty
 
   serviceProviderType          String
   domesticOffers               String

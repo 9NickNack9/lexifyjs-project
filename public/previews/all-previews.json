@@ -11,7 +11,11 @@
             "fields": [
               {
                 "label": "Client",
-                "path": "__clientLine__"
+                "path": "__clientLineOrDisclosed__"
+              },
+              {
+                "label": "Primary contact person",
+                "path": "__primaryContactPersonConfidential__"
               }
             ]
           },
@@ -103,7 +107,7 @@
             "fields": [
               {
                 "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
-                "path": "details.winnerBidderOnlyStatus"
+                "path": "__counterpartyConfidential__"
               },
               {
                 "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
@@ -154,7 +158,11 @@
             "fields": [
               {
                 "label": "Client",
-                "path": "__clientLine__"
+                "path": "__clientLineOrDisclosed__"
+              },
+              {
+                "label": "Primary contact person",
+                "path": "__primaryContactPersonConfidential__"
               }
             ]
           },
@@ -246,7 +254,7 @@
             "fields": [
               {
                 "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
-                "path": "details.winnerBidderOnlyStatus"
+                "path": "__counterpartyConfidential__"
               },
               {
                 "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
@@ -301,7 +309,7 @@
               },
               {
                 "label": "Primary contact person",
-                "path": "primaryContactPerson"
+                "path": "__primaryContactPersonConfidential__"
               }
             ]
           },
@@ -333,7 +341,7 @@
             "fields": [
               {
                 "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter",
-                "path": "details.winnerBidderOnlyStatus"
+                "path": "__counterpartyConfidential__"
               },
               {
                 "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
@@ -493,7 +501,7 @@
               },
               {
                 "label": "Primary contact person",
-                "path": "primaryContactPerson"
+                "path": "__primaryContactPersonConfidential__"
               }
             ]
           },
@@ -507,14 +515,44 @@
             ]
           },
           {
-            "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
+            "title": "How will the Client be Invoiced by the Legal Service Provider?",
             "fields": [
               {
-                "label": "Price model",
-                "path": "__priceModel__"
+                "label": "Contract Price",
+                "path": "paymentRate"
+              },
+              {
+                "label": "Currency",
+                "path": "currency"
+              },
+              {
+                "label": "Invoicing",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
+                "path": "advanceRetainerFee"
               }
             ]
           },
+          {
+            "title": "Attachments",
+            "fields": [
+              {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              },
+              {
+                "label": "Background files",
+                "path": "backgroundInfoFiles"
+              },
+              {
+                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "path": "supplierCodeOfConductFiles"
+              }
+            ]
+          },
+
           {
             "title": "Object of Sale",
             "fields": [
@@ -529,96 +567,24 @@
             ]
           },
           {
-            "title": "Confidentiality",
+            "title": "Counterparty/Confidentiality",
             "fields": [
               {
                 "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
-                "path": "details.winnerBidderOnlyStatus"
+                "path": "__counterpartyConfidential__"
+              },
+              {
+                "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
+                "path": "details.confidential"
               }
             ]
           },
           {
-            "title": "Commercial Terms",
+            "title": "Languages Required for the Performance of the Work",
             "fields": [
-              {
-                "label": "Contract Price",
-                "path": "paymentRate"
-              },
-              {
-                "label": "Currency",
-                "path": "currency"
-              },
-              {
-                "label": "Invoice type",
-                "path": "invoiceType"
-              },
-              {
-                "label": "Advance retainer fee",
-                "path": "advanceRetainerFee"
-              }
-            ]
-          },
-          {
-            "title": "Provider Requirements",
-            "fields": [
-              {
-                "label": "Service provider type",
-                "path": "serviceProviderType"
-              },
-              {
-                "label": "Domestic offers",
-                "path": "domesticOffers"
-              },
-              {
-                "label": "Minimum provider size",
-                "path": "providerSize"
-              },
-              {
-                "label": "Minimum company age",
-                "path": "providerCompanyAge"
-              },
-              {
-                "label": "Minimum rating",
-                "path": "providerMinimumRating"
-              }
-            ]
-          },
-          {
-            "title": "Attachments",
-            "fields": [
-              {
-                "label": "Background files",
-                "path": "backgroundInfoFiles"
-              },
-              {
-                "label": "Supplier Code of Conduct files",
-                "path": "supplierCodeOfConductFiles"
-              }
-            ]
-          },
-          {
-            "title": "Meta",
-            "fields": [
-              {
-                "label": "Request title",
-                "path": "title"
-              },
               {
                 "label": "Languages",
                 "path": "language"
-              },
-              {
-                "label": "Offers deadline",
-                "path": "offersDeadline"
-              }
-            ]
-          },
-          {
-            "title": "Request State",
-            "fields": [
-              {
-                "label": "Request State",
-                "path": "requestState"
               }
             ]
           },
@@ -650,15 +616,6 @@
             ]
           },
           {
-            "title": "Scope Of Work",
-            "fields": [
-              {
-                "label": "What do you need?",
-                "path": "scopeOfWork"
-              }
-            ]
-          },
-          {
             "title": "Description",
             "fields": [
               {
@@ -668,43 +625,7 @@
             ]
           },
           {
-            "title": "Additional Background Info",
-            "fields": [
-              {
-                "label": "Additional Background Information",
-                "path": "additionalBackgroundInfo"
-              }
-            ]
-          },
-          {
-            "title": "Date Expired",
-            "fields": [
-              {
-                "label": "Date Expired",
-                "path": "dateExpired"
-              }
-            ]
-          },
-          {
-            "title": "Details Due Diligence",
-            "fields": [
-              {
-                "label": "Due diligence reporting format",
-                "path": "details.dueDiligence"
-              }
-            ]
-          },
-          {
-            "title": "Details Confidential",
-            "fields": [
-              {
-                "label": "Confidential",
-                "path": "details.confidential"
-              }
-            ]
-          },
-          {
-            "title": "Details Price Range",
+            "title": "Expected Price Range",
             "fields": [
               {
                 "label": "Price Range",
@@ -763,7 +684,7 @@
               },
               {
                 "label": "Primary contact person",
-                "path": "primaryContactPerson"
+                "path": "__primaryContactPersonConfidential__"
               }
             ]
           },
@@ -777,11 +698,23 @@
             ]
           },
           {
-            "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
+            "title": "How will the Client be Invoiced by the Legal Service Provider?",
             "fields": [
               {
-                "label": "Price model",
-                "path": "__priceModel__"
+                "label": "Contract Price",
+                "path": "paymentRate"
+              },
+              {
+                "label": "Currency",
+                "path": "currency"
+              },
+              {
+                "label": "Invoicing",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
+                "path": "advanceRetainerFee"
               }
             ]
           },
@@ -795,57 +728,15 @@
             ]
           },
           {
-            "title": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Lease Agreement",
+            "title": "Counterparty/Confidentiality",
             "fields": [
               {
-                "label": "Counterparty",
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
                 "path": "__counterpartyConfidential__"
-              }
-            ]
-          },
-          {
-            "title": "Commercial Terms",
-            "fields": [
-              {
-                "label": "Contract Price",
-                "path": "paymentRate"
               },
               {
-                "label": "Currency",
-                "path": "currency"
-              },
-              {
-                "label": "Invoice type",
-                "path": "invoiceType"
-              },
-              {
-                "label": "Advance retainer fee",
-                "path": "advanceRetainerFee"
-              }
-            ]
-          },
-          {
-            "title": "Provider Requirements",
-            "fields": [
-              {
-                "label": "Service provider type",
-                "path": "serviceProviderType"
-              },
-              {
-                "label": "Domestic offers",
-                "path": "domesticOffers"
-              },
-              {
-                "label": "Minimum provider size",
-                "path": "providerSize"
-              },
-              {
-                "label": "Minimum company age",
-                "path": "providerCompanyAge"
-              },
-              {
-                "label": "Minimum rating",
-                "path": "providerMinimumRating"
+                "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
+                "path": "details.confidential"
               }
             ]
           },
@@ -853,38 +744,26 @@
             "title": "Attachments",
             "fields": [
               {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              },
+              {
                 "label": "Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct files",
+                "label": "Supplier Code of Conduct and/or other procurement related files",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
           },
+
           {
-            "title": "Meta",
+            "title": "Languages Required for the Performance of the Work",
             "fields": [
-              {
-                "label": "Request title",
-                "path": "title"
-              },
               {
                 "label": "Languages",
                 "path": "language"
-              },
-              {
-                "label": "Offers deadline",
-                "path": "offersDeadline"
-              }
-            ]
-          },
-          {
-            "title": "Request State",
-            "fields": [
-              {
-                "label": "Request State",
-                "path": "requestState"
               }
             ]
           },
@@ -925,25 +804,7 @@
             ]
           },
           {
-            "title": "Additional Background Info",
-            "fields": [
-              {
-                "label": "Additional Background Information",
-                "path": "additionalBackgroundInfo"
-              }
-            ]
-          },
-          {
-            "title": "Date Expired",
-            "fields": [
-              {
-                "label": "Date Expired",
-                "path": "dateExpired"
-              }
-            ]
-          },
-          {
-            "title": "Details Customer Type",
+            "title": "Customer Type",
             "fields": [
               {
                 "label": "Role",
@@ -952,29 +813,11 @@
             ]
           },
           {
-            "title": "Details Rent Range",
+            "title": "Expected Rent Range",
             "fields": [
               {
                 "label": "Rent Range",
                 "path": "details.rentRange"
-              }
-            ]
-          },
-          {
-            "title": "Details Confidential",
-            "fields": [
-              {
-                "label": "Confidential",
-                "path": "details.confidential"
-              }
-            ]
-          },
-          {
-            "title": "Details Winner Bidder Only Status",
-            "fields": [
-              {
-                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
-                "path": "details.winnerBidderOnlyStatus"
               }
             ]
           }
@@ -1028,7 +871,7 @@
               },
               {
                 "label": "Primary contact person",
-                "path": "primaryContactPerson"
+                "path": "__primaryContactPersonConfidential__"
               }
             ]
           },
@@ -1042,15 +885,6 @@
             ]
           },
           {
-            "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
-            "fields": [
-              {
-                "label": "Price model",
-                "path": "__priceModel__"
-              }
-            ]
-          },
-          {
             "title": "Type of Easement Agreement Being Negotiated",
             "fields": [
               {
@@ -1060,16 +894,20 @@
             ]
           },
           {
-            "title": "Name, Business Identity Code and Country of Domicile of the Client's Counterparty in the Easement Agreement; Property Identification Codes of the Properties Included in the Easement Agreement",
+            "title": "Counterparty/Confidentiality",
             "fields": [
               {
-                "label": "Counterparty",
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
                 "path": "__counterpartyConfidential__"
+              },
+              {
+                "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
+                "path": "details.confidential"
               }
             ]
           },
           {
-            "title": "Commercial Terms",
+            "title": "How will the Client be Invoiced by the Legal Service Provider?",
             "fields": [
               {
                 "label": "Contract Price",
@@ -1080,37 +918,12 @@
                 "path": "currency"
               },
               {
-                "label": "Invoice type",
+                "label": "Invoicing",
                 "path": "invoiceType"
               },
               {
-                "label": "Advance retainer fee",
+                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
                 "path": "advanceRetainerFee"
-              }
-            ]
-          },
-          {
-            "title": "Provider Requirements",
-            "fields": [
-              {
-                "label": "Service provider type",
-                "path": "serviceProviderType"
-              },
-              {
-                "label": "Domestic offers",
-                "path": "domesticOffers"
-              },
-              {
-                "label": "Minimum provider size",
-                "path": "providerSize"
-              },
-              {
-                "label": "Minimum company age",
-                "path": "providerCompanyAge"
-              },
-              {
-                "label": "Minimum rating",
-                "path": "providerMinimumRating"
               }
             ]
           },
@@ -1118,38 +931,25 @@
             "title": "Attachments",
             "fields": [
               {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              },
+              {
                 "label": "Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct files",
+                "label": "Supplier Code of Conduct and/or other procurement related files",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
           },
           {
-            "title": "Meta",
+            "title": "Languages Required for the Performance of the Work",
             "fields": [
-              {
-                "label": "Request title",
-                "path": "title"
-              },
               {
                 "label": "Languages",
                 "path": "language"
-              },
-              {
-                "label": "Offers deadline",
-                "path": "offersDeadline"
-              }
-            ]
-          },
-          {
-            "title": "Request State",
-            "fields": [
-              {
-                "label": "Request State",
-                "path": "requestState"
               }
             ]
           },
@@ -1186,42 +986,6 @@
               {
                 "label": "Description",
                 "path": "description"
-              }
-            ]
-          },
-          {
-            "title": "Additional Background Info",
-            "fields": [
-              {
-                "label": "Additional Background Information",
-                "path": "additionalBackgroundInfo"
-              }
-            ]
-          },
-          {
-            "title": "Date Expired",
-            "fields": [
-              {
-                "label": "Date Expired",
-                "path": "dateExpired"
-              }
-            ]
-          },
-          {
-            "title": "Details Confidential",
-            "fields": [
-              {
-                "label": "Confidential",
-                "path": "details.confidential"
-              }
-            ]
-          },
-          {
-            "title": "Details Winner Bidder Only Status",
-            "fields": [
-              {
-                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
-                "path": "details.winnerBidderOnlyStatus"
               }
             ]
           }
@@ -1272,7 +1036,7 @@
               },
               {
                 "label": "Primary contact person",
-                "path": "primaryContactPerson"
+                "path": "__primaryContactPersonConfidential__"
               }
             ]
           },
@@ -1286,34 +1050,7 @@
             ]
           },
           {
-            "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
-            "fields": [
-              {
-                "label": "Price model",
-                "path": "__priceModel__"
-              }
-            ]
-          },
-          {
-            "title": "Client's Role in the Construction Contract",
-            "fields": [
-              {
-                "label": "Role",
-                "path": "details.customerType"
-              }
-            ]
-          },
-          {
-            "title": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Construction Contract",
-            "fields": [
-              {
-                "label": "Counterparty",
-                "path": "__counterpartyConfidential__"
-              }
-            ]
-          },
-          {
-            "title": "Commercial Terms",
+            "title": "How will the Client be Invoiced by the Legal Service Provider?",
             "fields": [
               {
                 "label": "Contract Price",
@@ -1324,37 +1061,56 @@
                 "path": "currency"
               },
               {
-                "label": "Invoice type",
+                "label": "Invoicing",
                 "path": "invoiceType"
               },
               {
-                "label": "Advance retainer fee",
+                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
                 "path": "advanceRetainerFee"
               }
             ]
           },
+
           {
-            "title": "Provider Requirements",
+            "title": "Client's Role in the Construction Contract",
             "fields": [
               {
-                "label": "Service provider type",
-                "path": "serviceProviderType"
+                "label": "Role",
+                "path": "details.customerType"
+              }
+            ]
+          },
+          {
+            "title": "Counterparty/Confidentiality",
+            "fields": [
+              {
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
+                "path": "__counterpartyConfidential__"
               },
               {
-                "label": "Domestic offers",
-                "path": "domesticOffers"
+                "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
+                "path": "details.confidential"
+              }
+            ]
+          },
+          {
+            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "fields": [
+              {
+                "label": "Contract Price",
+                "path": "paymentRate"
               },
               {
-                "label": "Minimum provider size",
-                "path": "providerSize"
+                "label": "Currency",
+                "path": "currency"
               },
               {
-                "label": "Minimum company age",
-                "path": "providerCompanyAge"
+                "label": "Invoicing",
+                "path": "invoiceType"
               },
               {
-                "label": "Minimum rating",
-                "path": "providerMinimumRating"
+                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
+                "path": "advanceRetainerFee"
               }
             ]
           },
@@ -1362,38 +1118,25 @@
             "title": "Attachments",
             "fields": [
               {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              },
+              {
                 "label": "Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct files",
+                "label": "Supplier Code of Conduct and/or other procurement related files",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
           },
           {
-            "title": "Meta",
+            "title": "Languages Required for the Performance of the Work",
             "fields": [
-              {
-                "label": "Request title",
-                "path": "title"
-              },
               {
                 "label": "Languages",
                 "path": "language"
-              },
-              {
-                "label": "Offers deadline",
-                "path": "offersDeadline"
-              }
-            ]
-          },
-          {
-            "title": "Request State",
-            "fields": [
-              {
-                "label": "Request State",
-                "path": "requestState"
               }
             ]
           },
@@ -1434,47 +1177,11 @@
             ]
           },
           {
-            "title": "Additional Background Info",
-            "fields": [
-              {
-                "label": "Additional Background Information",
-                "path": "additionalBackgroundInfo"
-              }
-            ]
-          },
-          {
-            "title": "Date Expired",
-            "fields": [
-              {
-                "label": "Date Expired",
-                "path": "dateExpired"
-              }
-            ]
-          },
-          {
-            "title": "Details Price Range",
+            "title": "Expected Price Range",
             "fields": [
               {
                 "label": "Price Range",
                 "path": "details.priceRange"
-              }
-            ]
-          },
-          {
-            "title": "Details Confidential",
-            "fields": [
-              {
-                "label": "Confidential",
-                "path": "details.confidential"
-              }
-            ]
-          },
-          {
-            "title": "Details Winner Bidder Only Status",
-            "fields": [
-              {
-                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
-                "path": "details.winnerBidderOnlyStatus"
               }
             ]
           }
@@ -1545,48 +1252,23 @@
             ]
           },
           {
-            "title": "Commercial Terms",
+            "title": "How will the Client be Invoiced by the Legal Service Provider?",
             "fields": [
               {
                 "label": "Contract Price",
                 "path": "paymentRate"
               },
               {
-                "label": "Currency / Maximum price",
-                "path": "__currencyMax__"
+                "label": "Currency",
+                "path": "currency"
               },
               {
-                "label": "Invoice type",
+                "label": "Invoicing",
                 "path": "invoiceType"
               },
               {
-                "label": "Advance retainer fee",
+                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
                 "path": "advanceRetainerFee"
-              }
-            ]
-          },
-          {
-            "title": "Provider Requirements",
-            "fields": [
-              {
-                "label": "Service provider type",
-                "path": "serviceProviderType"
-              },
-              {
-                "label": "Domestic offers",
-                "path": "domesticOffers"
-              },
-              {
-                "label": "Minimum provider size",
-                "path": "providerSize"
-              },
-              {
-                "label": "Minimum company age",
-                "path": "providerCompanyAge"
-              },
-              {
-                "label": "Minimum rating",
-                "path": "providerMinimumRating"
               }
             ]
           },
@@ -1594,38 +1276,25 @@
             "title": "Attachments",
             "fields": [
               {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              },
+              {
                 "label": "Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct files",
+                "label": "Supplier Code of Conduct and/or other procurement related files",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
           },
           {
-            "title": "Meta",
+            "title": "Languages Required for the Performance of the Work",
             "fields": [
-              {
-                "label": "Request title",
-                "path": "title"
-              },
               {
                 "label": "Languages",
                 "path": "language"
-              },
-              {
-                "label": "Offers deadline",
-                "path": "offersDeadline"
-              }
-            ]
-          },
-          {
-            "title": "Request State",
-            "fields": [
-              {
-                "label": "Request State",
-                "path": "requestState"
               }
             ]
           },
@@ -1653,42 +1322,6 @@
               {
                 "label": "Assignment Type",
                 "path": "assignmentType"
-              }
-            ]
-          },
-          {
-            "title": "Additional Background Info",
-            "fields": [
-              {
-                "label": "Additional Background Information",
-                "path": "additionalBackgroundInfo"
-              }
-            ]
-          },
-          {
-            "title": "Currency",
-            "fields": [
-              {
-                "label": "Currency",
-                "path": "currency"
-              }
-            ]
-          },
-          {
-            "title": "Date Expired",
-            "fields": [
-              {
-                "label": "Date Expired",
-                "path": "dateExpired"
-              }
-            ]
-          },
-          {
-            "title": "Details Maximum Price",
-            "fields": [
-              {
-                "label": "Maximum Price",
-                "path": "details.maximumPrice"
               }
             ]
           }
@@ -1738,7 +1371,7 @@
               },
               {
                 "label": "Primary contact person",
-                "path": "primaryContactPerson"
+                "path": "__primaryContactPersonConfidential__"
               }
             ]
           },
@@ -1756,20 +1389,20 @@
             ]
           },
           {
-            "title": "Counterparty & Confidentiality",
+            "title": "Counterparty/Confidentiality",
             "fields": [
               {
-                "label": "Counterparty",
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
                 "path": "__counterpartyConfidential__"
               },
               {
-                "label": "Expected value of the agreement",
-                "path": "details.expectedValue"
+                "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
+                "path": "details.confidential"
               }
             ]
           },
           {
-            "title": "Commercial Terms",
+            "title": "How will the Client be Invoiced by the Legal Service Provider?",
             "fields": [
               {
                 "label": "Contract Price",
@@ -1780,37 +1413,12 @@
                 "path": "currency"
               },
               {
-                "label": "Invoice type",
+                "label": "Invoicing",
                 "path": "invoiceType"
               },
               {
-                "label": "Advance retainer fee",
+                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
                 "path": "advanceRetainerFee"
-              }
-            ]
-          },
-          {
-            "title": "Provider Requirements",
-            "fields": [
-              {
-                "label": "Service provider type",
-                "path": "serviceProviderType"
-              },
-              {
-                "label": "Domestic offers",
-                "path": "domesticOffers"
-              },
-              {
-                "label": "Minimum provider size",
-                "path": "providerSize"
-              },
-              {
-                "label": "Minimum company age",
-                "path": "providerCompanyAge"
-              },
-              {
-                "label": "Minimum rating",
-                "path": "providerMinimumRating"
               }
             ]
           },
@@ -1818,38 +1426,25 @@
             "title": "Attachments",
             "fields": [
               {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              },
+              {
                 "label": "Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct files",
+                "label": "Supplier Code of Conduct and/or other procurement related files",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
           },
           {
-            "title": "Meta",
+            "title": "Languages Required for the Performance of the Work",
             "fields": [
-              {
-                "label": "Request title",
-                "path": "title"
-              },
               {
                 "label": "Languages",
                 "path": "language"
-              },
-              {
-                "label": "Offers deadline",
-                "path": "offersDeadline"
-              }
-            ]
-          },
-          {
-            "title": "Request State",
-            "fields": [
-              {
-                "label": "Request State",
-                "path": "requestState"
               }
             ]
           },
@@ -1877,42 +1472,6 @@
               {
                 "label": "Assignment Type",
                 "path": "assignmentType"
-              }
-            ]
-          },
-          {
-            "title": "Additional Background Info",
-            "fields": [
-              {
-                "label": "Additional Background Information",
-                "path": "additionalBackgroundInfo"
-              }
-            ]
-          },
-          {
-            "title": "Date Expired",
-            "fields": [
-              {
-                "label": "Date Expired",
-                "path": "dateExpired"
-              }
-            ]
-          },
-          {
-            "title": "Details Confidential",
-            "fields": [
-              {
-                "label": "Confidential",
-                "path": "details.confidential"
-              }
-            ]
-          },
-          {
-            "title": "Details Winner Bidder Only Status",
-            "fields": [
-              {
-                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
-                "path": "details.winnerBidderOnlyStatus"
               }
             ]
           }
@@ -1964,7 +1523,7 @@
               },
               {
                 "label": "Primary contact person",
-                "path": "primaryContactPerson"
+                "path": "__primaryContactPersonConfidential__"
               }
             ]
           },
@@ -1982,24 +1541,20 @@
             ]
           },
           {
-            "title": "Counterparty, Expected Value & Template",
+            "title": "Counterparty/Confidentiality",
             "fields": [
               {
-                "label": "Counterparty",
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
                 "path": "__counterpartyConfidential__"
               },
               {
-                "label": "Expected value of the agreement",
-                "path": "details.expectedValue"
-              },
-              {
-                "label": "Negotiated on template",
-                "path": "details.negotiationTemplate"
+                "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
+                "path": "details.confidential"
               }
             ]
           },
           {
-            "title": "Commercial Terms",
+            "title": "How will the Client be Invoiced by the Legal Service Provider?",
             "fields": [
               {
                 "label": "Contract Price",
@@ -2010,37 +1565,12 @@
                 "path": "currency"
               },
               {
-                "label": "Invoice type",
+                "label": "Invoicing",
                 "path": "invoiceType"
               },
               {
-                "label": "Advance retainer fee",
+                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
                 "path": "advanceRetainerFee"
-              }
-            ]
-          },
-          {
-            "title": "Provider Requirements",
-            "fields": [
-              {
-                "label": "Service provider type",
-                "path": "serviceProviderType"
-              },
-              {
-                "label": "Domestic offers",
-                "path": "domesticOffers"
-              },
-              {
-                "label": "Minimum provider size",
-                "path": "providerSize"
-              },
-              {
-                "label": "Minimum company age",
-                "path": "providerCompanyAge"
-              },
-              {
-                "label": "Minimum rating",
-                "path": "providerMinimumRating"
               }
             ]
           },
@@ -2048,38 +1578,25 @@
             "title": "Attachments",
             "fields": [
               {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              },
+              {
                 "label": "Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct files",
+                "label": "Supplier Code of Conduct and/or other procurement related files",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
           },
           {
-            "title": "Meta",
+            "title": "Languages Required for the Performance of the Work",
             "fields": [
-              {
-                "label": "Request title",
-                "path": "title"
-              },
               {
                 "label": "Languages",
                 "path": "language"
-              },
-              {
-                "label": "Offers deadline",
-                "path": "offersDeadline"
-              }
-            ]
-          },
-          {
-            "title": "Request State",
-            "fields": [
-              {
-                "label": "Request State",
-                "path": "requestState"
               }
             ]
           },
@@ -2107,42 +1624,6 @@
               {
                 "label": "Assignment Type",
                 "path": "assignmentType"
-              }
-            ]
-          },
-          {
-            "title": "Additional Background Info",
-            "fields": [
-              {
-                "label": "Additional Background Information",
-                "path": "additionalBackgroundInfo"
-              }
-            ]
-          },
-          {
-            "title": "Date Expired",
-            "fields": [
-              {
-                "label": "Date Expired",
-                "path": "dateExpired"
-              }
-            ]
-          },
-          {
-            "title": "Details Confidential",
-            "fields": [
-              {
-                "label": "Confidential",
-                "path": "details.confidential"
-              }
-            ]
-          },
-          {
-            "title": "Details Winner Bidder Only Status",
-            "fields": [
-              {
-                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
-                "path": "details.winnerBidderOnlyStatus"
               }
             ]
           }
@@ -2209,11 +1690,23 @@
             ]
           },
           {
-            "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
+            "title": "How will the Client be Invoiced by the Legal Service Provider?",
             "fields": [
               {
-                "label": "Price model",
-                "path": "__priceModel_LumpSumWithCurrency__"
+                "label": "Contract Price",
+                "path": "paymentRate"
+              },
+              {
+                "label": "Currency",
+                "path": "currency"
+              },
+              {
+                "label": "Invoicing",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
+                "path": "advanceRetainerFee"
               }
             ]
           },
@@ -2227,7 +1720,7 @@
             ]
           },
           {
-            "title": "Additional Background Information Provided by Client",
+            "title": "Attachments",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -2236,75 +1729,19 @@
               {
                 "label": "Background files",
                 "path": "backgroundInfoFiles"
+              },
+              {
+                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "path": "supplierCodeOfConductFiles"
               }
             ]
           },
           {
-            "title": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
-            "fields": [
-              {
-                "label": "Advance retainer fee",
-                "path": "advanceRetainerFee"
-              }
-            ]
-          },
-          {
-            "title": "Invoice Type",
-            "fields": [
-              {
-                "label": "Invoice type",
-                "path": "invoiceType"
-              }
-            ]
-          },
-          {
-            "title": "Provider Requirements",
-            "fields": [
-              {
-                "label": "Service provider type",
-                "path": "serviceProviderType"
-              },
-              {
-                "label": "Domestic offers",
-                "path": "domesticOffers"
-              },
-              {
-                "label": "Minimum provider size",
-                "path": "providerSize"
-              },
-              {
-                "label": "Minimum company age",
-                "path": "providerCompanyAge"
-              },
-              {
-                "label": "Minimum rating",
-                "path": "providerMinimumRating"
-              }
-            ]
-          },
-          {
-            "title": "Meta",
+            "title": "Languages Required for the Performance of the Work",
             "fields": [
               {
                 "label": "Languages",
                 "path": "language"
-              },
-              {
-                "label": "Offers deadline",
-                "path": "offersDeadline"
-              },
-              {
-                "label": "Request title",
-                "path": "title"
-              }
-            ]
-          },
-          {
-            "title": "Request State",
-            "fields": [
-              {
-                "label": "Request State",
-                "path": "requestState"
               }
             ]
           },
@@ -2332,51 +1769,6 @@
               {
                 "label": "Assignment Type",
                 "path": "assignmentType"
-              }
-            ]
-          },
-          {
-            "title": "Supplier Code Of Conduct Files",
-            "fields": [
-              {
-                "label": "Supplier Code of Conduct files",
-                "path": "supplierCodeOfConductFiles"
-              }
-            ]
-          },
-          {
-            "title": "Currency",
-            "fields": [
-              {
-                "label": "Currency",
-                "path": "currency"
-              }
-            ]
-          },
-          {
-            "title": "Payment Rate",
-            "fields": [
-              {
-                "label": "Contract Price",
-                "path": "paymentRate"
-              }
-            ]
-          },
-          {
-            "title": "Maximum Price",
-            "fields": [
-              {
-                "label": "Maximum price (VAT 0%)",
-                "path": "maximumPrice"
-              }
-            ]
-          },
-          {
-            "title": "Date Expired",
-            "fields": [
-              {
-                "label": "Date Expired",
-                "path": "dateExpired"
               }
             ]
           }
@@ -2425,7 +1817,7 @@
               },
               {
                 "label": "Primary contact person",
-                "path": "primaryContactPerson"
+                "path": "__primaryContactPersonConfidential__"
               }
             ]
           },
@@ -2439,11 +1831,23 @@
             ]
           },
           {
-            "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
+            "title": "How will the Client be Invoiced by the Legal Service Provider?",
             "fields": [
               {
-                "label": "Price model",
-                "path": "__priceModel_LumpSumWithCurrency__"
+                "label": "Contract Price",
+                "path": "paymentRate"
+              },
+              {
+                "label": "Currency",
+                "path": "currency"
+              },
+              {
+                "label": "Invoicing",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
+                "path": "advanceRetainerFee"
               }
             ]
           },
@@ -2457,15 +1861,6 @@
             ]
           },
           {
-            "title": "Name, Business Identity Code and Country of Domicile of Client's Counterparty (Supplier) in the Matter",
-            "fields": [
-              {
-                "label": "Counterparty",
-                "path": "__counterpartyConfidential__"
-              }
-            ]
-          },
-          {
             "title": "Expected Value of the Contract",
             "fields": [
               {
@@ -2475,27 +1870,15 @@
             ]
           },
           {
-            "title": "Provider Requirements",
+            "title": "Counterparty/Confidentiality",
             "fields": [
               {
-                "label": "Service provider type",
-                "path": "serviceProviderType"
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
+                "path": "__counterpartyConfidential__"
               },
               {
-                "label": "Domestic offers",
-                "path": "domesticOffers"
-              },
-              {
-                "label": "Minimum provider size",
-                "path": "providerSize"
-              },
-              {
-                "label": "Minimum company age",
-                "path": "providerCompanyAge"
-              },
-              {
-                "label": "Minimum rating",
-                "path": "providerMinimumRating"
+                "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
+                "path": "details.confidential"
               }
             ]
           },
@@ -2503,38 +1886,25 @@
             "title": "Attachments",
             "fields": [
               {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              },
+              {
                 "label": "Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct files",
+                "label": "Supplier Code of Conduct and/or other procurement related files",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
           },
           {
-            "title": "Meta",
+            "title": "Languages Required for the Performance of the Work",
             "fields": [
               {
                 "label": "Languages",
                 "path": "language"
-              },
-              {
-                "label": "Offers deadline",
-                "path": "offersDeadline"
-              },
-              {
-                "label": "Request title",
-                "path": "title"
-              }
-            ]
-          },
-          {
-            "title": "Request State",
-            "fields": [
-              {
-                "label": "Request State",
-                "path": "requestState"
               }
             ]
           },
@@ -2566,83 +1936,11 @@
             ]
           },
           {
-            "title": "Additional Background Info",
-            "fields": [
-              {
-                "label": "Additional Background Information",
-                "path": "additionalBackgroundInfo"
-              }
-            ]
-          },
-          {
-            "title": "Currency",
-            "fields": [
-              {
-                "label": "Currency",
-                "path": "currency"
-              }
-            ]
-          },
-          {
-            "title": "Payment Rate",
-            "fields": [
-              {
-                "label": "Contract Price",
-                "path": "paymentRate"
-              }
-            ]
-          },
-          {
-            "title": "Advance Retainer Fee",
-            "fields": [
-              {
-                "label": "Advance retainer fee",
-                "path": "advanceRetainerFee"
-              }
-            ]
-          },
-          {
-            "title": "Invoice Type",
-            "fields": [
-              {
-                "label": "Invoice type",
-                "path": "invoiceType"
-              }
-            ]
-          },
-          {
-            "title": "Date Expired",
-            "fields": [
-              {
-                "label": "Date Expired",
-                "path": "dateExpired"
-              }
-            ]
-          },
-          {
-            "title": "Details Document Types",
+            "title": "Document Types",
             "fields": [
               {
                 "label": "Document Types",
                 "path": "details.documentTypes"
-              }
-            ]
-          },
-          {
-            "title": "Details Confidential",
-            "fields": [
-              {
-                "label": "Confidential",
-                "path": "details.confidential"
-              }
-            ]
-          },
-          {
-            "title": "Details Winner Bidder Only Status",
-            "fields": [
-              {
-                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
-                "path": "details.winnerBidderOnlyStatus"
               }
             ]
           }
@@ -2695,7 +1993,7 @@
               },
               {
                 "label": "Primary contact person",
-                "path": "primaryContactPerson"
+                "path": "__primaryContactPersonConfidential__"
               }
             ]
           },
@@ -2709,11 +2007,23 @@
             ]
           },
           {
-            "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
+            "title": "How will the Client be Invoiced by the Legal Service Provider?",
             "fields": [
               {
-                "label": "Price model",
-                "path": "__priceModel_HourlyWithCurrency__"
+                "label": "Contract Price",
+                "path": "paymentRate"
+              },
+              {
+                "label": "Currency",
+                "path": "currency"
+              },
+              {
+                "label": "Invoicing",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
+                "path": "advanceRetainerFee"
               }
             ]
           },
@@ -2727,11 +2037,15 @@
             ]
           },
           {
-            "title": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter",
+            "title": "Counterparty/Confidentiality",
             "fields": [
               {
-                "label": "Counterparty",
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
                 "path": "__counterpartyConfidential__"
+              },
+              {
+                "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
+                "path": "details.confidential"
               }
             ]
           },
@@ -2754,66 +2068,28 @@
             ]
           },
           {
-            "title": "Provider Requirements",
-            "fields": [
-              {
-                "label": "Service provider type",
-                "path": "serviceProviderType"
-              },
-              {
-                "label": "Domestic offers",
-                "path": "domesticOffers"
-              },
-              {
-                "label": "Minimum provider size",
-                "path": "providerSize"
-              },
-              {
-                "label": "Minimum company age",
-                "path": "providerCompanyAge"
-              },
-              {
-                "label": "Minimum rating",
-                "path": "providerMinimumRating"
-              }
-            ]
-          },
-          {
             "title": "Attachments",
             "fields": [
+              {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              },
               {
                 "label": "Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct files",
+                "label": "Supplier Code of Conduct and/or other procurement related files",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
           },
           {
-            "title": "Meta",
+            "title": "Languages Required for the Performance of the Work",
             "fields": [
               {
                 "label": "Languages",
                 "path": "language"
-              },
-              {
-                "label": "Offers deadline",
-                "path": "offersDeadline"
-              },
-              {
-                "label": "Request title",
-                "path": "title"
-              }
-            ]
-          },
-          {
-            "title": "Request State",
-            "fields": [
-              {
-                "label": "Request State",
-                "path": "requestState"
               }
             ]
           },
@@ -2845,83 +2121,11 @@
             ]
           },
           {
-            "title": "Additional Background Info",
-            "fields": [
-              {
-                "label": "Additional Background Information",
-                "path": "additionalBackgroundInfo"
-              }
-            ]
-          },
-          {
-            "title": "Currency",
-            "fields": [
-              {
-                "label": "Currency",
-                "path": "currency"
-              }
-            ]
-          },
-          {
-            "title": "Payment Rate",
-            "fields": [
-              {
-                "label": "Contract Price",
-                "path": "paymentRate"
-              }
-            ]
-          },
-          {
-            "title": "Advance Retainer Fee",
-            "fields": [
-              {
-                "label": "Advance retainer fee",
-                "path": "advanceRetainerFee"
-              }
-            ]
-          },
-          {
-            "title": "Invoice Type",
-            "fields": [
-              {
-                "label": "Invoice type",
-                "path": "invoiceType"
-              }
-            ]
-          },
-          {
-            "title": "Date Expired",
-            "fields": [
-              {
-                "label": "Date Expired",
-                "path": "dateExpired"
-              }
-            ]
-          },
-          {
             "title": "Details Document Types",
             "fields": [
               {
                 "label": "Document Types",
                 "path": "details.documentTypes"
-              }
-            ]
-          },
-          {
-            "title": "Details Confidential",
-            "fields": [
-              {
-                "label": "Confidential",
-                "path": "details.confidential"
-              }
-            ]
-          },
-          {
-            "title": "Details Winner Bidder Only Status",
-            "fields": [
-              {
-                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
-                "path": "details.winnerBidderOnlyStatus"
               }
             ]
           }
@@ -2971,6 +2175,10 @@
               {
                 "label": "Client",
                 "path": "__clientLine__"
+              },
+              {
+                "label": "Primary contact person",
+                "path": "primaryContactPerson"
               }
             ]
           },
@@ -3080,73 +2288,104 @@
     {
       "category": "Help with Employment related Documents",
       "subcategory": "Employment Contract Template",
+      "assignmentType": null,
       "preview": {
         "sections": [
           {
             "title": "Client Name, Business Identity Code and Country of Domicile",
-            "value": "companyHeader"
+            "fields": [
+              {
+                "label": "Client",
+                "path": "__clientLine__"
+              },
+              {
+                "label": "Primary contact person",
+                "path": "primaryContactPerson"
+              }
+            ]
           },
           {
             "title": "Scope of Work",
-            "value": "static+list",
-            "notes": "Intro: 'Preparation of the following employment contract templates for the Client:' then join areaboxes"
+            "fields": [
+              {
+                "label": "Scope of Work",
+                "path": "scopeOfWork"
+              }
+            ]
           },
           {
-            "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
-            "value": "lumpSumWithCurrency",
-            "notes": "Includes the line about revisions based on Client's feedback"
+            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "fields": [
+              {
+                "label": "Contract Price",
+                "path": "paymentRate"
+              },
+              {
+                "label": "Currency",
+                "path": "currency"
+              },
+              {
+                "label": "Invoicing",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
+                "path": "advanceRetainerFee"
+              }
+            ]
           },
           {
-            "title": "Description of Position and Tasks of the Employee or Employee Group for whom the Contract Template(s) is Prepared",
-            "value": "description"
+            "title": "Description",
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
           },
           {
-            "title": "Additional Background Information Provided by Client",
-            "value": "backgroundWithFiles"
+            "title": "Attachments",
+            "fields": [
+              {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              },
+              {
+                "label": "Background files",
+                "path": "backgroundInfoFiles"
+              },
+              {
+                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "path": "supplierCodeOfConductFiles"
+              }
+            ]
           },
           {
-            "title": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
-            "value": "retainerFeeWithNote"
+            "title": "Languages Required for the Performance of the Work",
+            "fields": [
+              {
+                "label": "Languages",
+                "path": "language"
+              }
+            ]
           },
           {
-            "title": "How is the Client Invoiced by the Legal Service Provider?",
-            "value": "paymentTerms"
+            "title": "Request Category",
+            "fields": [
+              {
+                "label": "Request Category",
+                "path": "requestCategory"
+              }
+            ]
           },
           {
-            "title": "What is the Language of Legal Services Provided to the Client?",
-            "value": "languageCSV"
-          },
-          {
-            "title": "Which Legal Service Providers May Offer in Response to this LEXIFY Request?",
-            "value": "offerer"
-          },
-          {
-            "title": "In Which Country/Countries is the Legal Service Provider Domiciled?",
-            "value": "providerCountry"
-          },
-          {
-            "title": "Minimum Number of Lawyers Employed by the Legal Service Provider",
-            "value": "lawyerCount"
-          },
-          {
-            "title": "Minimum Length of Time the Legal Service Provider Must Have Been in Operation",
-            "value": "firmAge"
-          },
-          {
-            "title": "Minimum Rating of the Legal Service Provider",
-            "value": "firmRating"
-          },
-          {
-            "title": "Contract Price Currency",
-            "value": "currency"
-          },
-          {
-            "title": "Maximum Price (VAT 0%)",
-            "value": "maxPrice"
-          },
-          {
-            "title": "Deadline for Offers to be Submitted by Legal Service Providers",
-            "value": "date"
+            "title": "Request Subcategory",
+            "fields": [
+              {
+                "label": "Request Subcategory",
+                "path": "requestSubcategory"
+              }
+            ]
           }
         ]
       },
@@ -3184,65 +2423,99 @@
         "sections": [
           {
             "title": "Client Name, Business Identity Code and Country of Domicile",
-            "value": "companyHeader"
+            "fields": [
+              {
+                "label": "Client",
+                "path": "__clientLine__"
+              },
+              {
+                "label": "Primary contact person",
+                "path": "primaryContactPerson"
+              }
+            ]
           },
           {
             "title": "Scope of Work",
-            "value": "static+list",
-            "notes": "Intro: 'Preparation of the following employment related document templates for the Client:' then areaboxes; if 'Other Template(s)' include otherArea"
+            "fields": [
+              {
+                "label": "Scope of Work",
+                "path": "scopeOfWork"
+              }
+            ]
           },
           {
-            "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
-            "value": "lumpSumWithCurrency",
-            "notes": "Includes the standard invoicing note"
+            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "fields": [
+              {
+                "label": "Contract Price",
+                "path": "paymentRate"
+              },
+              {
+                "label": "Currency",
+                "path": "currency"
+              },
+              {
+                "label": "Invoicing",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
+                "path": "advanceRetainerFee"
+              }
+            ]
           },
           {
-            "title": "Additional Background Information Provided by Client",
-            "value": "backgroundWithFiles"
+            "title": "Description",
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
           },
           {
-            "title": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
-            "value": "retainerFeeWithNote"
+            "title": "Attachments",
+            "fields": [
+              {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              },
+              {
+                "label": "Background files",
+                "path": "backgroundInfoFiles"
+              },
+              {
+                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "path": "supplierCodeOfConductFiles"
+              }
+            ]
           },
           {
-            "title": "How is the Client Invoiced by the Legal Service Provider?",
-            "value": "paymentTerms"
+            "title": "Languages Required for the Performance of the Work",
+            "fields": [
+              {
+                "label": "Languages",
+                "path": "language"
+              }
+            ]
           },
           {
-            "title": "What is the Language of Legal Services Provided to the Client?",
-            "value": "languageCSV"
+            "title": "Request Category",
+            "fields": [
+              {
+                "label": "Request Category",
+                "path": "requestCategory"
+              }
+            ]
           },
           {
-            "title": "Which Legal Service Providers May Offer in Response to this LEXIFY Request?",
-            "value": "offerer"
-          },
-          {
-            "title": "In Which Country/Countries is the Legal Service Provider Domiciled?",
-            "value": "providerCountry"
-          },
-          {
-            "title": "Minimum Number of Lawyers Employed by the Legal Service Provider",
-            "value": "lawyerCount"
-          },
-          {
-            "title": "Minimum Length of Time the Legal Service Provider Must Have Been in Operation",
-            "value": "firmAge"
-          },
-          {
-            "title": "Minimum Rating of the Legal Service Provider",
-            "value": "firmRating"
-          },
-          {
-            "title": "Contract Price Currency",
-            "value": "currency"
-          },
-          {
-            "title": "Maximum Price (VAT 0%)",
-            "value": "maxPrice"
-          },
-          {
-            "title": "Deadline for Offers to be Submitted by Legal Service Providers",
-            "value": "date"
+            "title": "Request Subcategory",
+            "fields": [
+              {
+                "label": "Request Subcategory",
+                "path": "requestSubcategory"
+              }
+            ]
           }
         ]
       },
@@ -3280,66 +2553,99 @@
         "sections": [
           {
             "title": "Client Name, Business Identity Code and Country of Domicile",
-            "value": "companyHeader"
+            "fields": [
+              {
+                "label": "Client",
+                "path": "__clientLine__"
+              },
+              {
+                "label": "Primary contact person",
+                "path": "primaryContactPerson"
+              }
+            ]
           },
           {
             "title": "Scope of Work",
-            "value": "static+list",
-            "notes": "Intro: 'Legal support with negotiating the following contract(s) with an employee or a director:' then areaboxes; if 'Other' include otherTopic"
+            "fields": [
+              {
+                "label": "Scope of Work",
+                "path": "scopeOfWork"
+              }
+            ]
           },
           {
-            "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
-            "value": "flatHourlyWithCurrency",
-            "notes": "Includes the validity-until-negotiations-conclude note"
+            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "fields": [
+              {
+                "label": "Contract Price",
+                "path": "paymentRate"
+              },
+              {
+                "label": "Currency",
+                "path": "currency"
+              },
+              {
+                "label": "Invoicing",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
+                "path": "advanceRetainerFee"
+              }
+            ]
           },
           {
-            "title": "Please provide the name and position (in your company) of the employee with whom you are negotiating",
-            "value": "description",
-            "notes": "Shown with the page’s privacy note"
+            "title": "Description",
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
           },
           {
-            "title": "Additional Background Information Provided by Client",
-            "value": "backgroundWithFiles"
+            "title": "Attachments",
+            "fields": [
+              {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              },
+              {
+                "label": "Background files",
+                "path": "backgroundInfoFiles"
+              },
+              {
+                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "path": "supplierCodeOfConductFiles"
+              }
+            ]
           },
           {
-            "title": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
-            "value": "retainerFeeWithNote"
+            "title": "Languages Required for the Performance of the Work",
+            "fields": [
+              {
+                "label": "Languages",
+                "path": "language"
+              }
+            ]
           },
           {
-            "title": "How is the Client Invoiced by the Legal Service Provider?",
-            "value": "paymentTerms"
+            "title": "Request Category",
+            "fields": [
+              {
+                "label": "Request Category",
+                "path": "requestCategory"
+              }
+            ]
           },
           {
-            "title": "What is the Language of Legal Services Provided to the Client?",
-            "value": "languageCSV"
-          },
-          {
-            "title": "In Which Country/Countries is the Legal Service Provider Domiciled?",
-            "value": "providerCountry"
-          },
-          {
-            "title": "Which Legal Service Providers May Offer in Response to this LEXIFY Request?",
-            "value": "offerer"
-          },
-          {
-            "title": "Minimum Number of Lawyers Employed by the Legal Service Provider",
-            "value": "lawyerCount"
-          },
-          {
-            "title": "Minimum Length of Time the Legal Service Provider Must Have Been in Operation",
-            "value": "firmAge"
-          },
-          {
-            "title": "Minimum Rating of the Legal Service Provider",
-            "value": "firmRating"
-          },
-          {
-            "title": "Contract Price Currency",
-            "value": "currency"
-          },
-          {
-            "title": "Deadline for Offers to be Submitted by Legal Service Providers",
-            "value": "date"
+            "title": "Request Subcategory",
+            "fields": [
+              {
+                "label": "Request Subcategory",
+                "path": "requestSubcategory"
+              }
+            ]
           }
         ]
       },
@@ -3386,7 +2692,7 @@
               },
               {
                 "label": "Primary contact person",
-                "path": "primaryContactPerson"
+                "path": "__primaryContactPersonConfidential__"
               }
             ]
           },
@@ -3394,25 +2700,20 @@
             "title": "Scope of Work",
             "fields": [
               {
-                "label": "What do you need?",
+                "label": "Scope of Work",
                 "path": "scopeOfWork"
               }
             ]
           },
           {
-            "title": "Counterparty (Court Proceedings)",
+            "title": "Counterparty/Confidentiality",
             "fields": [
               {
-                "label": "Counterparty",
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
                 "path": "__counterpartyConfidential__"
-              }
-            ]
-          },
-          {
-            "title": "Disclosed to Winning Bidder Only",
-            "fields": [
+              },
               {
-                "label": "Confidential",
+                "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
                 "path": "details.confidential"
               }
             ]
@@ -3427,7 +2728,7 @@
             ]
           },
           {
-            "title": "Additional Background Information Provided by Client",
+            "title": "Attachments",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -3436,79 +2737,40 @@
               {
                 "label": "Background files",
                 "path": "backgroundInfoFiles"
+              },
+              {
+                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "path": "supplierCodeOfConductFiles"
               }
             ]
           },
           {
-            "title": "Contract Price and Currency",
+            "title": "How will the Client be Invoiced by the Legal Service Provider?",
             "fields": [
               {
-                "label": "Contract Price and Currency",
-                "path": "__priceModel_Court__"
-              }
-            ]
-          },
-          {
-            "title": "Provider Requirements",
-            "fields": [
-              {
-                "label": "Service provider type",
-                "path": "serviceProviderType"
+                "label": "Contract Price",
+                "path": "paymentRate"
               },
               {
-                "label": "Domestic offers",
-                "path": "domesticOffers"
+                "label": "Currency",
+                "path": "currency"
               },
               {
-                "label": "Minimum provider size",
-                "path": "providerSize"
-              },
-              {
-                "label": "Minimum company age",
-                "path": "providerCompanyAge"
-              },
-              {
-                "label": "Minimum rating",
-                "path": "providerMinimumRating"
-              }
-            ]
-          },
-          {
-            "title": "Billing & Language",
-            "fields": [
-              {
-                "label": "Advance retainer fee",
-                "path": "advanceRetainerFee"
-              },
-              {
-                "label": "Invoice type",
+                "label": "Invoicing",
                 "path": "invoiceType"
               },
               {
+                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
+                "path": "advanceRetainerFee"
+              }
+            ]
+          },
+          {
+            "title": "Languages Required for the Performance of the Work",
+            "fields": [
+              {
                 "label": "Languages",
                 "path": "language"
-              }
-            ]
-          },
-          {
-            "title": "Meta",
-            "fields": [
-              {
-                "label": "Offers deadline",
-                "path": "offersDeadline"
-              },
-              {
-                "label": "Request title",
-                "path": "title"
-              }
-            ]
-          },
-          {
-            "title": "Request State",
-            "fields": [
-              {
-                "label": "Request State",
-                "path": "requestState"
               }
             ]
           },
@@ -3527,51 +2789,6 @@
               {
                 "label": "Request Subcategory",
                 "path": "requestSubcategory"
-              }
-            ]
-          },
-          {
-            "title": "Supplier Code Of Conduct Files",
-            "fields": [
-              {
-                "label": "Supplier Code of Conduct files",
-                "path": "supplierCodeOfConductFiles"
-              }
-            ]
-          },
-          {
-            "title": "Currency",
-            "fields": [
-              {
-                "label": "Currency",
-                "path": "currency"
-              }
-            ]
-          },
-          {
-            "title": "Maximum Price",
-            "fields": [
-              {
-                "label": "Maximum price (VAT 0%)",
-                "path": "maximumPrice"
-              }
-            ]
-          },
-          {
-            "title": "Date Expired",
-            "fields": [
-              {
-                "label": "Date Expired",
-                "path": "dateExpired"
-              }
-            ]
-          },
-          {
-            "title": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
-            "fields": [
-              {
-                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
-                "path": "details.winnerBidderOnlyStatus"
               }
             ]
           }
@@ -3622,7 +2839,7 @@
               },
               {
                 "label": "Primary contact person",
-                "path": "primaryContactPerson"
+                "path": "__primaryContactPersonConfidential__"
               }
             ]
           },
@@ -3630,22 +2847,26 @@
             "title": "Scope of Work",
             "fields": [
               {
-                "label": "What do you need?",
+                "label": "Scope of Work",
                 "path": "scopeOfWork"
               }
             ]
           },
           {
-            "title": "Counterparty (Arbitration)",
+            "title": "Counterparty/Confidentiality",
             "fields": [
               {
-                "label": "Counterparty",
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
                 "path": "__counterpartyConfidential__"
+              },
+              {
+                "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
+                "path": "details.confidential"
               }
             ]
           },
           {
-            "title": "Description of the Matter under Dispute and Current Status of the Arbitration Proceedings",
+            "title": "Description of the Matter under Dispute and Current Status of Court Proceedings",
             "fields": [
               {
                 "label": "Description",
@@ -3654,7 +2875,7 @@
             ]
           },
           {
-            "title": "Additional Background Information Provided by Client",
+            "title": "Attachments",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -3663,79 +2884,40 @@
               {
                 "label": "Background files",
                 "path": "backgroundInfoFiles"
+              },
+              {
+                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "path": "supplierCodeOfConductFiles"
               }
             ]
           },
           {
-            "title": "Contract Price and Currency",
+            "title": "How will the Client be Invoiced by the Legal Service Provider?",
             "fields": [
               {
-                "label": "Price model",
-                "path": "__priceModel_Arbitration__"
-              }
-            ]
-          },
-          {
-            "title": "Provider Requirements",
-            "fields": [
-              {
-                "label": "Service provider type",
-                "path": "serviceProviderType"
+                "label": "Contract Price",
+                "path": "paymentRate"
               },
               {
-                "label": "Domestic offers",
-                "path": "domesticOffers"
+                "label": "Currency",
+                "path": "currency"
               },
               {
-                "label": "Minimum provider size",
-                "path": "providerSize"
-              },
-              {
-                "label": "Minimum company age",
-                "path": "providerCompanyAge"
-              },
-              {
-                "label": "Minimum rating",
-                "path": "providerMinimumRating"
-              }
-            ]
-          },
-          {
-            "title": "Billing & Language",
-            "fields": [
-              {
-                "label": "Advance retainer fee",
-                "path": "advanceRetainerFee"
-              },
-              {
-                "label": "Invoice type",
+                "label": "Invoicing",
                 "path": "invoiceType"
               },
               {
+                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
+                "path": "advanceRetainerFee"
+              }
+            ]
+          },
+          {
+            "title": "Languages Required for the Performance of the Work",
+            "fields": [
+              {
                 "label": "Languages",
                 "path": "language"
-              }
-            ]
-          },
-          {
-            "title": "Meta",
-            "fields": [
-              {
-                "label": "Offers deadline",
-                "path": "offersDeadline"
-              },
-              {
-                "label": "Request title",
-                "path": "title"
-              }
-            ]
-          },
-          {
-            "title": "Request State",
-            "fields": [
-              {
-                "label": "Request State",
-                "path": "requestState"
               }
             ]
           },
@@ -3754,69 +2936,6 @@
               {
                 "label": "Request Subcategory",
                 "path": "requestSubcategory"
-              }
-            ]
-          },
-          {
-            "title": "Supplier Code Of Conduct Files",
-            "fields": [
-              {
-                "label": "Supplier Code of Conduct files",
-                "path": "supplierCodeOfConductFiles"
-              }
-            ]
-          },
-          {
-            "title": "Currency",
-            "fields": [
-              {
-                "label": "Currency",
-                "path": "currency"
-              }
-            ]
-          },
-          {
-            "title": "Payment Rate",
-            "fields": [
-              {
-                "label": "Contract Price",
-                "path": "paymentRate"
-              }
-            ]
-          },
-          {
-            "title": "Maximum Price",
-            "fields": [
-              {
-                "label": "Maximum price (VAT 0%)",
-                "path": "maximumPrice"
-              }
-            ]
-          },
-          {
-            "title": "Date Expired",
-            "fields": [
-              {
-                "label": "Date Expired",
-                "path": "dateExpired"
-              }
-            ]
-          },
-          {
-            "title": "Details Confidential",
-            "fields": [
-              {
-                "label": "Confidential",
-                "path": "details.confidential"
-              }
-            ]
-          },
-          {
-            "title": "Details Winner Bidder Only Status",
-            "fields": [
-              {
-                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
-                "path": "details.winnerBidderOnlyStatus"
               }
             ]
           }
@@ -3867,7 +2986,7 @@
               },
               {
                 "label": "Primary contact person",
-                "path": "primaryContactPerson"
+                "path": "__primaryContactPersonConfidential__"
               }
             ]
           },
@@ -3875,22 +2994,26 @@
             "title": "Scope of Work",
             "fields": [
               {
-                "label": "What do you need?",
+                "label": "Scope of Work",
                 "path": "scopeOfWork"
               }
             ]
           },
           {
-            "title": "Counterparty (Settlement Negotiations)",
+            "title": "Counterparty/Confidentiality",
             "fields": [
               {
-                "label": "Counterparty",
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
                 "path": "__counterpartyConfidential__"
+              },
+              {
+                "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
+                "path": "details.confidential"
               }
             ]
           },
           {
-            "title": "Description of the Matter under Dispute and Current Status of the Settlement Negotiations",
+            "title": "Description of the Matter under Dispute and Current Status of Court Proceedings",
             "fields": [
               {
                 "label": "Description",
@@ -3899,7 +3022,7 @@
             ]
           },
           {
-            "title": "Additional Background Information Provided by Client",
+            "title": "Attachments",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -3908,79 +3031,40 @@
               {
                 "label": "Background files",
                 "path": "backgroundInfoFiles"
+              },
+              {
+                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "path": "supplierCodeOfConductFiles"
               }
             ]
           },
           {
-            "title": "Contract Price and Currency",
+            "title": "How will the Client be Invoiced by the Legal Service Provider?",
             "fields": [
               {
-                "label": "Price model",
-                "path": "__priceModel_Settlement__"
-              }
-            ]
-          },
-          {
-            "title": "Provider Requirements",
-            "fields": [
-              {
-                "label": "Service provider type",
-                "path": "serviceProviderType"
+                "label": "Contract Price",
+                "path": "paymentRate"
               },
               {
-                "label": "Domestic offers",
-                "path": "domesticOffers"
+                "label": "Currency",
+                "path": "currency"
               },
               {
-                "label": "Minimum provider size",
-                "path": "providerSize"
-              },
-              {
-                "label": "Minimum company age",
-                "path": "providerCompanyAge"
-              },
-              {
-                "label": "Minimum rating",
-                "path": "providerMinimumRating"
-              }
-            ]
-          },
-          {
-            "title": "Billing & Language",
-            "fields": [
-              {
-                "label": "Advance retainer fee",
-                "path": "advanceRetainerFee"
-              },
-              {
-                "label": "Invoice type",
+                "label": "Invoicing",
                 "path": "invoiceType"
               },
               {
+                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
+                "path": "advanceRetainerFee"
+              }
+            ]
+          },
+          {
+            "title": "Languages Required for the Performance of the Work",
+            "fields": [
+              {
                 "label": "Languages",
                 "path": "language"
-              }
-            ]
-          },
-          {
-            "title": "Meta",
-            "fields": [
-              {
-                "label": "Offers deadline",
-                "path": "offersDeadline"
-              },
-              {
-                "label": "Request title",
-                "path": "title"
-              }
-            ]
-          },
-          {
-            "title": "Request State",
-            "fields": [
-              {
-                "label": "Request State",
-                "path": "requestState"
               }
             ]
           },
@@ -3999,69 +3083,6 @@
               {
                 "label": "Request Subcategory",
                 "path": "requestSubcategory"
-              }
-            ]
-          },
-          {
-            "title": "Supplier Code Of Conduct Files",
-            "fields": [
-              {
-                "label": "Supplier Code of Conduct files",
-                "path": "supplierCodeOfConductFiles"
-              }
-            ]
-          },
-          {
-            "title": "Currency",
-            "fields": [
-              {
-                "label": "Currency",
-                "path": "currency"
-              }
-            ]
-          },
-          {
-            "title": "Payment Rate",
-            "fields": [
-              {
-                "label": "Contract Price",
-                "path": "paymentRate"
-              }
-            ]
-          },
-          {
-            "title": "Maximum Price",
-            "fields": [
-              {
-                "label": "Maximum price (VAT 0%)",
-                "path": "maximumPrice"
-              }
-            ]
-          },
-          {
-            "title": "Date Expired",
-            "fields": [
-              {
-                "label": "Date Expired",
-                "path": "dateExpired"
-              }
-            ]
-          },
-          {
-            "title": "Details Confidential",
-            "fields": [
-              {
-                "label": "Confidential",
-                "path": "details.confidential"
-              }
-            ]
-          },
-          {
-            "title": "Details Winner Bidder Only Status",
-            "fields": [
-              {
-                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
-                "path": "details.winnerBidderOnlyStatus"
               }
             ]
           }
@@ -4112,7 +3133,7 @@
               },
               {
                 "label": "Primary contact person",
-                "path": "primaryContactPerson"
+                "path": "__primaryContactPersonConfidential__"
               }
             ]
           },
@@ -4120,7 +3141,7 @@
             "title": "Scope of Work",
             "fields": [
               {
-                "label": "What do you need?",
+                "label": "Scope of Work",
                 "path": "scopeOfWork"
               }
             ]
@@ -4144,7 +3165,7 @@
             ]
           },
           {
-            "title": "Additional Background Information Provided by Client",
+            "title": "Attachments",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -4153,79 +3174,40 @@
               {
                 "label": "Background files",
                 "path": "backgroundInfoFiles"
+              },
+              {
+                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "path": "supplierCodeOfConductFiles"
               }
             ]
           },
           {
-            "title": "Contract Price and Currency",
+            "title": "How will the Client be Invoiced by the Legal Service Provider?",
             "fields": [
               {
-                "label": "Price model",
-                "path": "__priceModel_Debt__"
-              }
-            ]
-          },
-          {
-            "title": "Provider Requirements",
-            "fields": [
-              {
-                "label": "Service provider type",
-                "path": "serviceProviderType"
+                "label": "Contract Price",
+                "path": "paymentRate"
               },
               {
-                "label": "Domestic offers",
-                "path": "domesticOffers"
+                "label": "Currency",
+                "path": "currency"
               },
               {
-                "label": "Minimum provider size",
-                "path": "providerSize"
-              },
-              {
-                "label": "Minimum company age",
-                "path": "providerCompanyAge"
-              },
-              {
-                "label": "Minimum rating",
-                "path": "providerMinimumRating"
-              }
-            ]
-          },
-          {
-            "title": "Billing & Language",
-            "fields": [
-              {
-                "label": "Advance retainer fee",
-                "path": "advanceRetainerFee"
-              },
-              {
-                "label": "Invoice type",
+                "label": "Invoicing",
                 "path": "invoiceType"
               },
               {
+                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
+                "path": "advanceRetainerFee"
+              }
+            ]
+          },
+          {
+            "title": "Languages Required for the Performance of the Work",
+            "fields": [
+              {
                 "label": "Languages",
                 "path": "language"
-              }
-            ]
-          },
-          {
-            "title": "Meta",
-            "fields": [
-              {
-                "label": "Offers deadline",
-                "path": "offersDeadline"
-              },
-              {
-                "label": "Request title",
-                "path": "title"
-              }
-            ]
-          },
-          {
-            "title": "Request State",
-            "fields": [
-              {
-                "label": "Request State",
-                "path": "requestState"
               }
             ]
           },
@@ -4244,69 +3226,6 @@
               {
                 "label": "Request Subcategory",
                 "path": "requestSubcategory"
-              }
-            ]
-          },
-          {
-            "title": "Supplier Code Of Conduct Files",
-            "fields": [
-              {
-                "label": "Supplier Code of Conduct files",
-                "path": "supplierCodeOfConductFiles"
-              }
-            ]
-          },
-          {
-            "title": "Currency",
-            "fields": [
-              {
-                "label": "Currency",
-                "path": "currency"
-              }
-            ]
-          },
-          {
-            "title": "Payment Rate",
-            "fields": [
-              {
-                "label": "Contract Price",
-                "path": "paymentRate"
-              }
-            ]
-          },
-          {
-            "title": "Maximum Price",
-            "fields": [
-              {
-                "label": "Maximum price (VAT 0%)",
-                "path": "maximumPrice"
-              }
-            ]
-          },
-          {
-            "title": "Date Expired",
-            "fields": [
-              {
-                "label": "Date Expired",
-                "path": "dateExpired"
-              }
-            ]
-          },
-          {
-            "title": "Details Confidential",
-            "fields": [
-              {
-                "label": "Confidential",
-                "path": "details.confidential"
-              }
-            ]
-          },
-          {
-            "title": "Details Winner Bidder Only Status",
-            "fields": [
-              {
-                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
-                "path": "details.winnerBidderOnlyStatus"
               }
             ]
           }
@@ -4357,7 +3276,7 @@
               },
               {
                 "label": "Primary contact person",
-                "path": "primaryContactPerson"
+                "path": "__primaryContactPersonConfidential__"
               }
             ]
           },
@@ -4365,7 +3284,7 @@
             "title": "Scope of Work",
             "fields": [
               {
-                "label": "What do you need?",
+                "label": "Scope of Work",
                 "path": "scopeOfWork"
               },
               {
@@ -4375,14 +3294,27 @@
             ]
           },
           {
-            "title": "Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency",
+            "title": "How will the Client be Invoiced by the Legal Service Provider?",
             "fields": [
               {
-                "label": "Price model",
-                "path": "__priceModel_MA__"
+                "label": "Contract Price",
+                "path": "paymentRate"
+              },
+              {
+                "label": "Currency",
+                "path": "currency"
+              },
+              {
+                "label": "Invoicing",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
+                "path": "advanceRetainerFee"
               }
             ]
           },
+
           {
             "title": "Object of Sale",
             "fields": [
@@ -4396,63 +3328,21 @@
             "title": "Buyer or Seller",
             "fields": [
               {
-                "label": "Client’s role",
+                "label": "Client's role",
                 "path": "details.buyerOrSeller"
               }
             ]
           },
           {
-            "title": "Confidentiality",
+            "title": "Counterparty/Confidentiality",
             "fields": [
               {
                 "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
-                "path": "details.winnerBidderOnlyStatus"
-              }
-            ]
-          },
-          {
-            "title": "Commercial Terms",
-            "fields": [
-              {
-                "label": "Contract Price",
-                "path": "paymentRate"
+                "path": "__counterpartyConfidential__"
               },
               {
-                "label": "Currency",
-                "path": "currency"
-              },
-              {
-                "label": "Invoice type",
-                "path": "invoiceType"
-              },
-              {
-                "label": "Advance retainer fee",
-                "path": "advanceRetainerFee"
-              }
-            ]
-          },
-          {
-            "title": "Provider Requirements",
-            "fields": [
-              {
-                "label": "Service provider type",
-                "path": "serviceProviderType"
-              },
-              {
-                "label": "Domestic offers",
-                "path": "domesticOffers"
-              },
-              {
-                "label": "Minimum provider size",
-                "path": "providerSize"
-              },
-              {
-                "label": "Minimum company age",
-                "path": "providerCompanyAge"
-              },
-              {
-                "label": "Minimum rating",
-                "path": "providerMinimumRating"
+                "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
+                "path": "details.confidential"
               }
             ]
           },
@@ -4460,38 +3350,25 @@
             "title": "Attachments",
             "fields": [
               {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              },
+              {
                 "label": "Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct files",
+                "label": "Supplier Code of Conduct and/or other procurement related files",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
           },
           {
-            "title": "Meta",
+            "title": "Languages Required for the Performance of the Work",
             "fields": [
-              {
-                "label": "Request title",
-                "path": "title"
-              },
               {
                 "label": "Languages",
                 "path": "language"
-              },
-              {
-                "label": "Offers deadline",
-                "path": "offersDeadline"
-              }
-            ]
-          },
-          {
-            "title": "Request State",
-            "fields": [
-              {
-                "label": "Request State",
-                "path": "requestState"
               }
             ]
           },
@@ -4514,47 +3391,11 @@
             ]
           },
           {
-            "title": "Additional Background Info",
-            "fields": [
-              {
-                "label": "Additional Background Information",
-                "path": "additionalBackgroundInfo"
-              }
-            ]
-          },
-          {
-            "title": "Maximum Price",
-            "fields": [
-              {
-                "label": "Maximum price (VAT 0%)",
-                "path": "maximumPrice"
-              }
-            ]
-          },
-          {
-            "title": "Date Expired",
-            "fields": [
-              {
-                "label": "Date Expired",
-                "path": "dateExpired"
-              }
-            ]
-          },
-          {
-            "title": "Details Price Range",
+            "title": "Expected Price Range",
             "fields": [
               {
                 "label": "Price Range",
                 "path": "details.priceRange"
-              }
-            ]
-          },
-          {
-            "title": "Details Confidential",
-            "fields": [
-              {
-                "label": "Confidential",
-                "path": "details.confidential"
               }
             ]
           }
@@ -4616,6 +3457,10 @@
             "title": "Scope of Work",
             "fields": [
               {
+                "label": "Scope of work",
+                "path": "scopeOfWork"
+              },
+              {
                 "label": "Selected items",
                 "path": "details.selectedItems"
               },
@@ -4630,16 +3475,28 @@
             ]
           },
           {
-            "title": "Contract Price (Lump Sum Fixed Fee) and Currency",
+            "title": "How will the Client be Invoiced by the Legal Service Provider?",
             "fields": [
               {
-                "label": "Price model",
-                "path": "__priceModel_LumpSumWithCurrency__"
+                "label": "Contract Price",
+                "path": "paymentRate"
+              },
+              {
+                "label": "Currency",
+                "path": "currency"
+              },
+              {
+                "label": "Invoicing",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
+                "path": "advanceRetainerFee"
               }
             ]
           },
           {
-            "title": "Additional Background Information Provided by Client",
+            "title": "Attachments",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -4648,70 +3505,19 @@
               {
                 "label": "Background files",
                 "path": "backgroundInfoFiles"
+              },
+              {
+                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "path": "supplierCodeOfConductFiles"
               }
             ]
           },
           {
-            "title": "Provider Requirements",
+            "title": "Languages Required for the Performance of the Work",
             "fields": [
-              {
-                "label": "Service provider type",
-                "path": "serviceProviderType"
-              },
-              {
-                "label": "Domestic offers",
-                "path": "domesticOffers"
-              },
-              {
-                "label": "Minimum provider size",
-                "path": "providerSize"
-              },
-              {
-                "label": "Minimum company age",
-                "path": "providerCompanyAge"
-              },
-              {
-                "label": "Minimum rating",
-                "path": "providerMinimumRating"
-              }
-            ]
-          },
-          {
-            "title": "Billing & Language",
-            "fields": [
-              {
-                "label": "Advance retainer fee",
-                "path": "advanceRetainerFee"
-              },
-              {
-                "label": "Invoice type",
-                "path": "invoiceType"
-              },
               {
                 "label": "Languages",
                 "path": "language"
-              }
-            ]
-          },
-          {
-            "title": "Meta",
-            "fields": [
-              {
-                "label": "Offers deadline",
-                "path": "offersDeadline"
-              },
-              {
-                "label": "Request title",
-                "path": "title"
-              }
-            ]
-          },
-          {
-            "title": "Request State",
-            "fields": [
-              {
-                "label": "Request State",
-                "path": "requestState"
               }
             ]
           },
@@ -4725,65 +3531,11 @@
             ]
           },
           {
-            "title": "Scope Of Work",
-            "fields": [
-              {
-                "label": "What do you need?",
-                "path": "scopeOfWork"
-              }
-            ]
-          },
-          {
             "title": "Description",
             "fields": [
               {
                 "label": "Description",
                 "path": "description"
-              }
-            ]
-          },
-          {
-            "title": "Supplier Code Of Conduct Files",
-            "fields": [
-              {
-                "label": "Supplier Code of Conduct files",
-                "path": "supplierCodeOfConductFiles"
-              }
-            ]
-          },
-          {
-            "title": "Currency",
-            "fields": [
-              {
-                "label": "Currency",
-                "path": "currency"
-              }
-            ]
-          },
-          {
-            "title": "Payment Rate",
-            "fields": [
-              {
-                "label": "Contract Price",
-                "path": "paymentRate"
-              }
-            ]
-          },
-          {
-            "title": "Maximum Price",
-            "fields": [
-              {
-                "label": "Maximum price (VAT 0%)",
-                "path": "maximumPrice"
-              }
-            ]
-          },
-          {
-            "title": "Date Expired",
-            "fields": [
-              {
-                "label": "Date Expired",
-                "path": "dateExpired"
               }
             ]
           }
@@ -4830,7 +3582,7 @@
             "fields": [
               {
                 "label": "Client",
-                "path": "__clientLineOrDisclosed__"
+                "path": "__clientLine__"
               },
               {
                 "label": "Primary contact person",
@@ -4842,7 +3594,7 @@
             "title": "Scope of Work",
             "fields": [
               {
-                "label": "What do you need?",
+                "label": "Scope of Work",
                 "path": "scopeOfWork"
               }
             ]
@@ -4857,97 +3609,49 @@
             ]
           },
           {
-            "title": "Questionnaire & Background",
+            "title": "Attachments",
             "fields": [
-              {
-                "label": "Background files",
-                "path": "backgroundInfoFiles"
-              },
               {
                 "label": "Additional Background Information",
                 "path": "additionalBackgroundInfo"
+              },
+              {
+                "label": "Questionnaire files",
+                "path": "backgroundInfoFiles"
+              },
+              {
+                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "path": "supplierCodeOfConductFiles"
               }
             ]
           },
           {
-            "title": "Confidentiality",
+            "title": "How will the Client be Invoiced by the Legal Service Provider?",
             "fields": [
               {
-                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
-                "path": "details.winnerBidderOnlyStatus"
-              }
-            ]
-          },
-          {
-            "title": "Contract Price (Lump Sum Fixed Fee) and Currency",
-            "fields": [
-              {
-                "label": "Price model",
-                "path": "__priceModel_LumpSumWithCurrency__"
-              }
-            ]
-          },
-          {
-            "title": "Provider Requirements",
-            "fields": [
-              {
-                "label": "Service provider type",
-                "path": "serviceProviderType"
+                "label": "Contract Price",
+                "path": "paymentRate"
               },
               {
-                "label": "Domestic offers",
-                "path": "domesticOffers"
+                "label": "Currency",
+                "path": "currency"
               },
               {
-                "label": "Minimum provider size",
-                "path": "providerSize"
-              },
-              {
-                "label": "Minimum company age",
-                "path": "providerCompanyAge"
-              },
-              {
-                "label": "Minimum rating",
-                "path": "providerMinimumRating"
-              }
-            ]
-          },
-          {
-            "title": "Billing & Language",
-            "fields": [
-              {
-                "label": "Advance retainer fee",
-                "path": "advanceRetainerFee"
-              },
-              {
-                "label": "Invoice type",
+                "label": "Invoicing",
                 "path": "invoiceType"
               },
               {
+                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
+                "path": "advanceRetainerFee"
+              }
+            ]
+          },
+          {
+            "title": "Languages Required for the Performance of the Work",
+            "fields": [
+              {
                 "label": "Languages",
                 "path": "language"
-              }
-            ]
-          },
-          {
-            "title": "Meta",
-            "fields": [
-              {
-                "label": "Offers deadline",
-                "path": "offersDeadline"
-              },
-              {
-                "label": "Request title",
-                "path": "title"
-              }
-            ]
-          },
-          {
-            "title": "Request State",
-            "fields": [
-              {
-                "label": "Request State",
-                "path": "requestState"
               }
             ]
           },
@@ -4957,60 +3661,6 @@
               {
                 "label": "Request Category",
                 "path": "requestCategory"
-              }
-            ]
-          },
-          {
-            "title": "Supplier Code Of Conduct Files",
-            "fields": [
-              {
-                "label": "Supplier Code of Conduct files",
-                "path": "supplierCodeOfConductFiles"
-              }
-            ]
-          },
-          {
-            "title": "Currency",
-            "fields": [
-              {
-                "label": "Currency",
-                "path": "currency"
-              }
-            ]
-          },
-          {
-            "title": "Payment Rate",
-            "fields": [
-              {
-                "label": "Contract Price",
-                "path": "paymentRate"
-              }
-            ]
-          },
-          {
-            "title": "Maximum Price",
-            "fields": [
-              {
-                "label": "Maximum price (VAT 0%)",
-                "path": "maximumPrice"
-              }
-            ]
-          },
-          {
-            "title": "Date Expired",
-            "fields": [
-              {
-                "label": "Date Expired",
-                "path": "dateExpired"
-              }
-            ]
-          },
-          {
-            "title": "Details Confidential",
-            "fields": [
-              {
-                "label": "Confidential",
-                "path": "details.confidential"
               }
             ]
           }
@@ -5068,7 +3718,7 @@
             "title": "Scope of Work",
             "fields": [
               {
-                "label": "What do you need?",
+                "label": "Scope of Work",
                 "path": "scopeOfWork"
               }
             ]
@@ -5091,7 +3741,7 @@
             ]
           },
           {
-            "title": "Additional Background Information Provided by Client",
+            "title": "Attachments",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -5100,79 +3750,40 @@
               {
                 "label": "Background files",
                 "path": "backgroundInfoFiles"
+              },
+              {
+                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "path": "supplierCodeOfConductFiles"
               }
             ]
           },
           {
-            "title": "Contract Price (Lump Sum Fixed Fee) and Currency",
+            "title": "How will the Client be Invoiced by the Legal Service Provider?",
             "fields": [
               {
-                "label": "Price model",
-                "path": "__priceModel_LumpSumWithCurrency__"
-              }
-            ]
-          },
-          {
-            "title": "Provider Requirements",
-            "fields": [
-              {
-                "label": "Service provider type",
-                "path": "serviceProviderType"
+                "label": "Contract Price",
+                "path": "paymentRate"
               },
               {
-                "label": "Domestic offers",
-                "path": "domesticOffers"
+                "label": "Currency",
+                "path": "currency"
               },
               {
-                "label": "Minimum provider size",
-                "path": "providerSize"
-              },
-              {
-                "label": "Minimum company age",
-                "path": "providerCompanyAge"
-              },
-              {
-                "label": "Minimum rating",
-                "path": "providerMinimumRating"
-              }
-            ]
-          },
-          {
-            "title": "Billing & Language",
-            "fields": [
-              {
-                "label": "Advance retainer fee",
-                "path": "advanceRetainerFee"
-              },
-              {
-                "label": "Invoice type",
+                "label": "Invoicing",
                 "path": "invoiceType"
               },
               {
+                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
+                "path": "advanceRetainerFee"
+              }
+            ]
+          },
+          {
+            "title": "Languages Required for the Performance of the Work",
+            "fields": [
+              {
                 "label": "Languages",
                 "path": "language"
-              }
-            ]
-          },
-          {
-            "title": "Meta",
-            "fields": [
-              {
-                "label": "Offers deadline",
-                "path": "offersDeadline"
-              },
-              {
-                "label": "Request title",
-                "path": "title"
-              }
-            ]
-          },
-          {
-            "title": "Request State",
-            "fields": [
-              {
-                "label": "Request State",
-                "path": "requestState"
               }
             ]
           },
@@ -5191,51 +3802,6 @@
               {
                 "label": "Description",
                 "path": "description"
-              }
-            ]
-          },
-          {
-            "title": "Supplier Code Of Conduct Files",
-            "fields": [
-              {
-                "label": "Supplier Code of Conduct files",
-                "path": "supplierCodeOfConductFiles"
-              }
-            ]
-          },
-          {
-            "title": "Currency",
-            "fields": [
-              {
-                "label": "Currency",
-                "path": "currency"
-              }
-            ]
-          },
-          {
-            "title": "Payment Rate",
-            "fields": [
-              {
-                "label": "Contract Price",
-                "path": "paymentRate"
-              }
-            ]
-          },
-          {
-            "title": "Maximum Price",
-            "fields": [
-              {
-                "label": "Maximum price (VAT 0%)",
-                "path": "maximumPrice"
-              }
-            ]
-          },
-          {
-            "title": "Date Expired",
-            "fields": [
-              {
-                "label": "Date Expired",
-                "path": "dateExpired"
               }
             ]
           }
@@ -5294,13 +3860,13 @@
             "title": "Scope of Work",
             "fields": [
               {
-                "label": "What do you need?",
+                "label": "Scope of Work",
                 "path": "scopeOfWork"
               }
             ]
           },
           {
-            "title": "Description of Your Company's Line of Business",
+            "title": "Description of Client Company's Line of Business",
             "fields": [
               {
                 "label": "Description",
@@ -5397,7 +3963,7 @@
             ]
           },
           {
-            "title": "Additional Background Information Provided by Client",
+            "title": "Attachments",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -5406,11 +3972,15 @@
               {
                 "label": "Background files",
                 "path": "backgroundInfoFiles"
+              },
+              {
+                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "path": "supplierCodeOfConductFiles"
               }
             ]
           },
           {
-            "title": "Commercial Terms",
+            "title": "How will the Client be Invoiced by the Legal Service Provider?",
             "fields": [
               {
                 "label": "Contract Price",
@@ -5421,67 +3991,21 @@
                 "path": "currency"
               },
               {
-                "label": "Maximum price (VAT 0%)",
-                "path": "maximumPrice"
-              },
-              {
-                "label": "Invoice type",
+                "label": "Invoicing",
                 "path": "invoiceType"
               },
               {
-                "label": "Advance retainer fee",
+                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
                 "path": "advanceRetainerFee"
               }
             ]
           },
           {
-            "title": "Provider Requirements",
-            "fields": [
-              {
-                "label": "Service provider type",
-                "path": "serviceProviderType"
-              },
-              {
-                "label": "Domestic offers",
-                "path": "domesticOffers"
-              },
-              {
-                "label": "Minimum provider size",
-                "path": "providerSize"
-              },
-              {
-                "label": "Minimum company age",
-                "path": "providerCompanyAge"
-              },
-              {
-                "label": "Minimum rating",
-                "path": "providerMinimumRating"
-              }
-            ]
-          },
-          {
-            "title": "Meta",
+            "title": "Languages Required for the Performance of the Work",
             "fields": [
               {
                 "label": "Languages",
                 "path": "language"
-              },
-              {
-                "label": "Offers deadline",
-                "path": "offersDeadline"
-              },
-              {
-                "label": "Request title",
-                "path": "title"
-              }
-            ]
-          },
-          {
-            "title": "Request State",
-            "fields": [
-              {
-                "label": "Request State",
-                "path": "requestState"
               }
             ]
           },
@@ -5500,24 +4024,6 @@
               {
                 "label": "Request Subcategory",
                 "path": "requestSubcategory"
-              }
-            ]
-          },
-          {
-            "title": "Supplier Code Of Conduct Files",
-            "fields": [
-              {
-                "label": "Supplier Code of Conduct files",
-                "path": "supplierCodeOfConductFiles"
-              }
-            ]
-          },
-          {
-            "title": "Date Expired",
-            "fields": [
-              {
-                "label": "Date Expired",
-                "path": "dateExpired"
               }
             ]
           }
@@ -5583,7 +4089,7 @@
               },
               {
                 "label": "Primary contact person",
-                "path": "primaryContactPerson"
+                "path": "__primaryContactPersonConfidential__"
               }
             ]
           },
@@ -5591,7 +4097,7 @@
             "title": "Scope of Work",
             "fields": [
               {
-                "label": "What do you need?",
+                "label": "Scope of Work",
                 "path": "scopeOfWork"
               }
             ]
@@ -5606,15 +4112,24 @@
               {
                 "label": "Is another identified company involved?",
                 "path": "details.involvedParties"
-              },
-              {
-                "label": "Counterparty",
-                "path": "__counterpartyConfidential__"
               }
             ]
           },
           {
-            "title": "Description of Company’s Line of Business",
+            "title": "Counterparty/Confidentiality",
+            "fields": [
+              {
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
+                "path": "__counterpartyConfidential__"
+              },
+              {
+                "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
+                "path": "details.confidential"
+              }
+            ]
+          },
+          {
+            "title": "Description of Company's Line of Business",
             "fields": [
               {
                 "label": "Description",
@@ -5623,7 +4138,7 @@
             ]
           },
           {
-            "title": "Additional Background Information Provided by Client",
+            "title": "Attachments",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -5632,11 +4147,15 @@
               {
                 "label": "Background files",
                 "path": "backgroundInfoFiles"
+              },
+              {
+                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "path": "supplierCodeOfConductFiles"
               }
             ]
           },
           {
-            "title": "Commercial Terms",
+            "title": "How will the Client be Invoiced by the Legal Service Provider?",
             "fields": [
               {
                 "label": "Contract Price",
@@ -5647,63 +4166,21 @@
                 "path": "currency"
               },
               {
-                "label": "Invoice type",
+                "label": "Invoicing",
                 "path": "invoiceType"
               },
               {
-                "label": "Advance retainer fee",
+                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
                 "path": "advanceRetainerFee"
               }
             ]
           },
           {
-            "title": "Provider Requirements",
-            "fields": [
-              {
-                "label": "Service provider type",
-                "path": "serviceProviderType"
-              },
-              {
-                "label": "Domestic offers",
-                "path": "domesticOffers"
-              },
-              {
-                "label": "Minimum provider size",
-                "path": "providerSize"
-              },
-              {
-                "label": "Minimum company age",
-                "path": "providerCompanyAge"
-              },
-              {
-                "label": "Minimum rating",
-                "path": "providerMinimumRating"
-              }
-            ]
-          },
-          {
-            "title": "Meta",
+            "title": "Languages Required for the Performance of the Work",
             "fields": [
               {
                 "label": "Languages",
                 "path": "language"
-              },
-              {
-                "label": "Offers deadline",
-                "path": "offersDeadline"
-              },
-              {
-                "label": "Request title",
-                "path": "title"
-              }
-            ]
-          },
-          {
-            "title": "Request State",
-            "fields": [
-              {
-                "label": "Request State",
-                "path": "requestState"
               }
             ]
           },
@@ -5722,42 +4199,6 @@
               {
                 "label": "Request Subcategory",
                 "path": "requestSubcategory"
-              }
-            ]
-          },
-          {
-            "title": "Supplier Code Of Conduct Files",
-            "fields": [
-              {
-                "label": "Supplier Code of Conduct files",
-                "path": "supplierCodeOfConductFiles"
-              }
-            ]
-          },
-          {
-            "title": "Date Expired",
-            "fields": [
-              {
-                "label": "Date Expired",
-                "path": "dateExpired"
-              }
-            ]
-          },
-          {
-            "title": "Details Breach Company",
-            "fields": [
-              {
-                "label": "Breach Company",
-                "path": "details.breachCompany"
-              }
-            ]
-          },
-          {
-            "title": "Details Confidential",
-            "fields": [
-              {
-                "label": "Confidential",
-                "path": "details.confidential"
               }
             ]
           }
@@ -5817,13 +4258,13 @@
             "title": "Scope of Work",
             "fields": [
               {
-                "label": "What do you need?",
+                "label": "Scope of Work",
                 "path": "scopeOfWork"
               }
             ]
           },
           {
-            "title": "Your Question",
+            "title": "Description of Client's Line of Business",
             "fields": [
               {
                 "label": "Description",
@@ -5832,7 +4273,7 @@
             ]
           },
           {
-            "title": "Additional Background Information Provided by Client",
+            "title": "Attachments",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -5841,11 +4282,15 @@
               {
                 "label": "Background files",
                 "path": "backgroundInfoFiles"
+              },
+              {
+                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "path": "supplierCodeOfConductFiles"
               }
             ]
           },
           {
-            "title": "Commercial Terms",
+            "title": "How will the Client be Invoiced by the Legal Service Provider?",
             "fields": [
               {
                 "label": "Contract Price",
@@ -5856,63 +4301,21 @@
                 "path": "currency"
               },
               {
-                "label": "Invoice type",
+                "label": "Invoicing",
                 "path": "invoiceType"
               },
               {
-                "label": "Advance retainer fee",
+                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
                 "path": "advanceRetainerFee"
               }
             ]
           },
           {
-            "title": "Provider Requirements",
-            "fields": [
-              {
-                "label": "Service provider type",
-                "path": "serviceProviderType"
-              },
-              {
-                "label": "Domestic offers",
-                "path": "domesticOffers"
-              },
-              {
-                "label": "Minimum provider size",
-                "path": "providerSize"
-              },
-              {
-                "label": "Minimum company age",
-                "path": "providerCompanyAge"
-              },
-              {
-                "label": "Minimum rating",
-                "path": "providerMinimumRating"
-              }
-            ]
-          },
-          {
-            "title": "Meta",
+            "title": "Languages Required for the Performance of the Work",
             "fields": [
               {
                 "label": "Languages",
                 "path": "language"
-              },
-              {
-                "label": "Offers deadline",
-                "path": "offersDeadline"
-              },
-              {
-                "label": "Request title",
-                "path": "title"
-              }
-            ]
-          },
-          {
-            "title": "Request State",
-            "fields": [
-              {
-                "label": "Request State",
-                "path": "requestState"
               }
             ]
           },
@@ -5931,24 +4334,6 @@
               {
                 "label": "Request Subcategory",
                 "path": "requestSubcategory"
-              }
-            ]
-          },
-          {
-            "title": "Supplier Code Of Conduct Files",
-            "fields": [
-              {
-                "label": "Supplier Code of Conduct files",
-                "path": "supplierCodeOfConductFiles"
-              }
-            ]
-          },
-          {
-            "title": "Date Expired",
-            "fields": [
-              {
-                "label": "Date Expired",
-                "path": "dateExpired"
               }
             ]
           }
@@ -6034,7 +4419,7 @@
             ]
           },
           {
-            "title": "Description of Your Company's Line of Business",
+            "title": "Description of Client Company's Line of Business",
             "fields": [
               {
                 "label": "Description",
@@ -6043,7 +4428,7 @@
             ]
           },
           {
-            "title": "Additional Background Information Provided by Client",
+            "title": "Attachments",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -6052,11 +4437,15 @@
               {
                 "label": "Background files",
                 "path": "backgroundInfoFiles"
+              },
+              {
+                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "path": "supplierCodeOfConductFiles"
               }
             ]
           },
           {
-            "title": "Commercial Terms",
+            "title": "How will the Client be Invoiced by the Legal Service Provider?",
             "fields": [
               {
                 "label": "Contract Price",
@@ -6067,67 +4456,21 @@
                 "path": "currency"
               },
               {
-                "label": "Maximum price (VAT 0%)",
-                "path": "maximumPrice"
-              },
-              {
-                "label": "Invoice type",
+                "label": "Invoicing",
                 "path": "invoiceType"
               },
               {
-                "label": "Advance retainer fee",
+                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
                 "path": "advanceRetainerFee"
               }
             ]
           },
           {
-            "title": "Provider Requirements",
-            "fields": [
-              {
-                "label": "Service provider type",
-                "path": "serviceProviderType"
-              },
-              {
-                "label": "Domestic offers",
-                "path": "domesticOffers"
-              },
-              {
-                "label": "Minimum provider size",
-                "path": "providerSize"
-              },
-              {
-                "label": "Minimum company age",
-                "path": "providerCompanyAge"
-              },
-              {
-                "label": "Minimum rating",
-                "path": "providerMinimumRating"
-              }
-            ]
-          },
-          {
-            "title": "Meta",
+            "title": "Languages Required for the Performance of the Work",
             "fields": [
               {
                 "label": "Languages",
                 "path": "language"
-              },
-              {
-                "label": "Offers deadline",
-                "path": "offersDeadline"
-              },
-              {
-                "label": "Request title",
-                "path": "title"
-              }
-            ]
-          },
-          {
-            "title": "Request State",
-            "fields": [
-              {
-                "label": "Request State",
-                "path": "requestState"
               }
             ]
           },
@@ -6150,34 +4493,7 @@
             ]
           },
           {
-            "title": "Scope Of Work",
-            "fields": [
-              {
-                "label": "What do you need?",
-                "path": "scopeOfWork"
-              }
-            ]
-          },
-          {
-            "title": "Supplier Code Of Conduct Files",
-            "fields": [
-              {
-                "label": "Supplier Code of Conduct files",
-                "path": "supplierCodeOfConductFiles"
-              }
-            ]
-          },
-          {
-            "title": "Date Expired",
-            "fields": [
-              {
-                "label": "Date Expired",
-                "path": "dateExpired"
-              }
-            ]
-          },
-          {
-            "title": "Details Company Revenue",
+            "title": "Company Annual Revenue",
             "fields": [
               {
                 "label": "Annual revenue",
@@ -6186,7 +4502,7 @@
             ]
           },
           {
-            "title": "Details Employee Count",
+            "title": "Company Employee Count",
             "fields": [
               {
                 "label": "Employees",
@@ -6195,7 +4511,7 @@
             ]
           },
           {
-            "title": "Details Customer Count",
+            "title": "Company Customer Count",
             "fields": [
               {
                 "label": "Customers",

@@ -1,9 +1,9 @@
-// src/app/api/me/requests/awaiting/select/route.js
-export const runtime = "nodejs";
+// src/app/api/admin/requests/[id]/conflict/route.js
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+
 import { htmlToPdfBuffer } from "@/lib/contractPdf.js";
 import { sendContractEmail } from "@/lib/mailer.js";
 import { filesToAttachments } from "@/lib/fetchFiles.js";
@@ -16,9 +16,60 @@ import {
   notifyLosingLawyerNotSelected,
 } from "@/lib/mailer";
 
-// ---- local helper (mirrors pending route) ----
+// ---------- helpers copied from awaiting/select (trimmed to what we need) ----------
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const isEmail = (s) => typeof s === "string" && EMAIL_RE.test(s.trim());
+const norm = (s) => (s ?? "").toString().trim().toLowerCase();
+const fullName = (p) =>
+  [p?.firstName, p?.lastName].filter(Boolean).join(" ").trim();
+
+function expandWithAllNotificationContacts(primary, contacts) {
+  const primaryEmail =
+    typeof primary === "string" ? primary : primary?.email || "";
+  const base = new Set();
+  if (isEmail(primaryEmail)) base.add(primaryEmail.trim());
+
+  (Array.isArray(contacts) ? contacts : [])
+    .filter((c) => c && c.allNotifications === true && isEmail(c.email))
+    .forEach((c) => base.add(c.email.trim()));
+
+  return Array.from(base);
+}
+
+function toStringArray(val) {
+  if (Array.isArray(val)) return val.filter((v) => typeof v === "string");
+  if (val && typeof val === "object") {
+    if (Array.isArray(val.set))
+      return val.set.filter((v) => typeof v === "string");
+    if (Array.isArray(val.value))
+      return val.value.filter((v) => typeof v === "string");
+  }
+  if (typeof val === "string") {
+    try {
+      const parsed = JSON.parse(val);
+      if (Array.isArray(parsed))
+        return parsed.filter((v) => typeof v === "string");
+      return val ? [val] : [];
+    } catch {
+      return val ? [val] : [];
+    }
+  }
+  return [];
+}
+
+function findPrimaryContactByLawyer(offerLawyer, contacts) {
+  const name = norm(offerLawyer);
+  if (!Array.isArray(contacts)) return null;
+  return (
+    contacts.find((c) => norm(fullName(c)) === name) ||
+    contacts.find(
+      (c) => norm(c?.firstName) === name || norm(c?.lastName) === name
+    ) ||
+    null
+  );
+}
+
 async function sendContractPackageEmail(prisma, requestId) {
-  // Load contract + participants
   const contract = await prisma.contract.findUnique({
     where: { requestId },
     select: {
@@ -71,10 +122,6 @@ async function sendContractPackageEmail(prisma, requestId) {
   });
   if (!contract) return;
 
-  const norm = (s) => (s || "").toString().trim().toLowerCase();
-  const full = (p) =>
-    [p?.firstName, p?.lastName].filter(Boolean).join(" ").trim();
-
   const offers = Array.isArray(contract.request?.offers)
     ? contract.request.offers
     : [];
@@ -85,10 +132,11 @@ async function sendContractPackageEmail(prisma, requestId) {
     byProvider.find((o) => (o.offerStatus || "").toUpperCase() === "WON") ||
     byProvider[0] ||
     null;
+
   const offerLawyer = won?.offerLawyer?.toString?.().trim() || "";
   const contacts = contract.provider?.companyContactPersons || [];
-  const match =
-    contacts.find((c) => norm(full(c)) === norm(offerLawyer)) ||
+  const lawyerMatch =
+    contacts.find((c) => norm(fullName(c)) === norm(offerLawyer)) ||
     contacts.find(
       (c) =>
         norm(c?.firstName).startsWith(norm(offerLawyer)) ||
@@ -100,16 +148,18 @@ async function sendContractPackageEmail(prisma, requestId) {
     userId: contract.provider?.userId ?? null,
     companyName: contract.provider?.companyName || "—",
     businessId: contract.provider?.companyId || "—",
-    contactName: match ? full(match) : offerLawyer || "—",
-    email: match?.email || "—",
-    phone: match?.telephone || "—",
+    contactName: lawyerMatch ? fullName(lawyerMatch) : offerLawyer || "—",
+    email: lawyerMatch?.email || "—",
+    phone: lawyerMatch?.telephone || "—",
   };
 
   const pcDirect =
     contract.request?.primaryContactPerson ||
     contract.request?.details?.primaryContactPerson ||
     null;
-  const list = Array.isArray(contract.request?.client?.companyContactPersons)
+  const purchaserContacts = Array.isArray(
+    contract.request?.client?.companyContactPersons
+  )
     ? contract.request.client.companyContactPersons
     : [];
   const pc =
@@ -119,11 +169,12 @@ async function sendContractPackageEmail(prisma, requestId) {
       pcDirect.email ||
       pcDirect.telephone)
       ? pcDirect
-      : list[0] || null;
+      : purchaserContacts[0] || null;
+
   const purchaser = {
     companyName: contract.request?.client?.companyName || "—",
     businessId: contract.request?.client?.companyId || "—",
-    contactName: pc ? full(pc) : "—",
+    contactName: pc ? fullName(pc) : "—",
     email: pc?.email || "—",
     phone: pc?.telephone || "—",
   };
@@ -177,7 +228,7 @@ async function sendContractPackageEmail(prisma, requestId) {
     },
   };
 
-  // load preview defs
+  // Load preview defs
   let defs = null;
   const origin = process.env.APP_ORIGIN;
   if (origin) {
@@ -199,6 +250,7 @@ async function sendContractPackageEmail(prisma, requestId) {
       defs = JSON.parse(await fs.readFile(p, "utf8"));
     } catch {}
   }
+
   const norm2 = (s) => (s ?? "").toString().trim().toLowerCase();
   const cat =
     norm2(shaped.request.requestCategory) ||
@@ -209,6 +261,7 @@ async function sendContractPackageEmail(prisma, requestId) {
   const asg =
     norm2(shaped.request.assignmentType) ||
     norm2(shaped.request?.details?.assignmentType);
+
   const previewDef =
     defs?.requests?.find(
       (d) =>
@@ -227,6 +280,7 @@ async function sendContractPackageEmail(prisma, requestId) {
     companyName: shaped.purchaser.companyName,
     previewDef,
   });
+
   const pdf = await htmlToPdfBuffer(html);
   const files = [
     ...(shaped.request.backgroundInfoFiles || []),
@@ -267,6 +321,7 @@ async function sendContractPackageEmail(prisma, requestId) {
         purchaser.contactName
       } &lt;${purchaser.email || ""}&gt;</p>
     </div>`;
+
   await sendContractEmail({
     to,
     bcc: ["support@lexify.online"],
@@ -275,267 +330,117 @@ async function sendContractPackageEmail(prisma, requestId) {
     attachments,
   });
 }
+// ---------- end helpers ----------
 
-// --- email helpers (place near other helpers) ---
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const isEmail = (s) => typeof s === "string" && EMAIL_RE.test(s.trim());
-
-// Find the primary contact person object (not just email) by offerLawyer name
-function findPrimaryContactByLawyer(offerLawyer, contacts) {
-  const norm = (s) => (s ?? "").toString().trim().toLowerCase();
-  const full = (p) =>
-    [p?.firstName, p?.lastName].filter(Boolean).join(" ").trim();
-  const name = norm(offerLawyer);
-  if (!Array.isArray(contacts)) return null;
-
-  return (
-    contacts.find((c) => norm(full(c)) === name) ||
-    contacts.find(
-      (c) => norm(c?.firstName) === name || norm(c?.lastName) === name
-    ) ||
-    null
-  );
-}
-
-// Given a primary contact (or email) + the same user's contacts,
-// return [primaryEmail, ...all allNotifications=true emails (excluding primary)]
-function expandWithAllNotificationContacts(primary, contacts) {
-  const primaryEmail =
-    typeof primary === "string" ? primary : primary?.email || "";
-  const base = new Set();
-  if (isEmail(primaryEmail)) base.add(primaryEmail.trim());
-
-  (Array.isArray(contacts) ? contacts : [])
-    .filter((c) => c && c.allNotifications === true && isEmail(c.email))
-    .forEach((c) => base.add(c.email.trim()));
-
-  return Array.from(base);
-}
-
-// normalize Json / legacy {set:[]} / string → string[]
-function toStringArray(val) {
-  if (Array.isArray(val)) return val.filter((v) => typeof v === "string");
-  if (val && typeof val === "object") {
-    if (Array.isArray(val.set))
-      return val.set.filter((v) => typeof v === "string");
-    if (Array.isArray(val.value))
-      return val.value.filter((v) => typeof v === "string");
+export async function PUT(req, { params }) {
+  const session = await getServerSession(authOptions);
+  if (!session || session.role !== "ADMIN") {
+    return NextResponse.json({ error: "Forbidden" }, { status: 403 });
   }
-  if (typeof val === "string") {
-    try {
-      const parsed = JSON.parse(val);
-      if (Array.isArray(parsed))
-        return parsed.filter((v) => typeof v === "string");
-      return val ? [val] : [];
-    } catch {
-      return val ? [val] : [];
-    }
+
+  const id = BigInt(params.id);
+  const { decision } = await req.json().catch(() => ({}));
+  if (!["accept", "deny"].includes(decision)) {
+    return NextResponse.json({ error: "Bad request" }, { status: 400 });
   }
-  return [];
-}
 
-// Map offerLawyer name to provider's companyContactPersons email
-function findLawyerEmail(offerLawyer, contacts) {
-  const norm = (s) => (s ?? "").toString().trim().toLowerCase();
-  const full = (p) =>
-    [p?.firstName, p?.lastName].filter(Boolean).join(" ").trim();
-  const name = norm(offerLawyer);
+  const request = await prisma.request.findUnique({
+    where: { requestId: id },
+    select: {
+      requestId: true,
+      clientId: true,
+      requestState: true,
+      selectedOfferId: true,
+      acceptDeadlinePausedRemainingMs: true,
+      details: true,
+      acceptDeadline: true,
+    },
+  });
 
-  if (!Array.isArray(contacts)) return "";
+  if (
+    !request ||
+    request.requestState !== "CONFLICT_CHECK" ||
+    !request.selectedOfferId
+  ) {
+    return NextResponse.json({ error: "Invalid state" }, { status: 400 });
+  }
 
-  const exact =
-    contacts.find((c) => norm(full(c)) === name) ||
-    contacts.find(
-      (c) => norm(c?.firstName) === name || norm(c?.lastName) === name
-    ) ||
-    null;
-
-  return (exact?.email || "").trim();
-}
-
-export async function POST(req) {
-  try {
-    const session = await getServerSession(authOptions);
-    if (!session?.userId)
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-    const body = await req.json().catch(() => ({}));
-    const { requestId, offerId } = body || {};
-
-    let reqIdBig, offerIdBig, clientIdBig;
-    try {
-      reqIdBig = BigInt(String(requestId));
-      offerIdBig = BigInt(String(offerId));
-      clientIdBig = BigInt(String(session.userId));
-    } catch {
-      return NextResponse.json({ error: "Bad request" }, { status: 400 });
-    }
-
-    const requestRow = await prisma.request.findUnique({
-      where: { requestId: reqIdBig },
-      select: {
-        clientId: true,
-        requestState: true,
-        acceptDeadline: true,
-        details: true,
-      },
-    });
-    if (!requestRow || requestRow.clientId !== clientIdBig) {
-      return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-    if (requestRow.requestState !== "ON HOLD") {
-      return NextResponse.json(
-        { error: "Request is not on hold" },
-        { status: 400 }
-      );
-    }
-
-    const offerRow = await prisma.offer.findUnique({
-      where: { offerId: offerIdBig },
+  if (decision === "accept") {
+    // Fetch the selected offer (the one that passed conflict check)
+    const selOffer = await prisma.offer.findUnique({
+      where: { offerId: request.selectedOfferId },
       select: {
         offerId: true,
         offerPrice: true,
         providerId: true,
         requestId: true,
-        offerTitle: true,
       },
     });
-    if (!offerRow || offerRow.requestId !== reqIdBig) {
-      return NextResponse.json({ error: "Offer not found" }, { status: 404 });
-    }
-
-    // Check for confidentiality for conflict check before creating contract
-    const confidentialYes =
-      (requestRow?.details?.confidential || "")
-        .toString()
-        .trim()
-        .toLowerCase() === "yes";
-
-    if (confidentialYes) {
-      const now = new Date();
-      const remainingMs = Math.max(
-        0,
-        new Date(requestRow.acceptDeadline).getTime() - now.getTime()
-      );
-
-      await prisma.request.update({
-        where: { requestId: reqIdBig },
-        data: {
-          requestState: "CONFLICT_CHECK",
-          selectedOfferId: offerRow.offerId,
-          acceptDeadlinePausedRemainingMs: remainingMs,
-          acceptDeadlinePausedAt: now,
-          // leave acceptDeadline as-is for audit; we’ll ignore it while paused
-        },
-      });
-
-      // === email offer's lawyer + provider allNotifications contacts ===
-      try {
-        // Load provider's contacts + prefs and the chosen offer's title & lawyer
-        const [provider, offerFull] = await Promise.all([
-          prisma.appUser.findUnique({
-            where: { userId: offerRow.providerId },
-            select: {
-              companyContactPersons: true,
-              notificationPreferences: true,
-            },
-          }),
-          prisma.offer.findUnique({
-            where: { offerId: offerRow.offerId },
-            select: { offerTitle: true, offerLawyer: true },
-          }),
-        ]);
-
-        const prefs = toStringArray(provider?.notificationPreferences);
-        const contacts = provider?.companyContactPersons || [];
-
-        if (prefs.includes("winner-conflict-check")) {
-          // Provider opted in → email lawyer + allNotifications contacts, BCC Support
-          const lawyerPrimary =
-            findPrimaryContactByLawyer(offerFull?.offerLawyer, contacts) ||
-            null;
-          const recipients = expandWithAllNotificationContacts(
-            lawyerPrimary,
-            contacts
-          );
-
-          if (recipients.length > 0) {
-            await notifyProviderConflictCheck({
-              to: recipients,
-              offerTitle: offerFull?.offerTitle || "",
-              bcc: ["support@lexify.online"],
-            });
-          }
-        } else {
-          // Provider opted out → still notify admins only
-          await notifyProviderConflictCheck({
-            to: ["support@lexify.online"],
-            offerTitle: offerFull?.offerTitle || "",
-            // No extra BCC needed here; Support is already in "to"
-          });
-        }
-      } catch (e) {
-        console.error("confidentiality notification failed:", e);
-      }
-
-      // Do NOT create contract, update statuses, or send emails yet
+    if (!selOffer || selOffer.requestId !== request.requestId) {
       return NextResponse.json(
-        { ok: true, conflictCheck: true },
-        { status: 200 }
+        { error: "Selected offer not found" },
+        { status: 404 }
       );
     }
 
-    // 1) Create the contract exactly once (no throw on duplicates)
+    // 1) Create the contract exactly once (skipDuplicates)
     const createRes = await prisma.contract.createMany({
       data: [
         {
-          requestId: reqIdBig,
-          clientId: clientIdBig,
-          providerId: offerRow.providerId,
+          requestId: request.requestId,
+          clientId: request.clientId,
+          providerId: selOffer.providerId,
           contractPrice:
-            offerRow.offerPrice?.toString?.() ?? String(offerRow.offerPrice),
+            selOffer.offerPrice?.toString?.() ?? String(selOffer.offerPrice),
         },
       ],
       skipDuplicates: true,
     });
     const createdNow = (createRes?.count || 0) > 0;
 
-    // 2) Update statuses in a clean transaction
+    // 2) Update statuses + request in a transaction
     await prisma.$transaction([
       prisma.offer.update({
-        where: { offerId: offerRow.offerId },
+        where: { offerId: selOffer.offerId },
         data: { offerStatus: "WON" },
       }),
       prisma.offer.updateMany({
-        where: { requestId: reqIdBig, offerId: { not: offerRow.offerId } },
+        where: {
+          requestId: request.requestId,
+          offerId: { not: selOffer.offerId },
+        },
         data: { offerStatus: "LOST" },
       }),
       prisma.request.update({
-        where: { requestId: reqIdBig },
-        data: { requestState: "EXPIRED", contractResult: "Yes" },
+        where: { requestId: request.requestId },
+        data: {
+          requestState: "EXPIRED",
+          contractResult: "Yes",
+          selectedOfferId: null,
+          acceptDeadlinePausedRemainingMs: null,
+          acceptDeadlinePausedAt: null,
+        },
       }),
     ]);
 
-    // 3) Email contract package only when newly created
+    // 3) Send contract package (PDF + attachments) only when newly created
     if (createdNow) {
       try {
-        await sendContractPackageEmail(prisma, reqIdBig);
+        await sendContractPackageEmail(prisma, request.requestId);
       } catch (e) {
-        console.error("awaiting/select email failed:", e);
+        console.error("conflict/accept contract package email failed:", e);
       }
     }
 
+    // 4) Notifications (purchaser, winner, losers per prefs); only on first creation
     if (createdNow) {
       try {
-        // Fetch request + offers + purchaser + provider contacts to build all emails
         const data = await prisma.request.findUnique({
-          where: { requestId: reqIdBig },
+          where: { requestId: request.requestId },
           select: {
             title: true,
             primaryContactPerson: true,
-            client: {
-              select: { companyContactPersons: true },
-            },
+            client: { select: { companyContactPersons: true } },
             offers: {
               select: {
                 offerId: true,
@@ -548,11 +453,7 @@ export async function POST(req) {
           },
         });
 
-        // Purchaser email
-        const norm = (s) => (s ?? "").toString().trim().toLowerCase();
-        const full = (p) =>
-          [p?.firstName, p?.lastName].filter(Boolean).join(" ").trim();
-
+        // Purchaser notification
         const pc = data?.primaryContactPerson || null;
         const purchaserContacts = Array.isArray(
           data?.client?.companyContactPersons
@@ -561,9 +462,9 @@ export async function POST(req) {
           : [];
         let purchaserEmail = "";
         if (pc) {
-          const target = norm(full(pc));
+          const target = norm(fullName(pc));
           const match =
-            purchaserContacts.find((c) => norm(full(c)) === target) ||
+            purchaserContacts.find((c) => norm(fullName(c)) === target) ||
             purchaserContacts.find(
               (c) =>
                 norm(c?.firstName) === norm(pc.firstName) ||
@@ -586,10 +487,10 @@ export async function POST(req) {
           });
         }
 
-        // Provider contacts for all offers
+        // Providers metadata
         const providerIds = Array.from(
           new Set((data?.offers || []).map((o) => String(o.providerId)))
-        ).map((id) => BigInt(id));
+        ).map((x) => BigInt(x));
         const providers = await prisma.appUser.findMany({
           where: { userId: { in: providerIds } },
           select: {
@@ -608,7 +509,7 @@ export async function POST(req) {
           ])
         );
 
-        // Winner
+        // Winner notification
         const winner = (data?.offers || []).find(
           (o) => (o.offerStatus || "").toUpperCase() === "WON"
         );
@@ -633,7 +534,7 @@ export async function POST(req) {
           }
         }
 
-        // Losers
+        // Loser notifications (respect provider prefs)
         for (const o of data?.offers || []) {
           if ((o.offerStatus || "").toUpperCase() === "WON") continue;
           const meta = providerMeta.get(String(o.providerId)) || {
@@ -658,16 +559,58 @@ export async function POST(req) {
           }
         }
       } catch (e) {
-        console.error("awaiting/select notifications failed:", e);
+        console.error("conflict/accept notifications failed:", e);
       }
     }
 
     return NextResponse.json(
-      { ok: true, createdNow },
-      { status: createdNow ? 201 : 200 }
+      { ok: true, resolved: "accepted", createdNow },
+      { status: 200 }
     );
-  } catch (e) {
-    console.error("POST /api/me/requests/awaiting/select failed:", e);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
+
+  // ----- deny branch: keep as-is, resume deadline, disqualify selected offer -----
+  if (decision === "deny") {
+    const now = new Date();
+
+    await prisma.$transaction(async (tx) => {
+      await tx.offer.update({
+        where: { offerId: request.selectedOfferId },
+        data: { offerStatus: "DISQUALIFIED" },
+      });
+
+      const r = await tx.request.findUnique({
+        where: { requestId: id },
+        select: {
+          disqualifiedOfferIds: true,
+          acceptDeadlinePausedRemainingMs: true,
+        },
+      });
+
+      const list = Array.isArray(r?.disqualifiedOfferIds)
+        ? r.disqualifiedOfferIds
+        : [];
+      const updatedList = [...list, request.selectedOfferId.toString()];
+
+      const remaining = Math.max(
+        0,
+        Number(r?.acceptDeadlinePausedRemainingMs ?? 0)
+      );
+      const newDeadline = remaining ? new Date(now.getTime() + remaining) : now;
+
+      await tx.request.update({
+        where: { requestId: id },
+        data: {
+          requestState: "ON HOLD",
+          selectedOfferId: null,
+          acceptDeadline: newDeadline,
+          acceptDeadlinePausedRemainingMs: null,
+          acceptDeadlinePausedAt: null,
+          disqualifiedOfferIds: updatedList,
+        },
+      });
+    });
+
+    return NextResponse.json({ ok: true, resolved: "denied" });
   }
 }

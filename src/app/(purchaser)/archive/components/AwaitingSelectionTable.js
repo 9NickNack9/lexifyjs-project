@@ -94,9 +94,16 @@ export default function AwaitingSelectionTable({
           </thead>
           <tbody>
             {rows.map((r) => {
-              const timeLeft = r.acceptDeadline
-                ? formatTimeUntil(r.acceptDeadline)
-                : "";
+              const timeLeft =
+                r.requestState === "CONFLICT_CHECK"
+                  ? r.pausedRemainingMs != null
+                    ? `Paused (${formatTimeUntil(
+                        Date.now() + r.pausedRemainingMs
+                      )})`
+                    : "Paused"
+                  : r.acceptDeadline
+                  ? formatTimeUntil(r.acceptDeadline)
+                  : "";
 
               return (
                 <tr key={r.requestId}>
@@ -121,13 +128,24 @@ export default function AwaitingSelectionTable({
                   </td>
 
                   <td className="border p-2 align-top">
+                    {r.requestState === "CONFLICT_CHECK" && (
+                      <div className="mb-2 text-sm text-amber-700">
+                        Conflict check in progress. Selection is temporarily
+                        paused.
+                      </div>
+                    )}
                     {Array.isArray(r.topOffers) && r.topOffers.length > 0 ? (
                       <ul className="space-y-2">
                         {r.topOffers.map((o) => (
                           <li key={o.offerId} className="text-sm">
                             <div className="flex items-center justify-between gap-2">
                               <button
-                                className="bg-[#11999e] text-white px-3 py-1 rounded cursor-pointer"
+                                className={`px-3 py-1 rounded cursor-pointer ${
+                                  r.requestState === "CONFLICT_CHECK"
+                                    ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                                    : "bg-[#11999e] text-white"
+                                }`}
+                                disabled={r.requestState === "CONFLICT_CHECK"}
                                 onClick={() => confirmAndSelect(r, o)}
                               >
                                 Select

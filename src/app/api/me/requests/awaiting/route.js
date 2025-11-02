@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { TURBOPACK_CLIENT_MIDDLEWARE_MANIFEST } from "next/dist/shared/lib/constants";
 
 // BigInt-safe JSON helper
 const serialize = (obj) =>
@@ -36,7 +37,10 @@ export async function GET() {
       where: {
         clientId: meId,
         requestState: "ON HOLD",
-        acceptDeadline: { gt: now },
+        OR: [
+          { requestState: "ON HOLD", acceptDeadline: { gt: now } },
+          { requestState: "CONFLICT_CHECK" },
+        ],
       },
       orderBy: { dateCreated: "desc" },
       select: {
@@ -47,6 +51,10 @@ export async function GET() {
         acceptDeadline: true,
         currency: true,
         details: true,
+        selectedOfferId: true,
+        acceptDeadlinePausedRemainingMs: true,
+        requestState: true,
+        disqualifiedOfferIds: true,
         offers: {
           select: {
             offerId: true,
@@ -59,6 +67,7 @@ export async function GET() {
               },
             },
             providerId: true,
+            offerStatus: true,
           },
         },
       },
@@ -66,7 +75,12 @@ export async function GET() {
 
     const shaped = reqs.map((r) => {
       const maxPrice = maxFromDetails(r.details);
+      const disqSet = new Set(
+        toStringArray(r.disqualifiedOfferIds).map(String) // use helper like in your select route
+      );
       const offers = (r.offers || [])
+        .filter((o) => (o.offerStatus || "").toUpperCase() !== "DISQUALIFIED")
+        .filter((o) => !disqSet.has(String(o.offerId)))
         .map((o) => ({
           // ↓↓↓ Convert BigInts to strings ↓↓↓
           offerId:
@@ -101,6 +115,9 @@ export async function GET() {
         currency: r.currency,
         maxPrice, // number | null
         topOffers: offers,
+        requestState: r.requestState,
+        selectedOfferId: r.selectedOfferId?.toString?.() ?? null,
+        pausedRemainingMs: r.acceptDeadlinePausedRemainingMs ?? null,
       };
     });
 

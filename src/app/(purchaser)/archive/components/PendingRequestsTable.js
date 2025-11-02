@@ -34,6 +34,11 @@ export default function PendingRequestsTable({
 
     let deadlineText = timeLeft;
 
+    // Conflict check deadline text
+    if (r.requestState === "CONFLICT_CHECK" && isExpired) {
+      deadlineText = "Expired. Awaiting Conflict Check for Selected Offer.";
+    }
+
     // Special messages for ON HOLD that are past the deadline
     if (r.requestState === "ON HOLD" && isExpired) {
       if (bestIsUnderMax) {
@@ -54,7 +59,7 @@ export default function PendingRequestsTable({
     return { ...r, rawDeadline, deadlineText, isExpired };
   });
 
-  // Show ALL PENDING and ON HOLD (even expired), hide only EXPIRED
+  // Show ALL PENDING and ON HOLD (even expired) and CONFLICT CHECK, hide only EXPIRED
   const active = enriched.filter((r) => r.requestState !== "EXPIRED");
 
   return (

@@ -701,6 +701,82 @@ export async function POST(req) {
       }
 
       if (winningMode === "automatic") {
+        const isConfidential =
+          (r.details?.confidential ?? "").toString().trim().toLowerCase() ===
+          "yes";
+
+        // If confidential => treat as MANUAL + UNDER-MAX case:
+        // put request ON HOLD for 7 days and notify purchaser (same template)
+        if (isConfidential) {
+          const accept = new Date(r.dateExpired ?? now);
+          accept.setDate(accept.getDate() + 7);
+          await prisma.request.update({
+            where: { requestId },
+            data: { requestState: "ON HOLD", acceptDeadline: accept },
+          });
+          // count it with manual-style bucket
+          onHoldManual++;
+
+          // same email logic as manual under-max section
+          try {
+            const norm = (s) => (s ?? "").toString().trim().toLowerCase();
+            const full = (p) =>
+              [p?.firstName, p?.lastName].filter(Boolean).join(" ").trim();
+
+            const pc =
+              (r.primaryContactPerson &&
+                (r.primaryContactPerson.firstName ||
+                  r.primaryContactPerson.lastName ||
+                  r.primaryContactPerson.email ||
+                  r.primaryContactPerson.telephone) &&
+                r.primaryContactPerson) ||
+              null;
+
+            const contacts = Array.isArray(r.client?.companyContactPersons)
+              ? r.client.companyContactPersons
+              : [];
+
+            let toEmail = "";
+            if (pc) {
+              const target = norm(full(pc));
+              const match =
+                contacts.find((c) => norm(full(c)) === target) ||
+                contacts.find(
+                  (c) =>
+                    norm(c?.firstName) === norm(pc.firstName) ||
+                    norm(c?.lastName) === norm(pc.lastName)
+                ) ||
+                null;
+              toEmail = (match?.email || pc.email || "").trim();
+            }
+            if (!toEmail && contacts.length > 0) {
+              toEmail = (contacts[0]?.email || "").trim();
+            }
+
+            const purchaserPrefs = toStringArray(
+              r.client?.notificationPreferences
+            );
+            // Only notify if the purchaser has "pending_offer_selection" enabled
+            if (toEmail && purchaserPrefs.includes("pending_offer_selection")) {
+              const toGroup = expandWithAllNotificationContacts(
+                { email: toEmail },
+                contacts // include allNotifications: true
+              );
+              await notifyPurchaserManualUnderMaxExpired({
+                to: toGroup,
+                requestTitle: r.title || "",
+              });
+            }
+          } catch (e) {
+            console.error(
+              "Automatic+confidential purchaser notification failed:",
+              e
+            );
+          }
+
+          continue; // do NOT auto-award when confidential
+        }
+
         if (anyUnderMax) {
           // RULE 3: Automatic + (no maxPrice but has offers) OR (offer <= maxPrice)
           const winning = lowest ?? null;
@@ -716,7 +792,7 @@ export async function POST(req) {
           }
           let createdNow = false;
           await prisma.$transaction(async (tx) => {
-            // ✅ 1) Ensure exactly one contract per requestId without throwing
+            // 1) Ensure exactly one contract per requestId without throwing
             const existing = await tx.contract.findUnique({
               where: { requestId }, // Contract.requestId is @unique
               select: { contractId: true },

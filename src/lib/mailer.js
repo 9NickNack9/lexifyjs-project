@@ -242,3 +242,19 @@ export async function notifyUserPasswordReset({ to, resetUrl }) {
     )
   );
 }
+
+// Losing offer lawyer notification: conflict check started for their offer
+export async function notifyProviderConflictCheck({
+  to,
+  offerTitle,
+  bcc = ["support@lexify.online"],
+}) {
+  if (!to) return;
+  const templateId = "d-9a1376d8463645fe92b1850880a20753";
+  await sendDynamicTemplateEmail({
+    to, // string or array
+    bcc, // ensure Support is copied
+    templateId,
+    dynamicTemplateData: { offerTitle },
+  });
+}
