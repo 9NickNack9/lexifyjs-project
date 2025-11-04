@@ -558,11 +558,10 @@ export default function EmploymentContract() {
               <strong>NOTE:</strong>{" "}
               <em>
                 Any maximum price set by you will not be visible to legal
-                service providers and will only be used to disqualify any offer
-                that exceeds your maximum price. If the best offer you receive
-                exceeds the maximum price, you can still choose to accept such
-                offer by confirming your acceptance within 7 days of the
-                expiration of your LEXIFY Request.
+                service providers. If the best offer you receive exceeds your
+                maximum price, you can still choose to accept such offer by
+                confirming your acceptance within 7 days of the expiration of
+                your LEXIFY Request.
               </em>
             </p>
             <br />

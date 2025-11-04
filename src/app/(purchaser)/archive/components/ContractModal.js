@@ -138,19 +138,12 @@ export default function ContractModal({
   }
 
   function primaryContactPersonConfidential(row) {
-    const confidential =
-      row?.details?.confidential?.toString().toLowerCase() === "yes";
-
-    if (confidential) return "Disclosed to Winning Bidder Only";
-
     return (
       row?.primaryContactPerson ?? row?.details?.primaryContactPerson ?? "—"
     );
   }
 
   function counterpartyOrWinnerOnly(row) {
-    const w = winnerOnly(row);
-    if (w) return w;
     return (
       row?.details?.breachCompany ||
       row?.details?.winnerBidderOnlyStatus ||
@@ -234,7 +227,7 @@ export default function ContractModal({
         case "__clientLine__":
           return buildClientLine(row, companyName);
         case "__clientLineOrDisclosed__":
-          return winnerOnly(row) || buildClientLine(row, companyName);
+          return buildClientLine(row, companyName);
         case "__counterpartyConfidential__":
           return counterpartyOrWinnerOnly(row);
         case "__currencyMax__":
