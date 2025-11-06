@@ -38,7 +38,7 @@
             ]
           },
           {
-            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "title": "Contract Price & Invoicing",
             "fields": [
               {
                 "label": "Contract Price",
@@ -59,7 +59,7 @@
             ]
           },
           {
-            "title": "Attachments",
+            "title": "Additional Background Information & Appendices",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -85,17 +85,12 @@
             ]
           },
           {
-            "title": "Request Category",
+            "title": "LEXIFY Request Category",
             "fields": [
               {
                 "label": "Request Category",
                 "path": "requestCategory"
-              }
-            ]
-          },
-          {
-            "title": "Request Subcategory",
-            "fields": [
+              },
               {
                 "label": "Request Subcategory",
                 "path": "requestSubcategory"
@@ -103,7 +98,7 @@
             ]
           },
           {
-            "title": "Counterparty/Confidentiality",
+            "title": "Client's Counterparty in the Matter",
             "fields": [
               {
                 "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
@@ -185,7 +180,7 @@
             ]
           },
           {
-            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "title": "Contract Price & Invoicing",
             "fields": [
               {
                 "label": "Contract Price",
@@ -206,7 +201,7 @@
             ]
           },
           {
-            "title": "Attachments",
+            "title": "Additional Background Information & Appendices",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -232,17 +227,12 @@
             ]
           },
           {
-            "title": "Request Category",
+            "title": "LEXIFY Request Category",
             "fields": [
               {
                 "label": "Request Category",
                 "path": "requestCategory"
-              }
-            ]
-          },
-          {
-            "title": "Request Subcategory",
-            "fields": [
+              },
               {
                 "label": "Request Subcategory",
                 "path": "requestSubcategory"
@@ -250,7 +240,7 @@
             ]
           },
           {
-            "title": "Counterparty/Confidentiality",
+            "title": "Client's Counterparty in the Matter",
             "fields": [
               {
                 "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
@@ -337,7 +327,7 @@
             ]
           },
           {
-            "title": "Counterparty/Confidentiality",
+            "title": "Client's Counterparty in the Matter",
             "fields": [
               {
                 "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter",
@@ -377,7 +367,7 @@
             ]
           },
           {
-            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "title": "Contract Price & Invoicing",
             "fields": [
               {
                 "label": "Contract Price",
@@ -398,7 +388,7 @@
             ]
           },
           {
-            "title": "Attachments",
+            "title": "Additional Background Information & Appendices",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -424,26 +414,16 @@
             ]
           },
           {
-            "title": "Request Category",
+            "title": "LEXIFY Request Category",
             "fields": [
               {
                 "label": "Request Category",
                 "path": "requestCategory"
-              }
-            ]
-          },
-          {
-            "title": "Request Subcategory",
-            "fields": [
+              },
               {
                 "label": "Request Subcategory",
                 "path": "requestSubcategory"
-              }
-            ]
-          },
-          {
-            "title": "Assignment Type",
-            "fields": [
+              },
               {
                 "label": "Assignment Type",
                 "path": "assignmentType"
@@ -509,13 +489,22 @@
             "title": "Scope of Work",
             "fields": [
               {
-                "label": "Selected support",
+                "label": "Scope of Work",
                 "path": "__supportWithDueDiligenceFormat__"
               }
             ]
           },
           {
-            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "title": "Description",
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
+          },
+          {
+            "title": "Contract Price & Invoicing",
             "fields": [
               {
                 "label": "Contract Price",
@@ -532,11 +521,15 @@
               {
                 "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
                 "path": "advanceRetainerFee"
+              },
+              {
+                "label": "Expected Price Range",
+                "path": "details.priceRange"
               }
             ]
           },
           {
-            "title": "Attachments",
+            "title": "Additional Background Information & Appendices",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -567,7 +560,7 @@
             ]
           },
           {
-            "title": "Counterparty/Confidentiality",
+            "title": "Client's Counterparty in the Matter",
             "fields": [
               {
                 "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
@@ -589,47 +582,19 @@
             ]
           },
           {
-            "title": "Request Category",
+            "title": "LEXIFY Request Category",
             "fields": [
               {
                 "label": "Request Category",
                 "path": "requestCategory"
-              }
-            ]
-          },
-          {
-            "title": "Request Subcategory",
-            "fields": [
+              },
               {
                 "label": "Request Subcategory",
                 "path": "requestSubcategory"
-              }
-            ]
-          },
-          {
-            "title": "Assignment Type",
-            "fields": [
+              },
               {
                 "label": "Assignment Type",
                 "path": "assignmentType"
-              }
-            ]
-          },
-          {
-            "title": "Description",
-            "fields": [
-              {
-                "label": "Description",
-                "path": "description"
-              }
-            ]
-          },
-          {
-            "title": "Expected Price Range",
-            "fields": [
-              {
-                "label": "Price Range",
-                "path": "details.priceRange"
               }
             ]
           }
@@ -692,13 +657,31 @@
             "title": "Scope of Work",
             "fields": [
               {
-                "label": "What do you need?",
+                "label": "Scope of Work",
                 "path": "scopeOfWork"
               }
             ]
           },
           {
-            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "title": "Customer Role",
+            "fields": [
+              {
+                "label": "Role",
+                "path": "details.customerType"
+              }
+            ]
+          },
+          {
+            "title": "Description",
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
+          },
+          {
+            "title": "Contract Price & Invoicing",
             "fields": [
               {
                 "label": "Contract Price",
@@ -715,6 +698,10 @@
               {
                 "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
                 "path": "advanceRetainerFee"
+              },
+              {
+                "label": "Expected Rent Range",
+                "path": "details.rentRange"
               }
             ]
           },
@@ -728,7 +715,7 @@
             ]
           },
           {
-            "title": "Counterparty/Confidentiality",
+            "title": "Client's Counterparty in the Matter",
             "fields": [
               {
                 "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
@@ -741,7 +728,7 @@
             ]
           },
           {
-            "title": "Attachments",
+            "title": "Additional Background Information & Appendices",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -768,56 +755,19 @@
             ]
           },
           {
-            "title": "Request Category",
+            "title": "LEXIFY Request Category",
             "fields": [
               {
                 "label": "Request Category",
                 "path": "requestCategory"
-              }
-            ]
-          },
-          {
-            "title": "Request Subcategory",
-            "fields": [
+              },
               {
                 "label": "Request Subcategory",
                 "path": "requestSubcategory"
-              }
-            ]
-          },
-          {
-            "title": "Assignment Type",
-            "fields": [
+              },
               {
                 "label": "Assignment Type",
                 "path": "assignmentType"
-              }
-            ]
-          },
-          {
-            "title": "Description",
-            "fields": [
-              {
-                "label": "Description",
-                "path": "description"
-              }
-            ]
-          },
-          {
-            "title": "Customer Type",
-            "fields": [
-              {
-                "label": "Role",
-                "path": "details.customerType"
-              }
-            ]
-          },
-          {
-            "title": "Expected Rent Range",
-            "fields": [
-              {
-                "label": "Rent Range",
-                "path": "details.rentRange"
               }
             ]
           }
@@ -879,8 +829,17 @@
             "title": "Scope of Work",
             "fields": [
               {
-                "label": "What do you need?",
+                "label": "Scope of Work",
                 "path": "scopeOfWork"
+              }
+            ]
+          },
+          {
+            "title": "Description",
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
               }
             ]
           },
@@ -894,7 +853,7 @@
             ]
           },
           {
-            "title": "Counterparty/Confidentiality",
+            "title": "Client's Counterparty in the Matter",
             "fields": [
               {
                 "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
@@ -907,7 +866,7 @@
             ]
           },
           {
-            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "title": "Contract Price & Invoicing",
             "fields": [
               {
                 "label": "Contract Price",
@@ -928,7 +887,7 @@
             ]
           },
           {
-            "title": "Attachments",
+            "title": "Additional Background Information & Appendices",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -954,38 +913,19 @@
             ]
           },
           {
-            "title": "Request Category",
+            "title": "LEXIFY Request Category",
             "fields": [
               {
                 "label": "Request Category",
                 "path": "requestCategory"
-              }
-            ]
-          },
-          {
-            "title": "Request Subcategory",
-            "fields": [
+              },
               {
                 "label": "Request Subcategory",
                 "path": "requestSubcategory"
-              }
-            ]
-          },
-          {
-            "title": "Assignment Type",
-            "fields": [
+              },
               {
                 "label": "Assignment Type",
                 "path": "assignmentType"
-              }
-            ]
-          },
-          {
-            "title": "Description",
-            "fields": [
-              {
-                "label": "Description",
-                "path": "description"
               }
             ]
           }
@@ -1044,13 +984,22 @@
             "title": "Scope of Work",
             "fields": [
               {
-                "label": "What do you need?",
+                "label": "Scope of Work",
                 "path": "scopeOfWork"
               }
             ]
           },
           {
-            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "title": "Description",
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
+          },
+          {
+            "title": "Contract Price & Invoicing",
             "fields": [
               {
                 "label": "Contract Price",
@@ -1067,6 +1016,10 @@
               {
                 "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
                 "path": "advanceRetainerFee"
+              },
+              {
+                "label": "Expected Price Range",
+                "path": "details.priceRange"
               }
             ]
           },
@@ -1081,7 +1034,7 @@
             ]
           },
           {
-            "title": "Counterparty/Confidentiality",
+            "title": "Client's Counterparty in the Matter",
             "fields": [
               {
                 "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
@@ -1094,7 +1047,7 @@
             ]
           },
           {
-            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "title": "Contract Price & Invoicing",
             "fields": [
               {
                 "label": "Contract Price",
@@ -1115,7 +1068,7 @@
             ]
           },
           {
-            "title": "Attachments",
+            "title": "Additional Background Information & Appendices",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -1141,47 +1094,19 @@
             ]
           },
           {
-            "title": "Request Category",
+            "title": "LEXIFY Request Category",
             "fields": [
               {
                 "label": "Request Category",
                 "path": "requestCategory"
-              }
-            ]
-          },
-          {
-            "title": "Request Subcategory",
-            "fields": [
+              },
               {
                 "label": "Request Subcategory",
                 "path": "requestSubcategory"
-              }
-            ]
-          },
-          {
-            "title": "Assignment Type",
-            "fields": [
+              },
               {
                 "label": "Assignment Type",
                 "path": "assignmentType"
-              }
-            ]
-          },
-          {
-            "title": "Description",
-            "fields": [
-              {
-                "label": "Description",
-                "path": "description"
-              }
-            ]
-          },
-          {
-            "title": "Expected Price Range",
-            "fields": [
-              {
-                "label": "Price Range",
-                "path": "details.priceRange"
               }
             ]
           }
@@ -1242,7 +1167,7 @@
             "title": "Scope of Work",
             "fields": [
               {
-                "label": "What do you need?",
+                "label": "Scope of Work",
                 "path": "scopeOfWork"
               },
               {
@@ -1252,7 +1177,7 @@
             ]
           },
           {
-            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "title": "Contract Price & Invoicing",
             "fields": [
               {
                 "label": "Contract Price",
@@ -1273,7 +1198,7 @@
             ]
           },
           {
-            "title": "Attachments",
+            "title": "Additional Background Information & Appendices",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -1299,26 +1224,16 @@
             ]
           },
           {
-            "title": "Request Category",
+            "title": "LEXIFY Request Category",
             "fields": [
               {
                 "label": "Request Category",
                 "path": "requestCategory"
-              }
-            ]
-          },
-          {
-            "title": "Request Subcategory",
-            "fields": [
+              },
               {
                 "label": "Request Subcategory",
                 "path": "requestSubcategory"
-              }
-            ]
-          },
-          {
-            "title": "Assignment Type",
-            "fields": [
+              },
               {
                 "label": "Assignment Type",
                 "path": "assignmentType"
@@ -1379,7 +1294,7 @@
             "title": "Scope of Work",
             "fields": [
               {
-                "label": "What do you need?",
+                "label": "Scope of Work",
                 "path": "scopeOfWork"
               },
               {
@@ -1389,7 +1304,7 @@
             ]
           },
           {
-            "title": "Counterparty/Confidentiality",
+            "title": "Client's Counterparty in the Matter",
             "fields": [
               {
                 "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
@@ -1402,7 +1317,7 @@
             ]
           },
           {
-            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "title": "Contract Price & Invoicing",
             "fields": [
               {
                 "label": "Contract Price",
@@ -1423,7 +1338,7 @@
             ]
           },
           {
-            "title": "Attachments",
+            "title": "Additional Background Information & Appendices",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -1449,26 +1364,16 @@
             ]
           },
           {
-            "title": "Request Category",
+            "title": "LEXIFY Request Category",
             "fields": [
               {
                 "label": "Request Category",
                 "path": "requestCategory"
-              }
-            ]
-          },
-          {
-            "title": "Request Subcategory",
-            "fields": [
+              },
               {
                 "label": "Request Subcategory",
                 "path": "requestSubcategory"
-              }
-            ]
-          },
-          {
-            "title": "Assignment Type",
-            "fields": [
+              },
               {
                 "label": "Assignment Type",
                 "path": "assignmentType"
@@ -1531,7 +1436,7 @@
             "title": "Scope of Work",
             "fields": [
               {
-                "label": "What do you need?",
+                "label": "Scope of Work",
                 "path": "scopeOfWork"
               },
               {
@@ -1541,7 +1446,7 @@
             ]
           },
           {
-            "title": "Counterparty/Confidentiality",
+            "title": "Client's Counterparty in the Matter",
             "fields": [
               {
                 "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
@@ -1554,7 +1459,7 @@
             ]
           },
           {
-            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "title": "Contract Price & Invoicing",
             "fields": [
               {
                 "label": "Contract Price",
@@ -1575,7 +1480,7 @@
             ]
           },
           {
-            "title": "Attachments",
+            "title": "Additional Background Information & Appendices",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -1601,26 +1506,16 @@
             ]
           },
           {
-            "title": "Request Category",
+            "title": "LEXIFY Request Category",
             "fields": [
               {
                 "label": "Request Category",
                 "path": "requestCategory"
-              }
-            ]
-          },
-          {
-            "title": "Request Subcategory",
-            "fields": [
+              },
               {
                 "label": "Request Subcategory",
                 "path": "requestSubcategory"
-              }
-            ]
-          },
-          {
-            "title": "Assignment Type",
-            "fields": [
+              },
               {
                 "label": "Assignment Type",
                 "path": "assignmentType"
@@ -1684,13 +1579,13 @@
             "title": "Scope of Work",
             "fields": [
               {
-                "label": "What do you need?",
+                "label": "Scope of Work",
                 "path": "scopeOfWork"
               }
             ]
           },
           {
-            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "title": "Contract Price & Invoicing",
             "fields": [
               {
                 "label": "Contract Price",
@@ -1720,7 +1615,7 @@
             ]
           },
           {
-            "title": "Attachments",
+            "title": "Additional Background Information & Appendices",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -1746,26 +1641,16 @@
             ]
           },
           {
-            "title": "Request Category",
+            "title": "LEXIFY Request Category",
             "fields": [
               {
                 "label": "Request Category",
                 "path": "requestCategory"
-              }
-            ]
-          },
-          {
-            "title": "Request Subcategory",
-            "fields": [
+              },
               {
                 "label": "Request Subcategory",
                 "path": "requestSubcategory"
-              }
-            ]
-          },
-          {
-            "title": "Assignment Type",
-            "fields": [
+              },
               {
                 "label": "Assignment Type",
                 "path": "assignmentType"
@@ -1825,13 +1710,22 @@
             "title": "Scope of Work",
             "fields": [
               {
-                "label": "What do you need?",
+                "label": "Scope of Work",
                 "path": "scopeOfWork"
               }
             ]
           },
           {
-            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "title": "Document Types",
+            "fields": [
+              {
+                "label": "Document Types",
+                "path": "details.documentTypes"
+              }
+            ]
+          },
+          {
+            "title": "Contract Price & Invoicing",
             "fields": [
               {
                 "label": "Contract Price",
@@ -1848,6 +1742,10 @@
               {
                 "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
                 "path": "advanceRetainerFee"
+              },
+              {
+                "label": "Expected value of the agreement",
+                "path": "details.expectedValue"
               }
             ]
           },
@@ -1861,16 +1759,7 @@
             ]
           },
           {
-            "title": "Expected Value of the Contract",
-            "fields": [
-              {
-                "label": "Expected value of the agreement",
-                "path": "details.expectedValue"
-              }
-            ]
-          },
-          {
-            "title": "Counterparty/Confidentiality",
+            "title": "Client's Counterparty in the Matter",
             "fields": [
               {
                 "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
@@ -1883,7 +1772,7 @@
             ]
           },
           {
-            "title": "Attachments",
+            "title": "Additional Background Information & Appendices",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -1914,33 +1803,14 @@
               {
                 "label": "Request Category",
                 "path": "requestCategory"
-              }
-            ]
-          },
-          {
-            "title": "Request Subcategory",
-            "fields": [
+              },
               {
                 "label": "Request Subcategory",
                 "path": "requestSubcategory"
-              }
-            ]
-          },
-          {
-            "title": "Assignment Type",
-            "fields": [
+              },
               {
                 "label": "Assignment Type",
                 "path": "assignmentType"
-              }
-            ]
-          },
-          {
-            "title": "Document Types",
-            "fields": [
-              {
-                "label": "Document Types",
-                "path": "details.documentTypes"
               }
             ]
           }
@@ -2001,13 +1871,31 @@
             "title": "Scope of Work",
             "fields": [
               {
-                "label": "What do you need?",
+                "label": "Scope of Work",
                 "path": "scopeOfWork"
               }
             ]
           },
           {
-            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "title": "Description of Product or Service Client is Buying or Selling with the Contract under Negotiation",
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
+          },
+          {
+            "title": "Details Document Types",
+            "fields": [
+              {
+                "label": "Document Types",
+                "path": "details.documentTypes"
+              }
+            ]
+          },
+          {
+            "title": "Contract Price & Invoicing",
             "fields": [
               {
                 "label": "Contract Price",
@@ -2024,20 +1912,15 @@
               {
                 "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
                 "path": "advanceRetainerFee"
-              }
-            ]
-          },
-          {
-            "title": "Description of Product or Service Client is Buying or Selling with the Contract under Negotiation",
-            "fields": [
+              },
               {
-                "label": "Description",
-                "path": "description"
+                "label": "Expected value of the agreement",
+                "path": "details.expectedValue"
               }
             ]
           },
           {
-            "title": "Counterparty/Confidentiality",
+            "title": "Client's Counterparty in the Matter",
             "fields": [
               {
                 "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
@@ -2046,15 +1929,6 @@
               {
                 "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
                 "path": "details.confidential"
-              }
-            ]
-          },
-          {
-            "title": "Expected Value of the Contract",
-            "fields": [
-              {
-                "label": "Expected value of the agreement",
-                "path": "details.expectedValue"
               }
             ]
           },
@@ -2068,7 +1942,7 @@
             ]
           },
           {
-            "title": "Attachments",
+            "title": "Additional Background Information & Appendices",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -2094,38 +1968,19 @@
             ]
           },
           {
-            "title": "Request Category",
+            "title": "LEXIFY Request Category",
             "fields": [
               {
                 "label": "Request Category",
                 "path": "requestCategory"
-              }
-            ]
-          },
-          {
-            "title": "Request Subcategory",
-            "fields": [
+              },
               {
                 "label": "Request Subcategory",
                 "path": "requestSubcategory"
-              }
-            ]
-          },
-          {
-            "title": "Assignment Type",
-            "fields": [
+              },
               {
                 "label": "Assignment Type",
                 "path": "assignmentType"
-              }
-            ]
-          },
-          {
-            "title": "Details Document Types",
-            "fields": [
-              {
-                "label": "Document Types",
-                "path": "details.documentTypes"
               }
             ]
           }
@@ -2192,7 +2047,7 @@
             ]
           },
           {
-            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "title": "Contract Price & Invoicing",
             "fields": [
               {
                 "label": "Contract Price",
@@ -2222,7 +2077,7 @@
             ]
           },
           {
-            "title": "Attachments",
+            "title": "Additional Background Information & Appendices",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -2248,7 +2103,7 @@
             ]
           },
           {
-            "title": "Request Category",
+            "title": "LEXIFY Request Category",
             "fields": [
               {
                 "label": "Request Category",
@@ -2314,7 +2169,7 @@
             ]
           },
           {
-            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "title": "Contract Price & Invoicing",
             "fields": [
               {
                 "label": "Contract Price",
@@ -2344,7 +2199,7 @@
             ]
           },
           {
-            "title": "Attachments",
+            "title": "Additional Background Information & Appendices",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -2370,17 +2225,12 @@
             ]
           },
           {
-            "title": "Request Category",
+            "title": "LEXIFY Request Category",
             "fields": [
               {
                 "label": "Request Category",
                 "path": "requestCategory"
-              }
-            ]
-          },
-          {
-            "title": "Request Subcategory",
-            "fields": [
+              },
               {
                 "label": "Request Subcategory",
                 "path": "requestSubcategory"
@@ -2444,7 +2294,7 @@
             ]
           },
           {
-            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "title": "Contract Price & Invoicing",
             "fields": [
               {
                 "label": "Contract Price",
@@ -2474,7 +2324,7 @@
             ]
           },
           {
-            "title": "Attachments",
+            "title": "Additional Background Information & Appendices",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -2500,17 +2350,12 @@
             ]
           },
           {
-            "title": "Request Category",
+            "title": "LEXIFY Request Category",
             "fields": [
               {
                 "label": "Request Category",
                 "path": "requestCategory"
-              }
-            ]
-          },
-          {
-            "title": "Request Subcategory",
-            "fields": [
+              },
               {
                 "label": "Request Subcategory",
                 "path": "requestSubcategory"
@@ -2574,7 +2419,7 @@
             ]
           },
           {
-            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "title": "Contract Price & Invoicing",
             "fields": [
               {
                 "label": "Contract Price",
@@ -2604,7 +2449,7 @@
             ]
           },
           {
-            "title": "Attachments",
+            "title": "Additional Background Information & Appendices",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -2630,17 +2475,12 @@
             ]
           },
           {
-            "title": "Request Category",
+            "title": "LEXIFY Request Category",
             "fields": [
               {
                 "label": "Request Category",
                 "path": "requestCategory"
-              }
-            ]
-          },
-          {
-            "title": "Request Subcategory",
-            "fields": [
+              },
               {
                 "label": "Request Subcategory",
                 "path": "requestSubcategory"
@@ -2706,7 +2546,7 @@
             ]
           },
           {
-            "title": "Counterparty/Confidentiality",
+            "title": "Client's Counterparty in the Matter",
             "fields": [
               {
                 "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
@@ -2728,7 +2568,7 @@
             ]
           },
           {
-            "title": "Attachments",
+            "title": "Additional Background Information & Appendices",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -2745,7 +2585,7 @@
             ]
           },
           {
-            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "title": "Contract Price & Invoicing",
             "fields": [
               {
                 "label": "Contract Price",
@@ -2775,17 +2615,12 @@
             ]
           },
           {
-            "title": "Request Category",
+            "title": "LEXIFY Request Category",
             "fields": [
               {
                 "label": "Request Category",
                 "path": "requestCategory"
-              }
-            ]
-          },
-          {
-            "title": "Request Subcategory",
-            "fields": [
+              },
               {
                 "label": "Request Subcategory",
                 "path": "requestSubcategory"
@@ -2853,7 +2688,7 @@
             ]
           },
           {
-            "title": "Counterparty/Confidentiality",
+            "title": "Client's Counterparty in the Matter",
             "fields": [
               {
                 "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
@@ -2875,7 +2710,7 @@
             ]
           },
           {
-            "title": "Attachments",
+            "title": "Additional Background Information & Appendices",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -2892,7 +2727,7 @@
             ]
           },
           {
-            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "title": "Contract Price & Invoicing",
             "fields": [
               {
                 "label": "Contract Price",
@@ -2922,17 +2757,12 @@
             ]
           },
           {
-            "title": "Request Category",
+            "title": "LEXIFY Request Category",
             "fields": [
               {
                 "label": "Request Category",
                 "path": "requestCategory"
-              }
-            ]
-          },
-          {
-            "title": "Request Subcategory",
-            "fields": [
+              },
               {
                 "label": "Request Subcategory",
                 "path": "requestSubcategory"
@@ -3000,7 +2830,7 @@
             ]
           },
           {
-            "title": "Counterparty/Confidentiality",
+            "title": "Client's Counterparty in the Matter",
             "fields": [
               {
                 "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
@@ -3022,7 +2852,7 @@
             ]
           },
           {
-            "title": "Attachments",
+            "title": "Additional Background Information & Appendices",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -3039,7 +2869,7 @@
             ]
           },
           {
-            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "title": "Contract Price & Invoicing",
             "fields": [
               {
                 "label": "Contract Price",
@@ -3069,17 +2899,12 @@
             ]
           },
           {
-            "title": "Request Category",
+            "title": "LEXIFY Request Category",
             "fields": [
               {
                 "label": "Request Category",
                 "path": "requestCategory"
-              }
-            ]
-          },
-          {
-            "title": "Request Subcategory",
-            "fields": [
+              },
               {
                 "label": "Request Subcategory",
                 "path": "requestSubcategory"
@@ -3147,11 +2972,15 @@
             ]
           },
           {
-            "title": "Debtor (Debt Collection)",
+            "title": "Client's Counterparty in the Matter",
             "fields": [
               {
-                "label": "Counterparty",
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
                 "path": "__counterpartyConfidential__"
+              },
+              {
+                "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
+                "path": "details.confidential"
               }
             ]
           },
@@ -3165,7 +2994,7 @@
             ]
           },
           {
-            "title": "Attachments",
+            "title": "Additional Background Information & Appendices",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -3182,7 +3011,7 @@
             ]
           },
           {
-            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "title": "Contract Price & Invoicing",
             "fields": [
               {
                 "label": "Contract Price",
@@ -3212,17 +3041,12 @@
             ]
           },
           {
-            "title": "Request Category",
+            "title": "LEXIFY Request Category",
             "fields": [
               {
                 "label": "Request Category",
                 "path": "requestCategory"
-              }
-            ]
-          },
-          {
-            "title": "Request Subcategory",
-            "fields": [
+              },
               {
                 "label": "Request Subcategory",
                 "path": "requestSubcategory"
@@ -3294,7 +3118,16 @@
             ]
           },
           {
-            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "title": "Description",
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
+          },
+          {
+            "title": "Contract Price & Invoicing",
             "fields": [
               {
                 "label": "Contract Price",
@@ -3311,6 +3144,10 @@
               {
                 "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
                 "path": "advanceRetainerFee"
+              },
+              {
+                "label": "Expected Price Range",
+                "path": "details.priceRange"
               }
             ]
           },
@@ -3325,7 +3162,7 @@
             ]
           },
           {
-            "title": "Buyer or Seller",
+            "title": "Client's Role in the Matter",
             "fields": [
               {
                 "label": "Client's role",
@@ -3334,7 +3171,7 @@
             ]
           },
           {
-            "title": "Counterparty/Confidentiality",
+            "title": "Client's Counterparty in the Matter",
             "fields": [
               {
                 "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
@@ -3347,7 +3184,7 @@
             ]
           },
           {
-            "title": "Attachments",
+            "title": "Additional Background Information & Appendices",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -3373,29 +3210,11 @@
             ]
           },
           {
-            "title": "Request Category",
+            "title": "LEXIFY Request Category",
             "fields": [
               {
                 "label": "Request Category",
                 "path": "requestCategory"
-              }
-            ]
-          },
-          {
-            "title": "Description",
-            "fields": [
-              {
-                "label": "Description",
-                "path": "description"
-              }
-            ]
-          },
-          {
-            "title": "Expected Price Range",
-            "fields": [
-              {
-                "label": "Price Range",
-                "path": "details.priceRange"
               }
             ]
           }
@@ -3461,10 +3280,6 @@
                 "path": "scopeOfWork"
               },
               {
-                "label": "Selected items",
-                "path": "details.selectedItems"
-              },
-              {
                 "label": "Purpose of notification/application",
                 "path": "details.applicationPurpose"
               },
@@ -3475,7 +3290,16 @@
             ]
           },
           {
-            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "title": "Description",
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
+          },
+          {
+            "title": "Contract Price & Invoicing",
             "fields": [
               {
                 "label": "Contract Price",
@@ -3496,7 +3320,7 @@
             ]
           },
           {
-            "title": "Attachments",
+            "title": "Additional Background Information & Appendices",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -3522,20 +3346,11 @@
             ]
           },
           {
-            "title": "Request Category",
+            "title": "LEXIFY Request Category",
             "fields": [
               {
                 "label": "Request Category",
                 "path": "requestCategory"
-              }
-            ]
-          },
-          {
-            "title": "Description",
-            "fields": [
-              {
-                "label": "Description",
-                "path": "description"
               }
             ]
           }
@@ -3609,7 +3424,7 @@
             ]
           },
           {
-            "title": "Attachments",
+            "title": "Additional Background Information & Appendices",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -3626,7 +3441,7 @@
             ]
           },
           {
-            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "title": "Contract Price & Invoicing",
             "fields": [
               {
                 "label": "Contract Price",
@@ -3656,7 +3471,7 @@
             ]
           },
           {
-            "title": "Request Category",
+            "title": "LEXIFY Request Category",
             "fields": [
               {
                 "label": "Request Category",
@@ -3724,6 +3539,15 @@
             ]
           },
           {
+            "title": "Description",
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
+          },
+          {
             "title": "Training Details",
             "fields": [
               {
@@ -3741,7 +3565,7 @@
             ]
           },
           {
-            "title": "Attachments",
+            "title": "Additional Background Information & Appendices",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -3758,7 +3582,7 @@
             ]
           },
           {
-            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "title": "Contract Price & Invoicing",
             "fields": [
               {
                 "label": "Contract Price",
@@ -3788,20 +3612,11 @@
             ]
           },
           {
-            "title": "Request Category",
+            "title": "LEXIFY Request Category",
             "fields": [
               {
                 "label": "Request Category",
                 "path": "requestCategory"
-              }
-            ]
-          },
-          {
-            "title": "Description",
-            "fields": [
-              {
-                "label": "Description",
-                "path": "description"
               }
             ]
           }
@@ -3875,7 +3690,7 @@
             ]
           },
           {
-            "title": "Company Scale",
+            "title": "Additional Company Details",
             "fields": [
               {
                 "label": "Annual revenue",
@@ -3950,7 +3765,7 @@
             ]
           },
           {
-            "title": "Interviews with Personnel",
+            "title": "Personnel Interview Details",
             "fields": [
               {
                 "label": "Preferred interview location",
@@ -3963,7 +3778,7 @@
             ]
           },
           {
-            "title": "Attachments",
+            "title": "Additional Background Information & Appendices",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -3980,7 +3795,7 @@
             ]
           },
           {
-            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "title": "Contract Price & Invoicing",
             "fields": [
               {
                 "label": "Contract Price",
@@ -4010,17 +3825,12 @@
             ]
           },
           {
-            "title": "Request Category",
+            "title": "LEXIFY Request Category",
             "fields": [
               {
                 "label": "Request Category",
                 "path": "requestCategory"
-              }
-            ]
-          },
-          {
-            "title": "Request Subcategory",
-            "fields": [
+              },
               {
                 "label": "Request Subcategory",
                 "path": "requestSubcategory"
@@ -4103,7 +3913,7 @@
             ]
           },
           {
-            "title": "Breach Details",
+            "title": "Data Breach Details",
             "fields": [
               {
                 "label": "Description of the breach and actions taken",
@@ -4116,7 +3926,7 @@
             ]
           },
           {
-            "title": "Counterparty/Confidentiality",
+            "title": "Client's Counterparty in the Matter",
             "fields": [
               {
                 "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
@@ -4138,7 +3948,7 @@
             ]
           },
           {
-            "title": "Attachments",
+            "title": "Additional Background Information & Appendices",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -4155,7 +3965,7 @@
             ]
           },
           {
-            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "title": "Contract Price & Invoicing",
             "fields": [
               {
                 "label": "Contract Price",
@@ -4185,17 +3995,12 @@
             ]
           },
           {
-            "title": "Request Category",
+            "title": "LEXIFY Request Category",
             "fields": [
               {
                 "label": "Request Category",
                 "path": "requestCategory"
-              }
-            ]
-          },
-          {
-            "title": "Request Subcategory",
-            "fields": [
+              },
               {
                 "label": "Request Subcategory",
                 "path": "requestSubcategory"
@@ -4273,7 +4078,7 @@
             ]
           },
           {
-            "title": "Attachments",
+            "title": "Additional Background Information & Appendices",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -4290,7 +4095,7 @@
             ]
           },
           {
-            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "title": "Contract Price & Invoicing",
             "fields": [
               {
                 "label": "Contract Price",
@@ -4320,17 +4125,12 @@
             ]
           },
           {
-            "title": "Request Category",
+            "title": "LEXIFY Request Category",
             "fields": [
               {
                 "label": "Request Category",
                 "path": "requestCategory"
-              }
-            ]
-          },
-          {
-            "title": "Request Subcategory",
-            "fields": [
+              },
               {
                 "label": "Request Subcategory",
                 "path": "requestSubcategory"
@@ -4385,7 +4185,7 @@
             ]
           },
           {
-            "title": "What kind of document(s) do you need?",
+            "title": "Document type(s) in the matter",
             "fields": [
               {
                 "label": "Document(s)",
@@ -4428,7 +4228,34 @@
             ]
           },
           {
-            "title": "Attachments",
+            "title": "Company Annual Revenue",
+            "fields": [
+              {
+                "label": "Annual revenue",
+                "path": "details.companyRevenue"
+              }
+            ]
+          },
+          {
+            "title": "Company Employee Count",
+            "fields": [
+              {
+                "label": "Employees",
+                "path": "details.employeeCount"
+              }
+            ]
+          },
+          {
+            "title": "Company Customer Count",
+            "fields": [
+              {
+                "label": "Customers",
+                "path": "details.customerCount"
+              }
+            ]
+          },
+          {
+            "title": "Additional Background Information & Appendices",
             "fields": [
               {
                 "label": "Additional Background Information",
@@ -4445,7 +4272,7 @@
             ]
           },
           {
-            "title": "How will the Client be Invoiced by the Legal Service Provider?",
+            "title": "Contract Price & Invoicing",
             "fields": [
               {
                 "label": "Contract Price",
@@ -4475,47 +4302,15 @@
             ]
           },
           {
-            "title": "Request Category",
+            "title": "LEXIFY Request Category",
             "fields": [
               {
                 "label": "Request Category",
                 "path": "requestCategory"
-              }
-            ]
-          },
-          {
-            "title": "Request Subcategory",
-            "fields": [
+              },
               {
                 "label": "Request Subcategory",
                 "path": "requestSubcategory"
-              }
-            ]
-          },
-          {
-            "title": "Company Annual Revenue",
-            "fields": [
-              {
-                "label": "Annual revenue",
-                "path": "details.companyRevenue"
-              }
-            ]
-          },
-          {
-            "title": "Company Employee Count",
-            "fields": [
-              {
-                "label": "Employees",
-                "path": "details.employeeCount"
-              }
-            ]
-          },
-          {
-            "title": "Company Customer Count",
-            "fields": [
-              {
-                "label": "Customers",
-                "path": "details.customerCount"
               }
             ]
           }

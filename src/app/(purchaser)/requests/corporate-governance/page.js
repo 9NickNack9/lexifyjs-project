@@ -168,12 +168,15 @@ export default function CorporateGovernance() {
         .filter(Boolean)
         .join(", ");
 
+      const selectedWork = (formData.areaboxes || []).join(", ");
+
       const payload = {
         requestState: "PENDING",
         requestCategory: "Help with Corporate Governance",
         primaryContactPerson: formData.contactPerson,
         scopeOfWork:
-          "Lump sum corporate governance support as specified in the request.",
+          "Lump sum corporate governance support as specified in the request. " +
+          selectedWork,
         description: "",
         additionalBackgroundInfo: formData.background || "",
         backgroundInfoFiles: [],

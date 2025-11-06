@@ -747,11 +747,12 @@ export default function MakeOffer() {
             <label className="block font-semibold mb-2">
               {isCapped ? (
                 <>
-                  Insert Your Offered Capped Price (VAT 0%){" "}
+                  Insert Your Offered Capped Price in Accordance with the LEXIFY
+                  Request (VAT 0%){" "}
                   <QuestionMarkTooltip tooltipText="Capped price refers to your offered maximum price for the work, taking into account all possible unexpected developments in the dispute proceedings such as an unusually high number of rounds of written pleadings." />
                 </>
               ) : (
-                "Insert Your Offered Price (VAT 0%)"
+                "Insert Your Offered Price in Accordance with the LEXIFY Request (VAT 0%)"
               )}
             </label>
             <input
@@ -774,7 +775,8 @@ export default function MakeOffer() {
           {isCapped && (
             <div>
               <label className="block font-semibold mb-2">
-                Insert Your Expected Price (VAT 0%){" "}
+                Insert Your Expected Price in Accordance with the LEXIFY Request
+                (VAT 0%){" "}
                 <QuestionMarkTooltip tooltipText="Expected price refers to your expected price for the work if the dispute proceedings do not involve any unexpected developments (such as an unusually high number of rounds of written pleadings)." />
               </label>
               <input

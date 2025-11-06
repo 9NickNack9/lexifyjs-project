@@ -130,8 +130,11 @@ export default function AwaitingSelectionTable({
                   <td className="border p-2 align-top">
                     {r.requestState === "CONFLICT_CHECK" && (
                       <div className="mb-2 text-sm text-amber-700">
-                        Conflict check in progress. Selection is temporarily
-                        paused.
+                        Conflict check in progress. You will be notified if a
+                        conflict prevents your selected legal service provider
+                        from performing the assignment. If no conflict is found,
+                        the LEXIFY Contract for the assignment will be sent to
+                        you without delay.
                       </div>
                     )}
                     {Array.isArray(r.topOffers) && r.topOffers.length > 0 ? (
