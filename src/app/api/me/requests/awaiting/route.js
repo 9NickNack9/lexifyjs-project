@@ -24,6 +24,24 @@ const maxFromDetails = (details) => {
   return toNum(raw);
 };
 
+function toStringArray(val) {
+  if (Array.isArray(val)) return val.map(String);
+  if (!val) return [];
+  if (typeof val === "string") {
+    try {
+      const parsed = JSON.parse(val);
+      return Array.isArray(parsed) ? parsed.map(String) : [val];
+    } catch {
+      return [val];
+    }
+  }
+  if (typeof val === "object") {
+    if (Array.isArray(val.set)) return val.set.map(String);
+    if (Array.isArray(val.value)) return val.value.map(String);
+  }
+  return [];
+}
+
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
@@ -64,6 +82,7 @@ export async function GET() {
               select: {
                 companyName: true,
                 providerTotalRating: true,
+                companyWebsite: true,
               },
             },
             providerId: true,
@@ -96,10 +115,17 @@ export async function GET() {
           offerLawyer: o.offerLawyer || "—",
           providerCompanyName: o.provider?.companyName || "—",
           providerTotalRating: toNum(o.provider?.providerTotalRating) ?? null,
+          providerCompanyWebsite: o.provider?.companyWebsite || null,
         }))
         .filter((o) => typeof o.offeredPrice === "number")
         .sort((a, b) => a.offeredPrice - b.offeredPrice)
         .slice(0, 3);
+
+      const canExtend =
+        r.requestState === "ON HOLD" &&
+        r.acceptDeadline &&
+        new Date(r.acceptDeadline).getTime() > Date.now() &&
+        !(r.details?.acceptDeadlineExtendedOnce === true);
 
       return {
         // ↓↓↓ Convert BigInt to string ↓↓↓
@@ -118,12 +144,101 @@ export async function GET() {
         requestState: r.requestState,
         selectedOfferId: r.selectedOfferId?.toString?.() ?? null,
         pausedRemainingMs: r.acceptDeadlinePausedRemainingMs ?? null,
+        canExtend,
+        extendedOnce: r.details?.acceptDeadlineExtendedOnce === true,
       };
     });
 
     return NextResponse.json(serialize({ requests: shaped }));
   } catch (e) {
     console.error("GET /api/me/requests/awaiting failed:", e);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
+}
+
+export async function POST(req) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.userId)
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+    const body = await req.json().catch(() => ({}));
+    const requestIdRaw = body?.requestId;
+    if (!requestIdRaw) {
+      return NextResponse.json({ error: "Missing requestId" }, { status: 400 });
+    }
+
+    const meId = BigInt(session.userId);
+    const requestId = BigInt(requestIdRaw);
+    const now = new Date();
+
+    // load request owned by the purchaser
+    const r = await prisma.request.findUnique({
+      where: { requestId },
+      select: {
+        clientId: true,
+        requestState: true,
+        acceptDeadline: true,
+        details: true,
+      },
+    });
+
+    if (!r || String(r.clientId) !== String(meId)) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    // only ON HOLD, not paused, and before deadline
+    if (r.requestState !== "ON HOLD" || !r.acceptDeadline) {
+      return NextResponse.json(
+        { error: "Extension not allowed" },
+        { status: 400 }
+      );
+    }
+    if (new Date(r.acceptDeadline).getTime() <= now.getTime()) {
+      return NextResponse.json(
+        { error: "Deadline already passed" },
+        { status: 400 }
+      );
+    }
+
+    const details = r.details ?? {};
+    if (details.acceptDeadlineExtendedOnce === true) {
+      return NextResponse.json(
+        { error: "Already extended once" },
+        { status: 400 }
+      );
+    }
+
+    const newDeadline = new Date(
+      new Date(r.acceptDeadline).getTime() + 24 * 60 * 60 * 1000
+    );
+
+    const currentDeadline = new Date(r.acceptDeadline);
+    const remainingMs = Math.max(0, currentDeadline.getTime() - now.getTime());
+    // Convert to hours with decimals
+    const remainingHours = remainingMs / (1000 * 60 * 60);
+
+    await prisma.request.update({
+      where: { requestId },
+      data: {
+        acceptDeadline: newDeadline,
+        details: {
+          ...(details || {}),
+          acceptDeadlineExtendedOnce: true,
+          // Store HOW MUCH TIME WAS LEFT at the moment the user clicked
+          // This is a number (ms) so it's easy to analyze or display later.
+          acceptDeadlineExtendedAt: Number(remainingHours.toFixed(3)),
+        },
+      },
+    });
+
+    return NextResponse.json({
+      ok: true,
+      acceptDeadline: newDeadline.toISOString(),
+      acceptDeadlineExtendedAt: Number(remainingHours.toFixed(3)),
+    });
+  } catch (e) {
+    console.error("POST /api/me/requests/awaiting extend failed:", e);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

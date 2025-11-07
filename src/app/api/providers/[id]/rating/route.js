@@ -33,6 +33,8 @@ export async function GET(_req, { params }) {
     ? provider.providerIndividualRating
     : [];
 
+  const ratingCount = arr.length;
+
   const mine =
     arr.find((r) => Number(r.raterId) === Number(session.userId)) || null;
 
@@ -53,7 +55,12 @@ export async function GET(_req, { params }) {
         total: 5.0,
       };
 
-  return NextResponse.json({ mine: mine || {}, aggregates });
+  return NextResponse.json({
+    mine: mine || {},
+    aggregates,
+    hasRealRatings,
+    ratingCount,
+  });
 }
 
 export async function POST(req, { params }) {

@@ -104,6 +104,7 @@ export default function ProviderRatingPage() {
   const [searchingAny, setSearchingAny] = useState(false);
   const [selectedAny, setSelectedAny] = useState(null);
   const [aggAny, setAggAny] = useState(null);
+  const [aggCount, setAggCount] = useState(0);
   const [aggLoading, setAggLoading] = useState(false);
 
   // live search: contracted providers
@@ -224,6 +225,7 @@ export default function ProviderRatingPage() {
   const selectAnyProvider = async (p) => {
     setSelectedAny(p);
     setAggAny(null);
+    setAggCount(0);
     setAggLoading(true);
     try {
       const res = await fetch(`/api/providers/${p.userId}/rating`, {
@@ -232,6 +234,7 @@ export default function ProviderRatingPage() {
       if (res.ok) {
         const data = await res.json();
         setAggAny(data?.aggregates ?? null);
+        setAggCount(Number(data?.ratingCount ?? 0));
       } else {
         setAggAny(null);
       }
@@ -393,29 +396,55 @@ export default function ProviderRatingPage() {
 
         {selectedAny && (
           <div className="mt-5 border rounded p-4">
-            <div className="text-lg font-semibold mb-2">
-              {selectedAny.companyName}
+            <div className="text-lg font-semibold mb-1">
+              {selectedAny.companyWebsite ? (
+                <a
+                  href={selectedAny.companyWebsite}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 hover:underline"
+                >
+                  {selectedAny.companyName}
+                </a>
+              ) : (
+                selectedAny.companyName
+              )}
+            </div>
+            <div className="text-sm text-gray-700 mb-3">
+              {aggCount} rating{aggCount === 1 ? "" : "s"} received
             </div>
             {aggLoading ? (
               <div className="text-sm text-gray-600">Loading ratings…</div>
             ) : aggAny ? (
               <div className="space-y-2">
-                <AggregateRow label="Total" value={aggAny.total ?? 0} />
-                <AggregateRow
-                  label="Quality of Work"
-                  value={aggAny.quality ?? 0}
-                  tooltipText="How satisfied were you in general with the quality of the legal advice and documentation provided by the legal service provider?"
-                />
-                <AggregateRow
-                  label="Responsiveness & Communication"
-                  value={aggAny.communication ?? 0}
-                  tooltipText="Did you receive timely responses and communications from the legal service provider? Was the advice you received clear and actionable or ambiguous analysis without clear value-adding guidance?"
-                />
-                <AggregateRow
-                  label="Billing Practices"
-                  value={aggAny.billing ?? 0}
-                  tooltipText="Did the legal service provider send invoices within agreed timeframes and with agreed specifications? In case of hourly rate assignments, did the legal service provider in your opinion invoice a reasonable amount of hours in relation to the legal support that was required?"
-                />
+                {aggCount > 0 ? (
+                  <>
+                    <AggregateRow label="Total" value={aggAny.total ?? 0} />
+                    <AggregateRow
+                      label="Quality of Work"
+                      value={aggAny.quality ?? 0}
+                      tooltipText="How satisfied were you in general with the quality of the legal advice and documentation provided by the legal service provider?"
+                    />
+                    <AggregateRow
+                      label="Responsiveness & Communication"
+                      value={aggAny.communication ?? 0}
+                      tooltipText="Did you receive timely responses and communications from the legal service provider? Was the advice you received clear and actionable or ambiguous analysis without clear value-adding guidance?"
+                    />
+                    <AggregateRow
+                      label="Billing Practices"
+                      value={aggAny.billing ?? 0}
+                      tooltipText="Did the legal service provider send invoices within agreed timeframes and with agreed specifications? In case of hourly rate assignments, did the legal service provider in your opinion invoice a reasonable amount of hours in relation to the legal support that was required?"
+                    />
+                  </>
+                ) : (
+                  <>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm">Total</span>
+                      <span className="font-semibold">No Ratings Yet</span>
+                    </div>
+                    {/* Sub rating rows are intentionally hidden when there are no ratings */}
+                  </>
+                )}
               </div>
             ) : (
               <div className="text-sm text-gray-600">

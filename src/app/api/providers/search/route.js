@@ -17,6 +17,7 @@ export async function GET(req) {
       userId: true,
       username: true,
       companyName: true,
+      companyWebsite: true,
     },
     orderBy: { companyName: "asc" },
     take: 20,
@@ -26,6 +27,7 @@ export async function GET(req) {
     userId: Number(p.userId),
     username: p.username,
     companyName: p.companyName,
+    companyWebsite: p.companyWebsite || null,
   }));
 
   return NextResponse.json(out);

@@ -66,6 +66,32 @@ export default function AwaitingSelectionTable({
     }
   };
 
+  const postExtendOnce = async (requestId) => {
+    const res = await fetch("/api/me/requests/awaiting", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ requestId }),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data?.error || "Failed to extend deadline.");
+    return data;
+  };
+
+  const handleExtend = async (requestId) => {
+    if (
+      !window.confirm(
+        "Add 24 hours to the decision deadline? This can only be done once."
+      )
+    )
+      return;
+    try {
+      await postExtendOnce(requestId);
+      window.location.reload();
+    } catch (e) {
+      alert(e.message || "Failed to extend deadline.");
+    }
+  };
+
   return (
     <div className="w-full mb-8">
       <h2 className="text-2xl font-semibold mb-4">
@@ -88,6 +114,7 @@ export default function AwaitingSelectionTable({
               <th className="border p-2 text-center">3 Best Offers</th>
               <th className="border p-2 text-center">
                 Time until Automatic Rejection of All Offers
+                <NarrowTooltip tooltipText="If you need more time to make decisions, you can click the 'I need more time' button to extend the deadline for selecting an offer by 1 day (24 hours). This button may only be clicked once." />
               </th>
               <th className="border p-2 text-center">Cancel LEXIFY Request</th>
             </tr>
@@ -155,8 +182,20 @@ export default function AwaitingSelectionTable({
                               </button>
                               <div className="flex-1">
                                 {fmtMoney(o.offeredPrice, r.currency)} (
-                                {o.providerCompanyName} / Lead: {o.offerLawyer},
-                                LEXIFY rating: {o.providerTotalRating ?? "—"}/5)
+                                {o.providerCompanyWebsite ? (
+                                  <a
+                                    href={o.providerCompanyWebsite}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-blue-600 hover:underline"
+                                  >
+                                    {o.providerCompanyName}
+                                  </a>
+                                ) : (
+                                  <span>{o.providerCompanyName}</span>
+                                )}{" "}
+                                / Lead: {o.offerLawyer}, LEXIFY rating:{" "}
+                                {o.providerTotalRating ?? "—"}/5)
                               </div>
                             </div>
                           </li>
@@ -175,7 +214,29 @@ export default function AwaitingSelectionTable({
                         : ""
                     }
                   >
-                    {timeLeft || "Expired"}
+                    <div className="flex items-center justify-center gap-2">
+                      <span>{timeLeft || "Expired"}</span>
+                      {r.requestState === "ON HOLD" && timeLeft && (
+                        <button
+                          className={`px-2 py-1 rounded text-white ${
+                            r.canExtend
+                              ? "bg-[#11999e] hover:opacity-90"
+                              : "bg-gray-400 cursor-not-allowed"
+                          }`}
+                          disabled={!r.canExtend}
+                          onClick={() => handleExtend(r.requestId)}
+                          title={
+                            r.canExtend
+                              ? "Adds 24 hours. Can be used only once."
+                              : r.extendedOnce
+                              ? "Already extended once."
+                              : "Extension not available."
+                          }
+                        >
+                          I need more time
+                        </button>
+                      )}
+                    </div>
                   </td>
 
                   <td className="border p-2 text-center">

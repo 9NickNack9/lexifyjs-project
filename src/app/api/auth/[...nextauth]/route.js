@@ -72,7 +72,9 @@ export const authOptions = {
             token.role = row.role;
             token.registerStatus = row.registerStatus;
           }
-        } catch {}
+        } catch (error) {
+          console.error("JWT refresh error:", error);
+        }
       }
 
       return token;
