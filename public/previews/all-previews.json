@@ -14,7 +14,7 @@
                 "path": "__clientLineOrDisclosed__"
               },
               {
-                "label": "Primary contact person",
+                "label": "Primary Contact Person",
                 "path": "__primaryContactPersonConfidential__"
               }
             ]
@@ -59,18 +59,18 @@
             ]
           },
           {
-            "title": "Additional Background Information & Appendices",
+            "title": "Additional Background Information & Client's Procurement Requirements (Appendices)",
             "fields": [
               {
                 "label": "Additional Background Information",
                 "path": "additionalBackgroundInfo"
               },
               {
-                "label": "Background files",
+                "label": "Additional Background Files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "label": "Client's Procurement Requirements (Appendices)",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
@@ -101,11 +101,11 @@
             "title": "Client's Counterparty in the Matter",
             "fields": [
               {
-                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter",
                 "path": "__counterpartyConfidential__"
               },
               {
-                "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
+                "label": "Is Identity of Client and Counterparty Disclosed to the Winning Bidder Only?",
                 "path": "details.confidential"
               }
             ]
@@ -156,7 +156,7 @@
                 "path": "__clientLineOrDisclosed__"
               },
               {
-                "label": "Primary contact person",
+                "label": "Primary Contact Person",
                 "path": "__primaryContactPersonConfidential__"
               }
             ]
@@ -201,18 +201,18 @@
             ]
           },
           {
-            "title": "Additional Background Information & Appendices",
+            "title": "Additional Background Information & Client's Procurement Requirements (Appendices)",
             "fields": [
               {
                 "label": "Additional Background Information",
                 "path": "additionalBackgroundInfo"
               },
               {
-                "label": "Background files",
+                "label": "Additional Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "label": "Client's Procurement Requirements (Appendices)",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
@@ -243,11 +243,11 @@
             "title": "Client's Counterparty in the Matter",
             "fields": [
               {
-                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter",
                 "path": "__counterpartyConfidential__"
               },
               {
-                "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
+                "label": "Is Identity of Client and Counterparty Disclosed to the Winning Bidder Only?",
                 "path": "details.confidential"
               }
             ]
@@ -298,7 +298,7 @@
                 "path": "__clientLineOrDisclosed__"
               },
               {
-                "label": "Primary contact person",
+                "label": "Primary Contact Person",
                 "path": "__primaryContactPersonConfidential__"
               }
             ]
@@ -312,7 +312,7 @@
               },
 
               {
-                "label": "Due diligence reporting format",
+                "label": "Due Diligence Reporting Format",
                 "path": "details.dueDiligence"
               }
             ]
@@ -334,7 +334,7 @@
                 "path": "__counterpartyConfidential__"
               },
               {
-                "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
+                "label": "Is Identity of Client and Counterparty Disclosed to the Winning Bidder Only?",
                 "path": "details.confidential"
               }
             ]
@@ -343,13 +343,13 @@
             "title": "Is the Client Buying or Selling in the Transaction?",
             "fields": [
               {
-                "label": "Buying or Selling?",
+                "label": "Buyer or Seller?",
                 "path": "details.customerType"
               }
             ]
           },
           {
-            "title": "Description of the Target Property",
+            "title": "Description of Target Property",
             "fields": [
               {
                 "label": "Description",
@@ -361,7 +361,7 @@
             "title": "Range of Expected Purchase price (Cash and Debt Free)",
             "fields": [
               {
-                "label": "Price Range",
+                "label": "Purchase Price Range",
                 "path": "details.priceRange"
               }
             ]
@@ -388,18 +388,18 @@
             ]
           },
           {
-            "title": "Additional Background Information & Appendices",
+            "title": "Additional Background Information & Client's Procurement Requirements (Appendices)",
             "fields": [
               {
                 "label": "Additional Background Information",
                 "path": "additionalBackgroundInfo"
               },
               {
-                "label": "Background files",
+                "label": "Additional Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "label": "Client's Procurement Requirements (Appendices)",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
@@ -425,7 +425,7 @@
                 "path": "requestSubcategory"
               },
               {
-                "label": "Assignment Type",
+                "label": "Request Assignment Type",
                 "path": "assignmentType"
               }
             ]
@@ -480,7 +480,7 @@
                 "path": "__clientLineOrDisclosed__"
               },
               {
-                "label": "Primary contact person",
+                "label": "Primary Contact Person",
                 "path": "__primaryContactPersonConfidential__"
               }
             ]
@@ -504,6 +504,37 @@
             ]
           },
           {
+            "title": "Object of Sale",
+            "fields": [
+              {
+                "label": "Object",
+                "path": "details.saleObject"
+              },
+              {
+                "label": "Other (specified)",
+                "path": "details.otherObject"
+              }
+            ]
+          },
+          {
+            "title": "Range of Expected Purchase price (Cash and Debt Free)",
+            "fields": [
+              {
+                "label": "Purchase Price Range",
+                "path": "details.priceRange"
+              }
+            ]
+          },
+          {
+            "title": "Is the Client Buying or Selling in the Transaction?",
+            "fields": [
+              {
+                "label": "Buyer or Seller?",
+                "path": "details.customerType"
+              }
+            ]
+          },
+          {
             "title": "Contract Price & Invoicing",
             "fields": [
               {
@@ -521,22 +552,18 @@
               {
                 "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
                 "path": "advanceRetainerFee"
-              },
-              {
-                "label": "Expected Price Range",
-                "path": "details.priceRange"
               }
             ]
           },
           {
-            "title": "Additional Background Information & Appendices",
+            "title": "Additional Background Information & Client's Procurement Requirements (Appendices)",
             "fields": [
               {
                 "label": "Additional Background Information",
                 "path": "additionalBackgroundInfo"
               },
               {
-                "label": "Background files",
+                "label": "Additional Background files",
                 "path": "backgroundInfoFiles"
               },
               {
@@ -545,29 +572,15 @@
               }
             ]
           },
-
-          {
-            "title": "Object of Sale",
-            "fields": [
-              {
-                "label": "Object",
-                "path": "details.saleObject"
-              },
-              {
-                "label": "Other (specified)",
-                "path": "details.otherObject"
-              }
-            ]
-          },
           {
             "title": "Client's Counterparty in the Matter",
             "fields": [
               {
-                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter",
                 "path": "__counterpartyConfidential__"
               },
               {
-                "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
+                "label": "Is Identity of Client and Counterparty Disclosed to the Winning Bidder Only?",
                 "path": "details.confidential"
               }
             ]
@@ -593,7 +606,7 @@
                 "path": "requestSubcategory"
               },
               {
-                "label": "Assignment Type",
+                "label": "Request Assignment Type",
                 "path": "assignmentType"
               }
             ]
@@ -648,7 +661,7 @@
                 "path": "__clientLineOrDisclosed__"
               },
               {
-                "label": "Primary contact person",
+                "label": "Primary Contact Person",
                 "path": "__primaryContactPersonConfidential__"
               }
             ]
@@ -663,10 +676,10 @@
             ]
           },
           {
-            "title": "Customer Role",
+            "title": "Is the Client Buying or Selling in the Transaction?",
             "fields": [
               {
-                "label": "Role",
+                "label": "Buyer or Seller?",
                 "path": "details.customerType"
               }
             ]
@@ -709,7 +722,7 @@
             "title": "Type of Lease Agreement Being Negotiated",
             "fields": [
               {
-                "label": "Agreement type",
+                "label": "Lease Agreement type",
                 "path": "details.agreementType"
               }
             ]
@@ -718,28 +731,28 @@
             "title": "Client's Counterparty in the Matter",
             "fields": [
               {
-                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter",
                 "path": "__counterpartyConfidential__"
               },
               {
-                "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
+                "label": "Is Identity of Client and Counterparty Disclosed to the Winning Bidder Only?",
                 "path": "details.confidential"
               }
             ]
           },
           {
-            "title": "Additional Background Information & Appendices",
+            "title": "Additional Background Information & Client's Procurement Requirements (Appendices)",
             "fields": [
               {
                 "label": "Additional Background Information",
                 "path": "additionalBackgroundInfo"
               },
               {
-                "label": "Background files",
+                "label": "Additional Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "label": "Client's Procurement Requirements (Appendices)",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
@@ -766,7 +779,7 @@
                 "path": "requestSubcategory"
               },
               {
-                "label": "Assignment Type",
+                "label": "Request Assignment Type",
                 "path": "assignmentType"
               }
             ]
@@ -820,7 +833,7 @@
                 "path": "__clientLineOrDisclosed__"
               },
               {
-                "label": "Primary contact person",
+                "label": "Primary Contact Person",
                 "path": "__primaryContactPersonConfidential__"
               }
             ]
@@ -847,7 +860,7 @@
             "title": "Type of Easement Agreement Being Negotiated",
             "fields": [
               {
-                "label": "Agreement type",
+                "label": "Easement Agreement type",
                 "path": "details.agreementType"
               }
             ]
@@ -856,11 +869,11 @@
             "title": "Client's Counterparty in the Matter",
             "fields": [
               {
-                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter",
                 "path": "__counterpartyConfidential__"
               },
               {
-                "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
+                "label": "Is Identity of Client and Counterparty Disclosed to the Winning Bidder Only?",
                 "path": "details.confidential"
               }
             ]
@@ -887,18 +900,18 @@
             ]
           },
           {
-            "title": "Additional Background Information & Appendices",
+            "title": "Additional Background Information & Client's Procurement Requirements (Appendices)",
             "fields": [
               {
                 "label": "Additional Background Information",
                 "path": "additionalBackgroundInfo"
               },
               {
-                "label": "Background files",
+                "label": "Additional Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "label": "Client's Procurement Requirements (Appendices)",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
@@ -924,7 +937,7 @@
                 "path": "requestSubcategory"
               },
               {
-                "label": "Assignment Type",
+                "label": "Request Assignment Type",
                 "path": "assignmentType"
               }
             ]
@@ -975,7 +988,7 @@
                 "path": "__clientLineOrDisclosed__"
               },
               {
-                "label": "Primary contact person",
+                "label": "Primary Contact Person",
                 "path": "__primaryContactPersonConfidential__"
               }
             ]
@@ -1023,7 +1036,6 @@
               }
             ]
           },
-
           {
             "title": "Client's Role in the Construction Contract",
             "fields": [
@@ -1037,11 +1049,11 @@
             "title": "Client's Counterparty in the Matter",
             "fields": [
               {
-                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter",
                 "path": "__counterpartyConfidential__"
               },
               {
-                "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
+                "label": "Is Identity of Client and Counterparty Disclosed to the Winning Bidder Only?",
                 "path": "details.confidential"
               }
             ]
@@ -1068,18 +1080,18 @@
             ]
           },
           {
-            "title": "Additional Background Information & Appendices",
+            "title": "Additional Background Information & Client's Procurement Requirements (Appendices)",
             "fields": [
               {
                 "label": "Additional Background Information",
                 "path": "additionalBackgroundInfo"
               },
               {
-                "label": "Background files",
+                "label": "Additional Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "label": "Client's Procurement Requirements (Appendices)",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
@@ -1105,7 +1117,7 @@
                 "path": "requestSubcategory"
               },
               {
-                "label": "Assignment Type",
+                "label": "Request Assignment Type",
                 "path": "assignmentType"
               }
             ]
@@ -1158,7 +1170,7 @@
                 "path": "__clientLine__"
               },
               {
-                "label": "Primary contact person",
+                "label": "Primary Contact Person",
                 "path": "primaryContactPerson"
               }
             ]
@@ -1198,18 +1210,18 @@
             ]
           },
           {
-            "title": "Additional Background Information & Appendices",
+            "title": "Additional Background Information & Client's Procurement Requirements (Appendices)",
             "fields": [
               {
                 "label": "Additional Background Information",
                 "path": "additionalBackgroundInfo"
               },
               {
-                "label": "Background files",
+                "label": "Additional Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "label": "Client's Procurement Requirements (Appendices)",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
@@ -1235,7 +1247,7 @@
                 "path": "requestSubcategory"
               },
               {
-                "label": "Assignment Type",
+                "label": "Request Assignment Type",
                 "path": "assignmentType"
               }
             ]
@@ -1285,7 +1297,7 @@
                 "path": "__clientLineOrDisclosed__"
               },
               {
-                "label": "Primary contact person",
+                "label": "Primary Contact Person",
                 "path": "__primaryContactPersonConfidential__"
               }
             ]
@@ -1307,11 +1319,11 @@
             "title": "Client's Counterparty in the Matter",
             "fields": [
               {
-                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter",
                 "path": "__counterpartyConfidential__"
               },
               {
-                "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
+                "label": "Is Identity of Client and Counterparty Disclosed to the Winning Bidder Only?",
                 "path": "details.confidential"
               }
             ]
@@ -1338,18 +1350,18 @@
             ]
           },
           {
-            "title": "Additional Background Information & Appendices",
+            "title": "Additional Background Information & Client's Procurement Requirements (Appendices)",
             "fields": [
               {
                 "label": "Additional Background Information",
                 "path": "additionalBackgroundInfo"
               },
               {
-                "label": "Background files",
+                "label": "Additional Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "label": "Client's Procurement Requirements (Appendices)",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
@@ -1375,7 +1387,7 @@
                 "path": "requestSubcategory"
               },
               {
-                "label": "Assignment Type",
+                "label": "Request Assignment Type",
                 "path": "assignmentType"
               }
             ]
@@ -1427,7 +1439,7 @@
                 "path": "__clientLineOrDisclosed__"
               },
               {
-                "label": "Primary contact person",
+                "label": "Primary Contact Person",
                 "path": "__primaryContactPersonConfidential__"
               }
             ]
@@ -1449,11 +1461,11 @@
             "title": "Client's Counterparty in the Matter",
             "fields": [
               {
-                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter",
                 "path": "__counterpartyConfidential__"
               },
               {
-                "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
+                "label": "Is Identity of Client and Counterparty Disclosed to the Winning Bidder Only?",
                 "path": "details.confidential"
               }
             ]
@@ -1480,18 +1492,18 @@
             ]
           },
           {
-            "title": "Additional Background Information & Appendices",
+            "title": "Additional Background Information & Client's Procurement Requirements (Appendices)",
             "fields": [
               {
                 "label": "Additional Background Information",
                 "path": "additionalBackgroundInfo"
               },
               {
-                "label": "Background files",
+                "label": "Additional Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "label": "Client's Procurement Requirements (Appendices)",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
@@ -1517,7 +1529,7 @@
                 "path": "requestSubcategory"
               },
               {
-                "label": "Assignment Type",
+                "label": "Request Assignment Type",
                 "path": "assignmentType"
               }
             ]
@@ -1570,7 +1582,7 @@
                 "path": "__clientLine__"
               },
               {
-                "label": "Primary contact person",
+                "label": "Primary Contact Person",
                 "path": "primaryContactPerson"
               }
             ]
@@ -1615,18 +1627,18 @@
             ]
           },
           {
-            "title": "Additional Background Information & Appendices",
+            "title": "Additional Background Information & Client's Procurement Requirements (Appendices)",
             "fields": [
               {
                 "label": "Additional Background Information",
                 "path": "additionalBackgroundInfo"
               },
               {
-                "label": "Background files",
+                "label": "Additional Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "label": "Client's Procurement Requirements (Appendices)",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
@@ -1652,7 +1664,7 @@
                 "path": "requestSubcategory"
               },
               {
-                "label": "Assignment Type",
+                "label": "Request Assignment Type",
                 "path": "assignmentType"
               }
             ]
@@ -1701,7 +1713,7 @@
                 "path": "__clientLineOrDisclosed__"
               },
               {
-                "label": "Primary contact person",
+                "label": "Primary Contact Person",
                 "path": "__primaryContactPersonConfidential__"
               }
             ]
@@ -1712,15 +1724,6 @@
               {
                 "label": "Scope of Work",
                 "path": "scopeOfWork"
-              }
-            ]
-          },
-          {
-            "title": "Document Types",
-            "fields": [
-              {
-                "label": "Document Types",
-                "path": "details.documentTypes"
               }
             ]
           },
@@ -1762,28 +1765,28 @@
             "title": "Client's Counterparty in the Matter",
             "fields": [
               {
-                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter",
                 "path": "__counterpartyConfidential__"
               },
               {
-                "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
+                "label": "Is Identity of Client and Counterparty Disclosed to the Winning Bidder Only?",
                 "path": "details.confidential"
               }
             ]
           },
           {
-            "title": "Additional Background Information & Appendices",
+            "title": "Additional Background Information & Client's Procurement Requirements (Appendices)",
             "fields": [
               {
                 "label": "Additional Background Information",
                 "path": "additionalBackgroundInfo"
               },
               {
-                "label": "Background files",
+                "label": "Additional Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "label": "Client's Procurement Requirements (Appendices)",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
@@ -1809,7 +1812,7 @@
                 "path": "requestSubcategory"
               },
               {
-                "label": "Assignment Type",
+                "label": "Request Assignment Type",
                 "path": "assignmentType"
               }
             ]
@@ -1862,7 +1865,7 @@
                 "path": "__clientLineOrDisclosed__"
               },
               {
-                "label": "Primary contact person",
+                "label": "Primary Contact Person",
                 "path": "__primaryContactPersonConfidential__"
               }
             ]
@@ -1882,15 +1885,6 @@
               {
                 "label": "Description",
                 "path": "description"
-              }
-            ]
-          },
-          {
-            "title": "Details Document Types",
-            "fields": [
-              {
-                "label": "Document Types",
-                "path": "details.documentTypes"
               }
             ]
           },
@@ -1923,37 +1917,37 @@
             "title": "Client's Counterparty in the Matter",
             "fields": [
               {
-                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter",
                 "path": "__counterpartyConfidential__"
               },
               {
-                "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
+                "label": "Is Identity of Client and Counterparty Disclosed to the Winning Bidder Only?",
                 "path": "details.confidential"
               }
             ]
           },
           {
-            "title": "Template Used in the Negotiations",
+            "title": "Contract Template Used in Negotiations",
             "fields": [
               {
-                "label": "Negotiated on template",
+                "label": "Client's Template ('My Template') or Counterparty's Template?",
                 "path": "details.negotiationTemplate"
               }
             ]
           },
           {
-            "title": "Additional Background Information & Appendices",
+            "title": "Additional Background Information & Client's Procurement Requirements (Appendices)",
             "fields": [
               {
                 "label": "Additional Background Information",
                 "path": "additionalBackgroundInfo"
               },
               {
-                "label": "Background files",
+                "label": "Additional Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "label": "Client's Procurement Requirements (Appendices)",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
@@ -1979,7 +1973,7 @@
                 "path": "requestSubcategory"
               },
               {
-                "label": "Assignment Type",
+                "label": "Request Assignment Type",
                 "path": "assignmentType"
               }
             ]
@@ -2032,7 +2026,7 @@
                 "path": "__clientLine__"
               },
               {
-                "label": "Primary contact person",
+                "label": "Primary Contact Person",
                 "path": "primaryContactPerson"
               }
             ]
@@ -2077,18 +2071,18 @@
             ]
           },
           {
-            "title": "Additional Background Information & Appendices",
+            "title": "Additional Background Information & Client's Procurement Requirements (Appendices)",
             "fields": [
               {
                 "label": "Additional Background Information",
                 "path": "additionalBackgroundInfo"
               },
               {
-                "label": "Background files",
+                "label": "Additional Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "label": "Client's Procurement Requirements (Appendices)",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
@@ -2154,7 +2148,7 @@
                 "path": "__clientLine__"
               },
               {
-                "label": "Primary contact person",
+                "label": "Primary Contact Person",
                 "path": "primaryContactPerson"
               }
             ]
@@ -2199,18 +2193,18 @@
             ]
           },
           {
-            "title": "Additional Background Information & Appendices",
+            "title": "Additional Background Information & Client's Procurement Requirements (Appendices)",
             "fields": [
               {
                 "label": "Additional Background Information",
                 "path": "additionalBackgroundInfo"
               },
               {
-                "label": "Background files",
+                "label": "Additional Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "label": "Client's Procurement Requirements (Appendices)",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
@@ -2279,7 +2273,7 @@
                 "path": "__clientLine__"
               },
               {
-                "label": "Primary contact person",
+                "label": "Primary Contact Person",
                 "path": "primaryContactPerson"
               }
             ]
@@ -2324,18 +2318,18 @@
             ]
           },
           {
-            "title": "Additional Background Information & Appendices",
+            "title": "Additional Background Information & Client's Procurement Requirements (Appendices)",
             "fields": [
               {
                 "label": "Additional Background Information",
                 "path": "additionalBackgroundInfo"
               },
               {
-                "label": "Background files",
+                "label": "Additional Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "label": "Client's Procurement Requirements (Appendices)",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
@@ -2404,7 +2398,7 @@
                 "path": "__clientLine__"
               },
               {
-                "label": "Primary contact person",
+                "label": "Primary Contact Person",
                 "path": "primaryContactPerson"
               }
             ]
@@ -2449,18 +2443,18 @@
             ]
           },
           {
-            "title": "Additional Background Information & Appendices",
+            "title": "Additional Background Information & Client's Procurement Requirements (Appendices)",
             "fields": [
               {
                 "label": "Additional Background Information",
                 "path": "additionalBackgroundInfo"
               },
               {
-                "label": "Background files",
+                "label": "Additional Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "label": "Client's Procurement Requirements (Appendices)",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
@@ -2531,7 +2525,7 @@
                 "path": "__clientLineOrDisclosed__"
               },
               {
-                "label": "Primary contact person",
+                "label": "Primary Contact Person",
                 "path": "__primaryContactPersonConfidential__"
               }
             ]
@@ -2549,11 +2543,11 @@
             "title": "Client's Counterparty in the Matter",
             "fields": [
               {
-                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter",
                 "path": "__counterpartyConfidential__"
               },
               {
-                "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
+                "label": "Is Identity of Client and Counterparty Disclosed to the Winning Bidder Only?",
                 "path": "details.confidential"
               }
             ]
@@ -2568,18 +2562,18 @@
             ]
           },
           {
-            "title": "Additional Background Information & Appendices",
+            "title": "Additional Background Information & Client's Procurement Requirements (Appendices)",
             "fields": [
               {
                 "label": "Additional Background Information",
                 "path": "additionalBackgroundInfo"
               },
               {
-                "label": "Background files",
+                "label": "Additional Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "label": "Client's Procurement Requirements (Appendices)",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
@@ -2673,7 +2667,7 @@
                 "path": "__clientLineOrDisclosed__"
               },
               {
-                "label": "Primary contact person",
+                "label": "Primary Contact Person",
                 "path": "__primaryContactPersonConfidential__"
               }
             ]
@@ -2691,11 +2685,11 @@
             "title": "Client's Counterparty in the Matter",
             "fields": [
               {
-                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter",
                 "path": "__counterpartyConfidential__"
               },
               {
-                "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
+                "label": "Is Identity of Client and Counterparty Disclosed to the Winning Bidder Only?",
                 "path": "details.confidential"
               }
             ]
@@ -2710,18 +2704,18 @@
             ]
           },
           {
-            "title": "Additional Background Information & Appendices",
+            "title": "Additional Background Information & Client's Procurement Requirements (Appendices)",
             "fields": [
               {
                 "label": "Additional Background Information",
                 "path": "additionalBackgroundInfo"
               },
               {
-                "label": "Background files",
+                "label": "Additional Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "label": "Client's Procurement Requirements (Appendices)",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
@@ -2815,7 +2809,7 @@
                 "path": "__clientLineOrDisclosed__"
               },
               {
-                "label": "Primary contact person",
+                "label": "Primary Contact Person",
                 "path": "__primaryContactPersonConfidential__"
               }
             ]
@@ -2833,11 +2827,11 @@
             "title": "Client's Counterparty in the Matter",
             "fields": [
               {
-                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter",
                 "path": "__counterpartyConfidential__"
               },
               {
-                "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
+                "label": "Is Identity of Client and Counterparty Disclosed to the Winning Bidder Only?",
                 "path": "details.confidential"
               }
             ]
@@ -2852,18 +2846,18 @@
             ]
           },
           {
-            "title": "Additional Background Information & Appendices",
+            "title": "Additional Background Information & Client's Procurement Requirements (Appendices)",
             "fields": [
               {
                 "label": "Additional Background Information",
                 "path": "additionalBackgroundInfo"
               },
               {
-                "label": "Background files",
+                "label": "Additional Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "label": "Client's Procurement Requirements (Appendices)",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
@@ -2957,7 +2951,7 @@
                 "path": "__clientLineOrDisclosed__"
               },
               {
-                "label": "Primary contact person",
+                "label": "Primary Contact Person",
                 "path": "__primaryContactPersonConfidential__"
               }
             ]
@@ -2975,11 +2969,11 @@
             "title": "Client's Counterparty in the Matter",
             "fields": [
               {
-                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter",
                 "path": "__counterpartyConfidential__"
               },
               {
-                "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
+                "label": "Is Identity of Client and Counterparty Disclosed to the Winning Bidder Only?",
                 "path": "details.confidential"
               }
             ]
@@ -2994,18 +2988,18 @@
             ]
           },
           {
-            "title": "Additional Background Information & Appendices",
+            "title": "Additional Background Information & Client's Procurement Requirements (Appendices)",
             "fields": [
               {
                 "label": "Additional Background Information",
                 "path": "additionalBackgroundInfo"
               },
               {
-                "label": "Background files",
+                "label": "Additional Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "label": "Client's Procurement Requirements (Appendices)",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
@@ -3099,7 +3093,7 @@
                 "path": "__clientLineOrDisclosed__"
               },
               {
-                "label": "Primary contact person",
+                "label": "Primary Contact Person",
                 "path": "__primaryContactPersonConfidential__"
               }
             ]
@@ -3174,28 +3168,28 @@
             "title": "Client's Counterparty in the Matter",
             "fields": [
               {
-                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter",
                 "path": "__counterpartyConfidential__"
               },
               {
-                "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
+                "label": "Is Identity of Client and Counterparty Disclosed to the Winning Bidder Only?",
                 "path": "details.confidential"
               }
             ]
           },
           {
-            "title": "Additional Background Information & Appendices",
+            "title": "Additional Background Information & Client's Procurement Requirements (Appendices)",
             "fields": [
               {
                 "label": "Additional Background Information",
                 "path": "additionalBackgroundInfo"
               },
               {
-                "label": "Background files",
+                "label": "Additional Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "label": "Client's Procurement Requirements (Appendices)",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
@@ -3267,7 +3261,7 @@
                 "path": "__clientLine__"
               },
               {
-                "label": "Primary contact person",
+                "label": "Primary Contact Person",
                 "path": "primaryContactPerson"
               }
             ]
@@ -3320,18 +3314,18 @@
             ]
           },
           {
-            "title": "Additional Background Information & Appendices",
+            "title": "Additional Background Information & Client's Procurement Requirements (Appendices)",
             "fields": [
               {
                 "label": "Additional Background Information",
                 "path": "additionalBackgroundInfo"
               },
               {
-                "label": "Background files",
+                "label": "Additional Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "label": "Client's Procurement Requirements (Appendices)",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
@@ -3400,7 +3394,7 @@
                 "path": "__clientLine__"
               },
               {
-                "label": "Primary contact person",
+                "label": "Primary Contact Person",
                 "path": "primaryContactPerson"
               }
             ]
@@ -3424,18 +3418,18 @@
             ]
           },
           {
-            "title": "Additional Background Information & Appendices",
+            "title": "Additional Background Information & Client's Procurement Requirements (Appendices)",
             "fields": [
               {
                 "label": "Additional Background Information",
                 "path": "additionalBackgroundInfo"
               },
               {
-                "label": "Questionnaire files",
+                "label": "Additional Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "label": "Client's Procurement Requirements (Appendices)",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
@@ -3524,7 +3518,7 @@
                 "path": "__clientLine__"
               },
               {
-                "label": "Primary contact person",
+                "label": "Primary Contact Person",
                 "path": "primaryContactPerson"
               }
             ]
@@ -3548,35 +3542,35 @@
             ]
           },
           {
-            "title": "Training Details",
+            "title": "Time and Location of Training",
             "fields": [
               {
-                "label": "Duration",
+                "label": "Duration of Training",
                 "path": "details.trainingDuration"
               },
               {
-                "label": "Date & time",
+                "label": "Date & Time of Training",
                 "path": "details.trainingDateTime"
               },
               {
-                "label": "Location",
+                "label": "Location of Training",
                 "path": "details.trainingLocation"
               }
             ]
           },
           {
-            "title": "Additional Background Information & Appendices",
+            "title": "Additional Background Information & Client's Procurement Requirements (Appendices)",
             "fields": [
               {
                 "label": "Additional Background Information",
                 "path": "additionalBackgroundInfo"
               },
               {
-                "label": "Background files",
+                "label": "Additional Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "label": "Client's Procurement Requirements (Appendices)",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
@@ -3666,7 +3660,7 @@
                 "path": "__clientLine__"
               },
               {
-                "label": "Primary contact person",
+                "label": "Primary Contact Person",
                 "path": "primaryContactPerson"
               }
             ]
@@ -3690,106 +3684,101 @@
             ]
           },
           {
-            "title": "Additional Company Details",
+            "title": "Client Company Details",
             "fields": [
               {
-                "label": "Annual revenue",
+                "label": "Company Annual Revenue",
                 "path": "details.companyRevenue"
               },
               {
-                "label": "Employees",
+                "label": "Number of Employees",
                 "path": "details.employeeCount"
               },
               {
-                "label": "Customers",
+                "label": "Number of Customers",
                 "path": "details.customerCount"
               },
               {
-                "label": "IT applications with personal data",
+                "label": "Number of IT Applications with Personal Data Currently in Use",
                 "path": "details.applicationCount"
               },
               {
-                "label": "Products with personal data",
+                "label": "Number of Products Containing Personal Data/Personal Data Processing Activities in Company's Offering",
                 "path": "details.productCount"
               },
               {
-                "label": "Web domains",
+                "label": "Number of Company's Web Domains",
                 "path": "details.domainCount"
               }
             ]
           },
           {
-            "title": "Existing Documentation",
+            "title": "Description of Existing Documentation",
             "fields": [
               {
-                "label": "IT app/process documentation",
+                "label": "Documentation Describing Company's IT Applications and Business Processes Using Personal Data",
                 "path": "details.appDocumentation"
               },
               {
-                "label": "Documentation description",
+                "label": "Description",
                 "path": "details.documentDescription"
               },
               {
-                "label": "Data architecture / data flow docs",
+                "label": "Documentation on Company's Data Architecture and/or Data Flow",
                 "path": "details.existingData"
               },
               {
-                "label": "Data documentation description",
+                "label": "Description",
                 "path": "details.dataDescription"
               }
             ]
           },
           {
-            "title": "Governance & Technology",
+            "title": "Other Relevant Information",
             "fields": [
               {
-                "label": "Dedicated owners for key IT/processes/products",
+                "label": "Does Company Have Dedicated Owners Designated for Key IT Applications, Business Processes and Products/Services?",
                 "path": "details.dedicatedOwners"
               },
               {
-                "label": "Use of AI for processing personal data",
+                "label": "Does Company Use AI for Processing Personal Data?",
                 "path": "details.aiUsage"
               },
               {
-                "label": "AI usage description",
+                "label": "Description",
                 "path": "details.aiDescription"
               },
               {
-                "label": "Use of profiling",
+                "label": "Does Company Conduct Any Profiling of Individual Persons?",
                 "path": "details.profiling"
               },
               {
-                "label": "Profiling description",
+                "label": "Description",
                 "path": "details.profilingDescription"
-              }
-            ]
-          },
-          {
-            "title": "Personnel Interview Details",
-            "fields": [
+              },
               {
-                "label": "Preferred interview location",
+                "label": "How Will Interviews with Key Personnel be Conducted?",
                 "path": "details.interviewLocation"
               },
               {
-                "label": "Location description",
+                "label": "Description",
                 "path": "details.locationDescription"
               }
             ]
           },
           {
-            "title": "Additional Background Information & Appendices",
+            "title": "Additional Background Information & Client's Procurement Requirements (Appendices)",
             "fields": [
               {
                 "label": "Additional Background Information",
                 "path": "additionalBackgroundInfo"
               },
               {
-                "label": "Background files",
+                "label": "Additional Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "label": "Client's Procurement Requirements (Appendices)",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
@@ -3898,7 +3887,7 @@
                 "path": "__clientLineOrDisclosed__"
               },
               {
-                "label": "Primary contact person",
+                "label": "Primary Contact Person",
                 "path": "__primaryContactPersonConfidential__"
               }
             ]
@@ -3916,11 +3905,11 @@
             "title": "Data Breach Details",
             "fields": [
               {
-                "label": "Description of the breach and actions taken",
+                "label": "Description of Data Breach and Actions Taken Thus Far",
                 "path": "details.breachStatus"
               },
               {
-                "label": "Is another identified company involved?",
+                "label": "Is Another Identified Company Involved in the Data Breach?",
                 "path": "details.involvedParties"
               }
             ]
@@ -3929,11 +3918,11 @@
             "title": "Client's Counterparty in the Matter",
             "fields": [
               {
-                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction",
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter",
                 "path": "__counterpartyConfidential__"
               },
               {
-                "label": "Is Identity of Client and Other Relevant Parties Disclosed to the Winning Bidder Only?",
+                "label": "Is Identity of Client and Counterparty Disclosed to the Winning Bidder Only?",
                 "path": "details.confidential"
               }
             ]
@@ -3948,18 +3937,18 @@
             ]
           },
           {
-            "title": "Additional Background Information & Appendices",
+            "title": "Additional Background Information & Client's Procurement Requirements (Appendices)",
             "fields": [
               {
                 "label": "Additional Background Information",
                 "path": "additionalBackgroundInfo"
               },
               {
-                "label": "Background files",
+                "label": "Additional Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "label": "Client's Procurement Requirements (Appendices)",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
@@ -4054,7 +4043,7 @@
                 "path": "__clientLine__"
               },
               {
-                "label": "Primary contact person",
+                "label": "Primary Contact Person",
                 "path": "primaryContactPerson"
               }
             ]
@@ -4078,18 +4067,18 @@
             ]
           },
           {
-            "title": "Additional Background Information & Appendices",
+            "title": "Additional Background Information & Client's Procurement Requirements (Appendices)",
             "fields": [
               {
                 "label": "Additional Background Information",
                 "path": "additionalBackgroundInfo"
               },
               {
-                "label": "Background files",
+                "label": "Additional Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "label": "Client's Procurement Requirements (Appendices)",
                 "path": "supplierCodeOfConductFiles"
               }
             ]
@@ -4179,41 +4168,41 @@
                 "path": "__clientLine__"
               },
               {
-                "label": "Primary contact person",
+                "label": "Primary Contact Person",
                 "path": "primaryContactPerson"
               }
             ]
           },
           {
-            "title": "Document type(s) in the matter",
+            "title": "Scope of Work",
             "fields": [
               {
-                "label": "Document(s)",
-                "path": "__docsWithOther__"
+                "label": "Scope of Work",
+                "path": "scopeOfWork"
               }
             ]
           },
           {
-            "title": "Do you need the above document(s) as empty template(s) only or fully completed…",
+            "title": "Should Document(s) be Prepared as Empty Template(s) Only or Fully Completed with Required Information Related Specifically to Client's Business?",
             "fields": [
               {
-                "label": "Document type",
+                "label": "Document Template Type",
                 "path": "details.documentType"
               },
               {
-                "label": "Context for template use",
+                "label": "Description of Context Where Empty Templates Will be Used",
                 "path": "details.documentTemplateContext"
               },
               {
-                "label": "Group(s) of individuals concerned",
+                "label": "Group(s) of Individual(s) Whose Personal Data is Concerned",
                 "path": "details.individuals"
               },
               {
-                "label": "What will the document(s) cover",
+                "label": "Description of Coverage of the Required Documents",
                 "path": "details.documentCoverage"
               },
               {
-                "label": "Description of the application/solution/product/process",
+                "label": "Description of Application/Solution/Product/Process to be Covered by Required Document(s)",
                 "path": "details.generalDescription"
               }
             ]
@@ -4228,45 +4217,35 @@
             ]
           },
           {
-            "title": "Company Annual Revenue",
+            "title": "Client Company Details",
             "fields": [
               {
-                "label": "Annual revenue",
+                "label": "Company Annual Revenue",
                 "path": "details.companyRevenue"
-              }
-            ]
-          },
-          {
-            "title": "Company Employee Count",
-            "fields": [
+              },
               {
-                "label": "Employees",
+                "label": "Number of Employees",
                 "path": "details.employeeCount"
-              }
-            ]
-          },
-          {
-            "title": "Company Customer Count",
-            "fields": [
+              },
               {
-                "label": "Customers",
+                "label": "Number of Customers",
                 "path": "details.customerCount"
               }
             ]
           },
           {
-            "title": "Additional Background Information & Appendices",
+            "title": "Additional Background Information & Client's Procurement Requirements (Appendices)",
             "fields": [
               {
                 "label": "Additional Background Information",
                 "path": "additionalBackgroundInfo"
               },
               {
-                "label": "Background files",
+                "label": "Additional Background files",
                 "path": "backgroundInfoFiles"
               },
               {
-                "label": "Supplier Code of Conduct and/or other procurement related files",
+                "label": "Client's Procurement Requirements (Appendices)",
                 "path": "supplierCodeOfConductFiles"
               }
             ]

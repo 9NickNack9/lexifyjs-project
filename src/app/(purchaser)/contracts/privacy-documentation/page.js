@@ -399,16 +399,14 @@ export default function PrivacyDocumentation() {
               onChange={handleChange}
             >
               <option value="">Select</option>
-              <option value="I need empty template(s) only">
+              <option value="Empty template(s) only">
                 I need empty template(s) only
               </option>
-              <option value="I need fully finalized document(s)">
+              <option value="Fully finalized document(s)">
                 I need fully finalized document(s)
               </option>
             </select>
-            {formData.documentType.includes(
-              "I need empty template(s) only"
-            ) && (
+            {formData.documentType.includes("Empty template(s) only") && (
               <>
                 <h4 className="text-md font-medium mb-1 font-semibold pt-4">
                   Please describe briefly the context where you will use the
@@ -425,9 +423,7 @@ export default function PrivacyDocumentation() {
                 ></textarea>
               </>
             )}
-            {formData.documentType.includes(
-              "I need fully finalized document(s)"
-            ) && (
+            {formData.documentType.includes("Fully finalized document(s)") && (
               <>
                 <br />
                 <br />

@@ -29,6 +29,7 @@ async function sendContractPackageEmail(prisma, requestId) {
       request: {
         select: {
           requestId: true,
+          clientId: true,
           requestCategory: true,
           requestSubcategory: true,
           assignmentType: true,
@@ -70,6 +71,21 @@ async function sendContractPackageEmail(prisma, requestId) {
     },
   });
   if (!contract) return;
+
+  // Fallback: if request.client is null, load it by clientId
+  let requestClient = contract.request?.client || null;
+  if (!requestClient && contract.request?.clientId) {
+    requestClient = await prisma.appUser.findUnique({
+      where: { userId: contract.request.clientId },
+      select: {
+        companyName: true,
+        companyId: true,
+        companyCountry: true,
+        companyContactPersons: true,
+        userId: true,
+      },
+    });
+  }
 
   const norm = (s) => (s || "").toString().trim().toLowerCase();
   const full = (p) =>
@@ -121,8 +137,8 @@ async function sendContractPackageEmail(prisma, requestId) {
       ? pcDirect
       : list[0] || null;
   const purchaser = {
-    companyName: contract.request?.client?.companyName || "—",
-    businessId: contract.request?.client?.companyId || "—",
+    companyName: requestClient?.companyName || "—",
+    businessId: requestClient?.companyId || "—",
     contactName: pc ? full(pc) : "—",
     email: pc?.email || "—",
     phone: pc?.telephone || "—",
@@ -170,9 +186,9 @@ async function sendContractPackageEmail(prisma, requestId) {
       details: contract.request?.details || {},
       primaryContactPerson: pc || null,
       client: {
-        companyName: contract.request?.client?.companyName || null,
-        companyId: contract.request?.client?.companyId || null,
-        companyCountry: contract.request?.client?.companyCountry || null,
+        companyName: requestClient?.companyName || null,
+        companyId: requestClient?.companyId || null,
+        companyCountry: requestClient?.companyCountry || null,
       },
     },
   };

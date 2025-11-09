@@ -224,9 +224,9 @@ export async function POST(req) {
 
   const now = new Date();
   // TEST MODE: set deadline to 1 minutes from now
-  //const offersDeadline = new Date(now.getTime() + 1 * 60 * 1000);
-  const [year, month, day] = body.offersDeadline.split("-").map(Number);
-  const offersDeadline = new Date(year, month - 1, day, 23, 59, 59);
+  const offersDeadline = new Date(now.getTime() + 1 * 60 * 1000);
+  //const [year, month, day] = body.offersDeadline.split("-").map(Number);
+  //const offersDeadline = new Date(year, month - 1, day, 23, 59, 59);
   const dateExpired = offersDeadline;
   const paymentType =
     body.paymentRate +

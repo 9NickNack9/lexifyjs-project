@@ -54,7 +54,6 @@ export async function GET() {
     const reqs = await prisma.request.findMany({
       where: {
         clientId: meId,
-        requestState: "ON HOLD",
         OR: [
           { requestState: "ON HOLD", acceptDeadline: { gt: now } },
           { requestState: "CONFLICT_CHECK" },
@@ -210,7 +209,7 @@ export async function POST(req) {
     }
 
     const newDeadline = new Date(
-      new Date(r.acceptDeadline).getTime() + 24 * 60 * 60 * 1000
+      new Date(r.acceptDeadline).getTime() + 168 * 60 * 60 * 1000
     );
 
     const currentDeadline = new Date(r.acceptDeadline);
