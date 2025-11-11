@@ -113,8 +113,8 @@ export default function AwaitingSelectionTable({
               </th>
               <th className="border p-2 text-center">3 Best Offers</th>
               <th className="border p-2 text-center">
-                Time until Automatic Rejection of All Offers
-                <NarrowTooltip tooltipText="If you need more time to make decisions, you can click the 'I need more time' button to extend the deadline for selecting an offer by 7 days (168 hours). This button may only be clicked once." />
+                Time until Automatic Rejection of All Offers{" "}
+                <NarrowTooltip tooltipText="If you need additional time to decide, click the 'I need more time' button to extend your offer selection deadline by 7 days (168 hours). This extension can only be used once." />
               </th>
               <th className="border p-2 text-center">Cancel LEXIFY Request</th>
             </tr>
