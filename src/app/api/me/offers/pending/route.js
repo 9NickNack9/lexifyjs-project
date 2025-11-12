@@ -35,6 +35,7 @@ export async function GET() {
       select: {
         offerId: true,
         offerPrice: true,
+        offerTitle: true,
         createdAt: true,
         offerLawyer: true,
         requestId: true,
@@ -53,6 +54,7 @@ export async function GET() {
             additionalBackgroundInfo: true,
             supplierCodeOfConductFiles: true,
             primaryContactPerson: true,
+            details: true,
           },
         },
       },
@@ -101,8 +103,9 @@ export async function GET() {
       return {
         offerId: safeNumber(o.offerId),
         requestId: safeNumber(o.requestId),
-        title: req.title || "—",
+        title: o.offerTitle || req.title || "—",
         clientName: client.companyName,
+        confidential: req.details?.confidential || null,
         offerSubmittedBy: o.offerLawyer || defaultName || "—",
         offerSubmissionDate: o.createdAt || null,
         offeredPrice: toNum(o.offerPrice),

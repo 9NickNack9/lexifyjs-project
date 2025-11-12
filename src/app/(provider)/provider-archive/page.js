@@ -699,7 +699,14 @@ export default function ProviderArchive() {
                   {filteredOffers.map((o) => (
                     <tr key={o.offerId}>
                       <td className="border p-2 text-center">{o.title}</td>
-                      <td className="border p-2 text-center">{o.clientName}</td>
+                      <td className="border p-2 text-center">
+                        {(o.confidential ?? o.request?.details?.confidential)
+                          ?.toString()
+                          .trim()
+                          .toLowerCase() === "yes"
+                          ? "Disclosed to Winning Bidder Only"
+                          : o.clientName || "—"}
+                      </td>
                       <td className="border p-2 text-center">
                         {o.offerSubmittedBy}
                       </td>

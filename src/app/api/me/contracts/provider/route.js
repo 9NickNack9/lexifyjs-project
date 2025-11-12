@@ -62,6 +62,7 @@ export async function GET() {
                 providerId: true,
                 offerLawyer: true,
                 offerStatus: true,
+                offerTitle: true,
               },
             },
           },
@@ -111,7 +112,7 @@ export async function GET() {
           contractId: safeNumber(c.contractId),
           contractDate: c.contractDate,
           contractPrice: toNum(c.contractPrice),
-          title: c.request?.title || "—",
+          title: c.offer?.offerTitle || "—",
           clientName: c.client?.companyName || "—",
           contractOwner: "—",
           contract: {
@@ -152,6 +153,7 @@ export async function GET() {
         providerId: true,
         offerLawyer: true,
         createdAt: true,
+        offerTitle: true,
       },
     });
 
@@ -198,6 +200,17 @@ export async function GET() {
       const key = `${c.requestId}:${c.providerId}`;
       const ownerFromOffer =
         wonMap.get(key) || latestMap.get(key) || defaultOwnerName || "";
+
+      // Get this provider’s offer title (prefer the WON one, otherwise first)
+      const offerTitle =
+        (c.request?.offers || [])
+          .filter((o) => String(o.providerId) === String(c.providerId))
+          .find((o) => (o.offerStatus || "").toUpperCase() === "WON")
+          ?.offerTitle ||
+        (c.request?.offers || []).filter(
+          (o) => String(o.providerId) === String(c.providerId)
+        )[0]?.offerTitle ||
+        null;
 
       // Resolve provider representative from offerLawyer
       const offerLawyer =
@@ -262,7 +275,7 @@ export async function GET() {
         contractId: safeNumber(c.contractId),
         contractDate: c.contractDate,
         contractPrice: toNum(c.contractPrice),
-        title: c.request?.title || "—",
+        title: offerTitle || c.request?.title || "—",
         clientName: c.client?.companyName || "—",
         contractOwner: ownerFromOffer || "—",
 
