@@ -2,11 +2,17 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import crypto from "crypto";
 import { notifyUserPasswordReset } from "@/lib/mailer";
+import { headers } from "next/headers";
 
 // Build absolute URL helper
 function absoluteUrl(req, path) {
-  const url = new URL(req.url);
-  const base = `${url.protocol}//${url.host}`;
+  const h = headers();
+  const proto =
+    h.get("x-forwarded-proto") ?? new URL(req.url).protocol.replace(":", "");
+  const host =
+    h.get("x-forwarded-host") ?? h.get("host") ?? new URL(req.url).host;
+  const runtimeBase = `${proto}://${host}`;
+  const base = process.env.APP_ORIGIN || runtimeBase;
   return `${base}${path}`;
 }
 
