@@ -226,7 +226,9 @@ export default function ProviderRequest() {
                         {r.assignmentType}
                       </td>
                       <td className="border p-2 text-center">
-                        {r.clientCompanyName}
+                        {r.details?.confidential === "yes"
+                          ? "Disclosed to Winning Bidder Only"
+                          : r.clientCompanyName || "—"}
                       </td>
                       <td
                         className="border p-2 text-center"
