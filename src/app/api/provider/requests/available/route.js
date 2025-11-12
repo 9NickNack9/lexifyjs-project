@@ -137,6 +137,7 @@ export async function GET(req) {
       assignmentType: r.assignmentType || r.details?.assignmentType || "—",
       clientCompanyName: r.client?.companyName || "—",
       offersDeadline: r.details?.offersDeadline || r.dateExpired || null,
+      confidential: r.details?.confidential || "—",
     }));
     return NextResponse.json({ requests: shaped });
   }
