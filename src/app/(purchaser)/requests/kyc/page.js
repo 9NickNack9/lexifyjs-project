@@ -186,7 +186,6 @@ export default function Kyc() {
         providerMinimumRating: formData.firmRating,
         currency: formData.currency,
         paymentRate: "Lump sum fixed price",
-        maximumPrice: formData.maxPrice,
         advanceRetainerFee: formData.retainerFee,
         invoiceType: formData.paymentTerms,
         language: languageCSV,
@@ -202,6 +201,7 @@ export default function Kyc() {
           )
             ? "Disclosed to Winning Bidder Only"
             : formData.confidential || "",
+          maximumPrice: formData.maxPrice,
         },
       };
 

@@ -199,6 +199,7 @@ export default function SourcingComments() {
             : "No",
           winnerBidderOnlyStatus: (formData.confidential || "").trim(),
           expectedValue: formData.priceRange || "",
+          maximumPrice: formData.maxPrice,
         },
       };
 

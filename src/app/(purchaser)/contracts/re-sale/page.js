@@ -217,6 +217,7 @@ export default function ReSale() {
           priceRange: formData.priceRange || "",
           dueDiligence: formData.dueDiligence || "",
           customerType: formData.customerType || "",
+          maximumPrice: isHourly ? null : formData.maxPrice,
         },
       };
 

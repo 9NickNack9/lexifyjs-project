@@ -201,6 +201,7 @@ export default function ReConstruction() {
             : "No",
           winnerBidderOnlyStatus: (formData.confidential || "").trim(),
           priceRange: formData.priceRange || "",
+          maximumPrice: isHourly ? null : formData.maxPrice,
         },
       };
 

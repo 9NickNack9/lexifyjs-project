@@ -188,7 +188,6 @@ export default function CorporateGovernance() {
         providerMinimumRating: formData.firmRating,
         currency: formData.currency,
         paymentRate: "Lump sum fixed price",
-        maximumPrice: formData.maxPrice,
         advanceRetainerFee: formData.retainerFee,
         invoiceType: formData.paymentTerms,
         language: languageCSV,
@@ -199,6 +198,7 @@ export default function CorporateGovernance() {
           selectedItems: (formData.areaboxes || []).join(", "),
           applicationPurpose: formData.appDescription || "",
           policyPurpose: formData.policyDescription || "",
+          maximumPrice: formData.maxPrice,
         },
       };
 

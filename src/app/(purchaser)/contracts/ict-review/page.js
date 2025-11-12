@@ -220,6 +220,7 @@ export default function IctReview() {
             ? "Yes"
             : "No",
           winnerBidderOnlyStatus: (formData.confidential || "").trim(),
+          maximumPrice: formData.maxPrice,
         },
       };
 

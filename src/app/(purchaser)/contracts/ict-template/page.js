@@ -195,14 +195,15 @@ export default function IctTemplate() {
         providerMinimumRating: formData.firmRating,
         currency: formData.currency,
         paymentRate: "Lump sum fixed price",
-        maximumPrice: formData.maxPrice,
         advanceRetainerFee: formData.retainerFee,
         invoiceType: formData.paymentTerms,
         language: languageCSV,
         offersDeadline: formData.date,
         title: formData.requestTitle,
         dateExpired: formData.date,
-        details: {},
+        details: {
+          maximumPrice: formData.maxPrice,
+        },
       };
 
       const form = new FormData();

@@ -207,6 +207,7 @@ export default function ReLeaseback() {
             : "No",
           winnerBidderOnlyStatus: (formData.confidential || "").trim(),
           priceRange: formData.priceRange || "",
+          maximumPrice: isHourly ? null : formData.maxPrice,
         },
       };
 

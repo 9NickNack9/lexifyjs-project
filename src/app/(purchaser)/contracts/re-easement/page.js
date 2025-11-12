@@ -197,6 +197,7 @@ export default function ReEasement() {
             ? "Yes"
             : "No",
           winnerBidderOnlyStatus: (formData.confidential || "").trim(),
+          maximumPrice: isHourly ? null : formData.maxPrice,
         },
       };
 

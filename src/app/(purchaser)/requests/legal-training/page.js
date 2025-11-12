@@ -203,6 +203,7 @@ export default function LegalTraining() {
           formData.trainLocation === "Face to face at a specific location"
             ? formData.specificLocation || ""
             : formData.trainLocation || "",
+        maximumPrice: formData.maxPrice,
       };
 
       const payload = {
@@ -239,7 +240,6 @@ export default function LegalTraining() {
         providerMinimumRating: formData.firmRating,
         currency: formData.currency,
         paymentRate: "Lump sum fixed price",
-        maximumPrice: formData.maxPrice,
         advanceRetainerFee: formData.retainerFee,
         invoiceType: formData.paymentTerms,
         language: languageCSV,

@@ -204,6 +204,7 @@ export default function ReLease() {
             : "No",
           winnerBidderOnlyStatus: (formData.confidential || "").trim(),
           rentRange: formData.rentRange || "",
+          maximumPrice: isHourly ? null : formData.maxPrice,
         },
       };
 

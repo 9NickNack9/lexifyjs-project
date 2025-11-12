@@ -279,7 +279,6 @@ export async function GET() {
         clientName: c.client?.companyName || "—",
         contractOwner: ownerFromOffer || "—",
 
-        // 👇 This is the same shape your purchaser modal expects
         contract: {
           contractDate: c.contractDate,
           contractPrice: toNum(c.contractPrice),

@@ -200,6 +200,7 @@ export default function GdprCompliance() {
         profilingDescription: formData.profilingDescription || "",
         interviewLocation: formData.interviewLocation || "",
         locationDescription: formData.locationDescription || "",
+        maximumPrice: formData.maxPrice,
       };
 
       const payload = {
@@ -220,7 +221,6 @@ export default function GdprCompliance() {
         providerMinimumRating: formData.firmRating,
         currency: formData.currency,
         paymentRate: "Lump sum fixed price",
-        maximumPrice: formData.maxPrice,
         advanceRetainerFee: formData.retainerFee,
         invoiceType: formData.paymentTerms,
         language: languageCSV,

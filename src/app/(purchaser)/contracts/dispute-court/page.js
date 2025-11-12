@@ -189,7 +189,6 @@ export default function DisputeCourt() {
         paymentRate: isFull
           ? "Capped Price. The capped price covers the pending proceedings in one court instance only and does not include fees or charges possibly levied by the competent court which fees and charges, if any, will be invoiced separately."
           : "Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the legal service provider submitting the winning offer. The offered hourly rate will be valid until the court proceedings in the current court instance have concluded.",
-        maximumPrice: isFull ? formData.maxPrice || "" : "",
         advanceRetainerFee: formData.retainerFee,
         invoiceType: formData.paymentTerms,
         language: languageCSV,
@@ -203,6 +202,7 @@ export default function DisputeCourt() {
             ? "Yes"
             : "No",
           winnerBidderOnlyStatus: (formData.confidential || "").trim(),
+          maximumPrice: isFull ? formData.maxPrice || "" : "",
         },
       };
 

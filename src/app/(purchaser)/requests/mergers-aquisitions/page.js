@@ -226,7 +226,6 @@ export default function MergerAquisitions() {
         paymentRate: isHourly
           ? "Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the Legal Service Provider. The offered hourly rate will be valid until the transaction has been closed or abandoned, whichever comes first."
           : "Lump sum fixed price",
-        maximumPrice: isHourly ? "" : formData.maxPrice,
         advanceRetainerFee: formData.retainerFee,
         invoiceType: formData.paymentTerms,
         language: languageCSV,
@@ -244,6 +243,7 @@ export default function MergerAquisitions() {
             ? "Yes"
             : "No",
           winnerBidderOnlyStatus: (formData.confidential || "").trim(),
+          maximumPrice: isHourly ? "" : formData.maxPrice,
         },
       };
 

@@ -209,6 +209,7 @@ export default function PrivacyDocumentation() {
         companyRevenue: formData.companyRevenue || "",
         employeeCount: formData.employeeCount || "",
         customerCount: formData.customerCount || "",
+        maximumPrice: formData.maxPrice,
       };
 
       const payload = {
@@ -230,7 +231,6 @@ export default function PrivacyDocumentation() {
         providerMinimumRating: formData.firmRating,
         currency: formData.currency,
         paymentRate: "Lump sum fixed price",
-        maximumPrice: formData.maxPrice,
         advanceRetainerFee: formData.retainerFee,
         invoiceType: formData.paymentTerms,
         language: languageCSV,
