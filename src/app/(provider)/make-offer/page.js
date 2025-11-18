@@ -325,6 +325,38 @@ function renderValue(v, pathHint) {
     return "—";
   }
 
+  if (
+    pathHint === "details.additionalQuestions" &&
+    v &&
+    typeof v === "object" &&
+    !Array.isArray(v)
+  ) {
+    const entries = Object.entries(v);
+    if (!entries.length) return "—";
+
+    return (
+      <div className="space-y-2">
+        {entries.map(([question, answer], idx) => (
+          <div key={idx} className="border-b last:border-b-0 pb-2 last:pb-0">
+            <div className="flex">
+              <span className="font-semibold mr-1">Information Request:</span>
+              <span className="whitespace-pre-wrap flex-1">{question}</span>
+            </div>
+
+            <div className="flex mt-1">
+              <span className="font-semibold mr-1">
+                Client&apos;s Response:
+              </span>
+              <span className="whitespace-pre-wrap flex-1">
+                {answer && String(answer).trim() ? answer : "(no answer yet)"}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  }
+
   if (Array.isArray(v)) {
     return v.length ? v.join(", ") : "—";
   }
@@ -507,13 +539,16 @@ export default function MakeOffer() {
   const [contacts, setContacts] = useState([]);
   const [defs, setDefs] = useState(null);
 
-  // form state (UNCHANGED)
+  // form state
   const [offerLawyer, setOfferLawyer] = useState("");
   const [offerPrice, setOfferPrice] = useState("");
   const [offerExpectedPrice, setOfferExpectedPrice] = useState("");
   const [offerTitle, setOfferTitle] = useState("");
   const [agree, setAgree] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  const [additionalQuestion, setAdditionalQuestion] = useState("");
+  const [questionSubmitting, setQuestionSubmitting] = useState(false);
 
   const paymentRate = (request?.paymentRate || "").toLowerCase();
   const isCapped = paymentRate.startsWith("capped price");
@@ -613,6 +648,38 @@ export default function MakeOffer() {
     }
   };
 
+  const handleSubmitAdditionalQuestion = async () => {
+    if (!requestId) return;
+    const q = additionalQuestion.trim();
+    if (!q) return;
+
+    try {
+      setQuestionSubmitting(true);
+      const res = await fetch(
+        `/api/requests/${requestId}/additional-question`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ question: q }),
+        }
+      );
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        alert(data?.error || "Failed to submit additional question");
+        return;
+      }
+
+      alert("Your question has been submitted to the client.");
+      setAdditionalQuestion("");
+    } catch (e) {
+      alert("Unexpected error while submitting your question.");
+    } finally {
+      setQuestionSubmitting(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen p-6">
@@ -701,9 +768,38 @@ export default function MakeOffer() {
           )}
         </div>
 
+        {/* ---------- ADDITIONAL QUESTION TO CLIENT ---------- */}
+        <div className="px-6 pb-6">
+          <h2 className="font-semibold mb-2">
+            Do you need any additional information about the LEXIFY Request
+            before submitting an offer? You can submit your additional
+            information request to the client below:
+          </h2>
+          <textarea
+            className="w-full border rounded p-2 min-h-[100px]"
+            value={additionalQuestion}
+            onChange={(e) => setAdditionalQuestion(e.target.value)}
+            placeholder="Insert additional information request here"
+          />
+          <div className="mt-3">
+            <button
+              type="button"
+              onClick={handleSubmitAdditionalQuestion}
+              disabled={
+                questionSubmitting || !additionalQuestion.trim() || !requestId
+              }
+              className="px-4 py-2 bg-[#11999e] text-white rounded disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
+            >
+              {questionSubmitting
+                ? "Submitting Question…"
+                : "Submit Additional Information Request"}
+            </button>
+          </div>
+        </div>
+
         <div className="h-px w-full bg-gray-200" />
 
-        {/* ---------------------- OFFER FORM (unchanged) ---------------------- */}
+        {/* ---------------------- OFFER FORM ---------------------- */}
         <form onSubmit={handleSubmit} className="p-6 space-y-6">
           <div>
             <label className="block font-semibold mb-2">

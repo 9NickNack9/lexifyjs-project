@@ -16,7 +16,7 @@ function formatTimeUntil(deadlineISO) {
   const end = new Date(deadlineISO).getTime();
   if (Number.isNaN(end)) return "";
   const diffMs = end - Date.now();
-  if (diffMs <= 0) return "Expired.";
+  if (diffMs <= 0) return "Expired. Awaiting Winning Offer Selection.";
 
   const totalMinutes = Math.floor(diffMs / 60000);
   const days = Math.floor(totalMinutes / (60 * 24));
@@ -266,6 +266,38 @@ function renderValue(v, pathHint) {
       );
     }
     return "—";
+  }
+
+  if (
+    pathHint === "details.additionalQuestions" &&
+    v &&
+    typeof v === "object" &&
+    !Array.isArray(v)
+  ) {
+    const entries = Object.entries(v);
+    if (!entries.length) return "—";
+
+    return (
+      <div className="space-y-2">
+        {entries.map(([question, answer], idx) => (
+          <div key={idx} className="border-b last:border-b-0 pb-2 last:pb-0">
+            <div className="flex">
+              <span className="font-semibold mr-1">Information Request:</span>
+              <span className="whitespace-pre-wrap flex-1">{question}</span>
+            </div>
+
+            <div className="flex mt-1">
+              <span className="font-semibold mr-1">
+                Client&apos;s Response:
+              </span>
+              <span className="whitespace-pre-wrap flex-1">
+                {answer && String(answer).trim() ? answer : "(no answer yet)"}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
   }
 
   if (Array.isArray(v)) {

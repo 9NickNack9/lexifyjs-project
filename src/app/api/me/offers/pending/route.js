@@ -27,8 +27,10 @@ export async function GET() {
       where: {
         providerId: BigInt(session.userId),
         request: {
-          requestState: "PENDING",
-          dateExpired: { gt: now },
+          requestState: {
+            in: ["PENDING", "ON HOLD"],
+          },
+          //dateExpired: { gt: now },
         },
       },
       orderBy: { createdAt: "desc" },

@@ -46,6 +46,39 @@ export default function ContractPrint({ contract, companyName, previewDef }) {
       }
       return "—";
     }
+
+    if (
+      pathHint === "details.additionalQuestions" &&
+      v &&
+      typeof v === "object" &&
+      !Array.isArray(v)
+    ) {
+      const entries = Object.entries(v);
+      if (!entries.length) return "—";
+
+      return (
+        <div className="space-y-2">
+          {entries.map(([question, answer], idx) => (
+            <div key={idx} className="border-b last:border-b-0 pb-2 last:pb-0">
+              <div className="flex">
+                <span className="font-semibold mr-1">Information Request:</span>
+                <span className="whitespace-pre-wrap flex-1">{question}</span>
+              </div>
+
+              <div className="flex mt-1">
+                <span className="font-semibold mr-1">
+                  Client&apos;s Response:
+                </span>
+                <span className="whitespace-pre-wrap flex-1">
+                  {answer && String(answer).trim() ? answer : "(no answer yet)"}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      );
+    }
+
     if (Array.isArray(v)) return v.length ? v.join(", ") : "—";
     if (v === null || v === undefined || v === "") return "—";
     const hint = (pathHint || "").toLowerCase();

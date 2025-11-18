@@ -21,6 +21,7 @@ export async function GET(_req, { params }) {
       title: true,
       primaryContactPerson: true,
       offersDeadline: true,
+      acceptDeadline: true,
       dateCreated: true,
       dateExpired: true,
       currency: true,
@@ -50,6 +51,9 @@ export async function GET(_req, { params }) {
     offersCount: r._count?.offers ?? 0,
     offersDeadline: r.offersDeadline
       ? new Date(r.offersDeadline).toISOString()
+      : null,
+    acceptDeadline: r.acceptDeadline
+      ? new Date(r.acceptDeadline).toISOString()
       : null,
     dateCreated: r.dateCreated ? new Date(r.dateCreated).toISOString() : null,
     dateExpired: r.dateExpired ? new Date(r.dateExpired).toISOString() : null,

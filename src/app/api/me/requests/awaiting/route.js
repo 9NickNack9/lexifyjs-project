@@ -82,6 +82,7 @@ export async function GET() {
                 companyName: true,
                 providerTotalRating: true,
                 companyWebsite: true,
+                providerIndividualRating: true,
               },
             },
             providerId: true,
@@ -114,6 +115,9 @@ export async function GET() {
           offerLawyer: o.offerLawyer || "—",
           providerCompanyName: o.provider?.companyName || "—",
           providerTotalRating: toNum(o.provider?.providerTotalRating) ?? null,
+          providerHasRatings:
+            Array.isArray(o.provider?.providerIndividualRating) &&
+            o.provider.providerIndividualRating.length > 0,
           providerCompanyWebsite: o.provider?.companyWebsite || null,
         }))
         .filter((o) => typeof o.offeredPrice === "number")

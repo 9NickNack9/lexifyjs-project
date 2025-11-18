@@ -276,7 +276,7 @@ export default function AdminPage() {
   const ADMIN_REQUEST_STATES = [
     { value: "PENDING", label: "Pending" },
     { value: "EXPIRED", label: "Expired" },
-    { value: "ON_HOLD", label: "On Hold" },
+    { value: "ON HOLD", label: "On Hold" },
   ];
 
   const showRequestDetails = async (id) => {
@@ -592,7 +592,7 @@ export default function AdminPage() {
           type="text"
           value={reqSearch}
           onChange={(e) => setReqSearch(e.target.value)}
-          placeholder="Search by company name…"
+          placeholder="Search by company name or request title…"
           className="border rounded p-2 w-full max-w-md"
         />
         <button
@@ -625,23 +625,25 @@ export default function AdminPage() {
             <tr>
               <th className="border p-2">Request ID</th>
               <th className="border p-2">Company</th>
+              <th className="border p-2">Title</th>
               <th className="border p-2">Request State</th>
               <th className="border p-2">Offers</th>
               <th className="border p-2">Time Until Expiration</th>
+              <th className="border p-2">Time Until Rejection of All Offers</th>
               <th className="border p-2">Actions</th>
             </tr>
           </thead>
           <tbody>
             {reqLoading && (
               <tr>
-                <td colSpan={6} className="text-center p-4">
+                <td colSpan={8} className="text-center p-4">
                   Loading…
                 </td>
               </tr>
             )}
             {!reqLoading && reqError && (
               <tr>
-                <td colSpan={6} className="text-center p-4 text-red-600">
+                <td colSpan={8} className="text-center p-4 text-red-600">
                   {reqError}
                 </td>
               </tr>
@@ -649,7 +651,7 @@ export default function AdminPage() {
             {!reqLoading && !reqError && reqs.length === 0 && (
               <>
                 <tr>
-                  <td colSpan={6} className="text-center p-4 text-gray-500">
+                  <td colSpan={8} className="text-center p-4 text-gray-500">
                     There are no requests made yet.
                   </td>
                 </tr>
@@ -662,6 +664,17 @@ export default function AdminPage() {
                   r.requestState === "EXPIRED"
                     ? "Expired"
                     : formatTimeUntil(r.offersDeadline);
+                let rejectLabel;
+                if (!r.acceptDeadline) {
+                  rejectLabel = "N/A"; // no deadline set
+                } else {
+                  const end = new Date(r.acceptDeadline).getTime();
+                  if (Number.isNaN(end) || end <= Date.now()) {
+                    rejectLabel = "Expired";
+                  } else {
+                    rejectLabel = formatTimeUntil(r.acceptDeadline);
+                  }
+                }
                 return (
                   <tr key={r.requestId} className="text-center">
                     <td
@@ -671,6 +684,7 @@ export default function AdminPage() {
                       {r.requestId}
                     </td>
                     <td className="border p-2">{r.clientCompanyName || "—"}</td>
+                    <td className="border p-2">{r.title || "—"}</td>
                     <td className="border p-2">
                       <select
                         className="border rounded"
@@ -688,6 +702,7 @@ export default function AdminPage() {
                     </td>
                     <td className="border p-2">{r.offersCount ?? 0}</td>
                     <td className="border p-2">{timeLabel}</td>
+                    <td className="border p-2">{rejectLabel}</td>
                     <td className="border p-2">
                       {r.requestState === "CONFLICT_CHECK" ? (
                         <div className="flex gap-2 justify-center">
@@ -742,7 +757,7 @@ export default function AdminPage() {
               })}
             {reqLoading && reqHasMore && (
               <tr>
-                <td colSpan={6} className="text-center p-3 text-gray-500">
+                <td colSpan={8} className="text-center p-3 text-gray-500">
                   Loading more…
                 </td>
               </tr>
@@ -777,6 +792,12 @@ export default function AdminPage() {
                 <strong>Offers Deadline:</strong>{" "}
                 {reqSelected.offersDeadline
                   ? new Date(reqSelected.offersDeadline).toLocaleString()
+                  : "—"}
+              </p>
+              <p>
+                <strong>Accept Deadline:</strong>{" "}
+                {reqSelected.acceptDeadline
+                  ? new Date(reqSelected.acceptDeadline).toLocaleString()
                   : "—"}
               </p>
               <p>

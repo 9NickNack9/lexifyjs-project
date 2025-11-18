@@ -133,7 +133,7 @@ export default function PreviewModal({ open, onClose, row, companyName }) {
             Preview — {row.title || "LEXIFY Request"}
           </h3>
           <button
-            className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300"
+            className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 cursor-pointer"
             onClick={onClose}
           >
             Close
@@ -326,6 +326,38 @@ function renderValue(v, pathHint) {
       );
     }
     return "—";
+  }
+
+  if (
+    pathHint === "details.additionalQuestions" &&
+    v &&
+    typeof v === "object" &&
+    !Array.isArray(v)
+  ) {
+    const entries = Object.entries(v);
+    if (!entries.length) return "—";
+
+    return (
+      <div className="space-y-2">
+        {entries.map(([question, answer], idx) => (
+          <div key={idx} className="border-b last:border-b-0 pb-2 last:pb-0">
+            <div className="flex">
+              <span className="font-semibold mr-1">Information Request:</span>
+              <span className="whitespace-pre-wrap flex-1">{question}</span>
+            </div>
+
+            <div className="flex mt-1">
+              <span className="font-semibold mr-1">
+                Client&apos;s Response:
+              </span>
+              <span className="whitespace-pre-wrap flex-1">
+                {answer && String(answer).trim() ? answer : "(no answer yet)"}
+              </span>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
   }
 
   if (Array.isArray(v)) {

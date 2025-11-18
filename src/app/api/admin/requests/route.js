@@ -18,11 +18,24 @@ export async function GET(req) {
     Math.max(1, parseInt(searchParams.get("take") || "10", 10))
   );
 
-  const where = {
-    ...(search
-      ? { clientCompanyName: { contains: search, mode: "insensitive" } }
-      : {}),
-  };
+  const where = search
+    ? {
+        OR: [
+          {
+            clientCompanyName: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+          {
+            title: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+        ],
+      }
+    : {};
 
   const [total, rows] = await Promise.all([
     prisma.request.count({ where }),
@@ -38,6 +51,7 @@ export async function GET(req) {
         title: true,
         primaryContactPerson: true,
         offersDeadline: true,
+        acceptDeadline: true,
         _count: { select: { offers: true } },
       },
     }),
@@ -51,6 +65,9 @@ export async function GET(req) {
     primaryContactPerson: r.primaryContactPerson,
     offersDeadline: r.offersDeadline
       ? new Date(r.offersDeadline).toISOString()
+      : null,
+    acceptDeadline: r.acceptDeadline
+      ? new Date(r.acceptDeadline).toISOString()
       : null,
     offersCount: r._count?.offers ?? 0,
   }));

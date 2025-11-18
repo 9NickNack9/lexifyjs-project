@@ -1,6 +1,7 @@
 "use client";
 // src/app/(purchaser)/archive/components/PendingRequestsTable.js
 
+import { useRouter } from "next/navigation";
 import { fmtMoney, formatTimeUntil } from "../utils/format";
 import NarrowTooltip from "../../../components/NarrowTooltip";
 
@@ -11,6 +12,7 @@ export default function PendingRequestsTable({
   onCancel,
   busyIds,
 }) {
+  const router = useRouter();
   const enriched = (rows || []).map((r) => {
     // Resolve a display deadline (offersDeadline preferred)
     const rawDeadline =
@@ -88,6 +90,9 @@ export default function PendingRequestsTable({
                 My Max. Price (VAT 0%){" "}
                 <NarrowTooltip tooltipText="If you have included a maximum price for the legal service in your LEXIFY Request, the maximum price is displayed here. A maximum price can be set for lump sum offers only. " />
               </th>
+              <th className="border p-2 text-center">
+                Additional Information Requests from Legal Service Providers
+              </th>
               <th className="border p-2 text-center">View LEXIFY Request</th>
               <th className="border p-2 text-center">Cancel LEXIFY Request</th>
             </tr>
@@ -127,6 +132,33 @@ export default function PendingRequestsTable({
                     {r.maximumPrice != null && r.maximumPrice !== ""
                       ? fmtMoney(r.maximumPrice, r.currency)
                       : "N/A"}
+                  </td>
+                  <td className="border p-2 text-center">
+                    {(() => {
+                      const aq = r.details?.additionalQuestions;
+                      const isObj =
+                        aq && typeof aq === "object" && !Array.isArray(aq);
+                      const count = isObj ? Object.keys(aq).length : 0;
+
+                      if (!count) return "N/A";
+
+                      return (
+                        <div className="flex items-center justify-center gap-2">
+                          <span>{count} Additional Information Request(s)</span>
+                          <button
+                            type="button"
+                            className="bg-[#11999e] text-white px-3 py-1 rounded cursor-pointer"
+                            onClick={() =>
+                              router.push(
+                                `/archive/requests/${r.requestId}/additional-questions`
+                              )
+                            }
+                          >
+                            Review and Respond
+                          </button>
+                        </div>
+                      );
+                    })()}
                   </td>
 
                   <td className="border p-2 text-center">

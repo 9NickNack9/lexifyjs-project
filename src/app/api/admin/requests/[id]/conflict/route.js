@@ -14,6 +14,8 @@ import {
   notifyPurchaserContractFormed,
   notifyWinningLawyerContractFormed,
   notifyLosingLawyerNotSelected,
+  notifyPurchaserConflictDeniedWithRemainingOffers,
+  notifyPurchaserConflictDeniedNoOffers,
 } from "@/lib/mailer";
 
 // ---------- helpers copied from awaiting/select (trimmed to what we need) ----------
@@ -610,6 +612,66 @@ export async function PUT(req, { params }) {
         },
       });
     });
+
+    // ---- Email notifications for DENY case ----
+    try {
+      // 1) Reload request with title + primary contact + client contacts
+      const full = await prisma.request.findUnique({
+        where: { requestId: id },
+        select: {
+          title: true,
+          primaryContactPerson: true,
+          details: true,
+          client: {
+            select: {
+              companyContactPersons: true,
+            },
+          },
+        },
+      });
+
+      const requestTitle = full?.title || "LEXIFY Request";
+
+      const contacts = Array.isArray(full?.client?.companyContactPersons)
+        ? full.client.companyContactPersons
+        : [];
+
+      // Prefer primaryContactPerson from main field, then from details
+      const primary =
+        full?.primaryContactPerson ||
+        full?.details?.primaryContactPerson ||
+        null;
+
+      // Use same helper you already use in other places
+      const recipients = expandWithAllNotificationContacts(primary, contacts);
+
+      if (recipients.length > 0) {
+        // 2) Count remaining (non-disqualified) offers
+        const remainingOffersCount = await prisma.offer.count({
+          where: {
+            requestId: id,
+            offerStatus: { not: "DISQUALIFIED" },
+          },
+        });
+
+        if (remainingOffersCount > 0) {
+          // There ARE more offers → "deny & replace" email
+          await notifyPurchaserConflictDeniedWithRemainingOffers({
+            to: recipients,
+            requestTitle,
+          });
+        } else {
+          // No offers left → "deny and no offers left" email
+          await notifyPurchaserConflictDeniedNoOffers({
+            to: recipients,
+            requestTitle,
+          });
+        }
+      }
+    } catch (e) {
+      console.error("conflict/deny notification failed:", e);
+      // Do not fail the API because email failed
+    }
 
     return NextResponse.json({ ok: true, resolved: "denied" });
   }

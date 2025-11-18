@@ -293,6 +293,21 @@ export default function LegalTraining() {
     });
   };
 
+  function formatDateTimeDDMMYYYYHHMM(value) {
+    if (!value) return "-";
+    const d = new Date(value);
+    if (isNaN(d)) return value; // fallback for invalid
+
+    const dd = String(d.getDate()).padStart(2, "0");
+    const mm = String(d.getMonth() + 1).padStart(2, "0");
+    const yyyy = d.getFullYear();
+
+    const hh = String(d.getHours()).padStart(2, "0");
+    const min = String(d.getMinutes()).padStart(2, "0");
+
+    return `${dd}.${mm}.${yyyy} ${hh}:${min}`;
+  }
+
   // Preview helper
   function Section({ title, children }) {
     return (
@@ -994,13 +1009,13 @@ export default function LegalTraining() {
                     </p>
 
                     <p className="text-md mt-2">
-                      Date and time of the training(yyyy-mm-dd):{" "}
+                      Date and time of the training(dd.mm.yyyy hh:mm):{" "}
                       {formData.trainDateSelect ===
                       "Date and time to be confirmed later"
                         ? "Date and time to be confirmed later"
                         : formData.trainDateSelect ===
                           "On a specific date and time already known"
-                        ? formData.trainDate || "-"
+                        ? formatDateTimeDDMMYYYYHHMM(formData.trainDate) || "-"
                         : "-"}
                     </p>
 

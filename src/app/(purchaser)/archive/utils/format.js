@@ -24,7 +24,7 @@ export function formatTimeUntil(deadline) {
   const hours = Math.floor((sec % 86400) / 3600);
   const minutes = Math.floor((sec % 3600) / 60);
 
-  if (days > 0) return `${days} day${days !== 1 ? "s" : ""} ${hours} h`;
+  if (days > 0) return `${days} d ${hours} h`;
   if (hours > 0) return `${hours} h ${minutes} min`;
   return `${minutes} min`; // never empty for future times
 }

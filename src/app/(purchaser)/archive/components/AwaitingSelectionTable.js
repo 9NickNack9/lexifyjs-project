@@ -42,8 +42,10 @@ export default function AwaitingSelectionTable({
     const pretty = `${fmtMoney(offer.offeredPrice, row.currency)} (${
       offer.providerCompanyName
     } / Lead: ${offer.offerLawyer}, LEXIFY rating: ${
-      offer.providerTotalRating ?? "—"
-    }/5)`;
+      !offer.providerHasRatings
+        ? "No Ratings Yet"
+        : `${offer.providerTotalRating ?? "—"}/5`
+    }`;
 
     const confirmed = window.confirm(
       [
@@ -157,11 +159,15 @@ export default function AwaitingSelectionTable({
                   <td className="border p-2 align-top">
                     {r.requestState === "CONFLICT_CHECK" && (
                       <div className="mb-2 text-sm text-amber-700">
-                        Conflict check in progress. You will be notified if a
-                        conflict prevents your selected legal service provider
-                        from performing the assignment. If no conflict is found,
-                        the LEXIFY Contract for the assignment will be sent to
-                        you without delay.
+                        Thank you for selecting your legal service provider.
+                        LEXIFY will next verify with your selected provider
+                        whether a conflict exists that would prevent the
+                        provider from performing the assignment. If no conflict
+                        is found, LEXIFY will send the LEXIFY Contract for the
+                        assignment to you and your selected provider without
+                        delay. If a conflict is identified, you will be notified
+                        accordingly and requested to select an alternative
+                        service provider from the received offers.
                       </div>
                     )}
                     {Array.isArray(r.topOffers) && r.topOffers.length > 0 ? (
@@ -195,7 +201,10 @@ export default function AwaitingSelectionTable({
                                   <span>{o.providerCompanyName}</span>
                                 )}{" "}
                                 / Lead: {o.offerLawyer}, LEXIFY rating:{" "}
-                                {o.providerTotalRating ?? "—"}/5)
+                                {!o.providerHasRatings
+                                  ? "No Ratings Yet"
+                                  : `${o.providerTotalRating ?? "—"}/5`}
+                                )
                               </div>
                             </div>
                           </li>
