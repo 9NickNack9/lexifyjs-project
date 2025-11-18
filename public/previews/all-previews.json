@@ -902,11 +902,157 @@
             ]
           },
           {
-            "title": "Type of Easement Agreement Being Negotiated",
+            "title": "Client's Counterparty in the Matter",
             "fields": [
               {
-                "label": "Easement Agreement type",
-                "path": "details.agreementType"
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter",
+                "path": "__counterpartyConfidential__"
+              },
+              {
+                "label": "Is Identity of Client and Counterparty Disclosed to the Winning Bidder Only?",
+                "path": "details.confidential"
+              }
+            ]
+          },
+          {
+            "title": "Contract Price & Invoicing",
+            "fields": [
+              {
+                "label": "Contract Price",
+                "path": "paymentRate"
+              },
+              {
+                "label": "Currency",
+                "path": "currency"
+              },
+              {
+                "label": "Invoicing",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
+                "path": "advanceRetainerFee"
+              }
+            ]
+          },
+          {
+            "title": "Additional Background Information & Client's Procurement Requirements (Appendices)",
+            "fields": [
+              {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              },
+              {
+                "label": "Additional Background files",
+                "path": "backgroundInfoFiles"
+              },
+              {
+                "label": "Client's Procurement Requirements (Appendices)",
+                "path": "supplierCodeOfConductFiles"
+              }
+            ]
+          },
+          {
+            "title": "Languages Required for the Performance of the Work",
+            "fields": [
+              {
+                "label": "Languages",
+                "path": "language"
+              }
+            ]
+          },
+          {
+            "title": "LEXIFY Request Category",
+            "fields": [
+              {
+                "label": "Request Category",
+                "path": "requestCategory"
+              },
+              {
+                "label": "Request Subcategory",
+                "path": "requestSubcategory"
+              },
+              {
+                "label": "Request Assignment Type",
+                "path": "assignmentType"
+              }
+            ]
+          },
+          {
+            "title": "Additional Information Requests from Legal Service Providers",
+            "fields": [
+              {
+                "label": "Information Requests and Responses",
+                "path": "details.additionalQuestions"
+              }
+            ]
+          }
+        ]
+      },
+      "payloadExample": {
+        "requestState": "PENDING",
+        "requestCategory": "Help with Contracts",
+        "requestSubcategory": "Real Estate and Construction",
+        "assignmentType": "Easement Agreement",
+        "primaryContactPerson": "Jane Doe",
+        "scopeOfWork": "Comprehensive legal support … / Occasional legal support … / An easement agreement …",
+        "description": "Brief description...",
+        "additionalBackgroundInfo": "",
+        "backgroundInfoFiles": [],
+        "supplierCodeOfConductFiles": [],
+        "serviceProviderType": "Attorneys-at-law / Law firms / Both",
+        "domesticOffers": "Yes, domestic only. / No, domestic and foreign.",
+        "providerSize": "Any size / 5 / 15 / 40",
+        "providerCompanyAge": "Any age / 5y / 10y / 25y",
+        "providerMinimumRating": "Any rating / 3 / 4",
+        "currency": "Euro (€) / …",
+        "paymentRate": "Hourly Rate if “Occasional…”, otherwise Lump sum fixed price",
+        "advanceRetainerFee": "Yes/No",
+        "invoiceType": "Monthly / On completion …",
+        "language": "English, …",
+        "offersDeadline": "2025-10-28",
+        "title": "LEXIFY Request title",
+        "dateExpired": "2025-10-28",
+        "details": {
+          "confidential": true,
+          "winnerBidderOnlyStatus": "Disclosed to Winning Bidder Only"
+        }
+      }
+    },
+    {
+      "category": "Help with Contracts",
+      "subcategory": "Real Estate and Construction",
+      "assignmentType": "Land Use Agreement",
+      "preview": {
+        "sections": [
+          {
+            "title": "Client Name, Business Identity Code and Country of Domicile",
+            "fields": [
+              {
+                "label": "Client",
+                "path": "__clientLineOrDisclosed__"
+              },
+              {
+                "label": "Primary Contact Person",
+                "path": "__primaryContactPersonConfidential__"
+              }
+            ]
+          },
+          {
+            "title": "Scope of Work",
+            "fields": [
+              {
+                "label": "Scope of Work",
+                "path": "scopeOfWork"
+              }
+            ]
+          },
+          {
+            "title": "Description",
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
               }
             ]
           },
@@ -1002,7 +1148,7 @@
         "requestState": "PENDING",
         "requestCategory": "Help with Contracts",
         "requestSubcategory": "Real Estate and Construction",
-        "assignmentType": "Easement Agreement",
+        "assignmentType": "Land Use Agreement",
         "primaryContactPerson": "Jane Doe",
         "scopeOfWork": "Comprehensive legal support … / Occasional legal support … / An easement agreement …",
         "description": "Brief description...",

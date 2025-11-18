@@ -341,7 +341,7 @@ export default function DisputeCourt() {
             not want your name or the name of the counterparty to be visible to
             all legal service providers qualified to make you an offer, please
             also check the box &quot;Disclosed to Winning Bidder Only&quot;{" "}
-            <QuestionMarkTooltip tooltipText="If “Disclosed to Winning Bidder Only” is checked, your identity and the identity of your counterparty will be disclosed only to the legal service provider submitting the winning offer to enable that service provider to complete its statutory conflict checks. If an existing conflict is then notified by the legal service provider to LEXIFY, the winning offer will automatically be disqualified and the second-best offer (if any) will replace it as the winning offer." />
+            <QuestionMarkTooltip tooltipText="If 'Disclosed to Winning Bidder Only' is checked, your identity and the identity of your counterparty will be disclosed solely to the legal service provider that submitted the winning offer, to enable that provider to conduct mandatory conflict checks. If the legal service provider notifies LEXIFY of an existing conflict, the winning offer will automatically be disqualified, and you will have the option to select an alternative winning offer." />
           </h4>
           <textarea
             name="confidential"
@@ -982,8 +982,8 @@ export default function DisputeCourt() {
                     provider to complete its mandatory conflict checks. If an
                     existing conflict is then notified by the legal service
                     provider to LEXIFY, the winning offer will automatically be
-                    disqualified and the second-best offer (if any) will replace
-                    it as the winning offer.
+                    disqualified and you will have the option to select an
+                    alternative winning offer.
                   </p>
                 </Section>
 

@@ -346,7 +346,7 @@ export default function ReEasement() {
               this information to be visible to all legal service providers
               qualified to make you an offer, please also check the box
               &quot;Disclosed to Winning Bidder Only&quot;.{" "}
-              <QuestionMarkTooltip tooltipText="If “Disclosed to Winning Bidder Only” is checked, the identity of your counterparty and the property identification codes will be disclosed only to the legal service provider submitting the winning offer to enable that service provider to complete its statutory conflict checks. If an existing conflict is then notified by the legal service provider to LEXIFY, the winning offer will automatically be disqualified and the second-best offer (if any) will replace it as the winning offer." />
+              <QuestionMarkTooltip tooltipText="If 'Disclosed to Winning Bidder Only' is checked, your identity, your counterparty’s identity, and the property identification codes will be disclosed solely to the legal service provider that submitted the winning offer, to enable that provider to conduct mandatory conflict checks. If the legal service provider notifies LEXIFY of an existing conflict, the winning offer will automatically be disqualified, and you will have the option to select an alternative winning offer." />
             </h4>
             <textarea
               name="confidential"
@@ -956,11 +956,6 @@ export default function ReEasement() {
                   </p>
                 </Section>
 
-                {/* Type of Lease Agreement Being Negotiated */}
-                <Section title="Type of Lease Agreement Being Negotiated">
-                  <p>{formData.agreementType || "-"}</p>
-                </Section>
-
                 {/* Counterparty */}
 
                 <Section title="Name and (if applicable) Business Identity Code and Country of Domicile of the Client's Counterparty in the Easement Agreement; Property Identification Codes of the Properties Included in the Easement Agreement">
@@ -977,8 +972,8 @@ export default function ReEasement() {
                     provider to complete its mandatory conflict checks. If an
                     existing conflict is then notified by the legal service
                     provider to LEXIFY, the winning offer will automatically be
-                    disqualified and the second-best offer (if any) will replace
-                    it as the winning offer.
+                    disqualified and you will have the option to select an
+                    alternative winning offer.
                   </p>
                 </Section>
 

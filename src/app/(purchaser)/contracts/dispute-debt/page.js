@@ -340,10 +340,10 @@ export default function DisputeDebt() {
           <h4 className="text-md font-medium mb-1 font-semibold">
             Please provide the name, business identity code and country of
             domicile of the debtor from whom you are collecting the debt. If you
-            do not want the name of the debtor to be visible to all legal
-            service providers qualified to make you an offer, please also check
-            the box &quot;Disclosed to Winning Bidder Only&quot;.
-            <QuestionMarkTooltip tooltipText="If “Disclosed to Winning Bidder Only” is checked, the identity of the debtor will be disclosed only to the legal service provider submitting the winning offer to enable that service provider to complete its statutory conflict checks. If an existing conflict is then notified by the legal service provider to LEXIFY, the winning offer will automatically be disqualified and the second-best offer (if any) will replace it as the winning offer." />
+            do not want your name and the name of the debtor to be visible to
+            all legal service providers qualified to make you an offer, please
+            also check the box &quot;Disclosed to Winning Bidder Only&quot;
+            <QuestionMarkTooltip tooltipText="If 'Disclosed to Winning Bidder Only' is checked, your identity and the identity of the debtor will be disclosed solely to the legal service provider that submitted the winning offer, to enable that provider to conduct mandatory conflict checks. If the legal service provider notifies LEXIFY of an existing conflict, the winning offer will automatically be disqualified, and you will have the option to select an alternative winning offer." />
           </h4>
           <textarea
             name="confidential"
@@ -974,8 +974,8 @@ export default function DisputeDebt() {
                     provider to complete its mandatory conflict checks. If an
                     existing conflict is then notified by the legal service
                     provider to LEXIFY, the winning offer will automatically be
-                    disqualified and the second-best offer (if any) will replace
-                    it as the winning offer.
+                    disqualified and you will have the option to select an
+                    alternative winning offer.
                   </p>
                 </Section>
 

@@ -362,11 +362,11 @@ export default function DataBreach() {
               <h4 className="text-md font-medium mb-1 font-semibold">
                 Is there any other identified company involved in the personal
                 data breach (for example, a supplier of your company)? If yes
-                but If you do not want the name of the other involved company to
-                be visible to all legal service providers qualified to make you
-                an offer, please also check the box “Disclosed to Winning Bidder
-                Only”.{" "}
-                <QuestionMarkTooltip tooltipText="If “Disclosed to Winning Bidder Only” is checked, the identity of the other involved company will be disclosed only to the legal service provider submitting the winning offer to enable that service provider to complete its statutory conflict checks. If an existing conflict is then notified by the legal service provider to LEXIFY, the winning offer will automatically be disqualified and the second-best offer (if any) will replace it as the winning offer." />
+                but if you do not want your name and the name of the other
+                involved company to be visible to all legal service providers
+                qualified to make you an offer, please also check the box
+                “Disclosed to Winning Bidder Only”.{" "}
+                <QuestionMarkTooltip tooltipText="If 'Disclosed to Winning Bidder Only' is checked, your identity and the identity of the other involved company will be disclosed solely to the legal service provider that submitted the winning offer, to enable that provider to conduct mandatory conflict checks. If the legal service provider notifies LEXIFY of an existing conflict, the winning offer will automatically be disqualified, and you will have the option to select an alternative winning offer." />
                 <br />
               </h4>
               <select
@@ -1036,15 +1036,15 @@ export default function DataBreach() {
                       }`}
 
                   <p className="text-xs mt-2 italic">
-                    <strong>NOTE:</strong> If the above states “Disclosed to
-                    Winning Bidder Only” , the relevant identity or identities
-                    will be disclosed only to the legal service provider
-                    submitting the winning offer to enable that service provider
-                    to complete its mandatory conflict checks. If an existing
-                    conflict is then notified by the legal service provider to
-                    LEXIFY, the winning offer will automatically be disqualified
-                    and the second-best offer (if any) will replace it as the
-                    winning offer.
+                    <strong>NOTE:</strong> If the above states &quot;Disclosed
+                    to Winning Bidder Only&quot;, the relevant identity or
+                    identities will be disclosed only to the legal service
+                    provider submitting the winning offer to enable that service
+                    provider to complete its mandatory conflict checks. If an
+                    existing conflict is then notified by the legal service
+                    provider to LEXIFY, the winning offer will automatically be
+                    disqualified and you will have the option to select an
+                    alternative winning offer.
                   </p>
                 </Section>
 

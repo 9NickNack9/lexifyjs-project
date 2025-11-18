@@ -22,6 +22,48 @@ export default function ContractPrint({ contract, companyName, previewDef }) {
     const parts = [name, id, country].filter(Boolean);
     return parts.length ? parts.join(", ") : "—";
   };
+
+  const winnerOnly = (row) => {
+    // whatever minimal logic you need, or just:
+    return row?.details?.winnerBidderOnlyStatus || null;
+  };
+
+  const counterpartyOrWinnerOnly = (row) => {
+    return (
+      row?.details?.breachCompany ||
+      row?.details?.winnerBidderOnlyStatus ||
+      row?.details?.counterparty ||
+      row?.counterparty ||
+      "—"
+    );
+  };
+
+  const primaryContactPersonConfidential = (row) => {
+    return (
+      row?.primaryContactPerson ?? row?.details?.primaryContactPerson ?? "—"
+    );
+  };
+
+  const docsWithOther = (row) => {
+    const fromDetails =
+      row?.details?.documentTypes ||
+      row?.details?.documents ||
+      row?.scopeOfWork ||
+      "";
+    const other = row?.details?.otherDocument || row?.details?.otherArea || "";
+    return [fromDetails, other].filter(Boolean).join(", ") || "—";
+  };
+
+  const supportWithDueDiligence = (row) => {
+    const base = row?.scopeOfWork || "—";
+    const dd =
+      row?.details?.dueDiligence &&
+      row.details.dueDiligence !== "Legal Due Diligence inspection not needed"
+        ? ` (Due Diligence: ${row.details.dueDiligence})`
+        : "";
+    return `${base}${dd}`;
+  };
+
   const renderValue = (v, pathHint) => {
     if ((pathHint || "").toLowerCase().includes("primarycontactperson")) {
       const p = v || {};
@@ -94,10 +136,43 @@ export default function ContractPrint({ contract, companyName, previewDef }) {
   };
   const resolvePath = (row, path) => {
     if (!path) return "—";
-    if (path === "__clientLine__" || path === "__clientLineOrDisclosed__")
-      return buildClientLine(row, companyName);
+
+    if (path.startsWith("__")) {
+      switch (path) {
+        case "__clientLine__": // client line
+          return buildClientLine(row, companyName);
+        case "__clientLineOrDisclosed__":
+          return buildClientLine(row, companyName);
+
+        case "__counterpartyConfidential__":
+          return counterpartyOrWinnerOnly(row);
+
+        case "__primaryContactPersonConfidential__":
+          return primaryContactPersonConfidential(row);
+
+        case "__currencyMax__":
+          return [
+            row.currency || row?.details?.currency || "—",
+            row.maximumPrice ?? "—",
+          ]
+            .filter(Boolean)
+            .join(" / ");
+
+        case "__docsWithOther__":
+          return docsWithOther(row);
+
+        case "__supportWithDueDiligenceFormat__":
+          return supportWithDueDiligence(row);
+
+        default:
+          return "—";
+      }
+    }
+
+    // normal deep path like "scopeOfWork", "details.counterparty", etc
     return deepGet(row, path) ?? "—";
   };
+
   const shouldHideField = (field) => {
     const HIDE_PATHS = new Set([
       "serviceProviderType",

@@ -1,18 +1,18 @@
 "use client";
+
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import QuestionMarkTooltip from "../../../components/QuestionmarkTooltip";
 
-// ==== COMPONENT START ====
-export default function DisputeArbitration() {
+export default function ReLandUse() {
   const router = useRouter();
 
   const initialFormState = {
     contactPerson: "",
-    need: "", // radio: full vs occasional
     confidential: "",
     confboxes: [],
     description: "",
+    supportType: "",
     background: "",
     backgroundFiles: [],
     offerer: "",
@@ -21,7 +21,6 @@ export default function DisputeArbitration() {
     firmAge: "",
     firmRating: "",
     currency: "",
-    maxPrice: "",
     retainerFee: "",
     paymentTerms: "",
     checkboxes: [],
@@ -34,11 +33,9 @@ export default function DisputeArbitration() {
 
   const [formData, setFormData] = useState(initialFormState);
   const [showPreview, setShowPreview] = useState(false);
-  const [submitting, setSubmitting] = useState(false);
-
-  // NEW: contacts + company
   const [contactOptions, setContactOptions] = useState([]);
   const [company, setCompany] = useState({ name: "", id: "", country: "" });
+  const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
     (async () => {
@@ -68,7 +65,6 @@ export default function DisputeArbitration() {
     })();
   }, []);
 
-  // files
   const handleBackgroundFileChange = (e) => {
     const files = Array.from(e.target.files || []);
     setFormData((s) => ({
@@ -96,13 +92,11 @@ export default function DisputeArbitration() {
     setFormData({ ...formData, supplierFiles: arr });
   };
 
-  // change
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
     if (type === "checkbox") {
-      if (name === "agree") {
-        setFormData({ ...formData, agree: checked });
-      } else if (name === "confboxes") {
+      if (name === "agree") setFormData({ ...formData, agree: checked });
+      else if (name === "confboxes") {
         setFormData({
           ...formData,
           confboxes: checked
@@ -118,49 +112,53 @@ export default function DisputeArbitration() {
         });
       }
     } else if (type === "radio") {
-      setFormData({ ...formData, need: value });
+      setFormData({ ...formData, supportType: value });
     } else {
       setFormData({ ...formData, [name]: value });
     }
   };
 
-  // validate
+  const isHourly = formData.supportType.startsWith("Occasional legal support");
+
   const validate = () => {
     if (!formData.contactPerson)
       return "Please select a primary contact person.";
-    if (!formData.need) return "Please select what kind of support you need.";
-    if (!formData.offerer) return "Choose which providers can offer.";
-    if (!formData.providerCountry) return "Choose domestic/foreign offers.";
-    if (!formData.lawyerCount) return "Choose a minimum provider size.";
-    if (!formData.firmAge) return "Choose a minimum company age.";
-    if (!formData.firmRating) return "Choose a minimum rating.";
-    if (!formData.currency) return "Choose a currency.";
-    if (!formData.retainerFee) return "Choose an advance retainer option.";
-    if (!formData.paymentTerms) return "Choose how you want to be invoiced.";
+    if (!formData.supportType) return "Please select what you need.";
+    if (!formData.description) return "Please provide a brief description.";
+    if (!formData.offerer) return "Please choose which providers can offer.";
+    if (!formData.providerCountry)
+      return "Please choose domestic/foreign offers.";
+    if (!formData.lawyerCount) return "Please choose a minimum provider size.";
+    if (!formData.firmAge) return "Please choose a minimum company age.";
+    if (!formData.firmRating) return "Please choose a minimum rating.";
+    if (!formData.currency) return "Please choose a currency.";
+    if (!formData.retainerFee)
+      return "Please choose an advance retainer option.";
+    if (!formData.paymentTerms)
+      return "Please choose how you want to be invoiced.";
     const langs = [
       ...(formData.checkboxes || []).filter((l) => l !== "Other:"),
-      formData.otherLang || null,
+      formData.otherLang || "",
     ].filter(Boolean);
     if (langs.length === 0)
-      return "Select at least one language (or type another).";
-    if (!formData.date) return "Pick an offers deadline.";
-    if (!formData.requestTitle) return "Give a title for your LEXIFY Request.";
-    if (!formData.agree) return "Confirm you're ready to submit.";
+      return "Please select at least one language (or type another).";
+    if (!formData.date) return "Please pick an offers deadline.";
+    if (!formData.requestTitle)
+      return "Please give a title for your LEXIFY Request.";
+    if (!formData.agree) return "You must confirm you're ready to submit.";
     return null;
   };
 
-  // submit
   const handleSubmit = async (e) => {
     e.preventDefault();
     const err = validate();
     if (err) return alert(err);
 
-    const isFull = formData.need.startsWith(
-      "Full legal representation in pending arbitration proceedings"
-    );
-
     setSubmitting(true);
     try {
+      const paymentRate = isHourly
+        ? "Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the Legal Service Provider. The offered hourly rate will be valid until the land use agreement has been signed or abandoned."
+        : "Lump sum fixed price";
       const languageCSV = [
         ...(formData.checkboxes || []).filter((l) => l !== "Other:"),
         formData.otherLang || null,
@@ -170,11 +168,12 @@ export default function DisputeArbitration() {
 
       const payload = {
         requestState: "PENDING",
-        requestCategory: "Help with Dispute Resolution or Debt Collection",
-        requestSubcategory: "Support with Arbitration Proceedings",
+        requestCategory: "Help with Contracts",
+        requestSubcategory: "Real Estate and Construction",
+        assignmentType: "Land Use Agreement",
         primaryContactPerson: formData.contactPerson,
-        scopeOfWork: formData.need,
-        description: formData.description || "",
+        scopeOfWork: formData.supportType,
+        description: formData.description,
         additionalBackgroundInfo: formData.background || "",
         backgroundInfoFiles: [],
         supplierCodeOfConductFiles: [],
@@ -184,9 +183,7 @@ export default function DisputeArbitration() {
         providerCompanyAge: formData.firmAge,
         providerMinimumRating: formData.firmRating,
         currency: formData.currency,
-        paymentRate: isFull
-          ? "Capped Price. The capped price covers the pending proceedings in one court instance only and does not include fees or charges possibly levied by the competent court which fees and charges, if any, will be invoiced separately."
-          : "Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the legal service provider submitting the winning offer. The offered hourly rate will be valid until the pending arbitration proceedings have concluded.",
+        paymentRate,
         advanceRetainerFee: formData.retainerFee,
         invoiceType: formData.paymentTerms,
         language: languageCSV,
@@ -200,7 +197,7 @@ export default function DisputeArbitration() {
             ? "Yes"
             : "No",
           winnerBidderOnlyStatus: (formData.confidential || "").trim(),
-          maximumPrice: isFull ? formData.maxPrice || "" : "",
+          maximumPrice: isHourly ? null : formData.maxPrice,
         },
       };
 
@@ -222,21 +219,18 @@ export default function DisputeArbitration() {
       } catch {}
       if (!res.ok)
         throw new Error(
-          (json && (json.error || json.message)) ||
-            text ||
-            "Failed to create request."
+          (json && json.error) || text || "Failed to create request."
         );
 
       alert("LEXIFY Request submitted successfully.");
       router.push("/main");
     } catch (e2) {
-      alert(e2.message || "Submission failed.");
+      alert(e2.message);
     } finally {
       setSubmitting(false);
     }
   };
 
-  // clear
   const handleClear = () => {
     setFormData(initialFormState);
     document.querySelectorAll("input, textarea, select").forEach((el) => {
@@ -248,7 +242,6 @@ export default function DisputeArbitration() {
     });
   };
 
-  // preview helper
   function Section({ title, children }) {
     return (
       <div>
@@ -264,10 +257,10 @@ export default function DisputeArbitration() {
     <div className="flex flex-col items-center justify-center min-h-screen p-6">
       <h1 className="text-3xl font-bold mb-4">Create a LEXIFY Request</h1>
       <h2 className="text-2xl font-semibold mb-6">
-        Help with Pending Arbitration Proceedings
+        Help with Land Use Agreement
       </h2>
 
-      <div className="w-full max-w-7xl p-6 rounded shadow-2xl bg-white text-black">
+      <div className="w-full max-w-7xl p-6 rounded shadow-2xl text-black bg-white">
         {/* Form Section */}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
@@ -294,37 +287,47 @@ export default function DisputeArbitration() {
           <br />
           <hr />
           <br />
-          <h4 className="text-md font-medium mb-1  font-semibold">
-            What kind of support do you need?
+          <h4 className="text-md font-medium mb-1 font-semibold">
+            What do you need?
           </h4>
           <div className="space-y-2">
             {[
-              "Full legal representation in pending arbitration proceedings (including, for example, drafting of legal briefs, representation in arbitration hearings and related attorney-client communications)",
-              "Occasional support with pending arbitration proceedings (including, for example, commenting on legal briefs or advising on legal strategy during different stages of the proceedings, if requested)",
+              "Comprehensive legal support throughout the land use agreement negotiation process, including but not limited to drafting/commenting of the land use agreement and related documents (except for maps and other primarily technical documents), required negotiations with the counterparty and participation in related meetings (if any) with competent authorities.",
+              "Occasional legal support with the land use agreement negotiation process when needed (for example, commenting of land use agreement documentation or legal advice during different stages of the process).",
+              "A land use agreement. The work includes the preparation of the first version of the document and necessary revisions on the basis of the Client's feedback to the Legal Service Provider. Additional work (for example, legal review of comments from the Client's counterparty) is not included.",
             ].map((option, index) => (
               <div key={index}>
                 <label className="block">
                   <input
                     type="radio"
-                    name="need"
+                    name="supportType"
                     value={option}
-                    checked={formData.need === option}
+                    checked={formData.supportType === option}
                     onChange={handleChange}
                   />
                   {option ===
-                    "Full legal representation in pending arbitration proceedings (including, for example, drafting of legal briefs, representation in arbitration hearings and related attorney-client communications)" &&
-                    " Full legal representation in pending arbitration proceedings (including, for example, drafting of legal briefs, representation in arbitration hearings and related attorney-client communications)"}
+                    "Comprehensive legal support throughout the land use agreement negotiation process, including but not limited to drafting/commenting of the land use agreement and related documents (except for maps and other primarily technical documents), required negotiations with the counterparty and participation in related meetings (if any) with competent authorities." &&
+                    " Comprehensive legal support throughout the land use agreement negotiation process (including but not limited to drafting of the land use agreement and related documents except for maps and other primarily technical documents, required negotiations with the counterparty and participation in any necessary related meetings with competent authorities)"}
                   {option ===
-                    "Occasional support with pending arbitration proceedings (including, for example, commenting on legal briefs or advising on legal strategy during different stages of the proceedings, if requested)" &&
-                    " Occasional support with pending arbitration proceedings (including, for example, commenting on legal briefs or advising on legal strategy during different stages of the proceedings, if requested)"}
+                    "Occasional legal support with the land use agreement negotiation process when needed (for example, commenting of land use agreement documentation or legal advice during different stages of the process)." &&
+                    " Occasional legal support with the land use agreement negotiation process when needed (for example, commenting of agreement documentation or legal advice during different stages of the process)"}
+                  {option ===
+                    "A land use agreement. The work includes the preparation of the first version of the document and necessary revisions on the basis of the Client's feedback to the Legal Service Provider. Additional work (for example, legal review of comments from the Client's counterparty) is not included." && (
+                    <>
+                      {
+                        " A land use agreement (including revisions based on client feedback)"
+                      }
+                      <QuestionMarkTooltip tooltipText="Any offers you receive will include the preparation of the first version of the document(s) and necessary revisions on the basis of your feedback to the legal service provider. Other work (for example, legal review of comments from your counterparty) is not included." />
+                    </>
+                  )}
                 </label>
                 <p className="text-xs pb-2">
                   <strong>NOTE: </strong>
                   <em>
                     {option ===
-                    "Full legal representation in pending arbitration proceedings (including, for example, drafting of legal briefs, representation in arbitration hearings and related attorney-client communications)"
-                      ? "Any offers you receive will be for a capped price and cover the pending proceedings in one court instance only. Any offers you receive will not include fees or charges possibly levied by the competent court and such fees and charges, if any, will be invoiced separately. The capped price offer will provide the maximum price for the work, taking into account all possible unexpected developments in the dispute proceedings (such as an unusually high number of rounds of written pleadings). In addition to the capped price, the offer will include an expected price, representing the price of the work if the dispute proceedings proceed without such unexpected developments."
-                      : "Any offers you receive will provide an applicable hourly rate only. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the legal service provider submitting the winning offer. The offered hourly rate will be valid until the pending arbitration proceedings have concluded."}
+                    "Occasional legal support with the land use agreement negotiation process when needed (for example, commenting of land use agreement documentation or legal advice during different stages of the process)."
+                      ? "Any offers you receive will provide an applicable hourly rate only. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the legal service provider submitting the winning offer. The offered hourly rate will be valid until the land use agreement has been signed or abandoned."
+                      : "Any offers you receive will be for a lump sum fixed price."}
                   </em>
                 </p>
               </div>
@@ -333,43 +336,44 @@ export default function DisputeArbitration() {
           <br />
           <hr />
           <br />
-          <h4 className="text-md font-medium mb-1 font-semibold">
-            Please provide the name, business identity code and country of
-            domicile of your counterparty in the arbitration proceedings. If you
-            do not want your name or the name of the counterparty to be visible
-            to all legal service providers qualified to make you an offer,
-            please also check the box &quot;Disclosed to Winning Bidder
-            Only&quot;{" "}
-            <QuestionMarkTooltip tooltipText="If 'Disclosed to Winning Bidder Only' is checked, your identity and the identity of your counterparty will be disclosed solely to the legal service provider that submitted the winning offer, to enable that provider to conduct mandatory conflict checks. If the legal service provider notifies LEXIFY of an existing conflict, the winning offer will automatically be disqualified, and you will have the option to select an alternative winning offer." />
-          </h4>
-          <textarea
-            name="confidential"
-            className="w-full border p-2"
-            onChange={handleChange}
-          ></textarea>
-          {["Disclosed to Winning Bidder Only"].map((option, index) => (
-            <label key={index} className="block">
-              <input
-                type="checkbox"
-                name="confboxes"
-                value={option}
-                checked={formData.confboxes.includes(option)}
-                onChange={handleChange}
-              />{" "}
-              {option}{" "}
-              <QuestionMarkTooltip tooltipText="Please note that checking “Disclosed to Winning Bidder Only” may cause additional delay in the processing of your LEXIFY Request as statutory conflict checks are postponed until the winning offer has been verified." />
-            </label>
-          ))}
+          <div>
+            <h4 className="text-md font-medium mb-1 font-semibold">
+              Please provide the name and, if the counterparty is a legal
+              entity, business identity code and country of domicile of your
+              counterparty in the land use agreement. Please provide also the
+              property identification codes or corresponding identifiers of the
+              properties included in the land use agreement. If you do not want
+              this information to be visible to all legal service providers
+              qualified to make you an offer, please also check the box
+              &quot;Disclosed to Winning Bidder Only&quot;.{" "}
+              <QuestionMarkTooltip tooltipText="If 'Disclosed to Winning Bidder Only' is checked, your identity, your counterparty's identity, and the property identification codes will be disclosed solely to the legal service provider that submitted the winning offer, to enable that provider to conduct mandatory conflict checks. If the legal service provider notifies LEXIFY of an existing conflict, the winning offer will automatically be disqualified, and you will have the option to select an alternative winning offer." />
+            </h4>
+            <textarea
+              name="confidential"
+              className="w-full border p-2"
+              onChange={handleChange}
+            ></textarea>
+            {["Disclosed to Winning Bidder Only"].map((option, index) => (
+              <label key={index} className="block">
+                <input
+                  type="checkbox"
+                  name="confboxes"
+                  value={option}
+                  checked={formData.confboxes.includes(option)}
+                  onChange={handleChange}
+                />{" "}
+                {option}{" "}
+                <QuestionMarkTooltip tooltipText="Please note that checking “Disclosed to Winning Bidder Only” may cause additional delay in the processing of your LEXIFY Request as statutory conflict checks are postponed until the winning offer has been verified." />
+              </label>
+            ))}
+          </div>
           <br />
           <hr />
           <br />
           <h4 className="text-md font-medium mb-1 font-semibold">
-            Please describe briefly the matter under dispute and the current
-            status of the arbitration proceedings (Which side - you or the
-            counterparty - has started the arbitration proceedings? What has
-            happened in the proceedings so far? Are you currently expected to
-            provide a response or other written document to the arbitration
-            tribunal by a fixed deadline?){" "}
+            Describe briefly the real properties involved in the land use
+            agreement and the arrangement(s) to be established with the land use
+            agreement{" "}
             <QuestionMarkTooltip tooltipText="Please do not include any personal data in the description. This information will be visible to all legal service providers qualified to submit an offer in response to your LEXIFY Request." />
           </h4>
           <textarea
@@ -377,6 +381,7 @@ export default function DisputeArbitration() {
             className="w-full border p-2"
             onChange={handleChange}
           ></textarea>
+          <br />
           <br />
           <hr />
           <br />
@@ -430,7 +435,6 @@ export default function DisputeArbitration() {
             </div>
           )}
           <br />
-          <br />
           <hr />
           <br />
           <div>
@@ -444,22 +448,18 @@ export default function DisputeArbitration() {
             >
               <option value="">Select</option>
               <option value="Attorneys-at-law">Attorneys-at-law</option>
-              <option value="Qualified Law firms">Qualified law firms</option>
-              <option value="All">
-                Both attorneys-at-law & qualified law firms
-              </option>
+              <option value="Law firms">Law firms</option>
+              <option value="All">Both attorneys-at-law & law firms</option>
             </select>
           </div>
           <p className="text-xs pt-2">
             <strong>NOTE:</strong>{" "}
             <em>
               Attorneys-at-law are legal service providers who are members of
-              the local bar association in their country of domicile. Qualified
-              law firms are legal service providers who are not members of the
-              local bar association in their country of domicile, but who may
-              offer legal services, including legal representation in
-              arbitration proceedings, according to the law of their country of
-              domicile.
+              the local bar association in their country of domicile. Law firms
+              are legal service providers who are not members of the local bar
+              association in their country of domicile, but who may offer legal
+              services according to the law of their country of domicile.
             </em>
           </p>
           <br />
@@ -595,8 +595,9 @@ export default function DisputeArbitration() {
           <br />
           <div>
             {[
-              "Full legal representation in pending arbitration proceedings (including, for example, drafting of legal briefs, representation in arbitration hearings and related attorney-client communications)",
-            ].includes(formData.need) && (
+              "Comprehensive legal support throughout the land use agreement negotiation process, including but not limited to drafting/commenting of the land use agreement and related documents (except for maps and other primarily technical documents), required negotiations with the counterparty and participation in related meetings (if any) with competent authorities.",
+              "A land use agreement. The work includes the preparation of the first version of the document and necessary revisions on the basis of the Client's feedback to the Legal Service Provider. Additional work (for example, legal review of comments from the Client's counterparty) is not included.",
+            ].includes(formData.supportType) && (
               <div>
                 <h4 className="text-md font-medium mb-1 font-semibold">
                   Please set a maximum price (VAT 0%) for the legal service you
@@ -709,6 +710,7 @@ export default function DisputeArbitration() {
               onChange={handleChange}
             />
           )}
+
           <br />
           <hr />
           <br />
@@ -856,7 +858,7 @@ export default function DisputeArbitration() {
             <button
               type="submit"
               disabled={submitting}
-              className="p-2 bg-[#11999e] text-white rounded disabled:opacity-60 cursor-pointer"
+              className="p-2 bg-[#11999e] text-white rounded disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
             >
               {submitting ? "Submitting…" : "Submit LEXIFY Request"}
             </button>
@@ -920,26 +922,14 @@ export default function DisputeArbitration() {
 
                 {/* Scope of Work */}
                 <Section title="Scope of Work">
-                  {formData.need ? formData.need : "-"}
+                  {formData.supportType || "-"}
                 </Section>
 
                 {/* Contract Price and Currency */}
-                <Section title="Contract Price (Capped Price or Flat Hourly Rate) and Currency">
-                  {formData.need.includes(
-                    "Full legal representation in pending arbitration proceedings (including, for example, drafting of legal briefs, representation in arbitration hearings and related attorney-client communications)"
+                <Section title="Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency">
+                  {formData.supportType.includes(
+                    "Occasional legal support with the land use agreement negotiation process when needed (for example, commenting of land use agreement documentation or legal advice during different stages of the process)."
                   ) ? (
-                    <>
-                      {`Capped Price ${
-                        formData.currency ? `(${formData.currency})` : ""
-                      }`}
-                      <p className="text-md mt-2">
-                        The capped price covers the pending proceedings in one
-                        court instance only and does not include fees or charges
-                        possibly levied by the competent court which fees and
-                        charges, if any, will be invoiced separately.
-                      </p>
-                    </>
-                  ) : (
                     <>
                       {`Flat Hourly Rate ${
                         formData.currency ? `(${formData.currency})` : ""
@@ -947,12 +937,15 @@ export default function DisputeArbitration() {
                       <p className="text-md mt-2">
                         The total price of the service will be calculated by
                         multiplying the hourly rate with the number of hours of
-                        legal support provided by the legal service provider
-                        submitting the winning offer. The offered hourly rate
-                        will be valid until the pending arbitration proceedings
-                        have concluded.
+                        legal support provided by the Legal Service Provider.
+                        The offered hourly rate will be valid until the land use
+                        agreement has been signed or abandoned.
                       </p>
                     </>
+                  ) : (
+                    `Lump Sum Fixed Fee ${
+                      formData.currency ? `(${formData.currency})` : ""
+                    }`
                   )}
                   <p className="text-md mt-2">
                     The Legal Service Provider shall submit all invoices to the
@@ -961,14 +954,9 @@ export default function DisputeArbitration() {
                   </p>
                 </Section>
 
-                {/* Description of Client's Line of Business */}
-                <Section title="Description of Disputed Matter and Current Status of Arbitration Proceedings">
-                  <p>{formData.description || "-"}</p>
-                </Section>
-
                 {/* Counterparty */}
 
-                <Section title="Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter">
+                <Section title="Name and (if applicable) Business Identity Code and Country of Domicile of the Client's Counterparty in the Land Use Agreement; Property Identification Codes of the Properties Included in the Land Use Agreement">
                   {formData.confboxes.includes(
                     "Disclosed to Winning Bidder Only"
                   )
@@ -985,6 +973,11 @@ export default function DisputeArbitration() {
                     disqualified and you will have the option to select an
                     alternative winning offer.
                   </p>
+                </Section>
+
+                {/* Description of the Properties */}
+                <Section title="Description of the Properties Involved in the Land Use Agreement and the Arrangement(s) to be Established with the Land Use Agreement">
+                  <p>{formData.description || "-"}</p>
                 </Section>
 
                 {/* Additional Background */}

@@ -23,6 +23,10 @@ export default function RealEstate() {
       link: "/contracts/re-easement",
     },
     {
+      title: "Land Use Agreement",
+      link: "/contracts/re-landuse",
+    },
+    {
       title: "Construction Contract",
       link: "/contracts/re-construction",
     },

@@ -275,7 +275,7 @@ async function sendContractPackageEmail(prisma, requestId) {
   }`;
   const emailHtml = `
     <div style="font-family:Arial,Helvetica,sans-serif">
-      <p>Attached is your LEXIFY Contract as a PDF along with the request's attachments.</p>
+      <p>Please find attached your new LEXIFY Contract with all appendices.</p>
       <p><strong>Provider Representative:</strong> ${
         provider.contactName
       } &lt;${provider.email || ""}&gt;</p>

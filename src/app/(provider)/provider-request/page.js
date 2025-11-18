@@ -39,6 +39,7 @@ const assignmentTypesBySubcategory = {
     "Sale and Leaseback of Real Estate",
     "Lease of Business Premises, Residential Premises or Land",
     "Easement Agreement",
+    "Land Use Agreement",
     "Construction Contract",
   ],
   Sourcing: [

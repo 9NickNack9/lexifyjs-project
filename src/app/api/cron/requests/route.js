@@ -403,7 +403,7 @@ async function sendContractPackageEmail(prisma, requestId) {
     shaped.request.title || shaped.purchaser.companyName || ""
   }`;
   const intro =
-    "Attached is your LEXIFY Contract cover page as a PDF along with the request's attachments.";
+    "Please find attached your new LEXIFY Contract with all appendices.";
   const inlineNotice =
     "If attachments are large, some email clients may truncate the message.";
   const emailHtml = `

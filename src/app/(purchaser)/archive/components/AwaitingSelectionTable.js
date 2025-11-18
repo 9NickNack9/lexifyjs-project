@@ -158,7 +158,7 @@ export default function AwaitingSelectionTable({
 
                   <td className="border p-2 align-top">
                     {r.requestState === "CONFLICT_CHECK" && (
-                      <div className="mb-2 text-sm text-amber-700">
+                      <div className="mb-2 text-sm text-black">
                         Thank you for selecting your legal service provider.
                         LEXIFY will next verify with your selected provider
                         whether a conflict exists that would prevent the
