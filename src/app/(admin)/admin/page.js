@@ -277,6 +277,7 @@ export default function AdminPage() {
     { value: "PENDING", label: "Pending" },
     { value: "EXPIRED", label: "Expired" },
     { value: "ON HOLD", label: "On Hold" },
+    { value: "CONFLICT_CHECK", label: "Conflict Check" },
   ];
 
   const showRequestDetails = async (id) => {
@@ -707,8 +708,13 @@ export default function AdminPage() {
                       {r.requestState === "CONFLICT_CHECK" ? (
                         <div className="flex gap-2 justify-center">
                           <button
-                            className="bg-green-600 text-white px-2 py-1 rounded"
+                            className="bg-green-600 text-white px-2 py-1 rounded cursor-pointer"
                             onClick={async () => {
+                              const ok = confirm(
+                                "Are you sure you want to APPROVE this conflict check?"
+                              );
+                              if (!ok) return;
+
                               await fetch(
                                 `/api/admin/requests/${r.requestId}/conflict`,
                                 {
@@ -719,14 +725,22 @@ export default function AdminPage() {
                                   body: JSON.stringify({ decision: "accept" }),
                                 }
                               );
-                              fetchRequests(true);
+
+                              // reload full page so all tables refresh
+                              window.location.reload();
                             }}
                           >
                             Approve Conflict Check
                           </button>
+
                           <button
-                            className="bg-red-600 text-white px-2 py-1 rounded"
+                            className="bg-red-600 text-white px-2 py-1 rounded cursor-pointer"
                             onClick={async () => {
+                              const ok = confirm(
+                                "Are you sure you want to DENY this offer and replace it?"
+                              );
+                              if (!ok) return;
+
                               await fetch(
                                 `/api/admin/requests/${r.requestId}/conflict`,
                                 {
@@ -737,7 +751,9 @@ export default function AdminPage() {
                                   body: JSON.stringify({ decision: "deny" }),
                                 }
                               );
-                              fetchRequests(true);
+
+                              // reload full page so all tables refresh
+                              window.location.reload();
                             }}
                           >
                             Deny & Replace Offer
