@@ -466,12 +466,22 @@ export async function POST(req) {
         const contacts = provider?.companyContactPersons || [];
 
         if (prefs.includes("winner-conflict-check")) {
-          // Provider opted in → email lawyer + allNotifications contacts, BCC Support
+          // Provider opted in → email offerLawyer + allNotifications contacts, BCC Support
           const lawyerPrimary =
             findPrimaryContactByLawyer(offerFull?.offerLawyer, contacts) ||
             null;
+
+          // Fallback: if we didn't find a full contact, at least get the email by name
+          const lawyerEmail = findLawyerEmail(offerFull?.offerLawyer, contacts);
+
+          // Primary passed to expandWithAllNotificationContacts:
+          //  - full contact (with email) if we have it
+          //  - otherwise a bare { email } object if we only have the email
+          const primaryForExpand =
+            lawyerPrimary || (lawyerEmail ? { email: lawyerEmail } : null);
+
           const recipients = expandWithAllNotificationContacts(
-            lawyerPrimary,
+            primaryForExpand,
             contacts
           );
 

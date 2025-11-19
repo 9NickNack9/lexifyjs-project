@@ -52,25 +52,54 @@ export async function GET(req) {
         primaryContactPerson: true,
         offersDeadline: true,
         acceptDeadline: true,
+        offers: {
+          select: {
+            offerId: true,
+            offerLawyer: true,
+            provider: {
+              select: {
+                companyName: true,
+              },
+            },
+          },
+        },
         _count: { select: { offers: true } },
       },
     }),
   ]);
 
-  const requests = rows.map((r) => ({
-    requestId: Number(r.requestId),
-    clientCompanyName: r.clientCompanyName,
-    requestState: r.requestState,
-    title: r.title,
-    primaryContactPerson: r.primaryContactPerson,
-    offersDeadline: r.offersDeadline
-      ? new Date(r.offersDeadline).toISOString()
-      : null,
-    acceptDeadline: r.acceptDeadline
-      ? new Date(r.acceptDeadline).toISOString()
-      : null,
-    offersCount: r._count?.offers ?? 0,
-  }));
+  const requests = rows.map((r) => {
+    let selectedOfferCompanyName = null;
+    let selectedOfferLawyer = null;
+
+    if (r.selectedOfferId && Array.isArray(r.offers)) {
+      const selIdStr = r.selectedOfferId.toString();
+      const match = r.offers.find(
+        (o) => o.offerId && o.offerId.toString() === selIdStr
+      );
+      if (match) {
+        selectedOfferCompanyName = match.provider?.companyName || null;
+        selectedOfferLawyer = match.offerLawyer || null;
+      }
+    }
+
+    return {
+      requestId: Number(r.requestId),
+      clientCompanyName: r.clientCompanyName,
+      requestState: r.requestState,
+      title: r.title,
+      primaryContactPerson: r.primaryContactPerson,
+      offersDeadline: r.offersDeadline
+        ? new Date(r.offersDeadline).toISOString()
+        : null,
+      acceptDeadline: r.acceptDeadline
+        ? new Date(r.acceptDeadline).toISOString()
+        : null,
+      offersCount: r._count?.offers ?? 0,
+      selectedOfferCompanyName,
+      selectedOfferLawyer,
+    };
+  });
 
   return NextResponse.json({ total, requests });
 }

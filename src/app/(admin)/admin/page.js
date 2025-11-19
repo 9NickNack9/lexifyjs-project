@@ -706,58 +706,70 @@ export default function AdminPage() {
                     <td className="border p-2">{rejectLabel}</td>
                     <td className="border p-2">
                       {r.requestState === "CONFLICT_CHECK" ? (
-                        <div className="flex gap-2 justify-center">
-                          <button
-                            className="bg-green-600 text-white px-2 py-1 rounded cursor-pointer"
-                            onClick={async () => {
-                              const ok = confirm(
-                                "Are you sure you want to APPROVE this conflict check?"
-                              );
-                              if (!ok) return;
+                        <div className="flex flex-col items-center gap-2">
+                          <div className="text-sm text-left">
+                            <div>
+                              <strong>Selected Provider:</strong>{" "}
+                              {r.selectedOfferCompanyName || "—"}
+                            </div>
+                            <div>
+                              <strong>Offer Lawyer:</strong>{" "}
+                              {r.selectedOfferLawyer || "—"}
+                            </div>
+                          </div>
+                          <div className="flex gap-2 justify-center">
+                            <button
+                              className="bg-green-600 text-white px-2 py-1 rounded cursor-pointer"
+                              onClick={async () => {
+                                const ok = confirm(
+                                  "Are you sure you want to APPROVE this conflict check?"
+                                );
+                                if (!ok) return;
 
-                              await fetch(
-                                `/api/admin/requests/${r.requestId}/conflict`,
-                                {
-                                  method: "PUT",
-                                  headers: {
-                                    "Content-Type": "application/json",
-                                  },
-                                  body: JSON.stringify({ decision: "accept" }),
-                                }
-                              );
+                                await fetch(
+                                  `/api/admin/requests/${r.requestId}/conflict`,
+                                  {
+                                    method: "PUT",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({
+                                      decision: "accept",
+                                    }),
+                                  }
+                                );
 
-                              // reload full page so all tables refresh
-                              window.location.reload();
-                            }}
-                          >
-                            Approve Conflict Check
-                          </button>
+                                window.location.reload();
+                              }}
+                            >
+                              Approve Conflict Check
+                            </button>
 
-                          <button
-                            className="bg-red-600 text-white px-2 py-1 rounded cursor-pointer"
-                            onClick={async () => {
-                              const ok = confirm(
-                                "Are you sure you want to DENY this offer and replace it?"
-                              );
-                              if (!ok) return;
+                            <button
+                              className="bg-red-600 text-white px-2 py-1 rounded cursor-pointer"
+                              onClick={async () => {
+                                const ok = confirm(
+                                  "Are you sure you want to DENY this offer and replace it?"
+                                );
+                                if (!ok) return;
 
-                              await fetch(
-                                `/api/admin/requests/${r.requestId}/conflict`,
-                                {
-                                  method: "PUT",
-                                  headers: {
-                                    "Content-Type": "application/json",
-                                  },
-                                  body: JSON.stringify({ decision: "deny" }),
-                                }
-                              );
+                                await fetch(
+                                  `/api/admin/requests/${r.requestId}/conflict`,
+                                  {
+                                    method: "PUT",
+                                    headers: {
+                                      "Content-Type": "application/json",
+                                    },
+                                    body: JSON.stringify({ decision: "deny" }),
+                                  }
+                                );
 
-                              // reload full page so all tables refresh
-                              window.location.reload();
-                            }}
-                          >
-                            Deny & Replace Offer
-                          </button>
+                                window.location.reload();
+                              }}
+                            >
+                              Deny & Replace Offer
+                            </button>
+                          </div>
                         </div>
                       ) : (
                         <button
@@ -845,7 +857,11 @@ export default function AdminPage() {
         <input
           type="text"
           value={offerSearchInput}
-          onChange={(e) => setOfferSearchInput(e.target.value)}
+          onChange={(e) => {
+            const val = e.target.value;
+            setOfferSearchInput(val);
+            setOfferSearch(val.trim()); // triggers debounced fetchOffers via useEffect
+          }}
           placeholder="Search by provider company…"
           className="border rounded p-2 w-full max-w-md"
         />
@@ -872,6 +888,7 @@ export default function AdminPage() {
             <tr>
               <th className="border p-2">Offer Id</th>
               <th className="border p-2">Company</th>
+              <th className="border p-2">Title</th>
               <th className="border p-2">Offer Status</th>
               <th className="border p-2">Offer Price</th>
               <th className="border p-2">Actions</th>
@@ -880,7 +897,7 @@ export default function AdminPage() {
           <tbody>
             {!offerLoading && offers.length === 0 && (
               <tr>
-                <td colSpan={5} className="text-center p-4 text-gray-500">
+                <td colSpan={6} className="text-center p-4 text-gray-500">
                   No offers found.
                 </td>
               </tr>
@@ -894,6 +911,7 @@ export default function AdminPage() {
                   {o.offerId}
                 </td>
                 <td className="border p-2">{o.companyName || "—"}</td>
+                <td className="border p-2">{o.offerTitle || "—"}</td>
                 <td className="border p-2">{o.offerStatus || "—"}</td>
                 <td className="border p-2">{o.offerPrice ?? "—"}</td>
                 <td className="border p-2">
@@ -908,14 +926,14 @@ export default function AdminPage() {
             ))}
             {offerLoading && (
               <tr>
-                <td colSpan={5} className="text-center p-4">
+                <td colSpan={6} className="text-center p-4">
                   Loading…
                 </td>
               </tr>
             )}
             {offerHasMore && !offerLoading && offers.length > 0 && (
               <tr>
-                <td colSpan={5} className="p-2">
+                <td colSpan={6} className="p-2">
                   <button
                     onClick={() => fetchOffers(false)}
                     className="w-full bg-gray-100 p-2"

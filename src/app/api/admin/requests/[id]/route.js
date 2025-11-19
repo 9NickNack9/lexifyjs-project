@@ -40,6 +40,7 @@ export async function GET(_req, { params }) {
       requestSubcategory: true,
       assignmentType: true,
       details: true, // include the full details blob
+      selectedOfferId: true,
       _count: { select: { offers: true } },
     },
   });
@@ -48,6 +49,7 @@ export async function GET(_req, { params }) {
   const out = {
     ...r,
     requestId: Number(r.requestId),
+    selectedOfferId: r.selectedOfferId ? Number(r.selectedOfferId) : null,
     offersCount: r._count?.offers ?? 0,
     offersDeadline: r.offersDeadline
       ? new Date(r.offersDeadline).toISOString()

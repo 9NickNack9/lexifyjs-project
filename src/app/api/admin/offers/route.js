@@ -9,7 +9,24 @@ export async function GET(req) {
   const take = Number(searchParams.get("take") || 10);
 
   const where = search
-    ? { provider: { companyName: { contains: search, mode: "insensitive" } } }
+    ? {
+        OR: [
+          {
+            provider: {
+              companyName: {
+                contains: search,
+                mode: "insensitive",
+              },
+            },
+          },
+          {
+            offerTitle: {
+              contains: search,
+              mode: "insensitive",
+            },
+          },
+        ],
+      }
     : {};
 
   const [total, data] = await Promise.all([
@@ -23,6 +40,7 @@ export async function GET(req) {
         offerId: true,
         offerStatus: true,
         offerPrice: true,
+        offerTitle: true,
         provider: { select: { companyName: true } },
       },
     }),
@@ -32,6 +50,7 @@ export async function GET(req) {
     offerId: Number(o.offerId),
     offerStatus: o.offerStatus,
     offerPrice: o.offerPrice,
+    offerTitle: o.offerTitle || null,
     companyName: o.provider?.companyName || "—",
   }));
 
