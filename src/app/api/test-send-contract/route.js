@@ -11,7 +11,7 @@ import allPreviews from "@/previews/all-previews.json";
 
 export async function GET(req) {
   try {
-    const origin = req.nextUrl.origin;
+    const origin = process.env.APP_ORIGIN;
     const cookie = req.headers.get("cookie") || "";
     // 🔧 Manually set your test Request ID and recipient emails
     const testRequestId = 2; // <-- set an existing Request ID from your DB
@@ -160,7 +160,10 @@ export async function GET(req) {
     };
 
     // 3) Load preview definitions using an absolute URL
-    const defs = allPreviews;
+    const defsRes = await fetch(`${origin}/previews/all-previews.json`, {
+      cache: "no-store",
+    });
+    const defs = defsRes.ok ? await defsRes.json() : null;
 
     const norm = (s) => (s ?? "").toString().trim().toLowerCase();
     const cat = norm(shaped.request.requestCategory);
