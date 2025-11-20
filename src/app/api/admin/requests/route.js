@@ -52,6 +52,7 @@ export async function GET(req) {
         primaryContactPerson: true,
         offersDeadline: true,
         acceptDeadline: true,
+        selectedOfferId: true,
         offers: {
           select: {
             offerId: true,
@@ -98,6 +99,7 @@ export async function GET(req) {
       offersCount: r._count?.offers ?? 0,
       selectedOfferCompanyName,
       selectedOfferLawyer,
+      selectedOfferId: r.selectedOfferId ? Number(r.selectedOfferId) : null,
     };
   });
 

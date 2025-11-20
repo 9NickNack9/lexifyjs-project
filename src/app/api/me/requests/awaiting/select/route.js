@@ -14,6 +14,7 @@ import {
   notifyPurchaserContractFormed,
   notifyWinningLawyerContractFormed,
   notifyLosingLawyerNotSelected,
+  notifyProviderConflictCheck,
 } from "@/lib/mailer";
 
 // ---- local helper (mirrors pending route) ----

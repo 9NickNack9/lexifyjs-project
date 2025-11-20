@@ -321,6 +321,18 @@ export default function LegalAdvice() {
     );
   }
 
+  const previewTopics = (() => {
+    const selected = formData.areaboxes || [];
+    const withoutOther = selected.filter((t) => t !== "Other");
+
+    // Only append otherTopic if "Other" is actually selected
+    if (selected.includes("Other") && formData.otherTopic?.trim()) {
+      return [...withoutOther, formData.otherTopic.trim()].join(", ");
+    }
+
+    return withoutOther.join(", ");
+  })();
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-6">
       <h1 className="text-3xl font-bold mb-4">Create a LEXIFY Request</h1>
@@ -1046,7 +1058,7 @@ export default function LegalAdvice() {
                       <p>
                         The Legal Service Provider will provider legal advice to
                         the Client in the following areas of law:{" "}
-                        {formData.areaboxes.join(", ")}
+                        {previewTopics || "-"}
                       </p>
                     </>
                   ) : formData.need ===
@@ -1079,7 +1091,7 @@ export default function LegalAdvice() {
                       <p>
                         The Legal Service Provider will provider legal advice to
                         the Client in the following areas of law:{" "}
-                        {formData.areaboxes.join(", ")}
+                        {previewTopics || "-"}
                       </p>
                     </>
                   ) : (
