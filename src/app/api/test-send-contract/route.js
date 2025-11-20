@@ -7,6 +7,7 @@ import { htmlToPdfBuffer } from "@/lib/contractPdf.js";
 import { sendContractEmail } from "@/lib/mailer.js";
 import { filesToAttachments } from "@/lib/fetchFiles.js";
 import ContractPrint from "@/emails/ContractPrint"; // returns HTML string
+import allPreviews from "@/previews/all-previews.json";
 
 export async function GET(req) {
   try {
@@ -159,10 +160,7 @@ export async function GET(req) {
     };
 
     // 3) Load preview definitions using an absolute URL
-    const defsRes = await fetch(`${origin}/previews/all-previews.json`, {
-      cache: "no-store",
-    });
-    const defs = defsRes.ok ? await defsRes.json() : null;
+    const defs = allPreviews;
 
     const norm = (s) => (s ?? "").toString().trim().toLowerCase();
     const cat = norm(shaped.request.requestCategory);
