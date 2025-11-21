@@ -5,29 +5,6 @@ if (process.env.SENDGRID_API_KEY) {
 }
 
 const FROM_EMAIL = process.env.EMAIL_FROM || "support@lexify.online";
-
-// export async function sendContractEmail({
-//   to,
-//   cc = [],
-//   bcc = [],
-//   subject,
-//   html,
-//   attachments = [],
-// }) {
-//   if (!process.env.SENDGRID_API_KEY || !process.env.EMAIL_FROM) {
-//     throw new Error("SENDGRID_API_KEY or EMAIL_FROM missing");
-//   }
-//   await sg.send({
-//     to,
-//     cc,
-//     bcc,
-//     from: process.env.EMAIL_FROM,
-//     subject,
-//     html,
-//     attachments, // [{ filename, content(base64), type?, disposition? }]
-//   });
-// }
-
 /**
  * Send a contract email with optional PDF (Buffer) attachment.
  *

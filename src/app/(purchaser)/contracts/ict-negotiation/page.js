@@ -859,25 +859,22 @@ export default function IctNegotiation() {
           </label>
           <p className="text-xs font-bold">
             <em>
-              By submitting this LEXIFY Request I accept that LEXIFY will
+              By submitting this LEXIFY Request, I accept that LEXIFY will
               automatically generate a binding LEXIFY Contract between my
-              company as the legal service purchaser and the legal service
-              provider submitting the best offer subject to the parameters in my
-              LEXIFY Request. If my Winning Offer Selection Method in the
-              &quot;My Account&quot; menu has been set to &quot;Manual&quot;,
-              any automatic generation of a LEXIFY Contract will also require
-              that I actively select the winning service provider. The LEXIFY
-              Contract will consist of i) the service description, other
-              specifications and my Procurement Appendices (if applicable) as I
-              have designated in the LEXIFY Request and ii) the General Terms
-              and Conditions for LEXIFY Contracts. The LEXIFY Contract will not
-              be generated if i) no qualifying offers have been received prior
-              to the expiration of my LEXIFY Request, ii) I as representative of
-              the legal service purchaser cancel the LEXIFY Request or iii) if
-              my Winning Offer Selection Method in the &quot;My Account&quot;
-              menu has been set to &quot;Manual&quot; and I do not actively
-              select any winning service provider within 7 days of the
-              expiration of the LEXIFY Request.
+              company, as the legal service purchaser, and the legal service
+              provider submitting the winning offer, subject to the parameters
+              defined in my LEXIFY Request and my selection of the winning offer
+              from the best offers received. The LEXIFY Contract will consist of
+              (i) the service description, other specifications, and any
+              Procurement Appendices (if applicable) designated in the LEXIFY
+              Request, and (ii) the General Terms and Conditions for LEXIFY
+              Contracts. The LEXIFY Contract will not be generated if (i) no
+              qualifying offers have been received prior to the expiration of my
+              LEXIFY Request, (ii) I, as representative of the legal service
+              purchaser, cancel the LEXIFY Request, or (iii) I do not actively
+              select any winning service provider within the period allocated
+              for the selection of a winning offer after the expiration of the
+              LEXIFY Request.
             </em>
           </p>
           <br />

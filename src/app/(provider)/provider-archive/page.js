@@ -933,8 +933,8 @@ export default function ProviderArchive() {
                               return null;
 
                             return (
-                              <div key={si} className="border rounded-lg">
-                                <div className="px-4 py-2 font-medium bg-[#119999] text-black rounded-lg">
+                              <div key={si} className="border border-white">
+                                <div className="px-4 py-2 font-medium bg-[#119999] text-white">
                                   {section.title}
                                 </div>
 

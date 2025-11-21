@@ -4,13 +4,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 
-import { htmlToPdfBuffer } from "@/lib/contractPdf.js";
-import { sendContractEmail } from "@/lib/mailer.js";
+import { contractToPdfBuffer } from "@/lib/contractToPdfBuffer";
 import { filesToAttachments } from "@/lib/fetchFiles.js";
-import ContractPrint from "@/emails/ContractPrint.jsx";
 import { promises as fs } from "fs";
 import path from "path";
 import {
+  sendContractEmail,
   notifyPurchaserContractFormed,
   notifyWinningLawyerContractFormed,
   notifyLosingLawyerNotSelected,
@@ -71,6 +70,25 @@ function findPrimaryContactByLawyer(offerLawyer, contacts) {
   );
 }
 
+// Map offerLawyer name to provider's companyContactPersons email
+function findLawyerEmail(offerLawyer, contacts) {
+  const norm = (s) => (s ?? "").toString().trim().toLowerCase();
+  const full = (p) =>
+    [p?.firstName, p?.lastName].filter(Boolean).join(" ").trim();
+  const name = norm(offerLawyer);
+
+  if (!Array.isArray(contacts)) return "";
+
+  const exact =
+    contacts.find((c) => norm(full(c)) === name) ||
+    contacts.find(
+      (c) => norm(c?.firstName) === name || norm(c?.lastName) === name
+    ) ||
+    null;
+
+  return (exact?.email || "").trim();
+}
+
 async function sendContractPackageEmail(prisma, requestId) {
   const contract = await prisma.contract.findUnique({
     where: { requestId },
@@ -108,7 +126,12 @@ async function sendContractPackageEmail(prisma, requestId) {
             },
           },
           offers: {
-            select: { providerId: true, offerLawyer: true, offerStatus: true },
+            select: {
+              providerId: true,
+              offerLawyer: true,
+              offerStatus: true,
+              offerTitle: true,
+            },
           },
         },
       },
@@ -137,7 +160,7 @@ async function sendContractPackageEmail(prisma, requestId) {
 
   const offerLawyer = won?.offerLawyer?.toString?.().trim() || "";
   const contacts = contract.provider?.companyContactPersons || [];
-  const lawyerMatch =
+  const match =
     contacts.find((c) => norm(fullName(c)) === norm(offerLawyer)) ||
     contacts.find(
       (c) =>
@@ -150,18 +173,16 @@ async function sendContractPackageEmail(prisma, requestId) {
     userId: contract.provider?.userId ?? null,
     companyName: contract.provider?.companyName || "—",
     businessId: contract.provider?.companyId || "—",
-    contactName: lawyerMatch ? fullName(lawyerMatch) : offerLawyer || "—",
-    email: lawyerMatch?.email || "—",
-    phone: lawyerMatch?.telephone || "—",
+    contactName: match ? fullName(match) : offerLawyer || "—",
+    email: match?.email || "—",
+    phone: match?.telephone || "—",
   };
 
   const pcDirect =
     contract.request?.primaryContactPerson ||
     contract.request?.details?.primaryContactPerson ||
     null;
-  const purchaserContacts = Array.isArray(
-    contract.request?.client?.companyContactPersons
-  )
+  const list = Array.isArray(contract.request?.client?.companyContactPersons)
     ? contract.request.client.companyContactPersons
     : [];
   const pc =
@@ -171,7 +192,7 @@ async function sendContractPackageEmail(prisma, requestId) {
       pcDirect.email ||
       pcDirect.telephone)
       ? pcDirect
-      : purchaserContacts[0] || null;
+      : list[0] || null;
 
   const purchaser = {
     companyName: contract.request?.client?.companyName || "—",
@@ -192,35 +213,7 @@ async function sendContractPackageEmail(prisma, requestId) {
     provider,
     purchaser,
     request: {
-      id: contract.request?.requestId || null,
-      requestCategory: contract.request?.requestCategory || null,
-      requestSubcategory: contract.request?.requestSubcategory || null,
-      assignmentType: contract.request?.assignmentType || null,
-      title: contract.request?.title || "—",
-      scopeOfWork: contract.request?.scopeOfWork || "—",
-      description: contract.request?.description || "—",
-      invoiceType: contract.request?.invoiceType || "—",
-      language: contract.request?.language || "—",
-      advanceRetainerFee: contract.request?.advanceRetainerFee || "—",
-      currency: contract.request?.currency || null,
-      paymentRate: contract.request?.paymentRate || null,
-      maximumPrice:
-        typeof contract.request?.details?.maximumPrice === "number"
-          ? contract.request.details.maximumPrice
-          : null,
-      additionalBackgroundInfo:
-        contract.request?.additionalBackgroundInfo ??
-        contract.request?.details?.additionalBackgroundInfo ??
-        null,
-      backgroundInfoFiles:
-        contract.request?.backgroundInfoFiles ??
-        contract.request?.details?.backgroundInfoFiles ??
-        [],
-      supplierCodeOfConductFiles:
-        contract.request?.supplierCodeOfConductFiles ??
-        contract.request?.details?.supplierCodeOfConductFiles ??
-        [],
-      details: contract.request?.details || {},
+      ...contract.request,
       primaryContactPerson: pc || null,
       client: {
         companyName: contract.request?.client?.companyName || null,
@@ -277,42 +270,77 @@ async function sendContractPackageEmail(prisma, requestId) {
     defs?.requests?.find((d) => norm2(d.category) === cat) ||
     null;
 
-  const html = ContractPrint({
+  // ---- Generate PDF buffer with React-PDF (same logic as awaiting/select) ----
+  const pdfBuffer = await contractToPdfBuffer({
     contract: shaped,
     companyName: shaped.purchaser.companyName,
     previewDef,
   });
 
-  const pdf = await htmlToPdfBuffer(html);
+  if (!pdfBuffer || pdfBuffer.length === 0) {
+    throw new Error("React-PDF returned empty buffer in conflict/accept");
+  }
+
+  // ---- Build attachments: contract PDF + request files ----
   const files = [
     ...(shaped.request.backgroundInfoFiles || []),
     ...(shaped.request.supplierCodeOfConductFiles || []),
   ];
+
   const fileAtts = await filesToAttachments(files, {
     origin: process.env.APP_ORIGIN,
+    max: 12,
+    maxBytes: 12 * 1024 * 1024,
   });
+
   const attachments = [
     {
-      filename: `LEXIFY-Contract-${shaped.request.id}.pdf`,
-      content: pdf.toString("base64"),
+      filename: `LEXIFY-Contract.pdf`,
+      content: pdfBuffer.toString("base64"),
+      type: "application/pdf",
+      disposition: "attachment",
     },
     ...fileAtts,
   ];
 
-  const to = [
-    ...expandWithAllNotificationContacts(
-      { email: provider.email },
-      contract.provider?.companyContactPersons || []
-    ),
-    ...expandWithAllNotificationContacts(
-      { email: purchaser.email },
-      contract.request?.client?.companyContactPersons || []
-    ),
-  ];
+  // ---- Build recipient groups (same as awaiting/select) ----
 
-  const subject = `LEXIFY Contract - ${
-    shaped.request.title || shaped.purchaser.companyName || ""
-  }`;
+  // Purchaser side: request's primaryContactPerson + allNotifications=true contacts
+  const purchaserContacts = Array.isArray(
+    contract.request?.client?.companyContactPersons
+  )
+    ? contract.request.client.companyContactPersons
+    : [];
+
+  const primaryPurchaser =
+    shaped.request.primaryContactPerson &&
+    shaped.request.primaryContactPerson.email
+      ? shaped.request.primaryContactPerson
+      : { email: purchaser.email };
+
+  const toPurchaser = expandWithAllNotificationContacts(
+    primaryPurchaser,
+    purchaserContacts
+  );
+
+  // Provider side: winning offer's offerLawyer + allNotifications=true contacts
+  const providerContacts = Array.isArray(
+    contract.provider?.companyContactPersons
+  )
+    ? contract.provider.companyContactPersons
+    : [];
+
+  const lawyerPrimary = match ||
+    (offerLawyer
+      ? { email: findLawyerEmail(offerLawyer, providerContacts) }
+      : null) || { email: provider.email };
+
+  const toProvider = expandWithAllNotificationContacts(
+    lawyerPrimary,
+    providerContacts
+  );
+
+  // ---- Email HTML (unchanged) ----
   const emailHtml = `
     <div style="font-family:Arial,Helvetica,sans-serif">
       <p>Please find attached your new LEXIFY Contract with all appendices.</p>
@@ -324,14 +352,41 @@ async function sendContractPackageEmail(prisma, requestId) {
       } &lt;${purchaser.email || ""}&gt;</p>
     </div>`;
 
-  await sendContractEmail({
-    to,
-    bcc: ["support@lexify.online"],
-    subject,
-    html: emailHtml,
-    attachments,
-  });
+  // ---- Send two separate emails ----
+
+  // 1) Purchaser email: "LEXIFY Contract - request.title"
+  if (toPurchaser.length > 0) {
+    await sendContractEmail({
+      to: toPurchaser,
+      bcc: ["support@lexify.online"],
+      subject: `LEXIFY Contract - ${shaped.request.title || ""}`,
+      html: emailHtml,
+      attachments,
+    });
+  } else {
+    console.warn(
+      "conflict/sendContractPackageEmail: no purchaser recipients resolved for requestId",
+      String(requestId)
+    );
+  }
+
+  // 2) Provider email: "LEXIFY Contract - offer.offerTitle"
+  if (toProvider.length > 0) {
+    await sendContractEmail({
+      to: toProvider,
+      bcc: ["support@lexify.online"],
+      subject: `LEXIFY Contract - ${won?.offerTitle || ""}`,
+      html: emailHtml,
+      attachments,
+    });
+  } else {
+    console.warn(
+      "conflict/sendContractPackageEmail: no provider recipients resolved for requestId",
+      String(requestId)
+    );
+  }
 }
+
 // ---------- end helpers ----------
 
 export async function PUT(req, { params }) {

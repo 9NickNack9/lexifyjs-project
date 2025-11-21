@@ -466,8 +466,7 @@ function renderValueForPdf(v, pathHint) {
       return v
         .map((file, idx) => {
           const name = file.name || `File ${idx + 1}`;
-          const url = file.url ? ` (${file.url})` : "";
-          return `${name}${url}`;
+          return `${name}`;
         })
         .join("\n");
     }

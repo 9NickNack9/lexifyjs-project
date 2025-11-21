@@ -827,82 +827,8 @@ export default function Account() {
           <span className="ms-3 text-sm text-black dark:text-black">
             My LEXIFY Request expires, qualifying offers have been received and
             I need to select the winning service provider{" "}
-            <NarrowTooltip tooltipText="Applicable only if Winning Offer Selection Method is set to 'Manual'" />
           </span>
         </label>
-      </div>
-      <br />
-      {/* Winning Offer Selection Method */}
-      <div className="w-full max-w-6xl p-6 rounded shadow-2xl bg-white text-black">
-        <h2 className="text-2xl font-semibold mb-4">
-          Winning Offer Selection Method
-        </h2>
-        <label className="inline-flex items-center cursor-pointer">
-          <input
-            type="checkbox"
-            checked={isAutomatic}
-            onChange={async () => {
-              const next = !isAutomatic;
-
-              // Optimistic UI
-              setIsAutomatic(next);
-
-              // Persist to DB: off => 'manual', on => 'automatic'
-              try {
-                const res = await fetch("/api/me", {
-                  method: "PATCH",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    winningOfferSelection: next ? "automatic" : "manual",
-                  }),
-                });
-                if (!res.ok) {
-                  // revert on failure
-                  setIsAutomatic(!next);
-                  const err = await res.json().catch(() => ({}));
-                  alert(
-                    err?.error || "Failed to update winning offer selection."
-                  );
-                }
-              } catch (e) {
-                setIsAutomatic(!next);
-                alert("Network error while updating selection.");
-              }
-            }}
-            className="sr-only"
-          />
-          <div
-            className={`relative w-11 h-6 rounded-full transition-colors ${
-              isAutomatic ? "bg-green-600" : "bg-gray-700"
-            }`}
-          >
-            <div
-              className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
-                isAutomatic ? "translate-x-full" : ""
-              }`}
-            />
-          </div>
-          <span className="ms-3 text-md text-black font-semibold">
-            {isAutomatic ? "Automatic" : "Manual"}
-          </span>
-        </label>
-
-        <br />
-        <h4 className="text-md">
-          When this option is set to &quot;Automatic&quot;, LEXIFY will
-          automatically select the best offer received by the expiration of each
-          LEXIFY Request, and designate the legal service provider submitting
-          that best offer as your legal service provider for the corresponding
-          LEXIFY Contract. When this option is set to &quot;Manual&quot;, LEXIFY
-          will show the three best offers received by the expiration of each
-          LEXIFY Request on the &quot;My Dashboard&quot; page, and you will have
-          7 days from the expiration of each LEXIFY Request to manually select
-          the winning offer from the best offers which are shown. If you do not
-          select any of the best offers to be the winning offer within 7 days,
-          LEXIFY will automatically reject all offers and no LEXIFY Contract
-          will be generated.{" "}
-        </h4>
-        <br />
       </div>
       <br />
       {/* Blocked Lexify Service Providers */}

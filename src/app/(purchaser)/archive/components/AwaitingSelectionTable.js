@@ -136,11 +136,7 @@ export default function AwaitingSelectionTable({
 
               return (
                 <tr key={r.requestId}>
-                  <td className="border p-2">
-                    <div className="flex flex-col items-start">
-                      <div className="font-medium">{r.requestTitle}</div>
-                    </div>
-                  </td>
+                  <td className="border p-2 text-center">{r.requestTitle}</td>
 
                   <td className="border p-2 text-center">
                     {formatDateDDMMYYYY(r.dateCreated)}
@@ -170,49 +166,62 @@ export default function AwaitingSelectionTable({
                         service provider from the received offers.
                       </div>
                     )}
-                    {Array.isArray(r.topOffers) && r.topOffers.length > 0 ? (
-                      <ul className="space-y-2">
-                        {r.topOffers.map((o) => (
-                          <li key={o.offerId} className="text-sm">
-                            <div className="flex items-center justify-between gap-2">
-                              <button
-                                className={`px-3 py-1 rounded cursor-pointer ${
-                                  r.requestState === "CONFLICT_CHECK"
-                                    ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                                    : "bg-[#11999e] text-white"
-                                }`}
-                                disabled={r.requestState === "CONFLICT_CHECK"}
-                                onClick={() => confirmAndSelect(r, o)}
-                              >
-                                Select
-                              </button>
-                              <div className="flex-1">
-                                {fmtMoney(o.offeredPrice, r.currency)} (
-                                {o.providerCompanyWebsite ? (
-                                  <a
-                                    href={o.providerCompanyWebsite}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="text-blue-600 hover:underline"
-                                  >
-                                    {o.providerCompanyName}
-                                  </a>
-                                ) : (
-                                  <span>{o.providerCompanyName}</span>
-                                )}{" "}
-                                / Lead: {o.offerLawyer}, LEXIFY rating:{" "}
-                                {!o.providerHasRatings
-                                  ? "No Ratings Yet"
-                                  : `${o.providerTotalRating ?? "—"}/5`}
-                                )
+
+                    {(() => {
+                      // During conflict check: only show the selected offer (if we know its id)
+                      const offers =
+                        r.requestState === "CONFLICT_CHECK" && r.selectedOfferId
+                          ? (r.topOffers || []).filter(
+                              (o) =>
+                                String(o.offerId) === String(r.selectedOfferId)
+                            )
+                          : r.topOffers || [];
+
+                      if (!Array.isArray(offers) || offers.length === 0)
+                        return "—";
+
+                      return (
+                        <ul className="space-y-2">
+                          {offers.map((o) => (
+                            <li key={o.offerId} className="text-sm">
+                              <div className="flex items-center justify-between gap-2">
+                                <button
+                                  className={`px-3 py-1 rounded cursor-pointer ${
+                                    r.requestState === "CONFLICT_CHECK"
+                                      ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                                      : "bg-[#11999e] text-white"
+                                  }`}
+                                  disabled={r.requestState === "CONFLICT_CHECK"}
+                                  onClick={() => confirmAndSelect(r, o)}
+                                >
+                                  Select
+                                </button>
+                                <div className="flex-1">
+                                  {fmtMoney(o.offeredPrice, r.currency)} (
+                                  {o.providerCompanyWebsite ? (
+                                    <a
+                                      href={o.providerCompanyWebsite}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="text-blue-600 hover:underline"
+                                    >
+                                      {o.providerCompanyName}
+                                    </a>
+                                  ) : (
+                                    <span>{o.providerCompanyName}</span>
+                                  )}{" "}
+                                  / Lead: {o.offerLawyer}, LEXIFY rating:{" "}
+                                  {!o.providerHasRatings
+                                    ? "No Ratings Yet"
+                                    : `${o.providerTotalRating ?? "—"}/5`}
+                                  )
+                                </div>
                               </div>
-                            </div>
-                          </li>
-                        ))}
-                      </ul>
-                    ) : (
-                      "—"
-                    )}
+                            </li>
+                          ))}
+                        </ul>
+                      );
+                    })()}
                   </td>
 
                   <td

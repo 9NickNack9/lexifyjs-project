@@ -30,10 +30,10 @@ const formatTimeUntil = (end) => {
 function Section({ title, children }) {
   return (
     <div>
-      <div className="bg-[#11999e] p-2 rounded-t">
+      <div className="bg-[#11999e] p-2">
         <h3 className="text-lg font-semibold text-white">{title}</h3>
       </div>
-      <div className="p-4 border-x border-b rounded-b bg-white text-black">
+      <div className="p-4 border-x border-b rounded-b bg-white text-black border-white">
         {children ?? "—"}
       </div>
     </div>
