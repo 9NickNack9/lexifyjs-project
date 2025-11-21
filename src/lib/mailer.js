@@ -6,6 +6,35 @@ if (process.env.SENDGRID_API_KEY) {
 
 const FROM_EMAIL = process.env.EMAIL_FROM || "support@lexify.online";
 
+// export async function sendContractEmail({
+//   to,
+//   cc = [],
+//   bcc = [],
+//   subject,
+//   html,
+//   attachments = [],
+// }) {
+//   if (!process.env.SENDGRID_API_KEY || !process.env.EMAIL_FROM) {
+//     throw new Error("SENDGRID_API_KEY or EMAIL_FROM missing");
+//   }
+//   await sg.send({
+//     to,
+//     cc,
+//     bcc,
+//     from: process.env.EMAIL_FROM,
+//     subject,
+//     html,
+//     attachments, // [{ filename, content(base64), type?, disposition? }]
+//   });
+// }
+
+/**
+ * Send a contract email with optional PDF (Buffer) attachment.
+ *
+ * - attachments: existing SendGrid-style attachments (base64 string content)
+ * - pdfBuffer: Node Buffer (e.g. from React-PDF's pdf(...).toBuffer())
+ * - pdfFilename: name of the attached PDF, default "LEXIFY-Contract.pdf"
+ */
 export async function sendContractEmail({
   to,
   cc = [],
@@ -17,6 +46,7 @@ export async function sendContractEmail({
   if (!process.env.SENDGRID_API_KEY || !process.env.EMAIL_FROM) {
     throw new Error("SENDGRID_API_KEY or EMAIL_FROM missing");
   }
+
   await sg.send({
     to,
     cc,

@@ -46,4 +46,6 @@ next-env.d.ts
 /public/supplier
 
 /src/app/api/test-contract-email
-
+/src/app/api/test-send-contract
+/src/app/api/debug-pdf
+/src/lib/debugPdfBuffer.js

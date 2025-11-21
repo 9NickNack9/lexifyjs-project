@@ -6,12 +6,12 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "postinstall": "PUPPETEER_CACHE_DIR=.puppeteer npx puppeteer browsers install chrome"
+    "lint": "next lint"
   },
   "dependencies": {
     "@aws-sdk/client-s3": "^3.913.0",
     "@prisma/client": "^6.16.2",
+    "@react-pdf/renderer": "^4.3.1",
     "@sendgrid/mail": "^8.1.6",
     "bcryptjs": "^3.0.2",
     "html2pdf.js": "^0.10.3",
