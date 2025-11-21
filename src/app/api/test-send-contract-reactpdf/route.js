@@ -14,7 +14,8 @@ export async function GET(req) {
     const cookie = req.headers.get("cookie") || "";
 
     const testRequestId = 2; // set this to an existing request
-    const testEmails = ["niklas.kantele@hotmail.com"]; // your test email
+    const testEmailsPurchaser = ["niklas.kantele@hotmail.com"]; // your test email
+    const testEmailsProvider = ["niklas.kantele@gmail.com"];
 
     if (!origin) {
       return NextResponse.json(
@@ -62,6 +63,7 @@ export async function GET(req) {
                 providerId: true,
                 offerLawyer: true,
                 offerStatus: true,
+                offerTitle: true,
               },
             },
           },
@@ -174,7 +176,7 @@ export async function GET(req) {
       purchaser,
       request: {
         ...contract.request,
-        primaryContactPerson: pc || null,
+        primaryContactPerson: primaryName,
         client: {
           companyName: contract.request.client.companyName,
           companyId: contract.request.client.companyId,
@@ -250,9 +252,16 @@ export async function GET(req) {
 
     // 6) Send email
     await sendContractEmail({
-      to: testEmails,
-      subject: `LEXIFY Contract - Request #${testRequestId}`,
+      to: testEmailsPurchaser,
+      subject: `LEXIFY Contract - Request #${contract.request?.title}`,
       html: `<p>Please find attached your new LEXIFY Contract (React-PDF) with all appendices.</p>`,
+      attachments,
+    });
+
+    await sendContractEmail({
+      to: testEmailsProvider,
+      subject: `LEXIFY Contract - Request #${won?.offerTitle}`,
+      html: `<p>Please find attached your new LEXIFY Contract with all appendices.</p>`,
       attachments,
     });
 

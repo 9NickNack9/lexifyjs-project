@@ -298,9 +298,7 @@ function resolvePath(row, path, companyName) {
         return buildClientLine(row, companyName);
       }
       case "__clientLineOrDisclosed__": {
-        const base = buildClientLine(row, companyName);
-        const wo = winnerOnly(row);
-        return wo || base;
+        return buildClientLine(row, companyName);
       }
       case "__counterpartyConfidential__":
         return counterpartyOrWinnerOnly(row);
@@ -437,9 +435,27 @@ function shouldHideField(field) {
 
 function renderValueForPdf(v, pathHint) {
   if ((pathHint || "").toLowerCase().includes("primarycontactperson")) {
-    const p = v || {};
-    const name = [p.firstName, p.lastName].filter(Boolean).join(" ").trim();
-    return name || "—";
+    if (v === null || v === undefined || v === "") return "—";
+
+    // If it's already a string (like "Olli Rautiainen"), just show it
+    if (typeof v === "string") {
+      const s = v.trim();
+      return s || "—";
+    }
+
+    // If it's an object, try firstName/lastName, then name/fullName
+    if (typeof v === "object") {
+      const p = v || {};
+      const fromFields = [p.firstName, p.lastName]
+        .filter(Boolean)
+        .join(" ")
+        .trim();
+      if (fromFields) return fromFields;
+
+      if (typeof p.name === "string" && p.name.trim()) return p.name.trim();
+      if (typeof p.fullName === "string" && p.fullName.trim())
+        return p.fullName.trim();
+    }
   }
 
   if (
