@@ -51,7 +51,7 @@ export async function sendContractEmail({
     to,
     cc,
     bcc,
-    from: process.env.EMAIL_FROM,
+    from: EMAIL_FROM,
     subject,
     html,
     attachments, // [{ filename, content(base64), type?, disposition? }]
