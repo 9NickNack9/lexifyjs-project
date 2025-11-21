@@ -119,26 +119,50 @@ export async function GET(req) {
       phone: match?.telephone || "—",
     };
 
-    const pcDirect =
+    // --- Purchaser contact: resolve from primaryContactPerson STRING + client contacts ---
+
+    // 1) Primary contact person name as string from request
+    const primaryNameRaw =
       contract.request?.primaryContactPerson ||
       contract.request?.details?.primaryContactPerson ||
+      "";
+
+    const primaryName = primaryNameRaw.toString().trim();
+
+    // 2) Client's company contact persons
+    const clientContacts = Array.isArray(
+      contract.request?.client?.companyContactPersons
+    )
+      ? contract.request.client.companyContactPersons
+      : [];
+
+    // 3) Try to match -> firstName + lastName in contact persons
+    const normalized = (s) => (s || "").toString().trim().toLowerCase();
+
+    const purchaserContact =
+      clientContacts.find(
+        (c) =>
+          normalized(`${c.firstName} ${c.lastName}`) === normalized(primaryName)
+      ) ||
+      clientContacts.find(
+        (c) =>
+          normalized(c.firstName) === normalized(primaryName) ||
+          normalized(c.lastName) === normalized(primaryName)
+      ) ||
       null;
 
-    const pc =
-      pcDirect &&
-      (pcDirect.firstName ||
-        pcDirect.lastName ||
-        pcDirect.email ||
-        pcDirect.telephone)
-        ? pcDirect
-        : null;
-
+    // 4) Shape purchaser object
     const purchaser = {
       companyName: contract.request?.client?.companyName || "—",
       businessId: contract.request?.client?.companyId || "—",
-      contactName: pc ? fullName(pc) : "—",
-      email: pc?.email || "—",
-      phone: pc?.telephone || "—",
+      // Use the name from the request if present, otherwise fall back to contact person name
+      contactName:
+        primaryName ||
+        (purchaserContact
+          ? `${purchaserContact.firstName} ${purchaserContact.lastName}`.trim()
+          : "—"),
+      email: purchaserContact?.email || "—",
+      phone: purchaserContact?.telephone || "—",
     };
 
     const shaped = {
