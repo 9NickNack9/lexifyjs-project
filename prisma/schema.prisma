@@ -36,7 +36,7 @@ model AppUser {
   companyFoundingYear            Int?
   companyAge                     Int?     @default(0)
   providerType                   String?  @default("")
-  notificationPreferences        Json     @default(["no_offers", "over_max_price", "pending_offer_selection", "no-winning-offer", "winner-conflict-check", "request-cancelled", "new-available-request"])
+  notificationPreferences        Json     @default("["no_offers", "over_max_price", "pending_offer_selection", "no-winning-offer", "winner-conflict-check", "request-cancelled", "new-available-request"]")
   winningOfferSelection          String   @default("manual")
   blockedServiceProviders        Json     @default("[]")
   preferredLegalServiceProviders Json     @default("[]")
