@@ -14,8 +14,16 @@ export async function GET(req) {
     const cookie = req.headers.get("cookie") || "";
 
     const testRequestId = 2; // set this to an existing request
-    const testEmailsPurchaser = ["niklas.kantele@hotmail.com"]; // your test email
-    const testEmailsProvider = ["niklas.kantele@gmail.com"];
+    const testEmailsPurchaser = [
+      "olli.rautiainen@technopolis.fi",
+      "outi.raekivi@technopolis.fi",
+    ]; // your test email
+    const testEmailsProvider = [
+      "benjamin.afhallstrom@wiidare.com",
+      "olli.sailas@wiidare.com",
+      "jonathan.andersson@wiidare.com",
+      "sini.makela@wiidare.com",
+    ];
 
     if (!origin) {
       return NextResponse.json(
@@ -237,7 +245,7 @@ export async function GET(req) {
 
     const attachments = [
       {
-        filename: `LEXIFY-Contract-${testRequestId}.pdf`,
+        filename: `LEXIFY-Contract.pdf`,
         content: pdfBuffer.toString("base64"),
         type: "application/pdf",
         disposition: "attachment",
@@ -253,14 +261,16 @@ export async function GET(req) {
     // 6) Send email
     await sendContractEmail({
       to: testEmailsPurchaser,
-      subject: `LEXIFY Contract - Request #${contract.request?.title}`,
-      html: `<p>Please find attached your new LEXIFY Contract (React-PDF) with all appendices.</p>`,
+      bcc: ["support@lexify.online"],
+      subject: `LEXIFY Contract - ${contract.request?.title}`,
+      html: `<p>Please find attached your new LEXIFY Contract with all appendices.</p>`,
       attachments,
     });
 
     await sendContractEmail({
       to: testEmailsProvider,
-      subject: `LEXIFY Contract - Request #${won?.offerTitle}`,
+      bcc: ["support@lexify.online"],
+      subject: `LEXIFY Contract - ${won?.offerTitle}`,
       html: `<p>Please find attached your new LEXIFY Contract with all appendices.</p>`,
       attachments,
     });
