@@ -14,7 +14,7 @@ export async function GET(req) {
     const cookie = req.headers.get("cookie") || "";
 
     const testRequestId = 2; // set this to an existing request
-    const testEmails = ["support@lexify.online"]; // your test email
+    const testEmails = ["niklas.kantele@hotmail.com"]; // your test email
 
     if (!origin) {
       return NextResponse.json(
@@ -123,11 +123,7 @@ export async function GET(req) {
       contract.request?.primaryContactPerson ||
       contract.request?.details?.primaryContactPerson ||
       null;
-    const fallbackList = Array.isArray(
-      contract.request?.client?.companyContactPersons
-    )
-      ? contract.request.client.companyContactPersons
-      : [];
+
     const pc =
       pcDirect &&
       (pcDirect.firstName ||
@@ -135,7 +131,7 @@ export async function GET(req) {
         pcDirect.email ||
         pcDirect.telephone)
         ? pcDirect
-        : fallbackList[0] || null;
+        : null;
 
     const purchaser = {
       companyName: contract.request?.client?.companyName || "—",
