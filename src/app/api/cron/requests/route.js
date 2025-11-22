@@ -158,8 +158,8 @@ export async function POST(req) {
           : offersWithNum.some((o) => o.priceNum <= maxPriceNum);
       // If there's no max price (hourly rate), we should also notify
       const isHourly =
-        typeof r.details?.paymentRate === "string" &&
-        r.details.paymentRate.trim().toLowerCase().startsWith("hourly rate");
+        typeof r.paymentRate === "string" &&
+        r.paymentRate.trim().toLowerCase().startsWith("hourly rate");
 
       if (!hasOffers) {
         // RULE 1: No offers → EXPIRED + contractResult = "No"
