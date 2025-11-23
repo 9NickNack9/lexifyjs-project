@@ -41,6 +41,10 @@ export async function POST(req, context) {
         requestCategory: true,
         requestSubcategory: true,
         assignmentType: true,
+        serviceProviderType: true,
+        providerSize: true,
+        providerCompanyAge: true,
+        providerMinimumRating: true,
       },
     });
 
@@ -87,24 +91,102 @@ export async function POST(req, context) {
         where: { role: "PROVIDER" },
         select: {
           companyContactPersons: true,
+          companyProfessionals: true,
+          companyAge: true,
+          providerType: true,
+          providerTotalRating: true,
         },
       });
 
-      const emails = [];
+      // Request filters
+      const reqAge = requestRecord.providerCompanyAge ?? null;
+      const reqSize = requestRecord.providerSize ?? null;
+      const reqType = requestRecord.serviceProviderType ?? null;
+      const reqRating = requestRecord.providerMinimumRating ?? null;
+
+      // Normalizer
+      const norm = (v) => (v ?? "").toString().trim().toLowerCase();
+
+      // Helper: whether request value auto-passes
+      const auto = (v) => {
+        const n = norm(v);
+        return n.startsWith("all") || n.startsWith("any");
+      };
+
+      const filteredEmails = [];
 
       for (const p of providers) {
-        const contacts = Array.isArray(p.companyContactPersons)
-          ? p.companyContactPersons
-          : [];
-        for (const c of contacts) {
-          if (c?.email) {
-            emails.push(c.email);
+        const {
+          companyAge,
+          companyProfessionals,
+          providerType,
+          providerTotalRating,
+          companyContactPersons,
+        } = p;
+
+        let ok = true;
+
+        // ---- Company Age ----
+        if (!auto(reqAge)) {
+          const numReqAge = Number(reqAge);
+          const numAge = Number(companyAge);
+          if (
+            !Number.isFinite(numReqAge) ||
+            !Number.isFinite(numAge) ||
+            numAge < numReqAge
+          ) {
+            ok = false;
           }
+        }
+
+        // ---- Company Size (#professionals) ----
+        if (!auto(reqSize)) {
+          const numReqSize = Number(reqSize);
+          const numSize = Number(companyProfessionals);
+          if (
+            !Number.isFinite(numReqSize) ||
+            !Number.isFinite(numSize) ||
+            numSize < numReqSize
+          ) {
+            ok = false;
+          }
+        }
+
+        // ---- Provider Type ----
+        if (!auto(reqType)) {
+          if (norm(providerType) !== norm(reqType)) {
+            ok = false;
+          }
+        }
+
+        // ---- Provider Minimum Rating ----
+        if (!auto(reqRating)) {
+          const numReqRating = Number(reqRating);
+          const numRating = Number(providerTotalRating);
+          if (
+            !Number.isFinite(numReqRating) ||
+            !Number.isFinite(numRating) ||
+            numRating < numReqRating
+          ) {
+            ok = false;
+          }
+        }
+
+        if (!ok) continue;
+
+        // Collect emails
+        const contacts = Array.isArray(companyContactPersons)
+          ? companyContactPersons
+          : [];
+
+        for (const c of contacts) {
+          if (c?.email) filteredEmails.push(c.email);
         }
       }
 
+      // Send to filtered providers
       await notifyProvidersAdditionalQuestionAnswered({
-        to: emails, // will be used as BCC
+        to: filteredEmails,
         requestCategory: requestRecord.requestCategory,
         requestSubcategory: requestRecord.requestSubcategory,
         assignmentType: requestRecord.assignmentType,
