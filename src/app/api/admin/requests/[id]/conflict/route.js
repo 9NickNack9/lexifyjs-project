@@ -341,9 +341,20 @@ async function sendContractPackageEmail(prisma, requestId) {
   );
 
   // ---- Email HTML (unchanged) ----
-  const emailHtml = `
+  const purchaserEmailHtml = `
     <div style="font-family:Arial,Helvetica,sans-serif">
-      <p>Please find attached your new LEXIFY Contract with all appendices.</p>
+      <p>Please find attached your new LEXIFY contract, including all appendices. Your legal service provider will contact you shortly to begin the assignment.</p>
+      <p><strong>Provider Representative:</strong> ${
+        provider.contactName
+      } &lt;${provider.email || ""}&gt;</p>
+      <p><strong>Purchaser Representative:</strong> ${
+        purchaser.contactName
+      } &lt;${purchaser.email || ""}&gt;</p>
+    </div>`;
+
+  const providerEmailHtml = `
+    <div style="font-family:Arial,Helvetica,sans-serif">
+      <p>Please find attached your new LEXIFY contract, including all appendices. You can now contact the client using the details on the cover page to initiate the assignment without delay.</p>
       <p><strong>Provider Representative:</strong> ${
         provider.contactName
       } &lt;${provider.email || ""}&gt;</p>
@@ -360,7 +371,7 @@ async function sendContractPackageEmail(prisma, requestId) {
       to: toPurchaser,
       bcc: ["support@lexify.online"],
       subject: `LEXIFY Contract - ${shaped.request.title || ""}`,
-      html: emailHtml,
+      html: purchaserEmailHtml,
       attachments,
     });
   } else {
@@ -376,7 +387,7 @@ async function sendContractPackageEmail(prisma, requestId) {
       to: toProvider,
       bcc: ["support@lexify.online"],
       subject: `LEXIFY Contract - ${won?.offerTitle || ""}`,
-      html: emailHtml,
+      html: providerEmailHtml,
       attachments,
     });
   } else {
