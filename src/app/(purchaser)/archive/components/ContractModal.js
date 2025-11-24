@@ -455,28 +455,27 @@ export default function ContractModal({
         <div className="p-4 text-black space-y-3 text-md">
           <p>
             <strong>Contract Date:</strong>{" "}
-            <u>{new Date(contract.contractDate).toLocaleDateString()}</u>
+            {new Date(contract.contractDate).toLocaleDateString()}
           </p>
 
           <br />
           <h3 className="font-semibold text-lg">LEGAL SERVICE PROVIDER</h3>
           <p>
             <strong>Company Name:</strong>{" "}
-            <u>{contract.provider?.companyName || "—"}</u>
+            {contract.provider?.companyName || "—"}
           </p>
           <p>
-            <strong>Business ID:</strong>{" "}
-            <u>{contract.provider?.businessId || "—"}</u>
+            <strong>Business ID:</strong> {contract.provider?.businessId || "—"}
           </p>
           <p>
             <strong>Representative Name:</strong>{" "}
-            <u>{contract.provider?.contactName || "—"}</u>
+            {contract.provider?.contactName || "—"}
           </p>
           <p>
-            <strong>Email:</strong> <u>{contract.provider?.email || "—"}</u>
+            <strong>Email:</strong> {contract.provider?.email || "—"}
           </p>
           <p>
-            <strong>Telephone:</strong> <u>{contract.provider?.phone || "—"}</u>
+            <strong>Telephone:</strong> {contract.provider?.phone || "—"}
           </p>
 
           <hr />
@@ -484,22 +483,21 @@ export default function ContractModal({
           <h3 className="font-semibold text-lg">LEGAL SERVICE PURCHASER</h3>
           <p>
             <strong>Company Name:</strong>{" "}
-            <u>{contract.purchaser?.companyName || companyName || "—"}</u>
+            {contract.purchaser?.companyName || companyName || "—"}
           </p>
           <p>
             <strong>Business ID:</strong>{" "}
-            <u>{contract.purchaser?.businessId || "—"}</u>
+            {contract.purchaser?.businessId || "—"}
           </p>
           <p>
             <strong>Representative Name:</strong>{" "}
-            <u>{contract.purchaser?.contactName || "—"}</u>
+            {contract.purchaser?.contactName || "—"}
           </p>
           <p>
-            <strong>Email:</strong> <u>{contract.purchaser?.email || "—"}</u>
+            <strong>Email:</strong> {contract.purchaser?.email || "—"}
           </p>
           <p>
-            <strong>Telephone:</strong>{" "}
-            <u>{contract.purchaser?.phone || "—"}</u>
+            <strong>Telephone:</strong> {contract.purchaser?.phone || "—"}
           </p>
 
           <p className="italic text-sm">
@@ -511,18 +509,16 @@ export default function ContractModal({
 
           <p>
             <strong>Contract Price (VAT 0%):</strong>{" "}
-            <u>
-              {contract.contractPrice?.toLocaleString() || "—"}{" "}
-              {contract.contractPriceCurrency || ""}
-            </u>
+            {contract.contractPrice?.toLocaleString() || "—"}{" "}
+            {contract.contractPriceCurrency || ""}
           </p>
           <p>
             <strong>Contract Price Currency:</strong>{" "}
-            <u>{contract.contractPriceCurrency || "—"}</u>
+            {contract.contractPriceCurrency || "—"}
           </p>
           <p>
             <strong>Contract Price Type:</strong>{" "}
-            <u>{contract.contractPriceType || "—"}</u>
+            {contract.contractPriceType || "—"}
           </p>
 
           <hr />
