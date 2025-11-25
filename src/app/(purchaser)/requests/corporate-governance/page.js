@@ -10,6 +10,8 @@ export default function CorporateGovernance() {
     contactPerson: "",
     areaboxes: [],
     appDescription: "",
+    confidential: "",
+    confboxes: [],
     policyDescription: "",
     supportType: "",
     description: "",
@@ -199,6 +201,12 @@ export default function CorporateGovernance() {
           applicationPurpose: formData.appDescription || "",
           policyPurpose: formData.policyDescription || "",
           maximumPrice: formData.maxPrice,
+          confidential: formData.confboxes.includes(
+            "Disclosed to Winning Bidder Only"
+          )
+            ? "Yes"
+            : "No",
+          winnerBidderOnlyStatus: (formData.confidential || "").trim(),
         },
       };
 
@@ -299,11 +307,13 @@ export default function CorporateGovernance() {
               What kind of support do you need?
             </h4>
             {[
-              "Comprehensive legal support with arranging a shareholders' meeting (including, for example, preparation of official invitations, minutes and other required documentation as well as support with chairing or acting as secretary in the meeting, as needed)",
-              "Comprehensive legal support with arranging a board of directors' meeting (including, for example, preparation of official invitations, minutes and other required documentation as well as support with chairing or acting as secretary in the meeting, as needed)",
-              "Comprehensive legal support with arranging an executive board meeting (including, for example, preparation of official invitations, minutes and other required documentation as well as support with chairing or acting as secretary in the meeting, as needed)",
-              "Comprehensive legal support with preparing a notification or application regarding a specific matter (for example, registration of new board members or applying for a business license) to the competent authority (including necessary attorney-client communications, preparation of needed documentation and required communications with the competent authority)",
+              "Comprehensive legal support with arranging a shareholders' meeting (including, for example, preparation of official invitations, minutes and other required documentation as well as support with chairing or acting as secretary in the meeting, as needed).",
+              "Comprehensive legal support with arranging a board of directors' meeting (including, for example, preparation of official invitations, minutes and other required documentation as well as support with chairing or acting as secretary in the meeting, as needed).",
+              "Comprehensive legal support with arranging an executive board meeting (including, for example, preparation of official invitations, minutes and other required documentation as well as support with chairing or acting as secretary in the meeting, as needed).",
+              "Comprehensive legal support with preparing a notification or application regarding a specific matter (for example, registration of new board members or applying for a business license) to the competent authority (including necessary attorney-client communications, preparation of needed documentation and required communications with the competent authority).",
               "Preparation of a corporate policy for a specific purpose. The work includes the preparation of the first version of the document(s) and necessary revisions on the basis of the Client's feedback to the Legal Service Provider.",
+              "Comprehensive legal support throughout a shareholders' agreement negotiation process (including, but not limited to, drafting the shareholders' agreement and conducting required negotiations with the other parties to the agreement).",
+              "A shareholders' agreement (including revisions based on client feedback).",
             ].map((option, index, array) => (
               <div key={index} className="pb-2">
                 <label className="flex-1">
@@ -316,11 +326,14 @@ export default function CorporateGovernance() {
                   />{" "}
                   {option}
                 </label>
-                {index === array.length - 1 && (
+                {index === array.length - 3 && (
                   <QuestionMarkTooltip tooltipText="Any offers you receive will include the preparation of the first version of the document(s) and necessary revisions on the basis of your feedback to the legal service provider." />
                 )}
-                {index === array.length - 2 && (
+                {index === array.length - 4 && (
                   <QuestionMarkTooltip tooltipText="Any offers you receive will not include fees or charges possibly levied by competent authorities and any such fees or charges will be invoiced separately." />
+                )}
+                {index === array.length - 1 && (
+                  <QuestionMarkTooltip tooltipText="Any offers you receive will include the preparation of the first version of the document(s) and necessary revisions on the basis of your feedback to the legal service provider. Other work (for example, legal review of comments from your counterparty) is not included." />
                 )}
               </div>
             ))}
@@ -331,7 +344,7 @@ export default function CorporateGovernance() {
               </em>
             </p>
             {formData.areaboxes.includes(
-              "Comprehensive legal support with preparing a notification or application regarding a specific matter (for example, registration of new board members or applying for a business license) to the competent authority (including necessary attorney-client communications, preparation of needed documentation and required communications with the competent authority)"
+              "Comprehensive legal support with preparing a notification or application regarding a specific matter (for example, registration of new board members or applying for a business license) to the competent authority (including necessary attorney-client communications, preparation of needed documentation and required communications with the competent authority)."
             ) && (
               <>
                 <br />
@@ -364,6 +377,44 @@ export default function CorporateGovernance() {
                   className="w-full border p-2"
                   onChange={handleChange}
                 ></textarea>
+              </>
+            )}
+            {(formData.areaboxes.includes(
+              "Comprehensive legal support throughout a shareholders' agreement negotiation process (including, but not limited to, drafting the shareholders' agreement and conducting required negotiations with the other parties to the agreement)."
+            ) ||
+              formData.areaboxes.includes(
+                "A shareholders' agreement (including revisions based on client feedback)."
+              )) && (
+              <>
+                <br />
+                <h4 className="text-md font-medium mb-1 font-semibold">
+                  Please provide the name, business identity code (if
+                  applicable), and country of domicile of the other parties to
+                  the shareholders&apos; agreement. If you do not want your
+                  identity and the identities of the other parties to the
+                  agreement to be visible to all legal service providers
+                  qualified to make you an offer, please also check the box
+                  &quot;Disclosed to Winning Bidder Only&quot;
+                  <QuestionMarkTooltip tooltipText="If 'Disclosed to Winning Bidder Only' is checked, your identity and the identity of your counterparty will be disclosed solely to the legal service provider that submitted the winning offer, to enable that provider to conduct mandatory conflict checks. If the legal service provider notifies LEXIFY of an existing conflict, the winning offer will automatically be disqualified, and you will have the option to select an alternative winning offer." />
+                </h4>
+                <textarea
+                  name="confidential"
+                  className="w-full border p-2"
+                  onChange={handleChange}
+                ></textarea>
+                {["Disclosed to Winning Bidder Only"].map((option, index) => (
+                  <label key={index} className="block">
+                    <input
+                      type="checkbox"
+                      name="confboxes"
+                      value={option}
+                      checked={formData.confboxes?.includes(option)}
+                      onChange={handleChange}
+                    />{" "}
+                    {option}{" "}
+                    <QuestionMarkTooltip tooltipText="Please note that checking “Disclosed to Winning Bidder Only” may cause additional delay in the processing of your LEXIFY Request as statutory conflict checks are postponed until the winning offer has been verified." />
+                  </label>
+                ))}
               </>
             )}
           </div>
@@ -752,7 +803,17 @@ export default function CorporateGovernance() {
               </ul>
             </div>
           )}
-          <br />
+          <p className="text-xs">
+            <strong>NOTE:</strong>{" "}
+            <em>
+              If you have selected &quot;Disclosed to Winning Bidder Only&quot;
+              earlier in the LEXIFY Request to ensure your name and the name of
+              your counterparty are disclosed only to the legal service provider
+              submitting the winning offer, please make sure that any
+              procurement appendices you may upload do not disclose the name of
+              your company.
+            </em>
+          </p>
           <br />
           <hr />
           <br />
@@ -875,7 +936,11 @@ export default function CorporateGovernance() {
               <div id="lexify-preview" className="space-y-6 text-black p-8">
                 {/* Client Name */}
                 <Section title="Client Name, Business Identity Code and Country of Domicile">
-                  {formData.contactPerson
+                  {formData.confboxes.includes(
+                    "Disclosed to Winning Bidder Only"
+                  )
+                    ? "Disclosed to Winning Bidder Only"
+                    : formData.contactPerson
                     ? [company.name, company.id, company.country]
                         .filter(Boolean)
                         .join(", ")
@@ -889,7 +954,7 @@ export default function CorporateGovernance() {
                       {formData.areaboxes.map((item, idx) => {
                         const isFourth =
                           item ===
-                          "Comprehensive legal support with preparing a notification or application regarding a specific matter (for example, registration of new board members or applying for a business license) to the competent authority (including necessary attorney-client communications, preparation of needed documentation and required communications with the competent authority)";
+                          "Comprehensive legal support with preparing a notification or application regarding a specific matter (for example, registration of new board members or applying for a business license) to the competent authority (including necessary attorney-client communications, preparation of needed documentation and required communications with the competent authority).";
 
                         const isFifth =
                           item ===
@@ -931,6 +996,33 @@ export default function CorporateGovernance() {
                     instructed in writing by the Client.
                   </p>
                 </Section>
+
+                {/* Counterparty */}
+                {(formData.areaboxes.includes(
+                  "Comprehensive legal support throughout a shareholders' agreement negotiation process (including, but not limited to, drafting the shareholders' agreement and conducting required negotiations with the other parties to the agreement)."
+                ) ||
+                  formData.areaboxes.includes(
+                    "A shareholders' agreement (including revisions based on client feedback)."
+                  )) && (
+                  <Section title="Name, Business Identity Code and Country of Domicile of Other Parties to the Shareholders' Agreement">
+                    {formData.confboxes.includes(
+                      "Disclosed to Winning Bidder Only"
+                    )
+                      ? "Disclosed to Winning Bidder Only"
+                      : formData.confidential || "-"}
+                    <p className="text-xs mt-2 italic">
+                      <strong>NOTE:</strong> If the above states &quot;Disclosed
+                      to Winning Bidder Only&quot;, the relevant identity or
+                      identities will be disclosed only to the legal service
+                      provider submitting the winning offer to enable that
+                      service provider to complete its mandatory conflict
+                      checks. If an existing conflict is then notified by the
+                      legal service provider to LEXIFY, the winning offer will
+                      automatically be disqualified and you will have the option
+                      to select an alternative winning offer.
+                    </p>
+                  </Section>
+                )}
 
                 {/* Additional Background */}
                 <Section title="Additional Background Information Provided by Client">

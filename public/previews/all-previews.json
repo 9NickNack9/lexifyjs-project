@@ -3602,11 +3602,11 @@
             "fields": [
               {
                 "label": "Client",
-                "path": "__clientLine__"
+                "path": "__clientLineOrDisclosed__"
               },
               {
                 "label": "Primary Contact Person",
-                "path": "primaryContactPerson"
+                "path": "__primaryContactPersonConfidential__"
               }
             ]
           },
@@ -3614,15 +3614,15 @@
             "title": "Scope of Work",
             "fields": [
               {
-                "label": "Scope of work",
+                "label": "Scope of Work",
                 "path": "scopeOfWork"
               },
               {
-                "label": "Purpose of notification/application",
+                "label": "Purpose of Notification/Application",
                 "path": "details.applicationPurpose"
               },
               {
-                "label": "Purpose of corporate policy",
+                "label": "Purpose of Corporate Policy",
                 "path": "details.policyPurpose"
               }
             ]
@@ -3654,6 +3654,19 @@
               {
                 "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
                 "path": "advanceRetainerFee"
+              }
+            ]
+          },
+          {
+            "title": "Client's Counterparty in the Matter",
+            "fields": [
+              {
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter",
+                "path": "__counterpartyConfidential__"
+              },
+              {
+                "label": "Is Identity of Client and Counterparty Disclosed to the Winning Bidder Only?",
+                "path": "details.confidential"
               }
             ]
           },
