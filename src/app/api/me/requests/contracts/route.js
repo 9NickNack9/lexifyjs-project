@@ -153,6 +153,20 @@ export async function GET() {
         me?.companyName
       );
 
+      // Determine if provider has any individual ratings.
+      // Field is Json @default("[]"), which may arrive as [] or "[]".
+      const rawInd = p.providerIndividualRating;
+      let providerHasRatings = false;
+
+      if (Array.isArray(rawInd)) {
+        providerHasRatings = rawInd.length > 0;
+      } else if (typeof rawInd === "string") {
+        const trimmed = rawInd.trim();
+        // Treat an empty string or "[]" as "no ratings"
+        providerHasRatings =
+          trimmed !== "" && trimmed !== "[]" && trimmed !== "{}";
+      }
+
       return {
         contractId: safeNumber(c.contractId),
         contractDate: c.contractDate,
@@ -188,6 +202,7 @@ export async function GET() {
 
         myRating, // null → N/A in UI
         providerRating, // should be filled now
+        providerHasRatings,
       };
     });
 

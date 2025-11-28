@@ -48,7 +48,11 @@ function coerceProviderRating(row) {
   };
 }
 
-function RatingDetails({ label, rating }) {
+function RatingDetails({ label, rating, hasRatings = true }) {
+  if (!hasRatings) {
+    return <span>No Ratings Yet</span>;
+  }
+
   const has =
     rating &&
     (rating.total != null ||
@@ -60,7 +64,7 @@ function RatingDetails({ label, rating }) {
 
   return (
     <details>
-      <summary className="cursor-pointer underline">
+      <summary className="cursor-pointer">
         {label}: {rating.total != null ? `${rating.total}/5` : "N/A"}
       </summary>
       <div className="mt-1 pl-4 text-left">
@@ -126,13 +130,18 @@ export default function ContractsTable({ rows, onShowContract }) {
                 </td>
 
                 <td className="border p-2 text-center">
-                  <RatingDetails label="My Rating" rating={c.myRating} />
+                  <RatingDetails
+                    label="My Rating"
+                    rating={c.myRating}
+                    hasRatings={c.myHasRating}
+                  />
                 </td>
 
                 <td className="border p-2 text-center">
                   <RatingDetails
                     label="Provider Total Rating"
                     rating={c.providerRating}
+                    hasRatings={c.providerHasRatings}
                   />
                 </td>
               </tr>

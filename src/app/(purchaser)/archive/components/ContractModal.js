@@ -447,7 +447,7 @@ export default function ContractModal({
 
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-white bg-[#3a3a3c] rounded-full w-8 h-8 flex items-center justify-center text-xl hover:bg-red-600 transition cursor-pointer"
+          className="absolute top-3 right-3 text-gray-600 hover:text-black text-xl rounded-full w-8 h-8 flex items-center justify-center bg-gray-300 cursor-pointer"
         >
           &times;
         </button>

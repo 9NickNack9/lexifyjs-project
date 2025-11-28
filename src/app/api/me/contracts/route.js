@@ -184,6 +184,88 @@ export async function GET() {
         billing: b ?? null,
       };
 
+      // Determine if provider actually has any individual ratings.
+      // Field is Json @default("[]"), which may come as [] or "[]".
+      const rawInd = p.providerIndividualRating;
+      let providerHasRatings = false;
+
+      if (Array.isArray(rawInd)) {
+        providerHasRatings = rawInd.length > 0;
+      } else if (typeof rawInd === "string") {
+        const trimmed = rawInd.trim();
+        // Treat empty string / "[]" / "{}" as "no ratings"
+        providerHasRatings =
+          trimmed !== "" && trimmed !== "[]" && trimmed !== "{}";
+      }
+
+      // ---- compute "My Rating" from providerIndividualRating by raterCompanyName ----
+      let myRating = null;
+      let myHasRating = false;
+
+      // Normalize providerIndividualRating into an array of rating objects
+      let indArr = [];
+      if (Array.isArray(rawInd)) {
+        indArr = rawInd;
+      } else if (typeof rawInd === "string") {
+        const trimmed = rawInd.trim();
+        if (trimmed.startsWith("[")) {
+          try {
+            const parsed = JSON.parse(trimmed);
+            if (Array.isArray(parsed)) indArr = parsed;
+          } catch {
+            // ignore parse errors, treat as no ratings
+          }
+        }
+      }
+
+      const myCompanyName = me?.companyName || "";
+      const norm = (s) => (s ?? "").toString().trim().toLowerCase();
+
+      if (indArr.length > 0 && myCompanyName) {
+        // Find ratings where raterCompanyName (or ratingCompanyName proxy) matches my company
+        const mine = indArr.filter((r) => {
+          const rc =
+            r.raterCompanyName ??
+            r.ratingCompanyName ?? // in case of naming mismatch
+            "";
+          return norm(rc) === norm(myCompanyName);
+        });
+
+        if (mine.length > 0) {
+          // If multiple, pick the latest by updatedAt if available
+          let latest = mine[0];
+          for (const r of mine) {
+            if (
+              r.updatedAt &&
+              (!latest.updatedAt ||
+                new Date(r.updatedAt) > new Date(latest.updatedAt))
+            ) {
+              latest = r;
+            }
+          }
+
+          const mq = numify(latest.quality);
+          const mr = numify(latest.responsiveness);
+          const mb = numify(latest.billing);
+
+          const mParts = [mq, mr, mb].filter((n) => typeof n === "number");
+          const myTotal = mParts.length
+            ? Number(
+                (mParts.reduce((s, v) => s + v, 0) / mParts.length).toFixed(1)
+              )
+            : null;
+
+          myRating = {
+            total: myTotal,
+            quality: mq ?? null,
+            communication: mr ?? null,
+            billing: mb ?? null,
+          };
+
+          myHasRating = mParts.length > 0;
+        }
+      }
+
       // ---- find the offerLawyer from offers on the same request by this provider ----
       const offers = Array.isArray(c.request?.offers) ? c.request.offers : [];
       const byProvider = offers.filter(
@@ -277,6 +359,9 @@ export async function GET() {
         },
 
         providerRating,
+        providerHasRatings,
+        myRating,
+        myHasRating,
       };
     });
 

@@ -80,7 +80,9 @@ function AggregateRow({ label, value, tooltipText }) {
         <span className="text-sm">{label}</span>
         {tooltipText && <QuestionMarkTooltip tooltipText={tooltipText} />}
       </div>
-      <span className="font-semibold">{value?.toFixed(2) ?? "0.00"} / 5</span>
+      <span className="font-semibold">
+        {!isNaN(Number(value)) ? Number(value).toFixed(2) : "0.00"} / 5
+      </span>
     </div>
   );
 }
@@ -106,6 +108,16 @@ export default function ProviderRatingPage() {
   const [aggAny, setAggAny] = useState(null);
   const [aggCount, setAggCount] = useState(0);
   const [aggLoading, setAggLoading] = useState(false);
+
+  // -------- All providers list modal --------
+  const [showAllModal, setShowAllModal] = useState(false);
+  const [allProviders, setAllProviders] = useState([]);
+  const [loadingAll, setLoadingAll] = useState(false);
+  const [errorAll, setErrorAll] = useState("");
+  const [expandedProviders, setExpandedProviders] = useState({});
+
+  // controls whether sub-ratings are shown for the ANY-provider aggregate card
+  const [showBreakdownAny, setShowBreakdownAny] = useState(false);
 
   // live search: contracted providers
   useEffect(() => {
@@ -227,6 +239,7 @@ export default function ProviderRatingPage() {
     setAggAny(null);
     setAggCount(0);
     setAggLoading(true);
+    setShowBreakdownAny(false);
     try {
       const res = await fetch(`/api/providers/${p.userId}/rating`, {
         cache: "no-store",
@@ -243,6 +256,38 @@ export default function ProviderRatingPage() {
     } finally {
       setAggLoading(false);
     }
+  };
+
+  const openAllProviders = async () => {
+    setShowAllModal(true);
+
+    // If we’ve already loaded them once, don’t refetch
+    if (allProviders.length > 0) return;
+
+    setLoadingAll(true);
+    setErrorAll("");
+    try {
+      const res = await fetch("/api/providers/search?all=1", {
+        cache: "no-store",
+      });
+      const json = await res.json();
+      if (res.ok && Array.isArray(json)) {
+        setAllProviders(json);
+      } else {
+        setErrorAll("Failed to load providers.");
+      }
+    } catch {
+      setErrorAll("Failed to load providers.");
+    } finally {
+      setLoadingAll(false);
+    }
+  };
+
+  const toggleProviderExpand = (id) => {
+    setExpandedProviders((prev) => ({
+      ...prev,
+      [id]: !prev[id],
+    }));
   };
 
   return (
@@ -344,13 +389,11 @@ export default function ProviderRatingPage() {
       )}
       <br />
       <br />
-      <h1 className="text-2xl font-bold">
-        Check Aggregated Rating of a Legal Service Provider
-      </h1>
+      <h1 className="text-2xl font-bold">Browse Legal Service Providers</h1>
       {/* Card 2: Search ANY provider (show read-only aggregates) */}
       <div className="w-full max-w-3xl p-6 mt-5 rounded shadow-2xl bg-white text-black">
         <h2 className="text-xl font-semibold mb-2">
-          Find any legal service provider on LEXIFY
+          Find a specific legal service provider on LEXIFY
         </h2>
         <p className="text-sm text-gray-700 mb-3">
           You can search for any legal service provider on LEXIFY to check their
@@ -419,22 +462,45 @@ export default function ProviderRatingPage() {
               <div className="space-y-2">
                 {aggCount > 0 ? (
                   <>
-                    <AggregateRow label="Total" value={aggAny.total ?? 0} />
-                    <AggregateRow
-                      label="Quality of Work"
-                      value={aggAny.quality ?? 0}
-                      tooltipText="How satisfied were you in general with the quality of the legal advice and documentation provided by the legal service provider?"
-                    />
-                    <AggregateRow
-                      label="Responsiveness & Communication"
-                      value={aggAny.communication ?? 0}
-                      tooltipText="Did you receive timely responses and communications from the legal service provider? Was the advice you received clear and actionable or ambiguous analysis without clear value-adding guidance?"
-                    />
-                    <AggregateRow
-                      label="Billing Practices"
-                      value={aggAny.billing ?? 0}
-                      tooltipText="Did the legal service provider send invoices within agreed timeframes and with agreed specifications? In case of hourly rate assignments, did the legal service provider in your opinion invoice a reasonable amount of hours in relation to the legal support that was required?"
-                    />
+                    {/* TOTAL row acts as an expander */}
+                    <button
+                      type="button"
+                      className="w-full -mx-2 px-2 py-1 rounded flex items-center justify-between hover:bg-gray-50 cursor-pointer"
+                      onClick={() => setShowBreakdownAny((v) => !v)}
+                      aria-expanded={showBreakdownAny}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg text-gray-600 select-none">
+                          {showBreakdownAny ? "▾" : "▸"}
+                        </span>
+
+                        <span className="text-sm font-semibold">Total</span>
+                      </div>
+                      <span className="font-semibold">
+                        {(aggAny.total ?? 0).toFixed(2)} / 5
+                      </span>
+                    </button>
+
+                    {/* Only show sub-ratings when expanded */}
+                    {showBreakdownAny && (
+                      <>
+                        <AggregateRow
+                          label="Quality of Work"
+                          value={aggAny.quality ?? 0}
+                          tooltipText="How satisfied were you in general with the quality of the legal advice and documentation provided by the legal service provider?"
+                        />
+                        <AggregateRow
+                          label="Responsiveness & Communication"
+                          value={aggAny.communication ?? 0}
+                          tooltipText="Did you receive timely responses and communications from the legal service provider? Was the advice you received clear and actionable or ambiguous analysis without clear value-adding guidance?"
+                        />
+                        <AggregateRow
+                          label="Billing Practices"
+                          value={aggAny.billing ?? 0}
+                          tooltipText="Did the legal service provider send invoices within agreed timeframes and with agreed specifications? In case of hourly rate assignments, did the legal service provider in your opinion invoice a reasonable amount of hours in relation to the legal support that was required?"
+                        />
+                      </>
+                    )}
                   </>
                 ) : (
                   <>
@@ -442,7 +508,6 @@ export default function ProviderRatingPage() {
                       <span className="text-sm">Total</span>
                       <span className="font-semibold">No Ratings Yet</span>
                     </div>
-                    {/* Sub rating rows are intentionally hidden when there are no ratings */}
                   </>
                 )}
               </div>
@@ -451,6 +516,155 @@ export default function ProviderRatingPage() {
                 No ratings available yet.
               </div>
             )}
+          </div>
+        )}
+        <div className="mt-10">
+          <h2 className="text-xl font-semibold mb-2">
+            View all legal service providers on LEXIFY
+          </h2>
+          <p className="text-sm text-gray-700 mb-4">
+            Click below to see all legal service providers currently offering
+            services on LEXIFY, along with their aggregated user ratings.
+          </p>
+          <button
+            type="button"
+            className="bg-[#11999e] text-white px-4 py-2 rounded cursor-pointer"
+            onClick={openAllProviders}
+          >
+            Show all legal service providers
+          </button>
+        </div>
+        {showAllModal && (
+          <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+            <div className="bg-white text-black rounded-lg shadow-2xl max-w-4xl w-full max-h-[80vh] overflow-y-auto p-6 relative">
+              <button
+                type="button"
+                className="absolute top-4 right-4 text-white bg-[#3a3a3c] rounded-full w-8 h-8 flex items-center justify-center text-xl hover:bg-red-600 transition cursor-pointer"
+                onClick={() => setShowAllModal(false)}
+              >
+                x
+              </button>
+
+              <h3 className="text-xl font-semibold mb-2">
+                LEXIFY Legal Service Providers
+              </h3>
+
+              {loadingAll ? (
+                <div className="text-sm text-gray-600">Loading providers…</div>
+              ) : errorAll ? (
+                <div className="text-sm text-red-600">{errorAll}</div>
+              ) : allProviders.length === 0 ? (
+                <div className="text-sm text-gray-600">
+                  No legal service providers found.
+                </div>
+              ) : (
+                <div className="space-y-4 mt-2">
+                  {allProviders.map((p) => {
+                    // Determine if provider has individual ratings
+                    const hasIndividual =
+                      Array.isArray(p.providerIndividualRating) &&
+                      p.providerIndividualRating.length > 0;
+
+                    // If no individual ratings → show simple “No Ratings Yet”
+                    if (!hasIndividual) {
+                      return (
+                        <div
+                          key={String(p.userId)}
+                          className="border rounded p-4 bg-white"
+                        >
+                          <div className="text-lg font-semibold mb-1">
+                            {p.companyWebsite ? (
+                              <a
+                                href={p.companyWebsite}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline"
+                              >
+                                {p.companyName}
+                              </a>
+                            ) : (
+                              p.companyName
+                            )}
+                          </div>
+                          <div className="flex items-center justify-between mt-2">
+                            <span className="text-sm">Total</span>
+                            <span className="font-semibold">
+                              No Ratings Yet
+                            </span>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    // Otherwise use expander pattern
+                    const expanded = expandedProviders[p.userId] ?? false;
+
+                    return (
+                      <div
+                        key={String(p.userId)}
+                        className="border rounded p-4 bg-white"
+                      >
+                        <div className="text-lg font-semibold mb-1">
+                          {p.companyWebsite ? (
+                            <a
+                              href={p.companyWebsite}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline"
+                            >
+                              {p.companyName}
+                            </a>
+                          ) : (
+                            p.companyName
+                          )}
+                        </div>
+
+                        {/* Expandable TOTAL row */}
+                        <button
+                          type="button"
+                          onClick={() => toggleProviderExpand(p.userId)}
+                          className="w-full -mx-2 px-2 py-1 rounded flex items-center justify-between hover:bg-gray-50 cursor-pointer mt-2"
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg text-gray-600 select-none">
+                              {expanded ? "▾" : "▸"}
+                            </span>
+                            <span className="text-sm font-semibold">Total</span>
+                          </div>
+                          <span className="font-semibold">
+                            {!isNaN(Number(p.providerTotalRating))
+                              ? Number(p.providerTotalRating).toFixed(2)
+                              : "0.00"}{" "}
+                            / 5
+                          </span>
+                        </button>
+
+                        {/* Subratings (visible only when expanded) */}
+                        {expanded && (
+                          <div className="mt-1 space-y-1">
+                            <AggregateRow
+                              label="Quality of Work"
+                              value={p.providerQualityRating ?? 0}
+                              tooltipText="How satisfied were you in general with the quality of the legal advice and documentation provided by the legal service provider?"
+                            />
+                            <AggregateRow
+                              label="Responsiveness & Communication"
+                              value={p.providerCommunicationRating ?? 0}
+                              tooltipText="Did you receive timely responses and communications from the legal service provider? Was the advice you received clear and actionable or ambiguous analysis without clear value-adding guidance?"
+                            />
+                            <AggregateRow
+                              label="Billing Practices"
+                              value={p.providerBillingRating ?? 0}
+                              tooltipText="Did the legal service provider send invoices within agreed timeframes and with agreed specifications? In case of hourly rate assignments, did the legal service provider in your opinion invoice a reasonable amount of hours in relation to the legal support that was required?"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         )}
       </div>

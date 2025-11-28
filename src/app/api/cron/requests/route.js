@@ -4,6 +4,7 @@ import {
   notifyPurchaserPendingExpiredNoOffers,
   notifyPurchaserManualUnderMaxExpired,
   notifyPurchaserManualAllOverMaxExpired,
+  notifyPurchaserOnHoldExpirySoon,
 } from "@/lib/mailer";
 
 // 🔐 Require a shared-secret header for cron calls
@@ -232,7 +233,7 @@ export async function POST(req) {
       }
 
       if (winningMode === "manual") {
-        // RULE 2: Manual → ON HOLD + acceptDeadline = dateExpired + 7 days
+        // Manual → ON HOLD + acceptDeadline = dateExpired + 7 days
         const accept = new Date(r.dateExpired ?? now);
         accept.setDate(accept.getDate() + 7);
         await prisma.request.update({
@@ -370,7 +371,112 @@ export async function POST(req) {
       onHoldManual++;
     }
 
-    // RULE 5: Any ON HOLD past acceptDeadline & not contracted → EXPIRED + contractResult="No"
+    //  ON HOLD requests whose acceptDeadline is within the next 48 hours
+    const in48h = new Date(now.getTime() + 48 * 60 * 60 * 1000);
+
+    const onHoldSoon = await prisma.request.findMany({
+      where: {
+        requestState: "ON HOLD",
+        acceptDeadline: {
+          gt: now, // still in the future
+          lte: in48h, // within the next 48 hours
+        },
+      },
+      select: {
+        requestId: true,
+        title: true,
+        acceptDeadline: true,
+        details: true,
+        primaryContactPerson: true,
+        client: {
+          select: {
+            companyContactPersons: true,
+            notificationPreferences: true,
+          },
+        },
+      },
+    });
+
+    for (const r of onHoldSoon) {
+      const details =
+        r.details && typeof r.details === "object" ? r.details : {};
+      // If we've already notified for this request, skip (prevents email spam)
+      if (details.expirationNotified === true) {
+        continue;
+      }
+
+      try {
+        const norm = (s) => (s ?? "").toString().trim().toLowerCase();
+        const full = (p) =>
+          [p?.firstName, p?.lastName].filter(Boolean).join(" ").trim();
+
+        const contacts = Array.isArray(r.client?.companyContactPersons)
+          ? r.client.companyContactPersons
+          : [];
+
+        // Prefer stored primaryContactPerson; fall back to first contact if needed
+        const pc =
+          (r.primaryContactPerson &&
+            (r.primaryContactPerson.firstName ||
+              r.primaryContactPerson.lastName ||
+              r.primaryContactPerson.email ||
+              r.primaryContactPerson.telephone) &&
+            r.primaryContactPerson) ||
+          null;
+
+        let toEmail = "";
+
+        if (pc) {
+          const target = norm(full(pc));
+          const match =
+            contacts.find((c) => norm(full(c)) === target) ||
+            contacts.find(
+              (c) =>
+                norm(c?.firstName) === norm(pc.firstName) ||
+                norm(c?.lastName) === norm(pc.lastName)
+            ) ||
+            null;
+          toEmail = (match?.email || pc.email || "").trim();
+        }
+
+        // Final fallback: first contact's email if primary not available
+        if (!toEmail && contacts.length > 0) {
+          toEmail = (contacts[0]?.email || "").trim();
+        }
+
+        // Build [primary + all allNotifications=true contacts] list
+        const toGroup = expandWithAllNotificationContacts(
+          { email: toEmail },
+          contacts
+        );
+
+        if (toGroup.length > 0) {
+          await notifyPurchaserOnHoldExpirySoon({
+            to: toGroup,
+            requestTitle: r.title || "",
+          });
+
+          // Mark that we've notified for this upcoming expiration
+          const newDetails = {
+            ...details,
+            expirationNotified: true,
+          };
+
+          await prisma.request.update({
+            where: { requestId: r.requestId },
+            data: { details: newDetails },
+          });
+        }
+      } catch (err) {
+        console.error(
+          "Failed to send ON HOLD 48h expiration reminder for request",
+          String(r.requestId),
+          err
+        );
+      }
+    }
+
+    // Any ON HOLD past acceptDeadline & not contracted → EXPIRED + contractResult="No"
     const onHoldPast = await prisma.request.findMany({
       where: { requestState: "ON HOLD", acceptDeadline: { lte: now } },
       select: { requestId: true, contractResult: true },

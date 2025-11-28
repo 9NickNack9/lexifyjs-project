@@ -366,3 +366,16 @@ export async function notifyPurchaserConflictDeniedNoOffers({
     dynamicTemplateData: { requestTitle },
   });
 }
+
+// Purchaser: ON HOLD request acceptDeadline approaching (<= 48h left)
+export async function notifyPurchaserOnHoldExpirySoon({ to, requestTitle }) {
+  if (!to) return;
+
+  const templateId = "d-33a1c59543854c5587dcb7cedb166769";
+
+  await sendDynamicTemplateEmail({
+    to, // string or array
+    templateId,
+    dynamicTemplateData: { requestTitle },
+  });
+}

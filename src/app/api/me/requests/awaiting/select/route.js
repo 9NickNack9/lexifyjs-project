@@ -126,27 +126,51 @@ async function sendContractPackageEmail(prisma, requestId) {
     phone: match?.telephone || "—",
   };
 
-  const pcDirect =
-    contract.request?.primaryContactPerson ||
-    contract.request?.details?.primaryContactPerson ||
-    null;
-  const list = Array.isArray(contract.request?.client?.companyContactPersons)
-    ? contract.request.client.companyContactPersons
+  // --- Purchaser contact: resolve from primaryContactPerson STRING + client contacts ---
+
+  // 1) Raw primary contact from request (can be string or object)
+  const primaryRaw =
+    contract.request?.primaryContactPerson ??
+    contract.request?.details?.primaryContactPerson ??
+    "";
+
+  // 2) Normalize to a name string (handles both string and object shapes)
+  let primaryName = "";
+  if (primaryRaw && typeof primaryRaw === "string") {
+    primaryName = primaryRaw.toString().trim();
+  } else if (primaryRaw && typeof primaryRaw === "object") {
+    primaryName = full(primaryRaw); // uses firstName + lastName
+  }
+
+  // 3) Client contact persons (use requestClient fallback we already loaded)
+  const clientContacts = Array.isArray(requestClient?.companyContactPersons)
+    ? requestClient.companyContactPersons
     : [];
-  const pc =
-    pcDirect &&
-    (pcDirect.firstName ||
-      pcDirect.lastName ||
-      pcDirect.email ||
-      pcDirect.telephone)
-      ? pcDirect
-      : list[0] || null;
+
+  const normalized = (s) => (s || "").toString().trim().toLowerCase();
+
+  // 4) Try to match the primaryName to a contact person
+  const purchaserContact =
+    clientContacts.find(
+      (c) =>
+        normalized(`${c.firstName} ${c.lastName}`) === normalized(primaryName)
+    ) ||
+    clientContacts.find(
+      (c) =>
+        normalized(c.firstName) === normalized(primaryName) ||
+        normalized(c.lastName) === normalized(primaryName)
+    ) ||
+    null;
+
+  // 5) Shape purchaser object
   const purchaser = {
     companyName: requestClient?.companyName || "—",
     businessId: requestClient?.companyId || "—",
-    contactName: pc ? full(pc) : "—",
-    email: pc?.email || "—",
-    phone: pc?.telephone || "—",
+    // Prefer the name from the request; fall back to contact person name
+    contactName:
+      primaryName || (purchaserContact ? full(purchaserContact) : "—"),
+    email: purchaserContact?.email || "—",
+    phone: purchaserContact?.telephone || "—",
   };
 
   const shaped = {
@@ -158,7 +182,8 @@ async function sendContractPackageEmail(prisma, requestId) {
     purchaser,
     request: {
       ...contract.request,
-      primaryContactPerson: pc || null,
+      // For the PDF, keep primaryContactPerson as the name string (same as test-send-contract)
+      primaryContactPerson: primaryName,
       client: {
         companyName: requestClient?.companyName || null,
         companyId: requestClient?.companyId || null,
