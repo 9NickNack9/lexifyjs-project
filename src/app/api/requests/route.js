@@ -151,6 +151,7 @@ export async function POST(req) {
     "providerSize",
     "providerCompanyAge",
     "providerMinimumRating",
+    "providerReferences",
     "currency",
     "paymentRate",
     "advanceRetainerFee",
@@ -223,8 +224,6 @@ export async function POST(req) {
   const assignmentType = body.assignmentType ?? null;
 
   const now = new Date();
-  // TEST MODE: set deadline to 1 minutes from now
-  //const offersDeadline = new Date(now.getTime() + 1 * 60 * 1000);
   const [year, month, day] = body.offersDeadline.split("-").map(Number);
   const offersDeadline = new Date(year, month - 1, day, 21, 59, 59);
   const dateExpired = offersDeadline;
@@ -254,6 +253,7 @@ export async function POST(req) {
       providerSize: body.providerSize,
       providerCompanyAge: body.providerCompanyAge,
       providerMinimumRating: body.providerMinimumRating,
+      providerReferences: body.providerReferences,
       currency: body.currency,
       paymentRate: paymentType,
       advanceRetainerFee: body.advanceRetainerFee,

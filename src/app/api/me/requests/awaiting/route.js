@@ -87,6 +87,7 @@ export async function GET() {
             },
             providerId: true,
             offerStatus: true,
+            providerReferenceFiles: true,
           },
         },
       },
@@ -100,26 +101,34 @@ export async function GET() {
       const offers = (r.offers || [])
         .filter((o) => (o.offerStatus || "").toUpperCase() !== "DISQUALIFIED")
         .filter((o) => !disqSet.has(String(o.offerId)))
-        .map((o) => ({
-          // ↓↓↓ Convert BigInts to strings ↓↓↓
-          offerId:
-            typeof o.offerId === "bigint"
-              ? o.offerId.toString()
-              : String(o.offerId),
-          providerId:
-            typeof o.providerId === "bigint"
-              ? o.providerId.toString()
-              : String(o.providerId),
+        .map((o) => {
+          const providerReferenceFiles = Array.isArray(o.providerReferenceFiles)
+            ? o.providerReferenceFiles
+            : [];
 
-          offeredPrice: toNum(o.offerPrice),
-          offerLawyer: o.offerLawyer || "—",
-          providerCompanyName: o.provider?.companyName || "—",
-          providerTotalRating: toNum(o.provider?.providerTotalRating) ?? null,
-          providerHasRatings:
-            Array.isArray(o.provider?.providerIndividualRating) &&
-            o.provider.providerIndividualRating.length > 0,
-          providerCompanyWebsite: o.provider?.companyWebsite || null,
-        }))
+          return {
+            offerId:
+              typeof o.offerId === "bigint"
+                ? o.offerId.toString()
+                : String(o.offerId),
+            providerId:
+              typeof o.providerId === "bigint"
+                ? o.providerId.toString()
+                : String(o.providerId),
+
+            offeredPrice: toNum(o.offerPrice),
+            offerLawyer: o.offerLawyer || "—",
+            providerCompanyName: o.provider?.companyName || "—",
+            providerTotalRating: toNum(o.provider?.providerTotalRating) ?? null,
+            providerHasRatings:
+              Array.isArray(o.provider?.providerIndividualRating) &&
+              o.provider.providerIndividualRating.length > 0,
+            providerCompanyWebsite: o.provider?.companyWebsite || null,
+
+            // pass S3 reference files through to the client
+            providerReferenceFiles,
+          };
+        })
         .filter((o) => typeof o.offeredPrice === "number")
         .sort((a, b) => a.offeredPrice - b.offeredPrice)
         .slice(0, 3);
@@ -131,7 +140,6 @@ export async function GET() {
         !(r.details?.acceptDeadlineExtendedOnce === true);
 
       return {
-        // ↓↓↓ Convert BigInt to string ↓↓↓
         requestId:
           typeof r.requestId === "bigint"
             ? r.requestId.toString()

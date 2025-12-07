@@ -44,6 +44,7 @@ next-env.d.ts
 
 /public/background
 /public/supplier
+/public/references
 
 /src/app/api/test-contract-email
 /src/app/api/test-send-contract

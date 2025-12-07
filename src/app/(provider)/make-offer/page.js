@@ -549,11 +549,18 @@ export default function MakeOffer() {
 
   const [additionalQuestion, setAdditionalQuestion] = useState("");
   const [questionSubmitting, setQuestionSubmitting] = useState(false);
+  const [referenceFiles, setReferenceFiles] = useState([]);
 
   const paymentRate = (request?.paymentRate || "").toLowerCase();
   const isCapped = paymentRate.startsWith("capped price");
   const deadline =
     request?.details?.offersDeadline || request?.dateExpired || null;
+
+  const providerRefs = (request?.providerReferences || "").trim().toLowerCase();
+  const requires1 = providerRefs.startsWith("yes, 1");
+  const requires2 = providerRefs.startsWith("yes, 2");
+  const requiresReferences = requires1 || requires2;
+  const minReferenceFiles = requires2 ? 2 : requires1 ? 1 : 0;
 
   useEffect(() => {
     if (!requestId) return;
@@ -608,20 +615,35 @@ export default function MakeOffer() {
     );
   }, [defs, request]);
 
+  const hasEnoughReferences =
+    !requiresReferences || referenceFiles.length >= minReferenceFiles;
+
   const canSubmit =
     !!requestId &&
     !!offerLawyer &&
     !!offerPrice &&
     !!offerTitle &&
-    (!isCapped || !!offerExpectedPrice) && // ← only require when capped
+    (!isCapped || !!offerExpectedPrice) &&
     agree &&
+    hasEnoughReferences &&
     !submitting;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!canSubmit) return;
+    if (!canSubmit) {
+      if (requiresReferences && referenceFiles.length < minReferenceFiles) {
+        alert(
+          `You must upload at least ${minReferenceFiles} written reference${
+            minReferenceFiles > 1 ? "s" : ""
+          } to submit this offer.`
+        );
+      }
+      return;
+    }
+
     try {
       setSubmitting(true);
+
       const payload = {
         requestId: requestId,
         offerLawyer,
@@ -631,16 +653,28 @@ export default function MakeOffer() {
       if (isCapped) {
         payload.offerExpectedPrice = offerExpectedPrice;
       }
+
+      const form = new FormData();
+      form.append(
+        "data",
+        new Blob([JSON.stringify(payload)], { type: "application/json" })
+      );
+      // attach reference files for backend processing
+      for (const f of referenceFiles) {
+        form.append("referenceFiles", f, f.name);
+      }
+
       const res = await fetch(`/api/offers`, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+        body: form,
       });
+
       const data = await res.json().catch(() => ({}));
       if (!res.ok) {
         alert(data?.error || `Failed to submit offer (${res.status})`);
         return;
       }
+
       alert("Your offer has been successfully submitted!");
       router.push("/provider-request");
     } finally {
@@ -678,6 +712,17 @@ export default function MakeOffer() {
     } finally {
       setQuestionSubmitting(false);
     }
+  };
+
+  const handleReferenceFileChange = (e) => {
+    const newFiles = Array.from(e.target.files || []);
+    if (!newFiles.length) return;
+    setReferenceFiles((prev) => [...prev, ...newFiles]);
+    e.target.value = "";
+  };
+
+  const handleDeleteReferenceFile = (index) => {
+    setReferenceFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
   if (loading) {
@@ -888,7 +933,55 @@ export default function MakeOffer() {
               />
             </div>
           )}
+          {requiresReferences && (
+            <div>
+              <label className="block font-semibold mb-2">
+                Upload Your Written References in Accordance with the LEXIFY
+                Request
+              </label>
+              <p className="text-sm mb-2">
+                You must upload at least {minReferenceFiles} written reference
+                {minReferenceFiles > 1 ? "s" : ""} to submit your offer.
+              </p>
 
+              <label className="inline-block px-4 py-2 bg-[#c8c8cf] text-black border border-black rounded cursor-pointer">
+                Upload Reference Files
+                <input
+                  type="file"
+                  name="referenceFiles"
+                  multiple
+                  className="hidden"
+                  onChange={handleReferenceFileChange}
+                  required={referenceFiles.length === 0}
+                />
+              </label>
+              <span className="ml-2 text-sm">
+                {referenceFiles.length > 0
+                  ? `${referenceFiles.length} file(s) selected`
+                  : "No files selected"}
+              </span>
+
+              {referenceFiles.length > 0 && (
+                <div className="mt-2 p-2">
+                  <h5 className="font-medium mb-1">Uploaded References:</h5>
+                  <ul className="list-disc pl-6">
+                    {referenceFiles.map((file, index) => (
+                      <li key={index} className="flex items-center mb-1">
+                        <span className="truncate">{file.name}</span>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteReferenceFile(index)}
+                          className="ml-2 px-2 py-1 bg-red-500 text-white text-xs rounded cursor-pointer"
+                        >
+                          Delete
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
+          )}
           <label className="block">
             <input
               type="checkbox"

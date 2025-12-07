@@ -203,7 +203,7 @@ export default function AwaitingSelectionTable({
                                       href={o.providerCompanyWebsite}
                                       target="_blank"
                                       rel="noopener noreferrer"
-                                      className="text-blue-600 hover:underline"
+                                      className="text-blue-600 hover:underline cursor-pointer"
                                     >
                                       {o.providerCompanyName}
                                     </a>
@@ -215,6 +215,41 @@ export default function AwaitingSelectionTable({
                                     ? "No Ratings Yet"
                                     : `${o.providerTotalRating ?? "—"}/5`}
                                   )
+                                  {Array.isArray(o.providerReferenceFiles) &&
+                                    o.providerReferenceFiles.length > 0 && (
+                                      <div className="mt-1 text-xs">
+                                        <span className="font-semibold">
+                                          , Written Reference(s):{" "}
+                                        </span>
+                                        {o.providerReferenceFiles.map(
+                                          (file, idx) => {
+                                            const name =
+                                              file?.name ||
+                                              `Reference ${idx + 1}`;
+                                            const url = file?.url;
+
+                                            if (!url)
+                                              return (
+                                                <span key={idx}>{name}</span>
+                                              );
+
+                                            return (
+                                              <span key={url || idx}>
+                                                {idx > 0 && ", "}
+                                                <a
+                                                  href={url}
+                                                  target="_blank"
+                                                  rel="noopener noreferrer"
+                                                  className="text-blue-600 hover:underline cursor-pointer"
+                                                >
+                                                  {name}
+                                                </a>
+                                              </span>
+                                            );
+                                          }
+                                        )}
+                                      </div>
+                                    )}
                                 </div>
                               </div>
                             </li>

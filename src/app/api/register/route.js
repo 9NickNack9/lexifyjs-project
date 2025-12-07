@@ -33,7 +33,7 @@ const BaseSchema = z.object({
   username: z.string().min(3, "Username must be at least 3 characters"),
   password: z.string().min(8, "Password must be at least 8 characters"),
   companyName: z.string().min(2, "Company name is required"),
-  companyID: z.string().min(2, "Company ID is required"),
+  companyId: z.string().min(2, "Company ID is required"),
   companyAddress: z.string().min(2, "Address is required"),
   companyPostalCode: z.string().min(1, "Postal code is required"),
   companyCity: z.string().min(1, "City is required"),
@@ -155,7 +155,7 @@ const RegisterSchema = BaseSchema.transform((raw) => {
     password: s.password,
 
     companyName: s.companyName,
-    companyId: s.companyID,
+    companyId: s.companyId,
     companyAddress: s.companyAddress,
     companyPostalCode: s.companyPostalCode,
     companyCity: s.companyCity,
@@ -197,13 +197,17 @@ export async function POST(req) {
     const data = parsed.data;
 
     // Uniqueness checks
-    const [userTaken, companyTaken] = await Promise.all([
+    const [userTaken, companyTaken, companyNameTaken] = await Promise.all([
       prisma.appUser.findFirst({
         where: { username: data.username },
         select: { userId: true },
       }),
       prisma.appUser.findFirst({
         where: { companyId: data.companyId },
+        select: { userId: true },
+      }),
+      prisma.appUser.findFirst({
+        where: { companyName: data.companyName },
         select: { userId: true },
       }),
     ]);
@@ -215,7 +219,16 @@ export async function POST(req) {
     }
     if (companyTaken) {
       return NextResponse.json(
-        { error: "This company ID is already registered.", field: "companyID" },
+        { error: "This company Id is already registered.", field: "companyId" },
+        { status: 409 }
+      );
+    }
+    if (companyNameTaken) {
+      return NextResponse.json(
+        {
+          error: "This company name is already registered",
+          field: "companyName",
+        },
         { status: 409 }
       );
     }

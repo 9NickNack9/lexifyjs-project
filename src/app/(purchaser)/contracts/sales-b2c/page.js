@@ -20,6 +20,7 @@ export default function SalesB2C() {
     lawyerCount: "",
     firmAge: "",
     firmRating: "",
+    providerReferences: "",
     currency: "",
     maxPrice: "",
     retainerFee: "",
@@ -143,6 +144,8 @@ export default function SalesB2C() {
     if (!formData.lawyerCount) return "Please choose a minimum provider size.";
     if (!formData.firmAge) return "Please choose a minimum company age.";
     if (!formData.firmRating) return "Please choose a minimum rating.";
+    if (!formData.providerReferences)
+      return "Please choose the amount of references needed.";
     if (!formData.currency) return "Please choose a currency.";
     if (!formData.retainerFee)
       return "Please choose an advance retainer option.";
@@ -201,6 +204,7 @@ export default function SalesB2C() {
         providerSize: formData.lawyerCount,
         providerCompanyAge: formData.firmAge,
         providerMinimumRating: formData.firmRating,
+        providerReferences: formData.providerReferences,
         currency: formData.currency,
         paymentRate,
         advanceRetainerFee: formData.retainerFee,
@@ -602,7 +606,31 @@ export default function SalesB2C() {
           <br />
           <hr />
           <br />
-
+          <div>
+            <h4 className="text-md font-medium mb-1 font-semibold">
+              Do tendering legal service providers need to provide a written
+              reference with their offer?{" "}
+              <QuestionMarkTooltip tooltipText="A written reference is a formal statement or endorsement that describes a legal service provider's performance for a past client on previous legal work of a similar nature to the legal services sought in your LEXIFY Request." />
+            </h4>
+            <select
+              name="providerReferences"
+              className="w-full border p-2"
+              onChange={handleChange}
+              value={formData.providerReferences}
+            >
+              <option value="">Select</option>
+              <option value="No">No</option>
+              <option value="Yes, 1 written reference must be provided">
+                Yes, 1 written reference must be provided
+              </option>
+              <option value="Yes, 2 written references must be provided">
+                Yes, 2 written references must be provided
+              </option>
+            </select>
+          </div>
+          <br />
+          <hr />
+          <br />
           <div>
             <h4 className="text-md font-medium mb-1 font-semibold">
               In what currency do you want to buy the legal service?
@@ -1066,6 +1094,10 @@ export default function SalesB2C() {
                   ) : (
                     "No"
                   )}
+                </Section>
+
+                <Section title="Is the Legal Service Provider Required to Provide Written References with the Offer?">
+                  {formData.providerReferences || "-"}
                 </Section>
               </div>
 

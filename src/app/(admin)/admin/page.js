@@ -89,6 +89,21 @@ export default function AdminPage() {
   const [contractLoading, setContractLoading] = useState(false);
   const [contractSelected, setContractSelected] = useState(null);
 
+  const adminUsers = useMemo(
+    () => users.filter((u) => u.role === "ADMIN"),
+    [users]
+  );
+
+  const purchaserUsers = useMemo(
+    () => users.filter((u) => u.role === "PURCHASER"),
+    [users]
+  );
+
+  const providerUsers = useMemo(
+    () => users.filter((u) => u.role === "PROVIDER"),
+    [users]
+  );
+
   const fetchContracts = async (reset = false) => {
     if (contractLoading) return;
     setContractLoading(true);
@@ -413,9 +428,137 @@ export default function AdminPage() {
 
       <div
         ref={scrollRef}
-        className="overflow-y-auto max-h-[70vh] border rounded bg-white text-black"
+        className="overflow-y-auto max-h-[70vh] text-black p-2"
       >
-        <table className="w-full border-collapse">
+        {/* --- Admin Users --- */}
+        <h3 className="text-lg font-semibold mt-2 mb-2 text-white">
+          Admin Users
+        </h3>
+        <table className="w-full border-collapse mb-6 bg-white">
+          <thead className="bg-gray-200">
+            <tr>
+              <th className="border p-2">User ID</th>
+              <th className="border p-2">Role</th>
+              <th className="border p-2">Status</th>
+              <th className="border p-2">Company</th>
+              <th className="border p-2">Requests</th>
+              <th className="border p-2">Offers</th>
+              <th className="border p-2">Contracts</th>
+              <th className="border p-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {adminUsers.map((u) => (
+              <tr key={u.userId} className="text-center">
+                <td
+                  className="border p-2 text-blue-600 cursor-pointer underline"
+                  onClick={() => showUserDetails(u.userId)}
+                >
+                  {u.userId}
+                </td>
+                <td className="border p-2">{u.role}</td>
+                <td className="border p-2">
+                  <select
+                    className="border rounded"
+                    value={u.registerStatus}
+                    onChange={(e) =>
+                      updateRegisterStatus(u.userId, e.target.value)
+                    }
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="confirmed">Confirmed</option>
+                  </select>
+                </td>
+                <td className="border p-2">{u.companyName}</td>
+                <td className="border p-2">{u.requestsCount}</td>
+                <td className="border p-2">{u.offersCount}</td>
+                <td className="border p-2">{u.contractsCount}</td>
+                <td className="border p-2">
+                  <button
+                    onClick={() => deleteUser(u.userId)}
+                    className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+            {!adminUsers.length && !loading && (
+              <tr>
+                <td colSpan={8} className="text-center p-4 text-gray-500">
+                  No admin users found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+
+        {/* --- Registered Purchasers --- */}
+        <h3 className="text-lg font-semibold mt-2 mb-2 text-white">
+          Registered Purchasers
+        </h3>
+        <table className="w-full border-collapse mb-6 bg-white">
+          <thead className="bg-gray-200">
+            <tr>
+              <th className="border p-2">User ID</th>
+              <th className="border p-2">Role</th>
+              <th className="border p-2">Status</th>
+              <th className="border p-2">Company</th>
+              <th className="border p-2">Requests</th>
+              <th className="border p-2">Contracts</th>
+              <th className="border p-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {purchaserUsers.map((u) => (
+              <tr key={u.userId} className="text-center">
+                <td
+                  className="border p-2 text-blue-600 cursor-pointer underline"
+                  onClick={() => showUserDetails(u.userId)}
+                >
+                  {u.userId}
+                </td>
+                <td className="border p-2">{u.role}</td>
+                <td className="border p-2">
+                  <select
+                    className="border rounded"
+                    value={u.registerStatus}
+                    onChange={(e) =>
+                      updateRegisterStatus(u.userId, e.target.value)
+                    }
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="confirmed">Confirmed</option>
+                  </select>
+                </td>
+                <td className="border p-2">{u.companyName}</td>
+                <td className="border p-2">{u.requestsCount}</td>
+                <td className="border p-2">{u.contractsCount}</td>
+                <td className="border p-2">
+                  <button
+                    onClick={() => deleteUser(u.userId)}
+                    className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+            {!purchaserUsers.length && !loading && (
+              <tr>
+                <td colSpan={7} className="text-center p-4 text-gray-500">
+                  No purchasers found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+
+        {/* --- Registered Providers --- */}
+        <h3 className="text-lg font-semibold mt-2 mb-2 text-white">
+          Registered Providers
+        </h3>
+        <table className="w-full border-collapse mb-2 bg-white">
           <thead className="bg-gray-200">
             <tr>
               <th className="border p-2">User ID</th>
@@ -426,14 +569,13 @@ export default function AdminPage() {
               <th className="border p-2">Invoice Fee</th>
               <th className="border p-2">Company Age</th>
               <th className="border p-2">Provider Type</th>
-              <th className="border p-2">Requests</th>
               <th className="border p-2">Offers</th>
               <th className="border p-2">Contracts</th>
               <th className="border p-2">Actions</th>
             </tr>
           </thead>
           <tbody>
-            {users.map((u) => (
+            {providerUsers.map((u) => (
               <tr key={u.userId} className="text-center">
                 <td
                   className="border p-2 text-blue-600 cursor-pointer underline"
@@ -494,23 +636,22 @@ export default function AdminPage() {
                     <option value="Law Firm">Law Firm</option>
                   </select>
                 </td>
-                <td className="border p-2">{u.requestsCount}</td>
                 <td className="border p-2">{u.offersCount}</td>
                 <td className="border p-2">{u.contractsCount}</td>
                 <td className="border p-2">
                   <button
                     onClick={() => deleteUser(u.userId)}
-                    className="bg-red-500 text-white px-2 py-1 rounded"
+                    className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
                   >
                     Delete
                   </button>
                 </td>
               </tr>
             ))}
-            {!users.length && !loading && (
+            {!providerUsers.length && !loading && (
               <tr>
-                <td colSpan={10} className="text-center p-4 text-gray-500">
-                  No users found.
+                <td colSpan={11} className="text-center p-4 text-gray-500">
+                  No providers found.
                 </td>
               </tr>
             )}
@@ -520,7 +661,7 @@ export default function AdminPage() {
         {hasMore && !loading && users.length > 0 && (
           <button
             onClick={() => fetchUsers(false)}
-            className="w-full bg-gray-100 p-2"
+            className="w-full bg-gray-100 p-2 mt-2"
           >
             Load more
           </button>
@@ -611,14 +752,6 @@ export default function AdminPage() {
 
       <div
         id={reqBoxId}
-        onScroll={(e) => {
-          const el = e.currentTarget;
-          const nearBottom =
-            el.scrollTop + el.clientHeight >= el.scrollHeight - 24;
-          if (nearBottom && reqHasMore && !reqLoading) {
-            fetchRequests(false);
-          }
-        }}
         className="overflow-y-auto max-h-[70vh] border rounded bg-white text-black"
       >
         <table className="w-full border-collapse">
@@ -783,6 +916,26 @@ export default function AdminPage() {
                   </tr>
                 );
               })}
+            {!reqLoading &&
+              !reqError &&
+              reqs.map((r) => {
+                // ...row rendering stays exactly the same...
+              })}
+
+            {/* Load more button, like in the other tables */}
+            {reqHasMore && !reqLoading && reqs.length > 0 && (
+              <tr>
+                <td colSpan={8} className="p-2">
+                  <button
+                    onClick={() => fetchRequests(false)}
+                    className="w-full bg-gray-100 p-2"
+                  >
+                    Load more
+                  </button>
+                </td>
+              </tr>
+            )}
+
             {reqLoading && reqHasMore && (
               <tr>
                 <td colSpan={8} className="text-center p-3 text-gray-500">
@@ -862,7 +1015,7 @@ export default function AdminPage() {
             setOfferSearchInput(val);
             setOfferSearch(val.trim()); // triggers debounced fetchOffers via useEffect
           }}
-          placeholder="Search by provider company…"
+          placeholder="Search by provider company, offer title or request title…"
           className="border rounded p-2 w-full max-w-md"
         />
         <button
@@ -888,7 +1041,8 @@ export default function AdminPage() {
             <tr>
               <th className="border p-2">Offer Id</th>
               <th className="border p-2">Company</th>
-              <th className="border p-2">Title</th>
+              <th className="border p-2">Offer Title</th>
+              <th className="border p-2">Request Title</th>
               <th className="border p-2">Offer Status</th>
               <th className="border p-2">Offer Price</th>
               <th className="border p-2">Actions</th>
@@ -897,7 +1051,7 @@ export default function AdminPage() {
           <tbody>
             {!offerLoading && offers.length === 0 && (
               <tr>
-                <td colSpan={6} className="text-center p-4 text-gray-500">
+                <td colSpan={7} className="text-center p-4 text-gray-500">
                   No offers found.
                 </td>
               </tr>
@@ -912,6 +1066,7 @@ export default function AdminPage() {
                 </td>
                 <td className="border p-2">{o.companyName || "—"}</td>
                 <td className="border p-2">{o.offerTitle || "—"}</td>
+                <td className="border p-2">{o.requestTitle || "—"}</td>
                 <td className="border p-2">{o.offerStatus || "—"}</td>
                 <td className="border p-2">{o.offerPrice ?? "—"}</td>
                 <td className="border p-2">
@@ -924,16 +1079,17 @@ export default function AdminPage() {
                 </td>
               </tr>
             ))}
+
             {offerLoading && (
               <tr>
-                <td colSpan={6} className="text-center p-4">
+                <td colSpan={7} className="text-center p-4">
                   Loading…
                 </td>
               </tr>
             )}
             {offerHasMore && !offerLoading && offers.length > 0 && (
               <tr>
-                <td colSpan={6} className="p-2">
+                <td colSpan={7} className="p-2">
                   <button
                     onClick={() => fetchOffers(false)}
                     className="w-full bg-gray-100 p-2"

@@ -404,6 +404,7 @@ export default function ContractModal({
     "requestState",
     "maximumPrice",
     "details.maximumPrice",
+    "providerReferences",
   ]);
   function looksLikeProviderReqSection(section) {
     const key = (section?.id || section?.name || section?.title || "")

@@ -408,6 +408,7 @@ const HIDE_PATHS = new Set([
   "requestState",
   "maximumPrice",
   "details.maximumPrice",
+  "providerReferences",
 ]);
 
 function looksLikeProviderReqSection(section) {

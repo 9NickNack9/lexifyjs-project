@@ -74,6 +74,7 @@ model Request {
   additionalBackgroundInfo           String     @default("")                 // present but can be empty
   backgroundInfoFiles                Json       @default("[]")              // present but can be empty
   supplierCodeOfConductFiles         Json       @default("[]")              // present but can be empty
+  providerReferences                 String     @default("")
 
   serviceProviderType          String
   domesticOffers               String
@@ -104,15 +105,16 @@ model Request {
 }
 
 model Offer {
-  offerId             BigInt   @id @default(autoincrement()) @db.BigInt
-  requestId           BigInt
-  providerId          BigInt
-  offerLawyer         String
-  offerPrice          Decimal  @db.Decimal
-  offerExpectedPrice  Decimal? @db.Decimal
-  createdAt           DateTime @default(now())
-  offerTitle          String
-  offerStatus         String   @default("Pending")
+  offerId                            BigInt     @id @default(autoincrement()) @db.BigInt
+  requestId                          BigInt
+  providerId                         BigInt
+  offerLawyer                        String
+  offerPrice                         Decimal    @db.Decimal
+  offerExpectedPrice                 Decimal?   @db.Decimal
+  createdAt                          DateTime   @default(now())
+  offerTitle                         String
+  offerStatus                        String     @default("Pending")
+  providerReferenceFiles             Json       @default("[]")
 
   request  Request @relation(fields: [requestId], references: [requestId], onDelete: Cascade)
   provider AppUser @relation("ProviderOffers", fields: [providerId], references: [userId], onDelete: Cascade)

@@ -194,6 +194,7 @@ export default function ContractPrint({ contract, companyName, previewDef }) {
       "requestState",
       "maximumPrice",
       "details.maximumPrice",
+      "providerReferences",
     ]);
     const path = String(field?.path || "");
     if (HIDE_PATHS.has(path)) return true;

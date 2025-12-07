@@ -25,6 +25,14 @@ export async function GET(req) {
               mode: "insensitive",
             },
           },
+          {
+            request: {
+              title: {
+                contains: search,
+                mode: "insensitive",
+              },
+            },
+          },
         ],
       }
     : {};
@@ -42,6 +50,7 @@ export async function GET(req) {
         offerPrice: true,
         offerTitle: true,
         provider: { select: { companyName: true } },
+        request: { select: { title: true } },
       },
     }),
   ]);
@@ -52,6 +61,7 @@ export async function GET(req) {
     offerPrice: o.offerPrice,
     offerTitle: o.offerTitle || null,
     companyName: o.provider?.companyName || "—",
+    requestTitle: o.request?.title || null,
   }));
 
   return NextResponse.json({ total, offers });
