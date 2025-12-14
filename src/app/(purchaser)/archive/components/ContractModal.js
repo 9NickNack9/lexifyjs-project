@@ -72,6 +72,21 @@ export default function ContractModal({
     );
   }, [defs, contract]);
 
+  const pdfMeta = useMemo(() => {
+    const f = contract?.contractPdfFile;
+    if (!f) return null;
+
+    if (Array.isArray(f)) {
+      return f.find((x) => x && x.url) || f[0] || null;
+    }
+
+    if (typeof f === "object") return f;
+
+    return null;
+  }, [contract]);
+
+  const pdfUrl = pdfMeta?.url || null;
+
   if (!open || !contract) return null;
 
   const Section = ({ title, children }) => (
@@ -446,12 +461,34 @@ export default function ContractModal({
           <h2 className="text-2xl font-bold text-white">LEXIFY Contract</h2>
         </div>
 
-        <button
-          onClick={onClose}
-          className="absolute top-3 right-3 text-gray-600 hover:text-black text-xl rounded-full w-8 h-8 flex items-center justify-center bg-gray-300 cursor-pointer"
-        >
-          &times;
-        </button>
+        <div className="absolute top-3 right-3 flex items-center gap-2">
+          {pdfUrl ? (
+            <button
+              type="button"
+              onClick={() =>
+                window.open(pdfUrl, "_blank", "noopener,noreferrer")
+              }
+              className="px-3 py-1 rounded bg-white text-[#11999e] text-sm font-medium hover:bg-gray-100 border border-[#11999e] cursor-pointer"
+            >
+              Open Pdf
+            </button>
+          ) : (
+            <button
+              type="button"
+              disabled
+              className="px-3 py-1 rounded bg-gray-300 text-gray-600 text-sm font-medium border border-gray-400 cursor-not-allowed"
+            >
+              No Pdf Available
+            </button>
+          )}
+
+          <button
+            onClick={onClose}
+            className="text-gray-600 hover:text-black text-xl rounded-full w-8 h-8 flex items-center justify-center bg-gray-300 cursor-pointer"
+          >
+            x
+          </button>
+        </div>
 
         <div className="p-4 text-black space-y-3 text-md">
           <p>

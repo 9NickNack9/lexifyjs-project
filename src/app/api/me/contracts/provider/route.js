@@ -38,6 +38,7 @@ export async function GET() {
         contractPrice: true, // Decimal
         requestId: true,
         providerId: true,
+        contractPdfFile: true,
         request: {
           select: {
             requestId: true,
@@ -112,6 +113,7 @@ export async function GET() {
           contractId: safeNumber(c.contractId),
           contractDate: c.contractDate,
           contractPrice: toNum(c.contractPrice),
+          contractPdfFile: c.contractPdfFile ?? null,
           title: c.offer?.offerTitle || "—",
           clientName: c.client?.companyName || "—",
           contractOwner: "—",
@@ -120,6 +122,7 @@ export async function GET() {
             contractPrice: toNum(c.contractPrice),
             contractPriceCurrency: c.request?.currency || null,
             contractPriceType: c.request?.paymentRate || null,
+            contractPdfFile: c.contractPdfFile ?? null,
             provider: null,
             client: {
               companyName: c.client?.companyName || "—",
@@ -278,12 +281,14 @@ export async function GET() {
         title: offerTitle || c.request?.title || "—",
         clientName: c.client?.companyName || "—",
         contractOwner: ownerFromOffer || "—",
+        contractPdfFile: c.contractPdfFile ?? null,
 
         contract: {
           contractDate: c.contractDate,
           contractPrice: toNum(c.contractPrice),
           contractPriceCurrency: c.request?.currency || null,
           contractPriceType: c.request?.paymentRate || null,
+          contractPdfFile: c.contractPdfFile ?? null,
           provider,
           purchaser,
           client: {

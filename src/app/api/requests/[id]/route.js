@@ -100,6 +100,7 @@ export async function GET(_req, ctx) {
         advanceRetainerFee: true,
 
         language: true,
+        providerReferences: true,
 
         // taxonomy
         requestCategory: true,

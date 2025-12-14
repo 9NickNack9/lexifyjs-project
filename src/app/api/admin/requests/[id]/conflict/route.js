@@ -16,6 +16,60 @@ import {
   notifyPurchaserConflictDeniedWithRemainingOffers,
   notifyPurchaserConflictDeniedNoOffers,
 } from "@/lib/mailer";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { randomBytes } from "crypto";
+
+const s3 = new S3Client({
+  region: process.env.S3_REGION,
+  endpoint: process.env.S3_ENDPOINT || undefined,
+  forcePathStyle: !!process.env.S3_FORCE_PATH_STYLE,
+  credentials: process.env.S3_ACCESS_KEY_ID
+    ? {
+        accessKeyId: process.env.S3_ACCESS_KEY_ID,
+        secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
+      }
+    : undefined,
+});
+
+function hasS3() {
+  return !!(
+    process.env.S3_BUCKET &&
+    process.env.S3_ACCESS_KEY_ID &&
+    process.env.S3_SECRET_ACCESS_KEY
+  );
+}
+
+async function uploadPdfBufferToS3(buffer, prefix = "contractpdfs") {
+  const key = `${prefix}/${Date.now()}-${Math.random()
+    .toString(36)
+    .slice(2)}.pdf`;
+
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: process.env.S3_BUCKET,
+      Key: key,
+      Body: buffer,
+      ContentType: "application/pdf",
+      ACL: "public-read",
+    })
+  );
+
+  const base = process.env.S3_PUBLIC_BASE_URL;
+  const url = base ? `${base}/${key}` : `s3://${process.env.S3_BUCKET}/${key}`;
+  return { key, url };
+}
+
+async function savePdfBufferLocally(buffer, prefix = "contractpdfs") {
+  const name = `${Date.now()}-${randomBytes(6).toString("hex")}.pdf`;
+  const dir = path.join(process.cwd(), "public", prefix);
+  await fs.mkdir(dir, { recursive: true }); // ensure folder exists
+  const abs = path.join(dir, name);
+  await fs.writeFile(abs, buffer);
+
+  const key = `${prefix}/${name}`;
+  const url = `/${prefix}/${name}`;
+  return { key, url };
+}
 
 // ---------- helpers copied from awaiting/select (trimmed to what we need) ----------
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -279,6 +333,37 @@ async function sendContractPackageEmail(prisma, requestId) {
 
   if (!pdfBuffer || pdfBuffer.length === 0) {
     throw new Error("React-PDF returned empty buffer in conflict/accept");
+  }
+
+  // --- Save contract PDF to storage & persist reference on contract ---
+  try {
+    const stored = hasS3()
+      ? await uploadPdfBufferToS3(pdfBuffer, "contractpdfs")
+      : await savePdfBufferLocally(pdfBuffer, "contractpdfs");
+
+    const uniqueName = `LEXIFY-Contract-${
+      contract.contractId
+    }-${Date.now()}.pdf`;
+
+    const pdfMeta = {
+      name: uniqueName,
+      type: "application/pdf",
+      size: pdfBuffer.length,
+      url: stored.url,
+      key: stored.key,
+    };
+
+    await prisma.contract.update({
+      where: { contractId: contract.contractId },
+      data: { contractPdfFile: pdfMeta },
+    });
+  } catch (e) {
+    console.error(
+      "conflict/sendContractPackageEmail: failed to persist contractPdfFile for contract",
+      String(contract.contractId),
+      e
+    );
+    // don't block email sending
   }
 
   // ---- Build attachments: contract PDF + request files ----

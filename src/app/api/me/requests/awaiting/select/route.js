@@ -15,6 +15,60 @@ import {
   notifyLosingLawyerNotSelected,
   notifyProviderConflictCheck,
 } from "@/lib/mailer";
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { randomBytes } from "crypto";
+
+const s3 = new S3Client({
+  region: process.env.S3_REGION,
+  endpoint: process.env.S3_ENDPOINT || undefined,
+  forcePathStyle: !!process.env.S3_FORCE_PATH_STYLE,
+  credentials: process.env.S3_ACCESS_KEY_ID
+    ? {
+        accessKeyId: process.env.S3_ACCESS_KEY_ID,
+        secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
+      }
+    : undefined,
+});
+
+function hasS3() {
+  return !!(
+    process.env.S3_BUCKET &&
+    process.env.S3_ACCESS_KEY_ID &&
+    process.env.S3_SECRET_ACCESS_KEY
+  );
+}
+
+async function uploadPdfBufferToS3(buffer, prefix = "contractpdfs") {
+  const key = `${prefix}/${Date.now()}-${Math.random()
+    .toString(36)
+    .slice(2)}.pdf`;
+
+  await s3.send(
+    new PutObjectCommand({
+      Bucket: process.env.S3_BUCKET,
+      Key: key,
+      Body: buffer,
+      ContentType: "application/pdf",
+      ACL: "public-read",
+    })
+  );
+
+  const base = process.env.S3_PUBLIC_BASE_URL;
+  const url = base ? `${base}/${key}` : `s3://${process.env.S3_BUCKET}/${key}`;
+  return { key, url };
+}
+
+async function savePdfBufferLocally(buffer, prefix = "contractpdfs") {
+  const name = `${Date.now()}-${randomBytes(6).toString("hex")}.pdf`;
+  const dir = path.join(process.cwd(), "public", prefix);
+  await fs.mkdir(dir, { recursive: true }); // ensure folder exists
+  const abs = path.join(dir, name);
+  await fs.writeFile(abs, buffer);
+
+  const key = `${prefix}/${name}`;
+  const url = `/${prefix}/${name}`;
+  return { key, url };
+}
 
 // ---- local helper (mirrors pending route) ----
 async function sendContractPackageEmail(prisma, requestId) {
@@ -250,6 +304,37 @@ async function sendContractPackageEmail(prisma, requestId) {
     throw new Error("React-PDF returned empty buffer in awaiting/select");
   }
 
+  // --- Save contract PDF to storage & persist reference on contract ---
+  try {
+    const stored = hasS3()
+      ? await uploadPdfBufferToS3(pdfBuffer, "contractpdfs")
+      : await savePdfBufferLocally(pdfBuffer, "contractpdfs");
+
+    const uniqueName = `LEXIFY-Contract-${
+      contract.contractId
+    }-${Date.now()}.pdf`;
+
+    const pdfMeta = {
+      name: uniqueName,
+      type: "application/pdf",
+      size: pdfBuffer.length,
+      url: stored.url,
+      key: stored.key,
+    };
+
+    await prisma.contract.update({
+      where: { contractId: contract.contractId },
+      data: { contractPdfFile: pdfMeta },
+    });
+  } catch (e) {
+    console.error(
+      "Failed to persist contractPdfFile for contract",
+      String(contract.contractId),
+      e
+    );
+    // do not throw – still proceed with sending emails
+  }
+
   // --- Build attachments: contract PDF + request files ----
   const files = [
     ...(shaped.request.backgroundInfoFiles || []),
@@ -451,7 +536,7 @@ export async function POST(req) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     const body = await req.json().catch(() => ({}));
-    const { requestId, offerId } = body || {};
+    const { requestId, offerId, selectReason, teamRequest } = body || {};
 
     let reqIdBig, offerIdBig, clientIdBig;
     try {
@@ -471,9 +556,31 @@ export async function POST(req) {
         details: true,
       },
     });
+
     if (!requestRow || requestRow.clientId !== clientIdBig) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
+
+    const baseDetails =
+      requestRow.details && typeof requestRow.details === "object"
+        ? { ...requestRow.details }
+        : {};
+
+    // Only update when values are provided (Confirm Selection)
+    if (typeof selectReason === "string") {
+      const val = selectReason.trim();
+      if (val) {
+        baseDetails.selectReason = val;
+      }
+    }
+
+    if (typeof teamRequest === "string") {
+      const val = teamRequest.trim();
+      if (val) {
+        baseDetails.teamRequest = val;
+      }
+    }
+
     if (requestRow.requestState !== "ON HOLD") {
       return NextResponse.json(
         { error: "Request is not on hold" },
@@ -516,7 +623,7 @@ export async function POST(req) {
           selectedOfferId: offerRow.offerId,
           acceptDeadlinePausedRemainingMs: remainingMs,
           acceptDeadlinePausedAt: now,
-          // leave acceptDeadline as-is for audit; we’ll ignore it while paused
+          details: baseDetails,
         },
       });
 
@@ -613,7 +720,11 @@ export async function POST(req) {
       }),
       prisma.request.update({
         where: { requestId: reqIdBig },
-        data: { requestState: "EXPIRED", contractResult: "Yes" },
+        data: {
+          requestState: "EXPIRED",
+          contractResult: "Yes",
+          details: baseDetails,
+        },
       }),
     ]);
 
@@ -634,6 +745,7 @@ export async function POST(req) {
           select: {
             title: true,
             primaryContactPerson: true,
+            details: true,
             client: {
               select: { companyContactPersons: true },
             },
@@ -722,15 +834,41 @@ export async function POST(req) {
             winner.offerLawyer,
             wMeta.contacts
           );
+
           if (wPrimary?.email && isEmail(wPrimary.email)) {
             const toGroup = expandWithAllNotificationContacts(
               wPrimary,
               wMeta.contacts
             );
-            await notifyWinningLawyerContractFormed({
+
+            // read teamRequest from request.details
+            let teamReq = "";
+            const rawTeamReq = data?.details?.teamRequest;
+            if (typeof rawTeamReq === "string") {
+              teamReq = rawTeamReq.trim();
+            } else if (rawTeamReq != null) {
+              teamReq = String(rawTeamReq).trim();
+            }
+
+            const basePayload = {
               to: toGroup,
               offerTitle: winner.offerTitle || "",
-            });
+            };
+
+            if (teamReq) {
+              await notifyWinningLawyerContractFormed({
+                ...basePayload,
+                teamCompTitle: "Team Composition Request",
+                compText:
+                  "The client has requested that the following legal professional(s) be included in the project team: ",
+                teamDetails: teamReq,
+                confirmText:
+                  "Please confirm team availability when discussing engagement details with the client.",
+              });
+            } else {
+              // No team request
+              await notifyWinningLawyerContractFormed(basePayload);
+            }
           }
         }
 

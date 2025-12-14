@@ -207,13 +207,31 @@ export async function notifyPurchaserContractFormed({ to, requestTitle }) {
 }
 
 // Winning offer lawyer notification: contract formed
-export async function notifyWinningLawyerContractFormed({ to, offerTitle }) {
+export async function notifyWinningLawyerContractFormed({
+  to,
+  offerTitle,
+  teamCompTitle,
+  compText,
+  teamDetails,
+  confirmText,
+}) {
   if (!to) return;
+
   const templateId = "d-eec22e806a934bc09103dd78bebe6951";
+
+  // Build dynamic template data
+  const dynamicTemplateData = { offerTitle };
+
+  // Only include team request fields if they exist & are non-empty
+  if (teamCompTitle) dynamicTemplateData.teamCompTitle = teamCompTitle;
+  if (compText) dynamicTemplateData.compText = compText;
+  if (teamDetails) dynamicTemplateData.teamDetails = teamDetails;
+  if (confirmText) dynamicTemplateData.confirmText = confirmText;
+
   await sendDynamicTemplateEmail({
-    to, // send directly to the winning lawyer
+    to,
     templateId,
-    dynamicTemplateData: { offerTitle },
+    dynamicTemplateData,
   });
 }
 

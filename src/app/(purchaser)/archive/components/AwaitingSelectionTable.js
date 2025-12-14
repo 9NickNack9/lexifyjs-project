@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { fmtMoney, formatTimeUntil } from "../utils/format";
 import NarrowTooltip from "../../../components/NarrowTooltip";
 
@@ -16,11 +17,21 @@ export default function AwaitingSelectionTable({
   onCancel,
   onSelect, // optional custom handler
 }) {
-  const postSelect = async (requestId, offerId) => {
+  const [modalOpen, setModalOpen] = useState(false);
+  const [modalRow, setModalRow] = useState(null);
+  const [modalOffer, setModalOffer] = useState(null);
+
+  const [selectReasonChoice, setSelectReasonChoice] = useState(
+    "Law Firm's Expertise and Experience in Similar Matters"
+  );
+  const [selectReasonOther, setSelectReasonOther] = useState("");
+  const [teamRequestText, setTeamRequestText] = useState("");
+
+  const postSelect = async (requestId, offerId, extra = {}) => {
     const res = await fetch("/api/me/requests/awaiting/select", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ requestId, offerId }),
+      body: JSON.stringify({ requestId, offerId, ...extra }),
     });
     const data = await res.json().catch(() => ({}));
     if (!res.ok)
@@ -28,9 +39,9 @@ export default function AwaitingSelectionTable({
     return data;
   };
 
-  const handleSelect = async (requestId, offerId) => {
+  const handleSelect = async (requestId, offerId, extra = {}) => {
     try {
-      await postSelect(requestId, offerId);
+      await postSelect(requestId, offerId, extra);
       // refresh after success
       window.location.reload();
     } catch (e) {
@@ -38,33 +49,60 @@ export default function AwaitingSelectionTable({
     }
   };
 
-  const confirmAndSelect = async (row, offer) => {
-    const pretty = `${fmtMoney(offer.offeredPrice, row.currency)} (${
-      offer.providerCompanyName
-    } / Lead: ${offer.offerLawyer}, LEXIFY rating: ${
-      !offer.providerHasRatings
-        ? "No Ratings Yet"
-        : `${offer.providerTotalRating ?? "—"}/5`
-    }`;
-
-    const confirmed = window.confirm(
-      [
-        "Please confirm you want to select this offer as the winner.",
-        "",
-        `Request: ${row.requestTitle}`,
-        `Offer:   ${pretty}`,
-        "",
-        "This will create a LEXIFY contract at the above price.",
-        "This action cannot be undone.",
-      ].join("\n")
+  const confirmAndSelect = (row, offer) => {
+    setModalRow(row);
+    setModalOffer(offer);
+    // reset fields each time
+    setSelectReasonChoice(
+      "Law Firm's Expertise and Experience in Similar Matters"
     );
+    setSelectReasonOther("");
+    setTeamRequestText("");
+    setModalOpen(true);
+  };
 
-    if (!confirmed) return;
+  const handleModalCancel = () => {
+    setModalOpen(false);
+    setModalRow(null);
+    setModalOffer(null);
+    setSelectReasonOther("");
+    setTeamRequestText("");
+  };
 
-    if (onSelect) {
-      await onSelect(row.requestId, offer.offerId);
-    } else {
-      await handleSelect(row.requestId, offer.offerId);
+  const handleModalConfirm = async () => {
+    if (!modalRow || !modalOffer) return;
+
+    // Determine what goes into details.selectReason
+    let selectReasonValue = null;
+    if (selectReasonChoice === "Other") {
+      const trimmed = selectReasonOther.trim();
+      if (trimmed) {
+        selectReasonValue = trimmed;
+      }
+    } else if (selectReasonChoice) {
+      selectReasonValue = selectReasonChoice;
+    }
+
+    const teamRequestValue = teamRequestText.trim() || null;
+
+    const extra = {
+      // Only send if there is something meaningful to store
+      ...(selectReasonValue ? { selectReason: selectReasonValue } : {}),
+      ...(teamRequestValue ? { teamRequest: teamRequestValue } : {}),
+    };
+
+    try {
+      if (onSelect) {
+        await onSelect(modalRow.requestId, modalOffer.offerId, extra);
+      } else {
+        await handleSelect(modalRow.requestId, modalOffer.offerId, extra);
+      }
+    } finally {
+      setModalOpen(false);
+      setModalRow(null);
+      setModalOffer(null);
+      setSelectReasonOther("");
+      setTeamRequestText("");
     }
   };
 
@@ -113,7 +151,7 @@ export default function AwaitingSelectionTable({
                 My Max. Price (VAT 0%){" "}
                 <NarrowTooltip tooltipText="If you have included a maximum price for the legal service in your LEXIFY Request, the maximum price is displayed here. A maximum price can be set for lump sum offers only. " />
               </th>
-              <th className="border p-2 text-center">3 Best Offers</th>
+              <th className="border p-2 text-center">5 Best Offers</th>
               <th className="border p-2 text-center">
                 Time until Automatic Rejection of All Offers{" "}
                 <NarrowTooltip tooltipText="If you need additional time to decide, click the 'I need more time' button to extend your offer selection deadline by 7 days (168 hours). This extension can only be used once." />
@@ -217,10 +255,8 @@ export default function AwaitingSelectionTable({
                                   )
                                   {Array.isArray(o.providerReferenceFiles) &&
                                     o.providerReferenceFiles.length > 0 && (
-                                      <div className="mt-1 text-xs">
-                                        <span className="font-semibold">
-                                          , Written Reference(s):{" "}
-                                        </span>
+                                      <div className="mt-1">
+                                        <span>, Written Reference(s): </span>
                                         {o.providerReferenceFiles.map(
                                           (file, idx) => {
                                             const name =
@@ -273,7 +309,7 @@ export default function AwaitingSelectionTable({
                         <button
                           className={`px-2 py-1 rounded text-white ${
                             r.canExtend
-                              ? "bg-[#11999e] hover:opacity-90"
+                              ? "bg-[#11999e] hover:opacity-90 cursor-pointer"
                               : "bg-gray-400 cursor-not-allowed"
                           }`}
                           disabled={!r.canExtend}
@@ -307,6 +343,122 @@ export default function AwaitingSelectionTable({
             })}
           </tbody>
         </table>
+      )}
+      {modalOpen && modalRow && modalOffer && (
+        <div className="fixed inset-0 bg-[#11999e] bg-opacity-40 flex items-center justify-center z-50">
+          <div className="bg-white text-black rounded shadow-lg w-full max-w-xl p-6">
+            {/* Existing info from the old confirm window */}
+            <h3 className="text-xl font-semibold mb-4">
+              Please Confirm Your Selected Winning Offer
+            </h3>
+
+            <div className="mb-3 text-sm">
+              <p>
+                <strong>LEXIFY Request Title:</strong> {modalRow.requestTitle}
+              </p>
+              <p className="mt-1">
+                <strong>Selected Offer:</strong>{" "}
+                {fmtMoney(modalOffer.offeredPrice, modalRow.currency)} (
+                {modalOffer.providerCompanyWebsite ? (
+                  <a
+                    href={modalOffer.providerCompanyWebsite}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline"
+                  >
+                    {modalOffer.providerCompanyName}
+                  </a>
+                ) : (
+                  <span>{modalOffer.providerCompanyName}</span>
+                )}{" "}
+                / Lead: {modalOffer.offerLawyer}, LEXIFY rating:{" "}
+                {!modalOffer.providerHasRatings
+                  ? "No Ratings Yet"
+                  : `${modalOffer.providerTotalRating ?? "—"}/5`}
+                )
+              </p>
+            </div>
+
+            {/* Dropdown with tooltip */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">
+                Help us improve by sharing your primary reason for selecting
+                this offer{" "}
+                <NarrowTooltip tooltipText="This primary reason for the winner selection will be shared with non-winning bidders to enable them to improve their proposals in the future. If you select “I'd rather not say,” this information will not be shared with non-winning bidders." />
+              </label>
+              <select
+                className="mt-1 block w-full border rounded p-2"
+                value={selectReasonChoice}
+                onChange={(e) => setSelectReasonChoice(e.target.value)}
+              >
+                <option value="Law Firm's Expertise and Experience in Similar Matters">
+                  Law Firm&apos;s Expertise and Experience in Similar Matters
+                </option>
+                <option value="Law Firm's LEXIFY Rating">
+                  Law Firm&apos;s LEXIFY Rating
+                </option>
+                <option value="Specific Lawyer(s) at Law Firm">
+                  Specific Lawyer(s) at Law Firm
+                </option>
+                <option value="Offered Price">Offered Price</option>
+                <option value="Other">Other</option>
+                <option value="I'd rather not say">
+                  I&apos;d rather not say
+                </option>
+              </select>
+
+              {selectReasonChoice === "Other" && (
+                <textarea
+                  className="mt-2 block w-full border rounded p-2 min-h-[60px]"
+                  value={selectReasonOther}
+                  onChange={(e) => setSelectReasonOther(e.target.value)}
+                  placeholder="Insert primary reason for selecting this offer"
+                />
+              )}
+            </div>
+
+            {/* Team request textarea with tooltip */}
+            <div className="mb-4">
+              <label className="block text-sm font-medium mb-1">
+                Request Specific Team Members (Optional){" "}
+                <NarrowTooltip tooltipText="If you would like specific lawyer(s) from the winning firm to be included in the project team, please specify their name(s) below. The firm will see your request as soon as you confirm your selection." />
+              </label>
+              <textarea
+                className="mt-1 block w-full border rounded p-2 min-h-[80px]"
+                value={teamRequestText}
+                onChange={(e) => setTeamRequestText(e.target.value)}
+                placeholder="Insert name(s) of preferred project team member(s). If you have no particular preference, leave this field blank."
+              />
+            </div>
+
+            <p className="text-sm mb-4">
+              By clicking &quot;Confirm Selection&quot; below, I accept that
+              LEXIFY will automatically generate a binding LEXIFY Contract
+              between my company, as the legal service purchaser, and the legal
+              service provider submitting the winning offer, subject to the
+              parameters defined in my LEXIFY Request. The LEXIFY Contract will
+              consist of (i) the service description, other specifications, and
+              any procurement appendices (if applicable) designated in my LEXIFY
+              Request, and (ii) the General Terms and Conditions for LEXIFY
+              Contracts.
+            </p>
+
+            <div className="flex justify-end gap-3 mt-4">
+              <button
+                onClick={handleModalCancel}
+                className="px-4 py-2 rounded border border-gray-400 text-gray-700 cursor-pointer"
+              >
+                Cancel Selection
+              </button>
+              <button
+                onClick={handleModalConfirm}
+                className="px-4 py-2 rounded bg-[#11999e] text-white cursor-pointer"
+              >
+                Confirm Selection
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

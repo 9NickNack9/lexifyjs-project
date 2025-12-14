@@ -50,6 +50,10 @@ export async function PUT(req, { params }) {
 
   return NextResponse.json({
     ok: true,
-    ...updated,
+    requestId: updated.requestId.toString(),
+    requestState: updated.requestState,
+    dateExpired: updated.dateExpired,
+    offersDeadline: updated.offersDeadline,
+    acceptDeadline: updated.acceptDeadline,
   });
 }

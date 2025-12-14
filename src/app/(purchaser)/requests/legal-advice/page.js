@@ -489,6 +489,7 @@ export default function LegalAdvice() {
             "Employment and Labor",
             "Real Estate and Construction",
             "Sourcing",
+            "Banking and Finance",
             "ICT and IT",
             "Intellectual Property Rights",
             "Data Privacy",

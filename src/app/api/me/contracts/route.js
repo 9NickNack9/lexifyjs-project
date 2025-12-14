@@ -107,6 +107,7 @@ export async function GET() {
         contractDate: true,
         contractPrice: true,
         providerId: true,
+        contractPdfFile: true,
 
         request: {
           select: {
@@ -307,6 +308,7 @@ export async function GET() {
         contractPrice: numify(c.contractPrice),
         contractPriceCurrency: c.request?.currency || null,
         contractPriceType: c.request?.paymentRate || null,
+        contractPdfFile: c.contractPdfFile ?? null,
 
         provider,
         purchaser,

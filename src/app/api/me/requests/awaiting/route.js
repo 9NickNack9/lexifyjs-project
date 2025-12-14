@@ -131,7 +131,7 @@ export async function GET() {
         })
         .filter((o) => typeof o.offeredPrice === "number")
         .sort((a, b) => a.offeredPrice - b.offeredPrice)
-        .slice(0, 3);
+        .slice(0, 5);
 
       const canExtend =
         r.requestState === "ON HOLD" &&

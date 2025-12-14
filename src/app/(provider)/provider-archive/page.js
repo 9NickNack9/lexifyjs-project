@@ -472,16 +472,25 @@ export default function ProviderArchive() {
   // Pending offers data & sorting
   const [offers, setOffers] = useState([]);
   const [pendingSort, setPendingSort] = useState({
-    key: "clientName",
-    dir: "asc",
+    key: "offerSubmissionDate",
+    dir: "desc",
   });
 
   // Contracts data & sorting
   const [contracts, setContracts] = useState([]);
   const [contractSort, setContractSort] = useState({
-    key: "clientName",
-    dir: "asc",
+    key: "contractDate",
+    dir: "desc",
   });
+
+  // Expired offers data & sorting
+  const [expiredOffers, setExpiredOffers] = useState([]);
+  const [expiredSort, setExpiredSort] = useState({
+    key: "offerSubmissionDate",
+    dir: "desc",
+  });
+
+  const [contactFilterExpired, setContactFilterExpired] = useState("All");
 
   // Preview defs
   const [defs, setDefs] = useState(null);
@@ -498,9 +507,10 @@ export default function ProviderArchive() {
       try {
         setLoading(true);
 
-        const [offRes, conRes, defsRes] = await Promise.all([
+        const [offRes, conRes, expRes, defsRes] = await Promise.all([
           fetch("/api/me/offers/pending", { cache: "no-store" }),
           fetch("/api/me/contracts/provider", { cache: "no-store" }),
+          fetch("/api/me/offers/expired", { cache: "no-store" }),
           fetch("/previews/all-previews.json", { cache: "no-store" }),
         ]);
 
@@ -511,9 +521,10 @@ export default function ProviderArchive() {
             : { error: await r.text() };
         };
 
-        const [off, con, jsonDefs] = await Promise.all([
+        const [off, con, exp, jsonDefs] = await Promise.all([
           read(offRes),
           read(conRes),
+          read(expRes),
           read(defsRes),
         ]);
 
@@ -521,20 +532,28 @@ export default function ProviderArchive() {
           throw new Error(off?.error || "Failed to load pending offers");
         if (!conRes.ok)
           throw new Error(con?.error || "Failed to load contracts");
+        if (!expRes.ok)
+          throw new Error(exp?.error || "Failed to load expired offers");
 
         setOffers(off.offers || []);
         setContracts(con.contracts || []);
+        setExpiredOffers(exp.offers || []);
         setDefs(jsonDefs);
 
-        // Merge contact options from both endpoints
+        // Merge contact options from all three endpoints
         const list = Array.from(
-          new Set([...(off.contacts || []), ...(con.contacts || [])])
+          new Set([
+            ...(off.contacts || []),
+            ...(con.contacts || []),
+            ...(exp.contacts || []),
+          ])
         );
         setContactOptions(["All", ...list]);
       } catch (e) {
         alert(e.message);
         setOffers([]);
         setContracts([]);
+        setExpiredOffers([]);
         setContactOptions(["All"]);
       } finally {
         setLoading(false);
@@ -603,6 +622,16 @@ export default function ProviderArchive() {
         : contracts.filter((c) => c.contractOwner === contactFilterContracts);
     return sortGeneric(f, contractSort.key, contractSort.dir);
   }, [contracts, contactFilterContracts, contractSort]);
+
+  const filteredExpiredOffers = useMemo(() => {
+    const f =
+      contactFilterExpired === "All"
+        ? expiredOffers
+        : expiredOffers.filter(
+            (o) => o.offerSubmittedBy === contactFilterExpired
+          );
+    return sortGeneric(f, expiredSort.key, expiredSort.dir);
+  }, [expiredOffers, contactFilterExpired, expiredSort]);
 
   const def = useMemo(() => {
     if (!defs || !reqPreview) return null;
@@ -762,6 +791,141 @@ export default function ProviderArchive() {
                       </td>
                     </tr>
                   ))}
+                </tbody>
+              </table>
+            )}
+          </div>
+
+          {/* Expired Offers */}
+          <div className="w-full mb-8">
+            <h2 className="text-2xl font-semibold mb-4">My Expired Offers</h2>
+
+            <select
+              value={contactFilterExpired}
+              onChange={(e) => setContactFilterExpired(e.target.value)}
+              className="mb-4 p-2 border rounded bg-white text-black"
+            >
+              {contactOptions.map((n) => (
+                <option key={n} value={n}>
+                  {n === "All" ? "Filter Expired Offers by Offer Owner" : n}
+                </option>
+              ))}
+            </select>
+
+            {filteredExpiredOffers.length === 0 ? (
+              <EmptyBox>N/A</EmptyBox>
+            ) : (
+              <table className="w-full border-collapse border border-gray-300 bg-white text-black">
+                <thead>
+                  <tr className="bg-[#3a3a3c] text-white">
+                    <th className="border p-2 text-center">Title</th>
+                    <th
+                      className="border p-2 text-center cursor-pointer"
+                      onClick={() =>
+                        setExpiredSort((p) => ({
+                          key: "clientName",
+                          dir: p.dir === "asc" ? "desc" : "asc",
+                        }))
+                      }
+                    >
+                      Client Name{" "}
+                      {expiredSort.key === "clientName"
+                        ? expiredSort.dir === "asc"
+                          ? "↑"
+                          : "↓"
+                        : ""}
+                    </th>
+                    <th className="border p-2 text-center">
+                      Offer Submitted By
+                    </th>
+                    <th
+                      className="border p-2 text-center cursor-pointer"
+                      onClick={() =>
+                        setExpiredSort((p) => ({
+                          key: "offerSubmissionDate",
+                          dir: p.dir === "asc" ? "desc" : "asc",
+                        }))
+                      }
+                    >
+                      Offer Submission Date{" "}
+                      {expiredSort.key === "offerSubmissionDate"
+                        ? expiredSort.dir === "asc"
+                          ? "↑"
+                          : "↓"
+                        : ""}
+                    </th>
+                    <th
+                      className="border p-2 text-center cursor-pointer"
+                      onClick={() =>
+                        setExpiredSort((p) => ({
+                          key: "offeredPrice",
+                          dir: p.dir === "asc" ? "desc" : "asc",
+                        }))
+                      }
+                    >
+                      Offered Price (VAT 0%){" "}
+                      {expiredSort.key === "offeredPrice"
+                        ? expiredSort.dir === "asc"
+                          ? "↑"
+                          : "↓"
+                        : ""}
+                    </th>
+                    <th className="border p-2 text-center">
+                      Offer Submitted in Response to
+                    </th>
+                    <th className="border p-2 text-center">
+                      Was Contract Won or Lost?
+                    </th>
+                    <th className="border p-2 text-center">
+                      Winner Selected Based on
+                    </th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredExpiredOffers.map((o) => {
+                    const rawReason = o.selectReason || "";
+                    const reasonTrimmed = rawReason.trim();
+                    const winnerSelectedBasedOn =
+                      reasonTrimmed === "I'd rather not say"
+                        ? "Not Disclosed by Client"
+                        : reasonTrimmed || "—";
+
+                    return (
+                      <tr key={o.offerId}>
+                        <td className="border p-2 text-center">{o.title}</td>
+                        <td className="border p-2 text-center">
+                          {o.clientName || "—"}
+                        </td>
+                        <td className="border p-2 text-center">
+                          {o.offerSubmittedBy}
+                        </td>
+                        <td className="border p-2 text-center">
+                          {o.offerSubmissionDate
+                            ? new Date(
+                                o.offerSubmissionDate
+                              ).toLocaleDateString()
+                            : "—"}
+                        </td>
+                        <td className="border p-2 text-center">
+                          {fmtMoney(o.offeredPrice)}
+                        </td>
+                        <td className="border p-2 text-center">
+                          <button
+                            className="bg-[#11999e] text-white px-3 py-1 rounded cursor-pointer"
+                            onClick={() => handleViewRequest(o.requestId)}
+                          >
+                            View LEXIFY Request
+                          </button>
+                        </td>
+                        <td className="border p-2 text-center">
+                          {o.offerStatus || "—"}
+                        </td>
+                        <td className="border p-2 text-center">
+                          {winnerSelectedBasedOn}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             )}

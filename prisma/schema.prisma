@@ -123,12 +123,13 @@ model Offer {
 }
 
 model Contract {
-  contractId    BigInt   @id @default(autoincrement()) @db.BigInt
-  requestId     BigInt   @unique
-  clientId      BigInt
-  providerId    BigInt
-  contractDate  DateTime @default(now())
-  contractPrice Decimal  @db.Decimal
+  contractId              BigInt     @id @default(autoincrement()) @db.BigInt
+  requestId               BigInt     @unique
+  clientId                BigInt
+  providerId              BigInt
+  contractDate            DateTime   @default(now())
+  contractPrice           Decimal    @db.Decimal
+  contractPdfFile         Json       @default("[]")
 
   request  Request @relation(fields: [requestId], references: [requestId], onDelete: Cascade)
   client   AppUser @relation("ClientContracts", fields: [clientId], references: [userId], onDelete: Cascade)

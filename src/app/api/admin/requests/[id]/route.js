@@ -33,6 +33,7 @@ export async function GET(_req, { params }) {
       providerSize: true,
       providerCompanyAge: true,
       providerMinimumRating: true,
+      providerReferences: true,
       scopeOfWork: true,
       description: true,
       additionalBackgroundInfo: true,

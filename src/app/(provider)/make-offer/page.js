@@ -550,6 +550,7 @@ export default function MakeOffer() {
   const [additionalQuestion, setAdditionalQuestion] = useState("");
   const [questionSubmitting, setQuestionSubmitting] = useState(false);
   const [referenceFiles, setReferenceFiles] = useState([]);
+  const [referenceError, setReferenceError] = useState("");
 
   const paymentRate = (request?.paymentRate || "").toLowerCase();
   const isCapped = paymentRate.startsWith("capped price");
@@ -630,9 +631,10 @@ export default function MakeOffer() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
     if (!canSubmit) {
       if (requiresReferences && referenceFiles.length < minReferenceFiles) {
-        alert(
+        setReferenceError(
           `You must upload at least ${minReferenceFiles} written reference${
             minReferenceFiles > 1 ? "s" : ""
           } to submit this offer.`
@@ -640,6 +642,9 @@ export default function MakeOffer() {
       }
       return;
     }
+
+    // clear any previous error once the form is actually submittable
+    setReferenceError("");
 
     try {
       setSubmitting(true);
@@ -659,7 +664,6 @@ export default function MakeOffer() {
         "data",
         new Blob([JSON.stringify(payload)], { type: "application/json" })
       );
-      // attach reference files for backend processing
       for (const f of referenceFiles) {
         form.append("referenceFiles", f, f.name);
       }
@@ -717,12 +721,30 @@ export default function MakeOffer() {
   const handleReferenceFileChange = (e) => {
     const newFiles = Array.from(e.target.files || []);
     if (!newFiles.length) return;
-    setReferenceFiles((prev) => [...prev, ...newFiles]);
+
+    setReferenceFiles((prev) => {
+      const next = [...prev, ...newFiles];
+      // if we've now satisfied the minimum, clear the error
+      if (
+        requiresReferences &&
+        next.length >= minReferenceFiles &&
+        referenceError
+      ) {
+        setReferenceError("");
+      }
+      return next;
+    });
+
     e.target.value = "";
   };
 
   const handleDeleteReferenceFile = (index) => {
-    setReferenceFiles((prev) => prev.filter((_, i) => i !== index));
+    setReferenceFiles((prev) => {
+      const next = prev.filter((_, i) => i !== index);
+      // if we drop below min again, don't auto-set an error;
+      // it will appear when they next try to submit.
+      return next;
+    });
   };
 
   if (loading) {
@@ -979,6 +1001,9 @@ export default function MakeOffer() {
                     ))}
                   </ul>
                 </div>
+              )}
+              {referenceError && (
+                <p className="mt-2 text-sm text-red-600">{referenceError}</p>
               )}
             </div>
           )}
