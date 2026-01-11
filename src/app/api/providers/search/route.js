@@ -26,6 +26,7 @@ export async function GET(req) {
       providerCommunicationRating: true,
       providerBillingRating: true,
       providerIndividualRating: true,
+      providerPracticalRatings: true,
     },
     orderBy: { companyName: "asc" },
   };
@@ -46,6 +47,7 @@ export async function GET(req) {
     providerCommunicationRating: p.providerCommunicationRating ?? null,
     providerBillingRating: p.providerBillingRating ?? null,
     providerIndividualRating: p.providerIndividualRating ?? [],
+    providerPracticalRatings: p.providerPracticalRatings ?? null,
   }));
 
   return NextResponse.json(out);

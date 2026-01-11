@@ -26,6 +26,10 @@ export default function AwaitingSelectionTable({
   );
   const [selectReasonOther, setSelectReasonOther] = useState("");
   const [teamRequestText, setTeamRequestText] = useState("");
+  const [ratingPopupOpen, setRatingPopupOpen] = useState(false);
+  const [popupOffer, setPopupOffer] = useState(null);
+  const [popupShowTotalBreakdown, setPopupShowTotalBreakdown] = useState(false);
+  const [popupExpandedCategories, setPopupExpandedCategories] = useState({});
 
   const postSelect = async (requestId, offerId, extra = {}) => {
     const res = await fetch("/api/me/requests/awaiting/select", {
@@ -132,6 +136,118 @@ export default function AwaitingSelectionTable({
     }
   };
 
+  function mapRequestToCategory(requestCategory, requestSubcategory) {
+    const sub = (requestSubcategory || "").trim();
+    const cat = (requestCategory || "").trim();
+
+    if (sub === "Real Estate and Construction" || sub === "ICT and IT")
+      return sub;
+
+    if (cat === "Help with Contracts") return "Contracts";
+    if (cat === "Day-to-day Legal Advice") return "Day-to-day Legal Advice";
+    if (cat === "Help with Employment related Documents") return "Employment";
+    if (cat === "Help with Dispute Resolution or Debt Collection")
+      return "Dispute Resolution";
+    if (cat === "Help with Mergers & Acquisitions") return "M&A";
+    if (cat === "Help with Corporate Governance") return "Corporate Advisory";
+    if (cat === "Help with Personal Data Protection") return "Data Protection";
+    if (
+      cat ===
+      "Help with KYC (Know Your Customer) or Compliance related Questionnaire"
+    )
+      return "Compliance";
+    if (cat === "Legal Training for Management and/or Personnel")
+      return "Legal Training";
+
+    return sub || cat || "Other";
+  }
+
+  const normalizePracticalRatings = (providerPracticalRatings) => {
+    const pr = providerPracticalRatings;
+    const map = {};
+
+    if (Array.isArray(pr)) {
+      for (const item of pr) {
+        const key = (
+          item?.category ||
+          item?.categoryLabel ||
+          item?.name ||
+          ""
+        ).trim();
+        if (key) map[key] = item;
+      }
+      return map;
+    }
+
+    if (pr && typeof pr === "object") {
+      for (const [key, val] of Object.entries(pr)) {
+        if (key) map[key] = val;
+      }
+    }
+
+    return map;
+  };
+
+  const getCategoryTotal = (entry) =>
+    entry?.total ?? entry?.providerTotalRating ?? entry?.totalRating ?? null;
+
+  function AggregateRow({ label, value, tooltipText }) {
+    return (
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-1">
+          <span className="text-sm">{label}</span>
+          {tooltipText && <NarrowTooltip tooltipText={tooltipText} />}
+        </div>
+        <span className="font-semibold">
+          {!isNaN(Number(value)) ? Number(value).toFixed(2) : "0.00"} / 5
+        </span>
+      </div>
+    );
+  }
+
+  const PRACTICAL_CATEGORIES = [
+    "Contracts",
+    "Day-to-day Legal Advice",
+    "Employment",
+    "Dispute Resolution",
+    "M&A",
+    "Corporate Advisory",
+    "Data Protection",
+    "Compliance",
+    "Legal Training",
+    "Real Estate and Construction",
+    "ICT and IT",
+    "Other",
+  ];
+
+  const categoryHasRatings = (entry) => {
+    if (!entry) return false;
+    const count = Number(entry.ratingCount ?? entry.count ?? 0);
+    if (count > 0) return true;
+    return (
+      entry.total != null ||
+      entry.providerTotalRating != null ||
+      entry.totalRating != null
+    );
+  };
+
+  const getCategoryNumbers = (entry) => {
+    const total =
+      entry?.total ?? entry?.providerTotalRating ?? entry?.totalRating ?? null;
+    const quality = entry?.quality ?? entry?.providerQualityRating ?? null;
+
+    // NOTE: ratings page uses responsiveness when present
+    const responsiveness =
+      entry?.responsiveness ??
+      entry?.communication ??
+      entry?.providerCommunicationRating ??
+      null;
+
+    const billing = entry?.billing ?? entry?.providerBillingRating ?? null;
+
+    return { total, quality, responsiveness, billing };
+  };
+
   return (
     <div className="w-full mb-8">
       <h2 className="text-2xl font-semibold mb-4">
@@ -151,7 +267,10 @@ export default function AwaitingSelectionTable({
                 My Max. Price (VAT 0%){" "}
                 <NarrowTooltip tooltipText="If you have included a maximum price for the legal service in your LEXIFY Request, the maximum price is displayed here. A maximum price can be set for lump sum offers only. " />
               </th>
-              <th className="border p-2 text-center">5 Best Offers</th>
+              <th className="border p-2 text-center">
+                5 Best Offers{" "}
+                <NarrowTooltip tooltipText="You can click the legal service provider's company name to access their website, and their LEXIFY Rating to see a more detailed breakdown of their rating." />
+              </th>
               <th className="border p-2 text-center">
                 Time until Automatic Rejection of All Offers{" "}
                 <NarrowTooltip tooltipText="If you need additional time to decide, click the 'I need more time' button to extend your offer selection deadline by 7 days (168 hours). This extension can only be used once." />
@@ -248,10 +367,48 @@ export default function AwaitingSelectionTable({
                                   ) : (
                                     <span>{o.providerCompanyName}</span>
                                   )}{" "}
-                                  / Lead: {o.offerLawyer}, LEXIFY rating:{" "}
-                                  {!o.providerHasRatings
-                                    ? "No Ratings Yet"
-                                    : `${o.providerTotalRating ?? "—"}/5`}
+                                  / Lead: {o.offerLawyer},{" "}
+                                  {(() => {
+                                    const categoryKey = mapRequestToCategory(
+                                      r.requestCategory,
+                                      r.requestSubcategory
+                                    );
+
+                                    const practicalMap =
+                                      normalizePracticalRatings(
+                                        o.providerPracticalRatings
+                                      );
+                                    const categoryEntry =
+                                      practicalMap?.[categoryKey];
+                                    const categoryTotal =
+                                      getCategoryTotal(categoryEntry);
+
+                                    const ratingText =
+                                      categoryTotal == null
+                                        ? "No Ratings Yet"
+                                        : `${Number(categoryTotal).toFixed(
+                                            2
+                                          )} / 5`;
+
+                                    return (
+                                      <button
+                                        type="button"
+                                        className="text-blue-600 hover:underline cursor-pointer"
+                                        onClick={() => {
+                                          setPopupOffer({
+                                            offer: o,
+                                            request: r,
+                                            categoryKey,
+                                          });
+                                          setRatingPopupOpen(true);
+                                          setPopupShowTotalBreakdown(false);
+                                          setPopupExpandedCategories({});
+                                        }}
+                                      >
+                                        LEXIFY Rating: {ratingText}
+                                      </button>
+                                    );
+                                  })()}
                                   )
                                   {Array.isArray(o.providerReferenceFiles) &&
                                     o.providerReferenceFiles.length > 0 && (
@@ -347,7 +504,6 @@ export default function AwaitingSelectionTable({
       {modalOpen && modalRow && modalOffer && (
         <div className="fixed inset-0 bg-[#11999e] bg-opacity-40 flex items-center justify-center z-50">
           <div className="bg-white text-black rounded shadow-lg w-full max-w-xl p-6">
-            {/* Existing info from the old confirm window */}
             <h3 className="text-xl font-semibold mb-4">
               Please Confirm Your Selected Winning Offer
             </h3>
@@ -372,9 +528,21 @@ export default function AwaitingSelectionTable({
                   <span>{modalOffer.providerCompanyName}</span>
                 )}{" "}
                 / Lead: {modalOffer.offerLawyer}, LEXIFY rating:{" "}
-                {!modalOffer.providerHasRatings
-                  ? "No Ratings Yet"
-                  : `${modalOffer.providerTotalRating ?? "—"}/5`}
+                {(() => {
+                  const categoryKey = mapRequestToCategory(
+                    modalRow.requestCategory,
+                    modalRow.requestSubcategory
+                  );
+
+                  const practicalMap = normalizePracticalRatings(
+                    modalOffer.providerPracticalRatings
+                  );
+                  const entry = practicalMap?.[categoryKey];
+                  const categoryTotal = getCategoryTotal(entry);
+
+                  if (categoryTotal == null) return "No Ratings Yet";
+                  return `${Number(categoryTotal).toFixed(2)} / 5`;
+                })()}
                 )
               </p>
             </div>
@@ -457,6 +625,211 @@ export default function AwaitingSelectionTable({
                 Confirm Selection
               </button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {ratingPopupOpen && popupOffer && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white text-black rounded-lg shadow-2xl max-w-3xl w-full max-h-[80vh] overflow-y-auto p-6 relative">
+            <button
+              type="button"
+              className="absolute top-4 right-4 text-white bg-[#3a3a3c] rounded-full w-8 h-8 flex items-center justify-center text-xl hover:bg-red-600 transition cursor-pointer"
+              onClick={() => setRatingPopupOpen(false)}
+            >
+              x
+            </button>
+
+            <div className="text-xl font-semibold mb-1">
+              {popupOffer.offer.providerCompanyName}
+            </div>
+
+            <div className="text-sm text-gray-700 mb-4">
+              {popupOffer.offer.providerRatingCount} rating
+              {popupOffer.offer.providerRatingCount === 1 ? "" : "s"} received
+            </div>
+
+            {(() => {
+              const offer = popupOffer?.offer;
+              if (!offer) return null;
+
+              // These depend on your awaiting route changes:
+              // - offer.providerPracticalRatings must be included
+              // - offer.providerRatingCount must be included
+              // - offer.providerTotalRating must be included
+              const practicalMap = normalizePracticalRatings(
+                offer.providerPracticalRatings
+              );
+
+              const categoriesToShow = Array.from(
+                new Set([
+                  ...PRACTICAL_CATEGORIES,
+                  ...Object.keys(practicalMap || {}),
+                ])
+              ).filter(Boolean);
+
+              const hasAnyTotalRatings = offer.providerHasRatings === true;
+
+              return (
+                <div className="space-y-4">
+                  {/* TOTAL (expandable) */}
+                  <div className="space-y-2">
+                    {hasAnyTotalRatings ? (
+                      <>
+                        <button
+                          type="button"
+                          className="w-full -mx-2 px-2 py-1 rounded flex items-center justify-between hover:bg-gray-50 cursor-pointer"
+                          onClick={() => setPopupShowTotalBreakdown((v) => !v)}
+                          aria-expanded={popupShowTotalBreakdown}
+                        >
+                          <div className="flex items-center gap-2">
+                            <span className="text-lg text-gray-600 select-none">
+                              {popupShowTotalBreakdown ? "▾" : "▸"}
+                            </span>
+                            <span className="text-sm font-semibold">Total</span>
+                          </div>
+                          <span className="font-semibold">
+                            {!isNaN(Number(offer.providerTotalRating))
+                              ? Number(offer.providerTotalRating).toFixed(2)
+                              : "0.00"}{" "}
+                            / 5
+                          </span>
+                        </button>
+
+                        {popupShowTotalBreakdown && (
+                          <div className="mt-1 space-y-1">
+                            <AggregateRow
+                              label="Total"
+                              value={offer.providerTotalRating ?? 0}
+                            />
+                            <AggregateRow
+                              label="Quality of Work"
+                              value={offer.providerQualityRating ?? 0}
+                              tooltipText="How satisfied were you in general with the quality of the legal advice and documentation provided by the legal service provider?"
+                            />
+                            <AggregateRow
+                              label="Responsiveness & Communication"
+                              value={
+                                offer.providerResponsivenessRating ??
+                                offer.providerCommunicationRating ??
+                                0
+                              }
+                              tooltipText="Did you receive timely responses and communications from the legal service provider? Was the advice you received clear and actionable or ambiguous analysis without clear value-adding guidance?"
+                            />
+                            <AggregateRow
+                              label="Billing Practices"
+                              value={offer.providerBillingRating ?? 0}
+                              tooltipText="Did the legal service provider send invoices within agreed timeframes and with agreed specifications? In case of hourly rate assignments, did the legal service provider in your opinion invoice a reasonable amount of hours in relation to the legal support that was required?"
+                            />
+                          </div>
+                        )}
+                      </>
+                    ) : (
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm font-semibold">Total</span>
+                        <span className="font-semibold">No Ratings Yet</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* CATEGORY-BASED RATINGS */}
+                  <div className="border-t pt-4">
+                    <div className="text-sm font-semibold mb-2">
+                      Category-based ratings
+                    </div>
+
+                    {categoriesToShow.length === 0 ? (
+                      <div className="text-sm text-gray-600">
+                        No category ratings available yet.
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {categoriesToShow.map((categoryKey) => {
+                          const entry = practicalMap?.[categoryKey];
+                          const expanded =
+                            popupExpandedCategories?.[categoryKey] ?? false;
+                          const hasRatings = categoryHasRatings(entry);
+
+                          if (!hasRatings) {
+                            return (
+                              <div
+                                key={categoryKey}
+                                className="flex items-center justify-between"
+                              >
+                                <span className="text-sm">{categoryKey}</span>
+                                <span className="font-semibold">
+                                  No Ratings Yet
+                                </span>
+                              </div>
+                            );
+                          }
+
+                          const { total, quality, responsiveness, billing } =
+                            getCategoryNumbers(entry);
+
+                          return (
+                            <div key={categoryKey}>
+                              <button
+                                type="button"
+                                onClick={() =>
+                                  setPopupExpandedCategories((prev) => ({
+                                    ...prev,
+                                    [categoryKey]: !(
+                                      prev?.[categoryKey] ?? false
+                                    ),
+                                  }))
+                                }
+                                className="w-full -mx-2 px-2 py-1 rounded flex items-center justify-between hover:bg-gray-50 cursor-pointer"
+                                aria-expanded={expanded}
+                              >
+                                <div className="flex items-center gap-2">
+                                  <span className="text-lg text-gray-600 select-none">
+                                    {expanded ? "▾" : "▸"}
+                                  </span>
+                                  <span className="text-sm font-semibold">
+                                    {categoryKey}
+                                  </span>
+                                </div>
+                                <span className="font-semibold">
+                                  {!isNaN(Number(total))
+                                    ? Number(total).toFixed(2)
+                                    : "0.00"}{" "}
+                                  / 5
+                                </span>
+                              </button>
+
+                              {expanded && (
+                                <div className="mt-1 space-y-1">
+                                  <AggregateRow
+                                    label="Total"
+                                    value={total ?? 0}
+                                  />
+                                  <AggregateRow
+                                    label="Quality of Work"
+                                    value={quality ?? 0}
+                                    tooltipText="How satisfied were you in general with the quality of the legal advice and documentation provided by the legal service provider?"
+                                  />
+                                  <AggregateRow
+                                    label="Responsiveness & Communication"
+                                    value={responsiveness ?? 0}
+                                    tooltipText="Did you receive timely responses and communications from the legal service provider? Was the advice you received clear and actionable or ambiguous analysis without clear value-adding guidance?"
+                                  />
+                                  <AggregateRow
+                                    label="Billing Practices"
+                                    value={billing ?? 0}
+                                    tooltipText="Did the legal service provider send invoices within agreed timeframes and with agreed specifications? In case of hourly rate assignments, did the legal service provider in your opinion invoice a reasonable amount of hours in relation to the legal support that was required?"
+                                  />
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}

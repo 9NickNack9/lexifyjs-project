@@ -46,6 +46,7 @@ model AppUser {
   providerCommunicationRating    Decimal? @default("5") @db.Decimal
   providerBillingRating          Decimal? @default("5") @db.Decimal
   providerIndividualRating       Json     @default("[]")
+  providerPracticalRatings       Json     @default("[]")
   invoiceFee                     Decimal  @default("0") @db.Decimal
   companyInvoiceContactPersons   Json
 

@@ -68,6 +68,8 @@ export async function GET() {
         acceptDeadline: true,
         currency: true,
         details: true,
+        requestCategory: true,
+        requestSubcategory: true,
         selectedOfferId: true,
         acceptDeadlinePausedRemainingMs: true,
         requestState: true,
@@ -81,8 +83,12 @@ export async function GET() {
               select: {
                 companyName: true,
                 providerTotalRating: true,
+                providerQualityRating: true,
+                providerCommunicationRating: true,
+                providerBillingRating: true,
                 companyWebsite: true,
                 providerIndividualRating: true,
+                providerPracticalRatings: true,
               },
             },
             providerId: true,
@@ -120,9 +126,22 @@ export async function GET() {
             offerLawyer: o.offerLawyer || "—",
             providerCompanyName: o.provider?.companyName || "—",
             providerTotalRating: toNum(o.provider?.providerTotalRating) ?? null,
+            providerQualityRating:
+              toNum(o.provider?.providerQualityRating) ?? null,
+            providerCommunicationRating:
+              toNum(o.provider?.providerCommunicationRating) ?? null,
+            providerBillingRating:
+              toNum(o.provider?.providerBillingRating) ?? null,
             providerHasRatings:
               Array.isArray(o.provider?.providerIndividualRating) &&
               o.provider.providerIndividualRating.length > 0,
+            providerRatingCount: Array.isArray(
+              o.provider?.providerIndividualRating
+            )
+              ? o.provider.providerIndividualRating.length
+              : 0,
+            providerPracticalRatings:
+              o.provider?.providerPracticalRatings ?? null,
             providerCompanyWebsite: o.provider?.companyWebsite || null,
 
             // pass S3 reference files through to the client
@@ -157,6 +176,8 @@ export async function GET() {
         pausedRemainingMs: r.acceptDeadlinePausedRemainingMs ?? null,
         canExtend,
         extendedOnce: r.details?.acceptDeadlineExtendedOnce === true,
+        requestCategory: r.requestCategory ?? null,
+        requestSubcategory: r.requestSubcategory ?? null,
       };
     });
 

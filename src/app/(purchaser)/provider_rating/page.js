@@ -119,6 +119,15 @@ export default function ProviderRatingPage() {
   // controls whether sub-ratings are shown for the ANY-provider aggregate card
   const [showBreakdownAny, setShowBreakdownAny] = useState(false);
 
+  // practical category ratings for the selected ANY-provider card
+  const [selectedAnyFull, setSelectedAnyFull] = useState(null);
+  const [expandedAnyCategories, setExpandedAnyCategories] = useState({});
+
+  const [contractsForSelected, setContractsForSelected] = useState([]);
+  const [selectedContractId, setSelectedContractId] = useState("");
+  const [selectedCategoryLabel, setSelectedCategoryLabel] = useState("");
+  const [selectedRequestTitle, setSelectedRequestTitle] = useState("");
+
   // live search: contracted providers
   useEffect(() => {
     let active = true;
@@ -157,10 +166,57 @@ export default function ProviderRatingPage() {
     setQow(0);
     setResp(0);
     setBill(0);
+
+    // reset contract selection
+    setContractsForSelected([]);
+    setSelectedContractId("");
+    setSelectedCategoryLabel("");
+
     try {
       const res = await fetch(`/api/providers/${p.userId}/rating`, {
         cache: "no-store",
       });
+      if (res.ok) {
+        const data = await res.json();
+
+        // contracts for dropdown
+        if (Array.isArray(data?.contracts)) {
+          setContractsForSelected(data.contracts);
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const selectContract = async (contractIdStr) => {
+    setSelectedContractId(contractIdStr);
+    setMessage("");
+    setQow(0);
+    setResp(0);
+    setBill(0);
+
+    const c = contractsForSelected.find(
+      (x) => String(x.contractId) === String(contractIdStr)
+    );
+    setSelectedRequestTitle(c?.requestTitle || "");
+
+    const category = mapRequestToCategory(
+      c?.requestCategory,
+      c?.requestSubcategory
+    );
+    setSelectedCategoryLabel(category);
+
+    if (!selected || !contractIdStr) return;
+
+    try {
+      const res = await fetch(
+        `/api/providers/${
+          selected.userId
+        }/rating?contractId=${encodeURIComponent(contractIdStr)}`,
+        { cache: "no-store" }
+      );
+
       if (res.ok) {
         const data = await res.json();
         if (data?.mine) {
@@ -176,10 +232,17 @@ export default function ProviderRatingPage() {
 
   const saveRating = async () => {
     if (!selected) return;
+
+    if (!selectedContractId) {
+      setMessage("Please select a contract before rating.");
+      return;
+    }
+
     if ([qow, resp, bill].some((v) => v < 0 || v > 5)) {
       setMessage("Ratings must be between 0 and 5.");
       return;
     }
+
     setSaving(true);
     setMessage("");
     try {
@@ -187,11 +250,13 @@ export default function ProviderRatingPage() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          contractId: selectedContractId,
           quality: qow,
           responsiveness: resp,
           billing: bill,
         }),
       });
+
       const json = await res.json().catch(() => ({}));
       if (!res.ok) setMessage(json?.error || "Failed to save rating.");
       else setMessage("Rating saved.");
@@ -234,13 +299,18 @@ export default function ProviderRatingPage() {
   }, [queryAny]);
 
   // on select ANY provider: fetch aggregates
+  // on select ANY provider: fetch aggregates + practical category ratings (if available)
   const selectAnyProvider = async (p) => {
     setSelectedAny(p);
+    setSelectedAnyFull(null);
     setAggAny(null);
     setAggCount(0);
     setAggLoading(true);
     setShowBreakdownAny(false);
+    setExpandedAnyCategories({});
+
     try {
+      // Aggregated “total” ratings (existing behavior)
       const res = await fetch(`/api/providers/${p.userId}/rating`, {
         cache: "no-store",
       });
@@ -250,6 +320,17 @@ export default function ProviderRatingPage() {
         setAggCount(Number(data?.ratingCount ?? 0));
       } else {
         setAggAny(null);
+      }
+
+      // Practical category ratings are returned by the “all providers” search endpoint.
+      // To avoid adding a new endpoint, we load the list once and pick the selected provider.
+      const resPractical = await fetch("/api/providers/search?all=1", {
+        cache: "no-store",
+      });
+      const list = await resPractical.json().catch(() => []);
+      if (resPractical.ok && Array.isArray(list)) {
+        const full = list.find((x) => String(x.userId) === String(p.userId));
+        if (full) setSelectedAnyFull(full);
       }
     } catch {
       setAggAny(null);
@@ -283,11 +364,116 @@ export default function ProviderRatingPage() {
     }
   };
 
-  const toggleProviderExpand = (id) => {
+  const toggleProviderCategoryExpand = (providerId, categoryKey) => {
     setExpandedProviders((prev) => ({
       ...prev,
-      [id]: !prev[id],
+      [providerId]: {
+        ...(prev[providerId] || {}),
+        [categoryKey]: !(prev[providerId]?.[categoryKey] ?? false),
+      },
     }));
+  };
+
+  const toggleAnyCategoryExpand = (categoryKey) => {
+    setExpandedAnyCategories((prev) => ({
+      ...prev,
+      [categoryKey]: !(prev?.[categoryKey] ?? false),
+    }));
+  };
+
+  function mapRequestToCategory(requestCategory, requestSubcategory) {
+    const sub = (requestSubcategory || "").trim();
+    const cat = (requestCategory || "").trim();
+
+    if (sub === "Real Estate and Construction" || sub === "ICT and IT")
+      return sub;
+
+    if (cat === "Help with Contracts") return "Contracts";
+    if (cat === "Day-to-day Legal Advice") return "Day-to-day Legal Advice";
+    if (cat === "Help with Employment related Documents") return "Employment";
+    if (cat === "Help with Dispute Resolution or Debt Collection")
+      return "Dispute Resolution";
+    if (cat === "Help with Mergers & Acquisitions") return "M&A";
+    if (cat === "Help with Corporate Governance") return "Corporate Advisory";
+    if (cat === "Help with Personal Data Protection") return "Data Protection";
+    if (
+      cat ===
+      "Help with KYC (Know Your Customer) or Compliance related Questionnaire"
+    )
+      return "Compliance";
+    if (cat === "Legal Training for Management and/or Personnel")
+      return "Legal Training";
+
+    return sub || cat || "Other";
+  }
+
+  const PRACTICAL_CATEGORIES = [
+    "Contracts",
+    "Day-to-day Legal Advice",
+    "Employment",
+    "Dispute Resolution",
+    "M&A",
+    "Corporate Advisory",
+    "Data Protection",
+    "Compliance",
+    "Legal Training",
+    "Real Estate and Construction",
+    "ICT and IT",
+    "Other",
+  ];
+
+  const normalizePracticalRatings = (provider) => {
+    const pr = provider?.providerPracticalRatings;
+
+    // Supports either:
+    // 1) Object keyed by category, or
+    // 2) Array of { category, total, quality, communication, billing, ratingCount }
+    const map = {};
+
+    if (Array.isArray(pr)) {
+      for (const item of pr) {
+        const key = (
+          item?.category ||
+          item?.categoryLabel ||
+          item?.name ||
+          ""
+        ).trim();
+        if (key) map[key] = item;
+      }
+      return map;
+    }
+
+    if (pr && typeof pr === "object") {
+      for (const [key, val] of Object.entries(pr)) {
+        if (key) map[key] = val;
+      }
+      return map;
+    }
+
+    return map;
+  };
+
+  const categoryHasRatings = (entry) => {
+    if (!entry) return false;
+    const count = Number(entry.ratingCount ?? entry.count ?? 0);
+    if (count > 0) return true;
+    // Fallback: treat non-null totals as “rated”
+    return entry.total != null || entry.providerTotalRating != null;
+  };
+
+  const getCategoryNumbers = (entry) => {
+    const total =
+      entry?.total ?? entry?.providerTotalRating ?? entry?.totalRating ?? null;
+    const quality = entry?.quality ?? entry?.providerQualityRating ?? null;
+    // Some datasets store this as `responsiveness` (instead of `communication`).
+    const communication =
+      entry?.communication ??
+      entry?.responsiveness ??
+      entry?.providerCommunicationRating ??
+      null;
+    const billing = entry?.billing ?? entry?.providerBillingRating ?? null;
+
+    return { total, quality, communication, billing };
   };
 
   return (
@@ -328,8 +514,8 @@ export default function ProviderRatingPage() {
                 return (
                   <div
                     key={String(r.userId)}
-                    className={`p-2 text-sm cursor-pointer hover:bg-gray-100 ${
-                      isSel ? "bg-gray-100" : ""
+                    className={`p-2 text-sm cursor-pointer ${
+                      isSel ? "bg-[#e6f7f7] border-l-4 border-[#11999e]" : ""
                     }`}
                     onClick={() => selectProvider(r)}
                   >
@@ -349,42 +535,77 @@ export default function ProviderRatingPage() {
           <h3 className="text-xl font-semibold mb-1">
             Rate a Legal Service Provider
           </h3>
-          <p className="text-sm text-gray-700 mb-4">
-            Use the sliders to set your rating for {selected.companyName}. You
-            can update your rating anytime.
-          </p>
+          {/* Contract dropdown */}
+          <div className="mb-4">
+            <div className="text-sm font-semibold mb-1">
+              Select the assignment you want to rate {selected.companyName} for
+            </div>
 
-          <div className="grid grid-cols-1 gap-4">
-            <RatingSlider
-              label="Quality of Work"
-              value={qow}
-              onChange={setQow}
-              tooltipText="How satisfied were you in general with the quality of the legal advice and documentation provided by the legal service provider?"
-            />{" "}
-            <RatingSlider
-              label="Responsiveness & Communication"
-              value={resp}
-              onChange={setResp}
-              tooltipText="Did you receive timely responses and communications from the legal service provider? Was the advice you received clear and actionable or ambiguous analysis without clear value-adding guidance?"
-            />{" "}
-            <RatingSlider
-              label="Billing Practices"
-              value={bill}
-              onChange={setBill}
-              tooltipText="Did the legal service provider send invoices within agreed timeframes and with agreed specifications? In case of hourly rate assignments, did the legal service provider in your opinion invoice a reasonable amount of hours in relation to	the legal support that was required?"
-            />{" "}
-          </div>
-
-          <div className="mt-5 flex items-center gap-3">
-            <button
-              className="bg-[#11999e] text-white px-4 py-2 rounded disabled:opacity-50 cursor-pointer"
-              onClick={saveRating}
-              disabled={saving}
+            <select
+              className="border rounded p-2 w-full"
+              value={selectedContractId}
+              onChange={(e) => selectContract(e.target.value)}
+              id="selectedContract"
             >
-              {saving ? "Saving…" : "Save Rating"}
-            </button>
-            {message && <div className="text-sm text-gray-700">{message}</div>}
+              <option value="">Select contract</option>
+              {contractsForSelected.map((c) => (
+                <option key={String(c.contractId)} value={String(c.contractId)}>
+                  {c.requestTitle}
+                </option>
+              ))}
+            </select>
           </div>
+          {/* Only show rating UI after a contract is chosen */}
+          {selectedContractId ? (
+            <>
+              <div className="text-sm font-semibold mb-4">
+                Rate the performance of {selected.companyName} on{" "}
+                {selectedRequestTitle}
+              </div>
+              <p className="text-sm text-gray-700 mb-4">
+                Use the sliders to set your rating for {selected.companyName}.
+                You can update your rating anytime.
+              </p>
+
+              <div className="grid grid-cols-1 gap-4">
+                <RatingSlider
+                  label="Quality of Work"
+                  value={qow}
+                  onChange={setQow}
+                  tooltipText="How satisfied were you in general with the quality of the legal advice and documentation provided by the legal service provider?"
+                />{" "}
+                <RatingSlider
+                  label="Responsiveness & Communication"
+                  value={resp}
+                  onChange={setResp}
+                  tooltipText="Did you receive timely responses and communications from the legal service provider? Was the advice you received clear and actionable or ambiguous analysis without clear value-adding guidance?"
+                />{" "}
+                <RatingSlider
+                  label="Billing Practices"
+                  value={bill}
+                  onChange={setBill}
+                  tooltipText="Did the legal service provider send invoices within agreed timeframes and with agreed specifications? In case of hourly rate assignments, did the legal service provider in your opinion invoice a reasonable amount of hours in relation to	the legal support that was required?"
+                />{" "}
+              </div>
+
+              <div className="mt-5 flex items-center gap-3">
+                <button
+                  className="bg-[#11999e] text-white px-4 py-2 rounded disabled:opacity-50 cursor-pointer"
+                  onClick={saveRating}
+                  disabled={saving}
+                >
+                  {saving ? "Saving…" : "Save Rating"}
+                </button>
+                {message && (
+                  <div className="text-sm text-gray-700">{message}</div>
+                )}
+              </div>
+            </>
+          ) : (
+            <div className="text-sm text-gray-600">
+              Select a contract above to rate this provider.
+            </div>
+          )}
         </div>
       )}
       <br />
@@ -423,7 +644,7 @@ export default function ProviderRatingPage() {
                   <div
                     key={String(r.userId)}
                     className={`p-2 text-sm cursor-pointer hover:bg-gray-100 ${
-                      isSel ? "bg-gray-100" : ""
+                      isSel ? "bg-[#e6f7f7] border-l-4 border-[#11999e]" : ""
                     }`}
                     onClick={() => selectAnyProvider(r)}
                   >
@@ -438,85 +659,204 @@ export default function ProviderRatingPage() {
         )}
 
         {selectedAny && (
-          <div className="mt-5 border rounded p-4">
-            <div className="text-lg font-semibold mb-1">
-              {selectedAny.companyWebsite ? (
-                <a
-                  href={selectedAny.companyWebsite}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-blue-600 hover:underline"
-                >
-                  {selectedAny.companyName}
-                </a>
-              ) : (
-                selectedAny.companyName
-              )}
-            </div>
-            <div className="text-sm text-gray-700 mb-3">
-              {aggCount} rating{aggCount === 1 ? "" : "s"} received
-            </div>
-            {aggLoading ? (
-              <div className="text-sm text-gray-600">Loading ratings…</div>
-            ) : aggAny ? (
-              <div className="space-y-2">
-                {aggCount > 0 ? (
-                  <>
-                    {/* TOTAL row acts as an expander */}
-                    <button
-                      type="button"
-                      className="w-full -mx-2 px-2 py-1 rounded flex items-center justify-between hover:bg-gray-50 cursor-pointer"
-                      onClick={() => setShowBreakdownAny((v) => !v)}
-                      aria-expanded={showBreakdownAny}
-                    >
-                      <div className="flex items-center gap-2">
-                        <span className="text-lg text-gray-600 select-none">
-                          {showBreakdownAny ? "▾" : "▸"}
-                        </span>
-
-                        <span className="text-sm font-semibold">Total</span>
-                      </div>
-                      <span className="font-semibold">
-                        {(aggAny.total ?? 0).toFixed(2)} / 5
-                      </span>
-                    </button>
-
-                    {/* Only show sub-ratings when expanded */}
-                    {showBreakdownAny && (
-                      <>
-                        <AggregateRow
-                          label="Quality of Work"
-                          value={aggAny.quality ?? 0}
-                          tooltipText="How satisfied were you in general with the quality of the legal advice and documentation provided by the legal service provider?"
-                        />
-                        <AggregateRow
-                          label="Responsiveness & Communication"
-                          value={aggAny.communication ?? 0}
-                          tooltipText="Did you receive timely responses and communications from the legal service provider? Was the advice you received clear and actionable or ambiguous analysis without clear value-adding guidance?"
-                        />
-                        <AggregateRow
-                          label="Billing Practices"
-                          value={aggAny.billing ?? 0}
-                          tooltipText="Did the legal service provider send invoices within agreed timeframes and with agreed specifications? In case of hourly rate assignments, did the legal service provider in your opinion invoice a reasonable amount of hours in relation to the legal support that was required?"
-                        />
-                      </>
-                    )}
-                  </>
+          <>
+            <div className="mt-5 border rounded p-4">
+              <div className="text-lg font-semibold mb-1">
+                {selectedAny.companyWebsite ? (
+                  <a
+                    href={selectedAny.companyWebsite}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 hover:underline"
+                  >
+                    {selectedAny.companyName}
+                  </a>
                 ) : (
-                  <>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm">Total</span>
-                      <span className="font-semibold">No Ratings Yet</span>
-                    </div>
-                  </>
+                  selectedAny.companyName
                 )}
               </div>
-            ) : (
-              <div className="text-sm text-gray-600">
-                No ratings available yet.
+              <div className="text-sm text-gray-700 mb-3">
+                {aggCount} rating{aggCount === 1 ? "" : "s"} received
               </div>
-            )}
-          </div>
+              {aggLoading ? (
+                <div className="text-sm text-gray-600">Loading ratings…</div>
+              ) : aggAny ? (
+                <div className="space-y-2">
+                  {aggCount > 0 ? (
+                    <>
+                      {/* TOTAL row acts as an expander */}
+                      <button
+                        type="button"
+                        className="w-full -mx-2 px-2 py-1 rounded flex items-center justify-between hover:bg-gray-50 cursor-pointer"
+                        onClick={() => setShowBreakdownAny((v) => !v)}
+                        aria-expanded={showBreakdownAny}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-lg text-gray-600 select-none">
+                            {showBreakdownAny ? "▾" : "▸"}
+                          </span>
+
+                          <span className="text-sm font-semibold">Total</span>
+                        </div>
+                        <span className="font-semibold">
+                          {(aggAny.total ?? 0).toFixed(2)} / 5
+                        </span>
+                      </button>
+
+                      {/* Only show sub-ratings when expanded */}
+                      {showBreakdownAny && (
+                        <>
+                          <AggregateRow
+                            label="Quality of Work"
+                            value={aggAny.quality ?? 0}
+                            tooltipText="How satisfied were you in general with the quality of the legal advice and documentation provided by the legal service provider?"
+                          />
+                          <AggregateRow
+                            label="Responsiveness & Communication"
+                            value={
+                              aggAny.responsiveness ?? aggAny.communication ?? 0
+                            }
+                            tooltipText="Did you receive timely responses and communications from the legal service provider? Was the advice you received clear and actionable or ambiguous analysis without clear value-adding guidance?"
+                          />
+                          <AggregateRow
+                            label="Billing Practices"
+                            value={aggAny.billing ?? 0}
+                            tooltipText="Did the legal service provider send invoices within agreed timeframes and with agreed specifications? In case of hourly rate assignments, did the legal service provider in your opinion invoice a reasonable amount of hours in relation to the legal support that was required?"
+                          />
+                        </>
+                      )}
+                      {/* Practical category ratings (expand per category) */}
+                      <div className="mt-5 border-t pt-4">
+                        <div className="text-sm font-semibold mb-2">
+                          Category-based ratings
+                        </div>
+
+                        {(() => {
+                          const providerForCategories =
+                            selectedAnyFull || selectedAny;
+                          const practicalMap = normalizePracticalRatings(
+                            providerForCategories
+                          );
+
+                          const categoriesToShow = Array.from(
+                            new Set([
+                              ...PRACTICAL_CATEGORIES,
+                              ...Object.keys(practicalMap || {}),
+                            ])
+                          ).filter(Boolean);
+
+                          if (!categoriesToShow.length) {
+                            return (
+                              <div className="text-sm text-gray-600">
+                                No category ratings available yet.
+                              </div>
+                            );
+                          }
+
+                          return (
+                            <div className="space-y-2">
+                              {categoriesToShow.map((categoryKey) => {
+                                const entry = practicalMap?.[categoryKey];
+                                const expanded =
+                                  expandedAnyCategories?.[categoryKey] ?? false;
+                                const hasRatings = categoryHasRatings(entry);
+
+                                if (!hasRatings) {
+                                  return (
+                                    <div
+                                      key={categoryKey}
+                                      className="flex items-center justify-between"
+                                    >
+                                      <span className="text-sm">
+                                        {categoryKey}
+                                      </span>
+                                      <span className="font-semibold">
+                                        No Ratings Yet
+                                      </span>
+                                    </div>
+                                  );
+                                }
+
+                                const {
+                                  total,
+                                  quality,
+                                  communication,
+                                  billing,
+                                } = getCategoryNumbers(entry);
+
+                                return (
+                                  <div key={categoryKey}>
+                                    <button
+                                      type="button"
+                                      onClick={() =>
+                                        toggleAnyCategoryExpand(categoryKey)
+                                      }
+                                      className="w-full -mx-2 px-2 py-1 rounded flex items-center justify-between hover:bg-gray-50 cursor-pointer"
+                                      aria-expanded={expanded}
+                                    >
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-lg text-gray-600 select-none">
+                                          {expanded ? "▾" : "▸"}
+                                        </span>
+                                        <span className="text-sm font-semibold">
+                                          {categoryKey}
+                                        </span>
+                                      </div>
+                                      <span className="font-semibold">
+                                        {!isNaN(Number(total))
+                                          ? Number(total).toFixed(2)
+                                          : "0.00"}{" "}
+                                        / 5
+                                      </span>
+                                    </button>
+
+                                    {expanded && (
+                                      <div className="mt-1 space-y-1">
+                                        <AggregateRow
+                                          label="Total"
+                                          value={total ?? 0}
+                                        />
+                                        <AggregateRow
+                                          label="Quality of Work"
+                                          value={quality ?? 0}
+                                          tooltipText="How satisfied were you in general with the quality of the legal advice and documentation provided by the legal service provider?"
+                                        />
+                                        <AggregateRow
+                                          label="Responsiveness & Communication"
+                                          value={communication ?? 0}
+                                          tooltipText="Did you receive timely responses and communications from the legal service provider? Was the advice you received clear and actionable or ambiguous analysis without clear value-adding guidance?"
+                                        />
+                                        <AggregateRow
+                                          label="Billing Practices"
+                                          value={billing ?? 0}
+                                          tooltipText="Did the legal service provider send invoices within agreed timeframes and with agreed specifications? In case of hourly rate assignments, did the legal service provider in your opinion invoice a reasonable amount of hours in relation to the legal support that was required?"
+                                        />
+                                      </div>
+                                    )}
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          );
+                        })()}
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-center justify-between">
+                        <span className="text-sm">Total</span>
+                        <span className="font-semibold">No Ratings Yet</span>
+                      </div>
+                    </>
+                  )}
+                </div>
+              ) : (
+                <div className="text-sm text-gray-600">
+                  No ratings available yet.
+                </div>
+              )}
+            </div>
+          </>
         )}
         <div className="mt-10">
           <h2 className="text-xl font-semibold mb-2">
@@ -536,7 +876,7 @@ export default function ProviderRatingPage() {
         </div>
         {showAllModal && (
           <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-            <div className="bg-white text-black rounded-lg shadow-2xl max-w-4xl w-full max-h-[80vh] overflow-y-auto p-6 relative">
+            <div className="bg-white text-black shadow-2xl max-w-4xl w-full max-h-[80vh] overflow-y-auto p-6 relative">
               <button
                 type="button"
                 className="absolute top-4 right-4 text-white bg-[#3a3a3c] rounded-full w-8 h-8 flex items-center justify-center text-xl hover:bg-red-600 transition cursor-pointer"
@@ -560,44 +900,15 @@ export default function ProviderRatingPage() {
               ) : (
                 <div className="space-y-4 mt-2">
                   {allProviders.map((p) => {
-                    // Determine if provider has individual ratings
-                    const hasIndividual =
-                      Array.isArray(p.providerIndividualRating) &&
-                      p.providerIndividualRating.length > 0;
+                    // Practical category ratings (expand per category)
+                    const practicalMap = normalizePracticalRatings(p);
 
-                    // If no individual ratings → show simple “No Ratings Yet”
-                    if (!hasIndividual) {
-                      return (
-                        <div
-                          key={String(p.userId)}
-                          className="border rounded p-4 bg-white"
-                        >
-                          <div className="text-lg font-semibold mb-1">
-                            {p.companyWebsite ? (
-                              <a
-                                href={p.companyWebsite}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-blue-600 hover:underline"
-                              >
-                                {p.companyName}
-                              </a>
-                            ) : (
-                              p.companyName
-                            )}
-                          </div>
-                          <div className="flex items-center justify-between mt-2">
-                            <span className="text-sm">Total</span>
-                            <span className="font-semibold">
-                              No Ratings Yet
-                            </span>
-                          </div>
-                        </div>
-                      );
-                    }
-
-                    // Otherwise use expander pattern
-                    const expanded = expandedProviders[p.userId] ?? false;
+                    const categoriesToShow = Array.from(
+                      new Set([
+                        ...PRACTICAL_CATEGORIES,
+                        ...Object.keys(practicalMap || {}),
+                      ])
+                    ).filter(Boolean);
 
                     return (
                       <div
@@ -619,46 +930,171 @@ export default function ProviderRatingPage() {
                           )}
                         </div>
 
-                        {/* Expandable TOTAL row */}
-                        <button
-                          type="button"
-                          onClick={() => toggleProviderExpand(p.userId)}
-                          className="w-full -mx-2 px-2 py-1 rounded flex items-center justify-between hover:bg-gray-50 cursor-pointer mt-2"
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="text-lg text-gray-600 select-none">
-                              {expanded ? "▾" : "▸"}
-                            </span>
-                            <span className="text-sm font-semibold">Total</span>
-                          </div>
-                          <span className="font-semibold">
-                            {!isNaN(Number(p.providerTotalRating))
-                              ? Number(p.providerTotalRating).toFixed(2)
-                              : "0.00"}{" "}
-                            / 5
-                          </span>
-                        </button>
+                        <div className="mt-2 space-y-2">
+                          {/* Total rating (expandable) */}
+                          {(() => {
+                            const totalExpanded =
+                              expandedProviders?.[p.userId]?.__TOTAL__ ?? false;
 
-                        {/* Subratings (visible only when expanded) */}
-                        {expanded && (
-                          <div className="mt-1 space-y-1">
-                            <AggregateRow
-                              label="Quality of Work"
-                              value={p.providerQualityRating ?? 0}
-                              tooltipText="How satisfied were you in general with the quality of the legal advice and documentation provided by the legal service provider?"
-                            />
-                            <AggregateRow
-                              label="Responsiveness & Communication"
-                              value={p.providerCommunicationRating ?? 0}
-                              tooltipText="Did you receive timely responses and communications from the legal service provider? Was the advice you received clear and actionable or ambiguous analysis without clear value-adding guidance?"
-                            />
-                            <AggregateRow
-                              label="Billing Practices"
-                              value={p.providerBillingRating ?? 0}
-                              tooltipText="Did the legal service provider send invoices within agreed timeframes and with agreed specifications? In case of hourly rate assignments, did the legal service provider in your opinion invoice a reasonable amount of hours in relation to the legal support that was required?"
-                            />
+                            const hasTotalRatings =
+                              Array.isArray(p.providerIndividualRating) &&
+                              p.providerIndividualRating.length > 0;
+
+                            if (!hasTotalRatings) {
+                              return (
+                                <div className="flex items-center justify-between">
+                                  <span className="text-sm">Total</span>
+                                  <span className="font-semibold">
+                                    No Ratings Yet
+                                  </span>
+                                </div>
+                              );
+                            }
+
+                            return (
+                              <div>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    toggleProviderCategoryExpand(
+                                      p.userId,
+                                      "__TOTAL__"
+                                    )
+                                  }
+                                  className="w-full -mx-2 px-2 py-1 rounded flex items-center justify-between hover:bg-gray-50 cursor-pointer"
+                                  aria-expanded={totalExpanded}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-lg text-gray-600 select-none">
+                                      {totalExpanded ? "▾" : "▸"}
+                                    </span>
+                                    <span className="text-sm font-semibold">
+                                      Total
+                                    </span>
+                                  </div>
+                                  <span className="font-semibold">
+                                    {!isNaN(Number(p.providerTotalRating))
+                                      ? Number(p.providerTotalRating).toFixed(2)
+                                      : "0.00"}{" "}
+                                    / 5
+                                  </span>
+                                </button>
+
+                                {totalExpanded && (
+                                  <div className="mt-1 space-y-1">
+                                    <AggregateRow
+                                      label="Total"
+                                      value={p.providerTotalRating ?? 0}
+                                    />
+                                    <AggregateRow
+                                      label="Quality of Work"
+                                      value={p.providerQualityRating ?? 0}
+                                      tooltipText="How satisfied were you in general with the quality of the legal advice and documentation provided by the legal service provider?"
+                                    />
+                                    <AggregateRow
+                                      label="Responsiveness & Communication"
+                                      value={p.providerCommunicationRating ?? 0}
+                                      tooltipText="Did you receive timely responses and clear communications from the legal service provider? Was the advice you received clear and actionable (i.e. not just generic analysis without clear value-adding guidance)?"
+                                    />
+                                    <AggregateRow
+                                      label="Billing Practices"
+                                      value={p.providerBillingRating ?? 0}
+                                      tooltipText="Did the legal service provider invoice you in line with agreed specifications? In case of hourly rate assignments, did the legal service provider give sufficient transparency about time spent and tasks performed?"
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })()}
+
+                          <div className="text-sm font-semibold mb-2 border-t mt-5 pt-4">
+                            Category-based ratings
                           </div>
-                        )}
+
+                          {categoriesToShow.map((categoryKey) => {
+                            const entry = practicalMap?.[categoryKey];
+                            const expanded =
+                              expandedProviders?.[p.userId]?.[categoryKey] ??
+                              false;
+
+                            const hasRatings = categoryHasRatings(entry);
+
+                            // If category has no ratings yet → show simple “No Ratings Yet”
+                            if (!hasRatings) {
+                              return (
+                                <div
+                                  key={categoryKey}
+                                  className="flex items-center justify-between"
+                                >
+                                  <span className="text-sm">{categoryKey}</span>
+                                  <span className="font-semibold">
+                                    No Ratings Yet
+                                  </span>
+                                </div>
+                              );
+                            }
+
+                            const { total, quality, communication, billing } =
+                              getCategoryNumbers(entry);
+
+                            return (
+                              <div key={categoryKey}>
+                                {/* Expandable CATEGORY row */}
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    toggleProviderCategoryExpand(
+                                      p.userId,
+                                      categoryKey
+                                    )
+                                  }
+                                  className="w-full -mx-2 px-2 py-1 rounded flex items-center justify-between hover:bg-gray-50 cursor-pointer"
+                                  aria-expanded={expanded}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-lg text-gray-600 select-none">
+                                      {expanded ? "▾" : "▸"}
+                                    </span>
+                                    <span className="text-sm font-semibold">
+                                      {categoryKey}
+                                    </span>
+                                  </div>
+                                  <span className="font-semibold">
+                                    {!isNaN(Number(total))
+                                      ? Number(total).toFixed(2)
+                                      : "0.00"}{" "}
+                                    / 5
+                                  </span>
+                                </button>
+
+                                {/* Category breakdown (visible only when expanded) */}
+                                {expanded && (
+                                  <div className="mt-1 space-y-1">
+                                    <AggregateRow
+                                      label="Total"
+                                      value={total ?? 0}
+                                    />
+                                    <AggregateRow
+                                      label="Quality of Work"
+                                      value={quality ?? 0}
+                                      tooltipText="How satisfied were you in general with the quality of the legal advice and documentation provided by the legal service provider?"
+                                    />
+                                    <AggregateRow
+                                      label="Responsiveness & Communication"
+                                      value={communication ?? 0}
+                                      tooltipText="Did you receive timely responses and communications from the legal service provider? Was the advice you received clear and actionable or ambiguous analysis without clear value-adding guidance?"
+                                    />
+                                    <AggregateRow
+                                      label="Billing Practices"
+                                      value={billing ?? 0}
+                                      tooltipText="Did the legal service provider send invoices within agreed timeframes and with agreed specifications? In case of hourly rate assignments, did the legal service provider in your opinion invoice a reasonable amount of hours in relation to the legal support that was required?"
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
                       </div>
                     );
                   })}

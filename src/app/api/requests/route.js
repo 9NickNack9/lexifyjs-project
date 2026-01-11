@@ -8,6 +8,70 @@ import { promises as fs } from "fs";
 import path from "path";
 import { notifyProvidersNewAvailableRequest } from "@/lib/mailer";
 
+function mapRequestToCategory(requestCategory, requestSubcategory) {
+  const sub = (requestSubcategory || "").trim();
+  const cat = (requestCategory || "").trim();
+
+  // These two subcategories are “direct categories” in your UI naming
+  if (sub === "Real Estate and Construction" || sub === "ICT and IT")
+    return sub;
+
+  if (cat === "Help with Contracts") return "Contracts";
+  if (cat === "Day-to-day Legal Advice") return "Day-to-day Legal Advice";
+  if (cat === "Help with Employment related Documents") return "Employment";
+  if (cat === "Help with Dispute Resolution or Debt Collection")
+    return "Dispute Resolution";
+  if (cat === "Help with Mergers & Acquisitions") return "M&A";
+  if (cat === "Help with Corporate Governance") return "Corporate Advisory";
+  if (cat === "Help with Personal Data Protection") return "Data Protection";
+  if (
+    cat ===
+    "Help with KYC (Know Your Customer) or Compliance related Questionnaire"
+  )
+    return "Compliance";
+  if (cat === "Legal Training for Management and/or Personnel")
+    return "Legal Training";
+
+  return sub || cat || "Other";
+}
+
+// providerPracticalRatings can be either array or object — handle both
+function normalizePracticalRatings(pr) {
+  const map = {};
+
+  if (Array.isArray(pr)) {
+    for (const item of pr) {
+      const key = (
+        item?.category ||
+        item?.categoryLabel ||
+        item?.name ||
+        ""
+      ).trim();
+      if (key) map[key] = item;
+    }
+    return map;
+  }
+
+  if (pr && typeof pr === "object") {
+    for (const [key, val] of Object.entries(pr)) {
+      if (key) map[key] = val;
+    }
+  }
+
+  return map;
+}
+
+function getPracticalCategoryTotal(providerPracticalRatings, categoryKey) {
+  const practicalMap = normalizePracticalRatings(providerPracticalRatings);
+  const entry = practicalMap?.[categoryKey];
+
+  const total =
+    entry?.total ?? entry?.providerTotalRating ?? entry?.totalRating ?? null;
+
+  const n = Number(total);
+  return Number.isFinite(n) ? n : 0;
+}
+
 function toDecimalString(v) {
   if (v === undefined || v === null || v === "") return null;
   const s = String(v).replace(/[^\d.]/g, "");
@@ -291,6 +355,11 @@ export async function POST(req) {
   const reqMinAge = parseMinAge(body.providerCompanyAge);
   const reqTypeNorm = normalizeProviderType(body.serviceProviderType);
 
+  const reqPracticalCategoryKey = mapRequestToCategory(
+    body.requestCategory,
+    requestSubcategory
+  );
+
   // Fetch Providers with fields needed for gating and notifications
   function toStringArray(val) {
     if (Array.isArray(val)) return val.filter((v) => typeof v === "string");
@@ -322,6 +391,7 @@ export async function POST(req) {
       companyProfessionals: true,
       providerType: true,
       providerTotalRating: true,
+      providerPracticalRatings: true,
     },
   });
 
@@ -342,9 +412,11 @@ export async function POST(req) {
     const pPros = Number.isFinite(Number(p?.companyProfessionals))
       ? Number(p.companyProfessionals)
       : 0;
-    const pRating = Number.isFinite(Number(p?.providerTotalRating))
-      ? Number(p.providerTotalRating)
-      : 0;
+    const pRating = getPracticalCategoryTotal(
+      p?.providerPracticalRatings,
+      reqPracticalCategoryKey
+    );
+
     const pTypeNorm = normalizeProviderType(p?.providerType);
 
     // providerType match: if request says "all" or empty → allow any; else must equal

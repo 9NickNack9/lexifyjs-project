@@ -3,6 +3,68 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 
+function mapRequestToCategory(requestCategory, requestSubcategory) {
+  const sub = (requestSubcategory || "").trim();
+  const cat = (requestCategory || "").trim();
+
+  if (sub === "Real Estate and Construction" || sub === "ICT and IT")
+    return sub;
+
+  if (cat === "Help with Contracts") return "Contracts";
+  if (cat === "Day-to-day Legal Advice") return "Day-to-day Legal Advice";
+  if (cat === "Help with Employment related Documents") return "Employment";
+  if (cat === "Help with Dispute Resolution or Debt Collection")
+    return "Dispute Resolution";
+  if (cat === "Help with Mergers & Acquisitions") return "M&A";
+  if (cat === "Help with Corporate Governance") return "Corporate Advisory";
+  if (cat === "Help with Personal Data Protection") return "Data Protection";
+  if (
+    cat ===
+    "Help with KYC (Know Your Customer) or Compliance related Questionnaire"
+  )
+    return "Compliance";
+  if (cat === "Legal Training for Management and/or Personnel")
+    return "Legal Training";
+
+  return sub || cat || "Other";
+}
+
+function normalizePracticalRatings(pr) {
+  const map = {};
+
+  if (Array.isArray(pr)) {
+    for (const item of pr) {
+      const key = (
+        item?.category ||
+        item?.categoryLabel ||
+        item?.name ||
+        ""
+      ).trim();
+      if (key) map[key] = item;
+    }
+    return map;
+  }
+
+  if (pr && typeof pr === "object") {
+    for (const [key, val] of Object.entries(pr)) {
+      if (key) map[key] = val;
+    }
+  }
+
+  return map;
+}
+
+function getPracticalCategoryTotal(providerPracticalRatings, categoryKey) {
+  const practicalMap = normalizePracticalRatings(providerPracticalRatings);
+  const entry = practicalMap?.[categoryKey];
+
+  const total =
+    entry?.total ?? entry?.providerTotalRating ?? entry?.totalRating ?? null;
+
+  const n = Number(total);
+  return Number.isFinite(n) ? n : 0;
+}
+
 // Parse "Any", "Any Age", "≥5", "5" → number (min years) or 0 for Any
 function parseMinFromLabel(label) {
   if (label == null) return null;
@@ -56,6 +118,7 @@ export async function GET(req) {
       role: true,
       companyProfessionals: true,
       providerTotalRating: true,
+      providerPracticalRatings: true,
       companyAge: true,
       providerType: true,
       companyName: true, // needed for blocked/preferred/panel checks
@@ -146,9 +209,14 @@ export async function GET(req) {
   const myPros = Number.isFinite(Number(me?.companyProfessionals))
     ? Number(me.companyProfessionals)
     : 0;
-  const myRating = Number.isFinite(Number(me?.providerTotalRating))
-    ? Number(me.providerTotalRating)
-    : 0;
+  const getMyRatingForRequest = (r) => {
+    const categoryKey = mapRequestToCategory(
+      r.requestCategory,
+      r.requestSubcategory
+    );
+    return getPracticalCategoryTotal(me?.providerPracticalRatings, categoryKey);
+  };
+
   const myAge = Number.isFinite(Number(me?.companyAge))
     ? Number(me.companyAge)
     : 0;
@@ -223,7 +291,8 @@ export async function GET(req) {
     const minPros = parseMinFromLabel(r.providerSize);
     const minRating = parseMinFromLabel(r.providerMinimumRating);
     let passPros = (minPros ?? 0) <= myPros;
-    let passRating = (minRating ?? 0) <= myRating;
+    const myRatingForThisRequest = getMyRatingForRequest(r);
+    let passRating = (minRating ?? 0) <= myRatingForThisRequest;
 
     // age gate with "Any Age" pass
     const reqAgeRaw =
