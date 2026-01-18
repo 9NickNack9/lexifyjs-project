@@ -403,6 +403,8 @@ export default function ProviderRatingPage() {
       return "Compliance";
     if (cat === "Legal Training for Management and/or Personnel")
       return "Legal Training";
+    if (cat === "Help with Banking & Finance Matters")
+      return "Banking & Finance";
 
     return sub || cat || "Other";
   }
@@ -417,6 +419,7 @@ export default function ProviderRatingPage() {
     "Data Protection",
     "Compliance",
     "Legal Training",
+    "Banking & Finance",
     "Real Estate and Construction",
     "ICT and IT",
     "Other",

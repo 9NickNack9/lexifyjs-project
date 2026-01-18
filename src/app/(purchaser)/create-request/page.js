@@ -35,6 +35,10 @@ export default function CreateRequest() {
       link: "/requests/privacy-selection",
     },
     {
+      title: "Help with Banking and Finance Matters",
+      link: "/requests/banking-and-finance",
+    },
+    {
       title:
         "Help with KYC (Know Your Customer) or Compliance related Questionnaire",
       link: "/requests/kyc",

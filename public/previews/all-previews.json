@@ -5020,6 +5020,607 @@
           "customerCount": ""
         }
       }
+    },
+    {
+      "category": "Help with Banking & Finance Matters",
+      "subcategory": "Refinancing of Existing Debt",
+      "assignmentType": null,
+      "preview": {
+        "sections": [
+          {
+            "title": "Client Name, Business Identity Code and Country of Domicile",
+            "fields": [
+              {
+                "label": "Client",
+                "path": "__clientLine__"
+              },
+              {
+                "label": "Primary Contact Person",
+                "path": "primaryContactPerson"
+              }
+            ]
+          },
+          {
+            "title": "Scope of Work",
+            "fields": [
+              {
+                "label": "Scope of Work",
+                "path": "scopeOfWork"
+              }
+            ]
+          },
+          {
+            "title": "Is the Client the Lender or the Borrower in the Refinancing Process?",
+            "fields": [
+              {
+                "label": "Lender or Borrower",
+                "path": "details.refinanceType"
+              }
+            ]
+          },
+          {
+            "title": "Is the Client Acting Only on Its Own Behalf or Also on Behalf of Other Lenders in the Refinancing Process?",
+            "fields": [
+              {
+                "label": "Acting on Its Own Behalf or Also on Behalf of Other Lenders",
+                "path": "details.financeAct"
+              }
+            ]
+          },
+          {
+            "title": "Description of the Other Lenders and the Client's Role in Relation to the Other Lenders",
+            "fields": [
+              {
+                "label": "Description",
+                "path": "details.relationRole"
+              }
+            ]
+          },
+          {
+            "title": "Has a Term Sheet Already Been Signed Between the Lender and the Borrower?",
+            "fields": [
+              {
+                "label": "Term Sheet Signed",
+                "path": "details.termSign"
+              }
+            ]
+          },
+          {
+            "title": "Will the Facility/Facilities Agreement Covering the Refinancing Be Based on an Investment Grade or Leveraged LMA Template?",
+            "fields": [
+              {
+                "label": "Term Sheet Signed",
+                "path": "details.agreementCoverage"
+              }
+            ]
+          },
+          {
+            "title": "Description of the Nature of the Facility/Facilities to be Provided",
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
+          },
+
+          {
+            "title": "Description of the Asset(s) to Be Used as Collateral",
+            "fields": [
+              {
+                "label": "Description",
+                "path": "details.assetDescription"
+              }
+            ]
+          },
+          {
+            "title": "Will the Debt be Secured or Unsecured",
+            "fields": [
+              {
+                "label": "Secured or Unsecured",
+                "path": "details.debtSecurance"
+              }
+            ]
+          },
+          {
+            "title": "Contract Price & Invoicing",
+            "fields": [
+              {
+                "label": "Contract Price",
+                "path": "paymentRate"
+              },
+              {
+                "label": "Currency",
+                "path": "currency"
+              },
+              {
+                "label": "Invoicing",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
+                "path": "advanceRetainerFee"
+              }
+            ]
+          },
+          {
+            "title": "Client's Counterparty in the Matter",
+            "fields": [
+              {
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter",
+                "path": "details.counterparty"
+              }
+            ]
+          },
+          {
+            "title": "Additional Background Information & Client's Procurement Requirements (Appendices)",
+            "fields": [
+              {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              },
+              {
+                "label": "Additional Background files",
+                "path": "backgroundInfoFiles"
+              },
+              {
+                "label": "Client's Procurement Requirements (Appendices)",
+                "path": "supplierCodeOfConductFiles"
+              }
+            ]
+          },
+          {
+            "title": "Languages Required for the Performance of the Work",
+            "fields": [
+              {
+                "label": "Languages",
+                "path": "language"
+              }
+            ]
+          },
+          {
+            "title": "LEXIFY Request Category",
+            "fields": [
+              {
+                "label": "Request Category",
+                "path": "requestCategory"
+              }
+            ]
+          },
+          {
+            "title": "Additional Information Requests from Legal Service Providers",
+            "fields": [
+              {
+                "label": "Information Requests and Responses",
+                "path": "details.additionalQuestions"
+              }
+            ]
+          },
+          {
+            "title": "Written References",
+            "fields": [
+              {
+                "label": "Does the Client Require Written References to Be Provided as Attachments to the Offer?",
+                "path": "providerReferences"
+              }
+            ]
+          }
+        ]
+      },
+      "payloadExample": {
+        "requestState": "PENDING",
+        "requestCategory": "Help with Mergers & Acquisitions",
+        "primaryContactPerson": "Jane Doe",
+        "scopeOfWork": "Comprehensive legal support … / Occasional legal support … / A sale and purchase agreement … / A letter of intent … / A legal due diligence inspection …",
+        "description": "",
+        "additionalBackgroundInfo": "",
+        "backgroundInfoFiles": [],
+        "supplierCodeOfConductFiles": [],
+        "serviceProviderType": "Attorneys-at-law / Law firms / Both",
+        "domesticOffers": "Domestic only / Domestic and foreign",
+        "providerSize": "Any / ≥5 / ≥15 / ≥40",
+        "providerCompanyAge": "Any / ≥5y / ≥10y / ≥25y",
+        "providerMinimumRating": "Any / 3 / 4",
+        "currency": "Euro (€) | …",
+        "paymentRate": "Hourly Rate (if Occasional) else Lump sum fixed price",
+        "maximumPrice": "required when Lump sum",
+        "advanceRetainerFee": "No | 10% | 25% | 50%",
+        "invoiceType": "Monthly / On completion …",
+        "language": "English, …",
+        "offersDeadline": "2025-10-28",
+        "title": "LEXIFY Request title",
+        "dateExpired": "2025-10-28",
+        "details": {
+          "objectOfSale": "All shares / Majority / Minority / Entire business / Specific assets",
+          "buyerOrSeller": "Buyer / Seller",
+          "priceRange": "(string)",
+          "dueDiligence": "'Red flag' report | Long form report | Legal Due Diligence inspection not needed",
+          "confidential": true,
+          "winnerBidderOnlyStatus": "Disclosed to Winning Bidder Only"
+        }
+      }
+    },
+    {
+      "category": "Help with Banking & Finance Matters",
+      "subcategory": "Amendment of Existing Debt Terms",
+      "assignmentType": null,
+      "preview": {
+        "sections": [
+          {
+            "title": "Client Name, Business Identity Code and Country of Domicile",
+            "fields": [
+              {
+                "label": "Client",
+                "path": "__clientLine__"
+              },
+              {
+                "label": "Primary Contact Person",
+                "path": "primaryContactPerson"
+              }
+            ]
+          },
+          {
+            "title": "Scope of Work",
+            "fields": [
+              {
+                "label": "Scope of Work",
+                "path": "scopeOfWork"
+              }
+            ]
+          },
+          {
+            "title": "Is the Client the Lender or the Borrower in the Amendment Process?",
+            "fields": [
+              {
+                "label": "Lender or Borrower",
+                "path": "details.refinanceType"
+              }
+            ]
+          },
+          {
+            "title": "Is the Client Acting Only on Its Own Behalf or Also on Behalf of Other Lenders in the Amendment Process?",
+            "fields": [
+              {
+                "label": "Acting on Its Own Behalf or Also on Behalf of Other Lenders",
+                "path": "details.financeAct"
+              }
+            ]
+          },
+          {
+            "title": "Description of the Other Lenders and the Client's Role in Relation to the Other Lenders",
+            "fields": [
+              {
+                "label": "Description",
+                "path": "details.relationRole"
+              }
+            ]
+          },
+          {
+            "title": "Description of the Asset(s) to Be Used as Collateral",
+            "fields": [
+              {
+                "label": "Description",
+                "path": "details.assetDescription"
+              }
+            ]
+          },
+          {
+            "title": "Description of the Facility/Facilities Agreement to Be Amended and the Amendments to Be Implemented",
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
+          },
+          {
+            "title": "Will the Debt Be Secured or Unsecured",
+            "fields": [
+              {
+                "label": "Secured or Unsecured",
+                "path": "details.debtSecurance"
+              }
+            ]
+          },
+          {
+            "title": "Contract Price & Invoicing",
+            "fields": [
+              {
+                "label": "Contract Price",
+                "path": "paymentRate"
+              },
+              {
+                "label": "Currency",
+                "path": "currency"
+              },
+              {
+                "label": "Invoicing",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
+                "path": "advanceRetainerFee"
+              }
+            ]
+          },
+          {
+            "title": "Client's Counterparty in the Matter",
+            "fields": [
+              {
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter",
+                "path": "details.counterparty"
+              }
+            ]
+          },
+          {
+            "title": "Additional Background Information & Client's Procurement Requirements (Appendices)",
+            "fields": [
+              {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              },
+              {
+                "label": "Additional Background files",
+                "path": "backgroundInfoFiles"
+              },
+              {
+                "label": "Client's Procurement Requirements (Appendices)",
+                "path": "supplierCodeOfConductFiles"
+              }
+            ]
+          },
+          {
+            "title": "Languages Required for the Performance of the Work",
+            "fields": [
+              {
+                "label": "Languages",
+                "path": "language"
+              }
+            ]
+          },
+          {
+            "title": "LEXIFY Request Category",
+            "fields": [
+              {
+                "label": "Request Category",
+                "path": "requestCategory"
+              }
+            ]
+          },
+          {
+            "title": "Additional Information Requests from Legal Service Providers",
+            "fields": [
+              {
+                "label": "Information Requests and Responses",
+                "path": "details.additionalQuestions"
+              }
+            ]
+          },
+          {
+            "title": "Written References",
+            "fields": [
+              {
+                "label": "Does the Client Require Written References to Be Provided as Attachments to the Offer?",
+                "path": "providerReferences"
+              }
+            ]
+          }
+        ]
+      },
+      "payloadExample": {
+        "requestState": "PENDING",
+        "requestCategory": "Help with Mergers & Acquisitions",
+        "primaryContactPerson": "Jane Doe",
+        "scopeOfWork": "Comprehensive legal support … / Occasional legal support … / A sale and purchase agreement … / A letter of intent … / A legal due diligence inspection …",
+        "description": "",
+        "additionalBackgroundInfo": "",
+        "backgroundInfoFiles": [],
+        "supplierCodeOfConductFiles": [],
+        "serviceProviderType": "Attorneys-at-law / Law firms / Both",
+        "domesticOffers": "Domestic only / Domestic and foreign",
+        "providerSize": "Any / ≥5 / ≥15 / ≥40",
+        "providerCompanyAge": "Any / ≥5y / ≥10y / ≥25y",
+        "providerMinimumRating": "Any / 3 / 4",
+        "currency": "Euro (€) | …",
+        "paymentRate": "Hourly Rate (if Occasional) else Lump sum fixed price",
+        "maximumPrice": "required when Lump sum",
+        "advanceRetainerFee": "No | 10% | 25% | 50%",
+        "invoiceType": "Monthly / On completion …",
+        "language": "English, …",
+        "offersDeadline": "2025-10-28",
+        "title": "LEXIFY Request title",
+        "dateExpired": "2025-10-28",
+        "details": {
+          "objectOfSale": "All shares / Majority / Minority / Entire business / Specific assets",
+          "buyerOrSeller": "Buyer / Seller",
+          "priceRange": "(string)",
+          "dueDiligence": "'Red flag' report | Long form report | Legal Due Diligence inspection not needed",
+          "confidential": true,
+          "winnerBidderOnlyStatus": "Disclosed to Winning Bidder Only"
+        }
+      }
+    },
+    {
+      "category": "Help with Banking & Finance Matters",
+      "subcategory": "Breach Waiver",
+      "assignmentType": null,
+      "preview": {
+        "sections": [
+          {
+            "title": "Client Name, Business Identity Code and Country of Domicile",
+            "fields": [
+              {
+                "label": "Client",
+                "path": "__clientLine__"
+              },
+              {
+                "label": "Primary Contact Person",
+                "path": "primaryContactPerson"
+              }
+            ]
+          },
+          {
+            "title": "Scope of Work",
+            "fields": [
+              {
+                "label": "Scope of Work",
+                "path": "scopeOfWork"
+              }
+            ]
+          },
+          {
+            "title": "Is the Client the Lender or the Borrower in the Amendment Process?",
+            "fields": [
+              {
+                "label": "Lender or Borrower",
+                "path": "details.refinanceType"
+              }
+            ]
+          },
+          {
+            "title": "Is the Client Acting Only on Its Own Behalf or Also on Behalf of Other Lenders in the Breach Waiver Process?",
+            "fields": [
+              {
+                "label": "Acting on Its Own Behalf or Also on Behalf of Other Lenders",
+                "path": "details.financeAct"
+              }
+            ]
+          },
+          {
+            "title": "Description of the Other Lenders and the Client's Role in Relation to the Other Lenders",
+            "fields": [
+              {
+                "label": "Description",
+                "path": "details.relationRole"
+              }
+            ]
+          },
+          {
+            "title": "Description of the Breach(es) in Respect of Which the Waiver Is Sought and the Finance Documents That Have Been Breached",
+            "fields": [
+              {
+                "label": "Description",
+                "path": "description"
+              }
+            ]
+          },
+          {
+            "title": "Contract Price & Invoicing",
+            "fields": [
+              {
+                "label": "Contract Price",
+                "path": "paymentRate"
+              },
+              {
+                "label": "Currency",
+                "path": "currency"
+              },
+              {
+                "label": "Invoicing",
+                "path": "invoiceType"
+              },
+              {
+                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
+                "path": "advanceRetainerFee"
+              }
+            ]
+          },
+          {
+            "title": "Client's Counterparty in the Matter",
+            "fields": [
+              {
+                "label": "Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter",
+                "path": "details.counterparty"
+              }
+            ]
+          },
+          {
+            "title": "Additional Background Information & Client's Procurement Requirements (Appendices)",
+            "fields": [
+              {
+                "label": "Additional Background Information",
+                "path": "additionalBackgroundInfo"
+              },
+              {
+                "label": "Additional Background files",
+                "path": "backgroundInfoFiles"
+              },
+              {
+                "label": "Client's Procurement Requirements (Appendices)",
+                "path": "supplierCodeOfConductFiles"
+              }
+            ]
+          },
+          {
+            "title": "Languages Required for the Performance of the Work",
+            "fields": [
+              {
+                "label": "Languages",
+                "path": "language"
+              }
+            ]
+          },
+          {
+            "title": "LEXIFY Request Category",
+            "fields": [
+              {
+                "label": "Request Category",
+                "path": "requestCategory"
+              }
+            ]
+          },
+          {
+            "title": "Additional Information Requests from Legal Service Providers",
+            "fields": [
+              {
+                "label": "Information Requests and Responses",
+                "path": "details.additionalQuestions"
+              }
+            ]
+          },
+          {
+            "title": "Written References",
+            "fields": [
+              {
+                "label": "Does the Client Require Written References to Be Provided as Attachments to the Offer?",
+                "path": "providerReferences"
+              }
+            ]
+          }
+        ]
+      },
+      "payloadExample": {
+        "requestState": "PENDING",
+        "requestCategory": "Help with Mergers & Acquisitions",
+        "primaryContactPerson": "Jane Doe",
+        "scopeOfWork": "Comprehensive legal support … / Occasional legal support … / A sale and purchase agreement … / A letter of intent … / A legal due diligence inspection …",
+        "description": "",
+        "additionalBackgroundInfo": "",
+        "backgroundInfoFiles": [],
+        "supplierCodeOfConductFiles": [],
+        "serviceProviderType": "Attorneys-at-law / Law firms / Both",
+        "domesticOffers": "Domestic only / Domestic and foreign",
+        "providerSize": "Any / ≥5 / ≥15 / ≥40",
+        "providerCompanyAge": "Any / ≥5y / ≥10y / ≥25y",
+        "providerMinimumRating": "Any / 3 / 4",
+        "currency": "Euro (€) | …",
+        "paymentRate": "Hourly Rate (if Occasional) else Lump sum fixed price",
+        "maximumPrice": "required when Lump sum",
+        "advanceRetainerFee": "No | 10% | 25% | 50%",
+        "invoiceType": "Monthly / On completion …",
+        "language": "English, …",
+        "offersDeadline": "2025-10-28",
+        "title": "LEXIFY Request title",
+        "dateExpired": "2025-10-28",
+        "details": {
+          "objectOfSale": "All shares / Majority / Minority / Entire business / Specific assets",
+          "buyerOrSeller": "Buyer / Seller",
+          "priceRange": "(string)",
+          "dueDiligence": "'Red flag' report | Long form report | Legal Due Diligence inspection not needed",
+          "confidential": true,
+          "winnerBidderOnlyStatus": "Disclosed to Winning Bidder Only"
+        }
+      }
     }
   ]
 }

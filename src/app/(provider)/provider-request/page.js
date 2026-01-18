@@ -31,6 +31,11 @@ const subcategoriesByCategory = {
     "Support with Data Breach",
     "Specific Privacy related Question",
   ],
+  "Help with Banking & Finance Matters": [
+    "Refinancing of Existing Debt",
+    "Amendment of Existing Debt Terms",
+    "Breach Waiver",
+  ],
 };
 
 const assignmentTypesBySubcategory = {
@@ -141,6 +146,9 @@ export default function ProviderRequest() {
             </option>
             <option value="Help with Personal Data Protection">
               Help with Personal Data Protection
+            </option>
+            <option value="Help with Personal Data Protection">
+              Help with Banking & Finance Matters
             </option>
             <option value="Help with KYC (Know Your Customer) or Compliance related Questionnaire">
               Help with KYC (Know Your Customer) or Compliance related

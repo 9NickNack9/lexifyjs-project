@@ -25,6 +25,7 @@ function mapRequestToCategory(requestCategory, requestSubcategory) {
     return "Compliance";
   if (cat === "Legal Training for Management and/or Personnel")
     return "Legal Training";
+  if (cat === "Help with Banking & Finance Matters") return "Banking & Finance";
 
   return sub || cat || "Other";
 }
