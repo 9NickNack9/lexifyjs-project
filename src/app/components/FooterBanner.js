@@ -27,7 +27,7 @@ export default function FooterBanner() {
             Privacy Statement
           </Link>
         </div>
-        <div className="text-gray-500">© LEXIFY 2025</div>
+        <div className="text-gray-500">© LEXIFY 2026</div>
       </div>
     </footer>
   );
