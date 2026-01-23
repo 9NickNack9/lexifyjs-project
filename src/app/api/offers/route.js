@@ -42,7 +42,7 @@ async function uploadBlobToS3(file, prefix = "uploads") {
       Body: Buffer.from(arrayBuf),
       ContentType: file.type || "application/octet-stream",
       ACL: "public-read",
-    })
+    }),
   );
 
   const base = process.env.S3_PUBLIC_BASE_URL;
@@ -82,7 +82,7 @@ export async function POST(req) {
     } catch {
       return NextResponse.json(
         { error: "Invalid providerId" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -96,7 +96,7 @@ export async function POST(req) {
       if (!dataPart) {
         return NextResponse.json(
           { error: "Missing 'data' part" },
-          { status: 400 }
+          { status: 400 },
         );
       }
       try {
@@ -104,7 +104,7 @@ export async function POST(req) {
       } catch {
         return NextResponse.json(
           { error: "Invalid JSON in 'data' part" },
-          { status: 400 }
+          { status: 400 },
         );
       }
       referenceFilesBlobs = form.getAll("referenceFiles") || [];
@@ -122,7 +122,13 @@ export async function POST(req) {
       offerExpectedPrice, // optional; required only if paymentRate = "capped price"
       offerTitle, // required (string)
       offerStatus, // optional; defaults to "Pending"
+      providerAdditionalInfo,
     } = body || {};
+
+    const providerAdditionalInfoToStore =
+      typeof providerAdditionalInfo === "string"
+        ? providerAdditionalInfo.trim()
+        : "";
 
     // Basic required fields
     if (!requestId || !offerLawyer || !offerPrice || !offerTitle) {
@@ -131,7 +137,7 @@ export async function POST(req) {
           error:
             "Missing required fields: requestId, offerLawyer, offerPrice, offerTitle",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -169,7 +175,7 @@ export async function POST(req) {
             error:
               "offerExpectedPrice is required when paymentRate is 'capped price'.",
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
       expectedPriceToStore = String(offerExpectedPrice);
@@ -194,7 +200,7 @@ export async function POST(req) {
               requiredRefsCount > 1 ? "s" : ""
             } to be uploaded in connection with the offer.`,
           },
-          { status: 400 }
+          { status: 400 },
         );
       }
     }
@@ -224,7 +230,7 @@ export async function POST(req) {
     if (referenceFilesBlobs.length > 0) {
       providerReferenceFiles = await processUploads(
         referenceFilesBlobs,
-        "references"
+        "references",
       );
     }
 
@@ -238,6 +244,7 @@ export async function POST(req) {
       offerStatus: offerStatus ?? "Pending",
       ...(isCapped ? { offerExpectedPrice: String(offerExpectedPrice) } : {}),
       providerReferenceFiles,
+      providerAdditionalInfo: providerAdditionalInfoToStore,
     };
 
     const created = await prisma.offer.create({
@@ -247,12 +254,7 @@ export async function POST(req) {
 
     return NextResponse.json(
       { ok: true, offerId: created.offerId.toString() },
-      { status: 201 }
-    );
-
-    return NextResponse.json(
-      { ok: true, offerId: created.offerId.toString() },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err) {
     console.error("POST /api/offers failed:", err);
@@ -260,7 +262,7 @@ export async function POST(req) {
     if (err?.code === "P2002") {
       return NextResponse.json(
         { error: "You already submitted an offer for this request." },
-        { status: 409 }
+        { status: 409 },
       );
     }
     return NextResponse.json({ error: "Invalid payload" }, { status: 400 });

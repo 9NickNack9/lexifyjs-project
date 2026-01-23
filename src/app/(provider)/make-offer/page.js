@@ -10,7 +10,7 @@ const fmtLocalDDMMYYYY_HHMM = (isoish) => {
   const d = new Date(isoish);
   if (Number.isNaN(d.getTime())) return "—";
   return `${pad2(d.getDate())}/${pad2(
-    d.getMonth() + 1
+    d.getMonth() + 1,
   )}/${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
 };
 const formatTimeUntil = (end) => {
@@ -58,7 +58,7 @@ function formatLocalDDMMYYYY_HHMM(date) {
   if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "—";
   const pad = (n) => String(n).padStart(2, "0");
   return `${pad(date.getDate())}/${pad(
-    date.getMonth() + 1
+    date.getMonth() + 1,
   )}/${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
 }
 function parseIfDateLike(value, pathHint) {
@@ -563,6 +563,8 @@ export default function MakeOffer() {
   const requiresReferences = requires1 || requires2;
   const minReferenceFiles = requires2 ? 2 : requires1 ? 1 : 0;
 
+  const [providerAdditionalInfo, setProviderAdditionalInfo] = useState("");
+
   useEffect(() => {
     if (!requestId) return;
     let active = true;
@@ -605,12 +607,12 @@ export default function MakeOffer() {
         (d) =>
           (d.category || "") === (request.requestCategory || "") &&
           (d.subcategory || null) === (request.requestSubcategory ?? null) &&
-          (d.assignmentType || null) === (request.assignmentType ?? null)
+          (d.assignmentType || null) === (request.assignmentType ?? null),
       ) ||
       list.find(
         (d) =>
           (d.category || "") === (request.requestCategory || "") &&
-          (d.subcategory || null) === (request.requestSubcategory ?? null)
+          (d.subcategory || null) === (request.requestSubcategory ?? null),
       ) ||
       list.find((d) => (d.category || "") === (request.requestCategory || ""))
     );
@@ -637,7 +639,7 @@ export default function MakeOffer() {
         setReferenceError(
           `You must upload at least ${minReferenceFiles} written reference${
             minReferenceFiles > 1 ? "s" : ""
-          } to submit this offer.`
+          } to submit this offer.`,
         );
       }
       return;
@@ -654,6 +656,7 @@ export default function MakeOffer() {
         offerLawyer,
         offerPrice,
         offerTitle,
+        providerAdditionalInfo,
       };
       if (isCapped) {
         payload.offerExpectedPrice = offerExpectedPrice;
@@ -662,7 +665,7 @@ export default function MakeOffer() {
       const form = new FormData();
       form.append(
         "data",
-        new Blob([JSON.stringify(payload)], { type: "application/json" })
+        new Blob([JSON.stringify(payload)], { type: "application/json" }),
       );
       for (const f of referenceFiles) {
         form.append("referenceFiles", f, f.name);
@@ -699,7 +702,7 @@ export default function MakeOffer() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ question: q }),
-        }
+        },
       );
 
       const data = await res.json().catch(() => ({}));
@@ -882,7 +885,7 @@ export default function MakeOffer() {
               className="border p-2 w-full rounded"
               value={offerTitle}
               onChange={(e) => setOfferTitle(e.target.value)}
-              placeholder="Insert Offer title"
+              placeholder="Insert offer title"
               required
             />
           </div>
@@ -1007,6 +1010,22 @@ export default function MakeOffer() {
               )}
             </div>
           )}
+          {/* ---------- ADDITIONAL MESSAGE ATTACHED TO OFFER ---------- */}
+          <div className="mt-6">
+            <label className="block font-semibold mb-2">
+              Add a message to your offer (optional){" "}
+              <QuestionMarkTooltip tooltipText="This optional field allows you to include additional context, clarifications, or disclaimers alongside your offer. The message will be visible to the client company when they review and select the winning offer." />
+            </label>
+
+            <textarea
+              className="border p-2 w-full rounded"
+              value={providerAdditionalInfo}
+              onChange={(e) => setProviderAdditionalInfo(e.target.value)}
+              placeholder="Insert message (optional). Maximum 600 characters."
+              maxLength="600"
+            />
+          </div>
+
           <label className="block">
             <input
               type="checkbox"

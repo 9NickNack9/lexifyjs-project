@@ -76,10 +76,10 @@ export default function PreviewModal({ open, onClose, row, companyName }) {
         (d) =>
           norm(d.category) === cat &&
           norm(d.subcategory) === sub &&
-          norm(d.assignmentType) === asg
+          norm(d.assignmentType) === asg,
       ) ||
       list.find(
-        (d) => norm(d.category) === cat && norm(d.subcategory) === sub
+        (d) => norm(d.category) === cat && norm(d.subcategory) === sub,
       ) ||
       list.find((d) => norm(d.category) === cat) ||
       null
@@ -127,7 +127,7 @@ export default function PreviewModal({ open, onClose, row, companyName }) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-[min(900px,95vw)] max-h-[90vh] overflow-auto rounded-xl bg-white text-black p-6 shadow-xl">
+      <div className="w-[min(900px,95vw)] max-h-[90vh] overflow-auto bg-white text-black p-6 shadow-xl">
         <div className="flex items-center justify-between mb-4">
           <h3 className="text-xl font-semibold">
             Preview — {row.title || "LEXIFY Request"}

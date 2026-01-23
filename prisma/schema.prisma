@@ -116,6 +116,7 @@ model Offer {
   offerTitle                         String
   offerStatus                        String     @default("Pending")
   providerReferenceFiles             Json       @default("[]")
+  providerAdditionalInfo             String     @default("")
 
   request  Request @relation(fields: [requestId], references: [requestId], onDelete: Cascade)
   provider AppUser @relation("ProviderOffers", fields: [providerId], references: [userId], onDelete: Cascade)

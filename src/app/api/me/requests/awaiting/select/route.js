@@ -50,7 +50,7 @@ async function uploadPdfBufferToS3(buffer, prefix = "contractpdfs") {
       Body: buffer,
       ContentType: "application/pdf",
       ACL: "public-read",
-    })
+    }),
   );
 
   const base = process.env.S3_PUBLIC_BASE_URL;
@@ -68,6 +68,19 @@ async function savePdfBufferLocally(buffer, prefix = "contractpdfs") {
   const key = `${prefix}/${name}`;
   const url = `/${prefix}/${name}`;
   return { key, url };
+}
+
+function escapeHtml(s) {
+  return String(s ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function toHtmlWithLineBreaks(s) {
+  return escapeHtml(s).replace(/\r?\n/g, "<br/>");
 }
 
 // ---- local helper (mirrors pending route) ----
@@ -115,6 +128,7 @@ async function sendContractPackageEmail(prisma, requestId) {
               offerLawyer: true,
               offerStatus: true,
               offerTitle: true,
+              providerAdditionalInfo: true,
             },
           },
         },
@@ -154,12 +168,22 @@ async function sendContractPackageEmail(prisma, requestId) {
     ? contract.request.offers
     : [];
   const byProvider = offers.filter(
-    (o) => String(o.providerId) === String(contract.providerId)
+    (o) => String(o.providerId) === String(contract.providerId),
   );
   const won =
     byProvider.find((o) => (o.offerStatus || "").toUpperCase() === "WON") ||
     byProvider[0] ||
     null;
+
+  const coverNoteRaw =
+    typeof won?.providerAdditionalInfo === "string"
+      ? won.providerAdditionalInfo.trim()
+      : "";
+
+  const coverNoteHtml = coverNoteRaw
+    ? toHtmlWithLineBreaks(coverNoteRaw)
+    : "None";
+
   const offerLawyer = won?.offerLawyer?.toString?.().trim() || "";
   const contacts = contract.provider?.companyContactPersons || [];
   const match =
@@ -167,7 +191,7 @@ async function sendContractPackageEmail(prisma, requestId) {
     contacts.find(
       (c) =>
         norm(c?.firstName).startsWith(norm(offerLawyer)) ||
-        norm(c?.lastName).startsWith(norm(offerLawyer))
+        norm(c?.lastName).startsWith(norm(offerLawyer)),
     ) ||
     null;
 
@@ -207,12 +231,12 @@ async function sendContractPackageEmail(prisma, requestId) {
   const purchaserContact =
     clientContacts.find(
       (c) =>
-        normalized(`${c.firstName} ${c.lastName}`) === normalized(primaryName)
+        normalized(`${c.firstName} ${c.lastName}`) === normalized(primaryName),
     ) ||
     clientContacts.find(
       (c) =>
         normalized(c.firstName) === normalized(primaryName) ||
-        normalized(c.lastName) === normalized(primaryName)
+        normalized(c.lastName) === normalized(primaryName),
     ) ||
     null;
 
@@ -263,7 +287,7 @@ async function sendContractPackageEmail(prisma, requestId) {
         process.cwd(),
         "public",
         "previews",
-        "all-previews.json"
+        "all-previews.json",
       );
       defs = JSON.parse(await fs.readFile(p, "utf8"));
     } catch {}
@@ -283,10 +307,10 @@ async function sendContractPackageEmail(prisma, requestId) {
       (d) =>
         norm2(d.category) === cat &&
         norm2(d.subcategory) === sub &&
-        norm2(d.assignmentType) === asg
+        norm2(d.assignmentType) === asg,
     ) ||
     defs?.requests?.find(
-      (d) => norm2(d.category) === cat && norm2(d.subcategory) === sub
+      (d) => norm2(d.category) === cat && norm2(d.subcategory) === sub,
     ) ||
     defs?.requests?.find((d) => norm2(d.category) === cat) ||
     null;
@@ -330,7 +354,7 @@ async function sendContractPackageEmail(prisma, requestId) {
     console.error(
       "Failed to persist contractPdfFile for contract",
       String(contract.contractId),
-      e
+      e,
     );
     // do not throw – still proceed with sending emails
   }
@@ -360,7 +384,7 @@ async function sendContractPackageEmail(prisma, requestId) {
   // ---- Build recipient groups ----
   // Purchaser side: request's primaryContactPerson + allNotifications=true contacts
   const purchaserContacts = Array.isArray(
-    contract.request?.client?.companyContactPersons
+    contract.request?.client?.companyContactPersons,
   )
     ? contract.request.client.companyContactPersons
     : [];
@@ -373,12 +397,12 @@ async function sendContractPackageEmail(prisma, requestId) {
 
   const toPurchaser = expandWithAllNotificationContacts(
     primaryPurchaser,
-    purchaserContacts
+    purchaserContacts,
   );
 
   // Provider side: winning offer's offerLawyer + allNotifications=true contacts
   const providerContacts = Array.isArray(
-    contract.provider?.companyContactPersons
+    contract.provider?.companyContactPersons,
   )
     ? contract.provider.companyContactPersons
     : [];
@@ -391,17 +415,18 @@ async function sendContractPackageEmail(prisma, requestId) {
 
   const toProvider = expandWithAllNotificationContacts(
     lawyerPrimary,
-    providerContacts
+    providerContacts,
   );
 
   // ---- Email HTML (unchanged) ----
   const purchaserEmailHtml = `
     <div style="font-family:Arial,Helvetica,sans-serif">
       <p>Please find attached your new LEXIFY contract, including all appendices. Your legal service provider will contact you shortly to begin the assignment.</p>
-      <p><strong>Provider Representative:</strong> ${
+      <p><strong>Legal Service Provider Representative:</strong> ${
         provider.contactName
       } &lt;${provider.email || ""}&gt;</p>
-      <p><strong>Purchaser Representative:</strong> ${
+      <p><strong>Legal Service Provider Cover Note from Offer:</strong> ${coverNoteHtml}</p>
+      <p><strong>Legal Service Purchaser Representative:</strong> ${
         purchaser.contactName
       } &lt;${purchaser.email || ""}&gt;</p>
     </div>`;
@@ -409,10 +434,11 @@ async function sendContractPackageEmail(prisma, requestId) {
   const providerEmailHtml = `
     <div style="font-family:Arial,Helvetica,sans-serif">
       <p>Please find attached your new LEXIFY contract, including all appendices. You can now contact the client using the details on the cover page to initiate the assignment without delay.</p>
-      <p><strong>Provider Representative:</strong> ${
+      <p><strong>Legal Service Provider Representative:</strong> ${
         provider.contactName
       } &lt;${provider.email || ""}&gt;</p>
-      <p><strong>Purchaser Representative:</strong> ${
+      <p><strong>Legal Service Provider Cover Note from Offer:</strong> ${coverNoteHtml}</p>
+      <p><strong>Legal Service Purchaser Representative:</strong> ${
         purchaser.contactName
       } &lt;${purchaser.email || ""}&gt;</p>
     </div>`;
@@ -431,7 +457,7 @@ async function sendContractPackageEmail(prisma, requestId) {
   } else {
     console.warn(
       "sendContractPackageEmail: no purchaser recipients resolved for requestId",
-      String(requestId)
+      String(requestId),
     );
   }
 
@@ -447,7 +473,7 @@ async function sendContractPackageEmail(prisma, requestId) {
   } else {
     console.warn(
       "sendContractPackageEmail: no provider recipients resolved for requestId",
-      String(requestId)
+      String(requestId),
     );
   }
 }
@@ -467,7 +493,7 @@ function findPrimaryContactByLawyer(offerLawyer, contacts) {
   return (
     contacts.find((c) => norm(full(c)) === name) ||
     contacts.find(
-      (c) => norm(c?.firstName) === name || norm(c?.lastName) === name
+      (c) => norm(c?.firstName) === name || norm(c?.lastName) === name,
     ) ||
     null
   );
@@ -522,7 +548,7 @@ function findLawyerEmail(offerLawyer, contacts) {
   const exact =
     contacts.find((c) => norm(full(c)) === name) ||
     contacts.find(
-      (c) => norm(c?.firstName) === name || norm(c?.lastName) === name
+      (c) => norm(c?.firstName) === name || norm(c?.lastName) === name,
     ) ||
     null;
 
@@ -584,7 +610,7 @@ export async function POST(req) {
     if (requestRow.requestState !== "ON HOLD") {
       return NextResponse.json(
         { error: "Request is not on hold" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -613,7 +639,7 @@ export async function POST(req) {
       const now = new Date();
       const remainingMs = Math.max(
         0,
-        new Date(requestRow.acceptDeadline).getTime() - now.getTime()
+        new Date(requestRow.acceptDeadline).getTime() - now.getTime(),
       );
 
       await prisma.request.update({
@@ -664,7 +690,7 @@ export async function POST(req) {
 
           const recipients = expandWithAllNotificationContacts(
             primaryForExpand,
-            contacts
+            contacts,
           );
 
           if (recipients.length > 0) {
@@ -689,7 +715,7 @@ export async function POST(req) {
       // Do NOT create contract, update statuses, or send emails yet
       return NextResponse.json(
         { ok: true, conflictCheck: true },
-        { status: 200 }
+        { status: 200 },
       );
     }
 
@@ -768,7 +794,7 @@ export async function POST(req) {
 
         const pc = data?.primaryContactPerson || null;
         const purchaserContacts = Array.isArray(
-          data?.client?.companyContactPersons
+          data?.client?.companyContactPersons,
         )
           ? data.client.companyContactPersons
           : [];
@@ -780,7 +806,7 @@ export async function POST(req) {
             purchaserContacts.find(
               (c) =>
                 norm(c?.firstName) === norm(pc.firstName) ||
-                norm(c?.lastName) === norm(pc.lastName)
+                norm(c?.lastName) === norm(pc.lastName),
             ) ||
             null;
           purchaserEmail = (match?.email || pc.email || "").trim();
@@ -791,7 +817,7 @@ export async function POST(req) {
         if (purchaserEmail) {
           const toGroup = expandWithAllNotificationContacts(
             { email: purchaserEmail },
-            purchaserContacts
+            purchaserContacts,
           );
           await notifyPurchaserContractFormed({
             to: toGroup,
@@ -801,7 +827,7 @@ export async function POST(req) {
 
         // Provider contacts for all offers
         const providerIds = Array.from(
-          new Set((data?.offers || []).map((o) => String(o.providerId)))
+          new Set((data?.offers || []).map((o) => String(o.providerId))),
         ).map((id) => BigInt(id));
         const providers = await prisma.appUser.findMany({
           where: { userId: { in: providerIds } },
@@ -818,12 +844,12 @@ export async function POST(req) {
               contacts: p.companyContactPersons || [],
               prefs: toStringArray(p.notificationPreferences),
             },
-          ])
+          ]),
         );
 
         // Winner
         const winner = (data?.offers || []).find(
-          (o) => (o.offerStatus || "").toUpperCase() === "WON"
+          (o) => (o.offerStatus || "").toUpperCase() === "WON",
         );
         if (winner) {
           const wMeta = providerMeta.get(String(winner.providerId)) || {
@@ -832,13 +858,13 @@ export async function POST(req) {
           };
           const wPrimary = findPrimaryContactByLawyer(
             winner.offerLawyer,
-            wMeta.contacts
+            wMeta.contacts,
           );
 
           if (wPrimary?.email && isEmail(wPrimary.email)) {
             const toGroup = expandWithAllNotificationContacts(
               wPrimary,
-              wMeta.contacts
+              wMeta.contacts,
             );
 
             // read teamRequest from request.details
@@ -883,12 +909,12 @@ export async function POST(req) {
 
           const primary = findPrimaryContactByLawyer(
             o.offerLawyer,
-            meta.contacts
+            meta.contacts,
           );
           if (primary?.email && isEmail(primary.email)) {
             const toGroup = expandWithAllNotificationContacts(
               primary,
-              meta.contacts
+              meta.contacts,
             );
             await notifyLosingLawyerNotSelected({
               to: toGroup,
@@ -903,7 +929,7 @@ export async function POST(req) {
 
     return NextResponse.json(
       { ok: true, createdNow },
-      { status: createdNow ? 201 : 200 }
+      { status: createdNow ? 201 : 200 },
     );
   } catch (e) {
     console.error("POST /api/me/requests/awaiting/select failed:", e);

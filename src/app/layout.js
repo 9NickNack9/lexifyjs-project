@@ -14,6 +14,22 @@ const poppins = Poppins({
   display: "swap",
 });
 
+export const metadata = {
+  title: {
+    default: "LEXIFY - Buy Legal Services Efficiently",
+    template: "%s | LEXIFY",
+  },
+  description:
+    "LEXIFY is a legal services marketplace where businesses can create requests, receive offers from legal service providers, and form contracts efficiently.",
+  metadataBase: new URL("https://www.lexify.online"),
+
+  icons: {
+    icon: "/icon.png", // shown in Google results
+    shortcut: "/favicon.ico",
+    apple: "/apple-touch-icon.png",
+  },
+};
+
 export default function RootLayout({ children }) {
   const pathname = usePathname();
   const noNavPages = [

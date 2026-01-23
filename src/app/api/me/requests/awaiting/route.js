@@ -8,7 +8,7 @@ import { TURBOPACK_CLIENT_MIDDLEWARE_MANIFEST } from "next/dist/shared/lib/const
 // BigInt-safe JSON helper
 const serialize = (obj) =>
   JSON.parse(
-    JSON.stringify(obj, (_, v) => (typeof v === "bigint" ? v.toString() : v))
+    JSON.stringify(obj, (_, v) => (typeof v === "bigint" ? v.toString() : v)),
   );
 
 const toNum = (v) => {
@@ -78,7 +78,9 @@ export async function GET() {
           select: {
             offerId: true,
             offerPrice: true,
+            offerExpectedPrice: true,
             offerLawyer: true,
+            providerAdditionalInfo: true,
             provider: {
               select: {
                 companyName: true,
@@ -102,7 +104,7 @@ export async function GET() {
     const shaped = reqs.map((r) => {
       const maxPrice = maxFromDetails(r.details);
       const disqSet = new Set(
-        toStringArray(r.disqualifiedOfferIds).map(String) // use helper like in your select route
+        toStringArray(r.disqualifiedOfferIds).map(String), // use helper like in your select route
       );
       const offers = (r.offers || [])
         .filter((o) => (o.offerStatus || "").toUpperCase() !== "DISQUALIFIED")
@@ -123,7 +125,9 @@ export async function GET() {
                 : String(o.providerId),
 
             offeredPrice: toNum(o.offerPrice),
+            offerExpectedPrice: toNum(o.offerExpectedPrice), // number | null
             offerLawyer: o.offerLawyer || "—",
+            providerAdditionalInfo: o.providerAdditionalInfo || "",
             providerCompanyName: o.provider?.companyName || "—",
             providerTotalRating: toNum(o.provider?.providerTotalRating) ?? null,
             providerQualityRating:
@@ -136,7 +140,7 @@ export async function GET() {
               Array.isArray(o.provider?.providerIndividualRating) &&
               o.provider.providerIndividualRating.length > 0,
             providerRatingCount: Array.isArray(
-              o.provider?.providerIndividualRating
+              o.provider?.providerIndividualRating,
             )
               ? o.provider.providerIndividualRating.length
               : 0,
@@ -223,13 +227,13 @@ export async function POST(req) {
     if (r.requestState !== "ON HOLD" || !r.acceptDeadline) {
       return NextResponse.json(
         { error: "Extension not allowed" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     if (new Date(r.acceptDeadline).getTime() <= now.getTime()) {
       return NextResponse.json(
         { error: "Deadline already passed" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
@@ -237,12 +241,12 @@ export async function POST(req) {
     if (details.acceptDeadlineExtendedOnce === true) {
       return NextResponse.json(
         { error: "Already extended once" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const newDeadline = new Date(
-      new Date(r.acceptDeadline).getTime() + 168 * 60 * 60 * 1000
+      new Date(r.acceptDeadline).getTime() + 168 * 60 * 60 * 1000,
     );
 
     const currentDeadline = new Date(r.acceptDeadline);
