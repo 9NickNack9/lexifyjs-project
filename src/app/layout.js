@@ -39,6 +39,18 @@ export default function RootLayout({ children }) {
       <body className={poppins.className}>
         <Providers>{children}</Providers>
       </body>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{
+          __html: JSON.stringify({
+            "@context": "https://schema.org",
+            "@type": "Organization",
+            name: "LEXIFY",
+            url: "https://www.lexify.online",
+            logo: "https://www.lexify.online/icon.png",
+          }),
+        }}
+      />
     </html>
   );
 }
