@@ -1013,7 +1013,7 @@ export default function MakeOffer() {
           {/* ---------- ADDITIONAL MESSAGE ATTACHED TO OFFER ---------- */}
           <div className="mt-6">
             <label className="block font-semibold mb-2">
-              Add a message to your offer (optional){" "}
+              Add a Message to Your Offer (Optional){" "}
               <QuestionMarkTooltip tooltipText="This optional field allows you to include additional context, clarifications, or disclaimers alongside your offer. The message will be visible to the client company when they review and select the winning offer." />
             </label>
 
