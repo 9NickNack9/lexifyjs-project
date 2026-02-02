@@ -58,7 +58,7 @@ export default function Register() {
       username: formData.username.trim(),
       password: formData.password,
       companyName: formData.companyName.trim(),
-      companyID: formData.companyID.trim(), // will map to companyId in API
+      companyId: formData.companyID.trim(), // will map to companyId in API
       companyAddress: formData.companyAddress.trim(),
       companyPostalCode: formData.companyPostalCode.trim(),
       companyCity: formData.companyCity.trim(),

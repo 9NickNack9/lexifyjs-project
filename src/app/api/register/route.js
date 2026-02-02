@@ -57,7 +57,7 @@ const BaseSchema = z.object({
 const RegisterSchema = BaseSchema.transform((raw) => {
   // Trim everything
   const s = Object.fromEntries(
-    Object.entries(raw).map(([k, v]) => [k, trim(v)])
+    Object.entries(raw).map(([k, v]) => [k, trim(v)]),
   );
 
   // Normalize role
@@ -191,7 +191,7 @@ export async function POST(req) {
           fields: flat.fieldErrors,
           form: flat.formErrors,
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
     const data = parsed.data;
@@ -214,13 +214,13 @@ export async function POST(req) {
     if (userTaken) {
       return NextResponse.json(
         { error: "This username is already taken.", field: "username" },
-        { status: 409 }
+        { status: 409 },
       );
     }
     if (companyTaken) {
       return NextResponse.json(
         { error: "This company Id is already registered.", field: "companyId" },
-        { status: 409 }
+        { status: 409 },
       );
     }
     if (companyNameTaken) {
@@ -229,7 +229,7 @@ export async function POST(req) {
           error: "This company name is already registered",
           field: "companyName",
         },
-        { status: 409 }
+        { status: 409 },
       );
     }
 
@@ -323,7 +323,7 @@ export async function POST(req) {
 
     return NextResponse.json(
       { ok: true, userId: String(created.userId) },
-      { status: 201 }
+      { status: 201 },
     );
   } catch (err) {
     console.error("POST /api/register failed:", err);
