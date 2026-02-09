@@ -67,7 +67,7 @@ export default function LegalAdvice() {
                 .trim();
               return n ? { label: n, value: n } : null;
             })
-            .filter(Boolean)
+            .filter(Boolean),
         );
       } catch {
         // silent: dropdown will just show "Select"
@@ -250,7 +250,7 @@ export default function LegalAdvice() {
         currency: formData.currency,
         paymentRate: isMonthly
           ? "Lump sum fixed price per month"
-          : "Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the legal service provider submitting the winning offer. The offered hourly rate will be valid for 12 calendar months from the date of the LEXIFY Contract between the Client and the legal service provider.",
+          : "Blended Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the legal service provider submitting the winning offer. The offered hourly rate will be valid for 12 calendar months from the date of the LEXIFY Contract between the Client and the legal service provider.",
         advanceRetainerFee: formData.retainerFee,
         invoiceType: formData.paymentTerms,
         language: languageCSV,
@@ -271,7 +271,7 @@ export default function LegalAdvice() {
       const form = new FormData();
       form.append(
         "data",
-        new Blob([JSON.stringify(payload)], { type: "application/json" })
+        new Blob([JSON.stringify(payload)], { type: "application/json" }),
       );
       for (const f of formData.backgroundFiles)
         form.append("backgroundFiles", f, f.name);
@@ -289,7 +289,7 @@ export default function LegalAdvice() {
         throw new Error(
           (json && (json.error || json.message)) ||
             text ||
-            "Failed to create request."
+            "Failed to create request.",
         );
       }
 
@@ -408,7 +408,7 @@ export default function LegalAdvice() {
             ))}
           </div>
           {formData.need.includes(
-            "A fixed monthly number of hours of day-to-day legal support on specific areas of law, as needed from time to time."
+            "A fixed monthly number of hours of day-to-day legal support on specific areas of law, as needed from time to time.",
           ) && (
             <div>
               <h4 className="text-md font-medium font-semibold mb-1">
@@ -872,7 +872,7 @@ export default function LegalAdvice() {
                 />{" "}
                 {option}
               </label>
-            )
+            ),
           )}
           {formData.checkboxes.includes("Other:") && (
             <input
@@ -1129,7 +1129,7 @@ export default function LegalAdvice() {
                 {/* Contract Price and Currency */}
                 <Section title="Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency">
                   {formData.need.includes(
-                    "A fixed monthly number of hours of day-to-day legal support on specific areas of law, as needed from time to time."
+                    "A fixed monthly number of hours of day-to-day legal support on specific areas of law, as needed from time to time.",
                   ) ? (
                     `Lump Sum Fixed Fee ${
                       formData.currency ? `(${formData.currency})` : ""
@@ -1221,7 +1221,7 @@ export default function LegalAdvice() {
                 <Section title="Languages Required for the Performance of the Work">
                   {[
                     ...(formData.checkboxes || []).filter(
-                      (lang) => lang !== "Other:"
+                      (lang) => lang !== "Other:",
                     ),
                     formData.otherLang,
                   ]

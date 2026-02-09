@@ -165,7 +165,7 @@ export default function ReLeaseback() {
     setSubmitting(true);
     try {
       const paymentRate = isHourly
-        ? "Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the Legal Service Provider. The offered hourly rate will be valid until the transaction has been closed or abandoned, whichever comes first."
+        ? "Blended Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the Legal Service Provider. The offered hourly rate will be valid until the transaction has been closed or abandoned, whichever comes first."
         : "Lump sum fixed price";
       const languageCSV = [
         ...(formData.checkboxes || []).filter((l) => l !== "Other:"),
@@ -205,7 +205,7 @@ export default function ReLeaseback() {
           otherObject:
             formData.saleObject === "Other" ? formData.otherObject || "" : "",
           confidential: formData.confboxes.includes(
-            "Disclosed to Winning Bidder Only"
+            "Disclosed to Winning Bidder Only",
           )
             ? "Yes"
             : "No",
@@ -218,7 +218,7 @@ export default function ReLeaseback() {
       const form = new FormData();
       form.append(
         "data",
-        new Blob([JSON.stringify(payload)], { type: "application/json" })
+        new Blob([JSON.stringify(payload)], { type: "application/json" }),
       );
       for (const f of formData.backgroundFiles)
         form.append("backgroundFiles", f, f.name);
@@ -233,7 +233,7 @@ export default function ReLeaseback() {
       } catch {}
       if (!res.ok)
         throw new Error(
-          (json && json.error) || text || "Failed to create request."
+          (json && json.error) || text || "Failed to create request.",
         );
 
       alert("LEXIFY Request submitted successfully.");
@@ -877,7 +877,7 @@ export default function ReLeaseback() {
                 />{" "}
                 {option}
               </label>
-            )
+            ),
           )}
           {formData.checkboxes.includes("Other:") && (
             <input
@@ -1086,14 +1086,14 @@ export default function ReLeaseback() {
                 {/* Client Name */}
                 <Section title="Client Name, Business Identity Code and Country of Domicile">
                   {formData.confboxes.includes(
-                    "Disclosed to Winning Bidder Only"
+                    "Disclosed to Winning Bidder Only",
                   )
                     ? "Disclosed to Winning Bidder Only"
                     : formData.contactPerson
-                    ? [company.name, company.id, company.country]
-                        .filter(Boolean)
-                        .join(", ")
-                    : "-"}
+                      ? [company.name, company.id, company.country]
+                          .filter(Boolean)
+                          .join(", ")
+                      : "-"}
                 </Section>
 
                 {/* Scope of Work */}
@@ -1111,7 +1111,7 @@ export default function ReLeaseback() {
                 {/* Contract Price and Currency */}
                 <Section title="Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency">
                   {formData.supportType.includes(
-                    "Occasional legal support with the transaction process when needed (for example, commenting of transactional documents or legal advice during different stages of the transaction)."
+                    "Occasional legal support with the transaction process when needed (for example, commenting of transactional documents or legal advice during different stages of the transaction).",
                   ) ? (
                     <>
                       {`Flat Hourly Rate ${
@@ -1147,7 +1147,7 @@ export default function ReLeaseback() {
 
                 <Section title="Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Transaction">
                   {formData.confboxes.includes(
-                    "Disclosed to Winning Bidder Only"
+                    "Disclosed to Winning Bidder Only",
                   )
                     ? "Disclosed to Winning Bidder Only"
                     : formData.confidential || "-"}
@@ -1238,7 +1238,7 @@ export default function ReLeaseback() {
                 <Section title="Languages Required for the Performance of the Work">
                   {[
                     ...(formData.checkboxes || []).filter(
-                      (lang) => lang !== "Other:"
+                      (lang) => lang !== "Other:",
                     ),
                     formData.otherLang,
                   ]

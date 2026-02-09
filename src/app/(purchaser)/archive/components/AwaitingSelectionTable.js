@@ -862,9 +862,14 @@ export default function AwaitingSelectionTable({
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold">
-                  {fullOfferPopupData.offer.offerExpectedPrice != null
-                    ? "Offered Capped Price"
-                    : "Offered Price"}
+                  {fullOfferPopupData.offer.offerExpectedPrice != null ? (
+                    <>
+                      Offered Capped Price{" "}
+                      <NarrowTooltip tooltipText="Capped price refers to your offered maximum price for the work, taking into account all possible unexpected developments in the dispute proceedings such as an unusually high number of rounds of written pleadings." />
+                    </>
+                  ) : (
+                    "Offered Price"
+                  )}
                 </span>
                 <span className="text-sm">
                   {fmtMoney(
@@ -877,7 +882,8 @@ export default function AwaitingSelectionTable({
               {fullOfferPopupData.offer.offerExpectedPrice != null && (
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold">
-                    Offer Expected Price
+                    Offer Expected Price{" "}
+                    <NarrowTooltip tooltipText="Expected price refers to your expected price for the work if the dispute proceedings do not involve any unexpected developments (such as an unusually high number of rounds of written pleadings)." />
                   </span>
                   <span className="text-sm">
                     {fmtMoney(

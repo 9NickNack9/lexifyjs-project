@@ -68,7 +68,7 @@ export default function MergerAquisitions() {
                 .trim();
               return n ? { label: n, value: n } : null;
             })
-            .filter(Boolean)
+            .filter(Boolean),
         );
       } catch {
         // silent fail -> dropdown shows "Select"
@@ -167,7 +167,7 @@ export default function MergerAquisitions() {
       return "Please select whether you are buying or selling.";
     if (!formData.currency) return "Please select a currency.";
     const isHourly = formData.supportType.startsWith(
-      "Occasional legal support"
+      "Occasional legal support",
     );
     if (!isHourly && !formData.maxPrice)
       return "Please set a maximum price (VAT 0%).";
@@ -199,7 +199,7 @@ export default function MergerAquisitions() {
     if (err) return alert(err);
 
     const isHourly = formData.supportType.startsWith(
-      "Occasional legal support"
+      "Occasional legal support",
     );
 
     setSubmitting(true);
@@ -228,7 +228,7 @@ export default function MergerAquisitions() {
         providerReferences: formData.providerReferences,
         currency: formData.currency,
         paymentRate: isHourly
-          ? "Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the Legal Service Provider. The offered hourly rate will be valid until the transaction has been closed or abandoned, whichever comes first."
+          ? "Blended Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the Legal Service Provider. The offered hourly rate will be valid until the transaction has been closed or abandoned, whichever comes first."
           : "Lump sum fixed price",
         advanceRetainerFee: formData.retainerFee,
         invoiceType: formData.paymentTerms,
@@ -242,7 +242,7 @@ export default function MergerAquisitions() {
           priceRange: formData.priceRange,
           dueDiligence: formData.dueDiligence || "",
           confidential: formData.confboxes.includes(
-            "Disclosed to Winning Bidder Only"
+            "Disclosed to Winning Bidder Only",
           )
             ? "Yes"
             : "No",
@@ -254,7 +254,7 @@ export default function MergerAquisitions() {
       const form = new FormData();
       form.append(
         "data",
-        new Blob([JSON.stringify(payload)], { type: "application/json" })
+        new Blob([JSON.stringify(payload)], { type: "application/json" }),
       );
       for (const f of formData.backgroundFiles)
         form.append("backgroundFiles", f, f.name);
@@ -271,7 +271,7 @@ export default function MergerAquisitions() {
         throw new Error(
           (json && (json.error || json.message)) ||
             text ||
-            "Failed to create request."
+            "Failed to create request.",
         );
 
       alert("LEXIFY Request submitted successfully.");
@@ -888,7 +888,7 @@ export default function MergerAquisitions() {
                 />{" "}
                 {option}
               </label>
-            )
+            ),
           )}
           {formData.checkboxes.includes("Other:") && (
             <input
@@ -1097,14 +1097,14 @@ export default function MergerAquisitions() {
                 {/* Client Name */}
                 <Section title="Client Name, Business Identity Code and Country of Domicile">
                   {formData.confboxes.includes(
-                    "Disclosed to Winning Bidder Only"
+                    "Disclosed to Winning Bidder Only",
                   )
                     ? "Disclosed to Winning Bidder Only"
                     : formData.contactPerson
-                    ? [company.name, company.id, company.country]
-                        .filter(Boolean)
-                        .join(", ")
-                    : "-"}
+                      ? [company.name, company.id, company.country]
+                          .filter(Boolean)
+                          .join(", ")
+                      : "-"}
                 </Section>
 
                 {/* Scope of Work */}
@@ -1122,7 +1122,7 @@ export default function MergerAquisitions() {
                 {/* Contract Price and Currency */}
                 <Section title="Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency">
                   {formData.supportType.includes(
-                    "Occasional legal support with the transaction process when needed (for example, commenting of transactional documents or legal advice during different stages of the transaction)"
+                    "Occasional legal support with the transaction process when needed (for example, commenting of transactional documents or legal advice during different stages of the transaction)",
                   ) ? (
                     <>
                       {`Flat Hourly Rate ${
@@ -1158,7 +1158,7 @@ export default function MergerAquisitions() {
 
                 <Section title="Name, Business Identity Code and Country of Domicile of the Client's Counterparty and the Target in the Transaction">
                   {formData.confboxes.includes(
-                    "Disclosed to Winning Bidder Only"
+                    "Disclosed to Winning Bidder Only",
                   )
                     ? "Disclosed to Winning Bidder Only"
                     : formData.confidential || "-"}
@@ -1249,7 +1249,7 @@ export default function MergerAquisitions() {
                 <Section title="Languages Required for the Performance of the Work">
                   {[
                     ...(formData.checkboxes || []).filter(
-                      (lang) => lang !== "Other:"
+                      (lang) => lang !== "Other:",
                     ),
                     formData.otherLang,
                   ]

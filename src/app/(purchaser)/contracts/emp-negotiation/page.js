@@ -63,7 +63,7 @@ export default function EmploymentNegotiation() {
                 .trim();
               return n ? { label: n, value: n } : null;
             })
-            .filter(Boolean)
+            .filter(Boolean),
         );
       } catch {}
     })();
@@ -197,7 +197,7 @@ export default function EmploymentNegotiation() {
         providerReferences: formData.providerReferences,
         currency: formData.currency,
         paymentRate:
-          "Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the Legal Service Provider. The hourly rate offered by the Legal Service Provider will be valid until the pending negotiations with the relevant employee/director are concluded.",
+          "Blended Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the Legal Service Provider. The hourly rate offered by the Legal Service Provider will be valid until the pending negotiations with the relevant employee/director are concluded.",
         advanceRetainerFee: formData.retainerFee,
         invoiceType: formData.paymentTerms,
         language: languageCSV,
@@ -210,7 +210,7 @@ export default function EmploymentNegotiation() {
       const form = new FormData();
       form.append(
         "data",
-        new Blob([JSON.stringify(payload)], { type: "application/json" })
+        new Blob([JSON.stringify(payload)], { type: "application/json" }),
       );
       for (const f of formData.backgroundFiles)
         form.append("backgroundFiles", f, f.name);
@@ -227,7 +227,7 @@ export default function EmploymentNegotiation() {
         throw new Error(
           (json && (json.error || json.message)) ||
             text ||
-            "Failed to create request."
+            "Failed to create request.",
         );
 
       alert("LEXIFY Request submitted successfully.");
@@ -664,7 +664,7 @@ export default function EmploymentNegotiation() {
                 />{" "}
                 {option}
               </label>
-            )
+            ),
           )}
           {formData.checkboxes.includes("Other:") && (
             <input
@@ -880,7 +880,7 @@ export default function EmploymentNegotiation() {
                         .map((item) =>
                           item === "Other" && formData.otherTopic
                             ? `${formData.otherTopic}`
-                            : item
+                            : item,
                         )
                         .join(", ")}
                     </>
@@ -960,7 +960,7 @@ export default function EmploymentNegotiation() {
                 <Section title="Languages Required for the Performance of the Work">
                   {[
                     ...(formData.checkboxes || []).filter(
-                      (lang) => lang !== "Other:"
+                      (lang) => lang !== "Other:",
                     ),
                     formData.otherLang,
                   ]

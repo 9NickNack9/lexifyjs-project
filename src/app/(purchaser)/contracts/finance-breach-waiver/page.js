@@ -67,7 +67,7 @@ export default function FinanceBreachWaiver() {
                 .trim();
               return n ? { label: n, value: n } : null;
             })
-            .filter(Boolean)
+            .filter(Boolean),
         );
       } catch {
         // silent fail -> dropdown shows "Select"
@@ -144,7 +144,7 @@ export default function FinanceBreachWaiver() {
       return "Please select whether the term sheet has already been signed or not.";
     if (!formData.currency) return "Please select a currency.";
     const isHourly = formData.supportType.startsWith(
-      "Occasional legal support"
+      "Occasional legal support",
     );
     if (!isHourly && !formData.maxPrice)
       return "Please set a maximum price (VAT 0%).";
@@ -176,7 +176,7 @@ export default function FinanceBreachWaiver() {
     if (err) return alert(err);
 
     const isHourly = formData.supportType.startsWith(
-      "Occasional legal support"
+      "Occasional legal support",
     );
 
     setSubmitting(true);
@@ -206,7 +206,7 @@ export default function FinanceBreachWaiver() {
         providerReferences: formData.providerReferences,
         currency: formData.currency,
         paymentRate: isHourly
-          ? "Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the Legal Service Provider. The offered hourly rate will be valid until the transaction has been closed or abandoned, whichever comes first."
+          ? "Blended Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the Legal Service Provider. The offered hourly rate will be valid until the transaction has been closed or abandoned, whichever comes first."
           : "Lump sum fixed price",
         advanceRetainerFee: formData.retainerFee,
         invoiceType: formData.paymentTerms,
@@ -226,7 +226,7 @@ export default function FinanceBreachWaiver() {
       const form = new FormData();
       form.append(
         "data",
-        new Blob([JSON.stringify(payload)], { type: "application/json" })
+        new Blob([JSON.stringify(payload)], { type: "application/json" }),
       );
       for (const f of formData.backgroundFiles)
         form.append("backgroundFiles", f, f.name);
@@ -243,7 +243,7 @@ export default function FinanceBreachWaiver() {
         throw new Error(
           (json && (json.error || json.message)) ||
             text ||
-            "Failed to create request."
+            "Failed to create request.",
         );
 
       alert("LEXIFY Request submitted successfully.");
@@ -390,7 +390,7 @@ export default function FinanceBreachWaiver() {
                 <br />
                 <div>
                   {["On my own behalf and for other lenders"].includes(
-                    formData.financeAct
+                    formData.financeAct,
                   ) && (
                     <>
                       <div>
@@ -774,7 +774,7 @@ export default function FinanceBreachWaiver() {
                 />{" "}
                 {option}
               </label>
-            )
+            ),
           )}
           {formData.checkboxes.includes("Other:") && (
             <input
@@ -986,7 +986,7 @@ export default function FinanceBreachWaiver() {
                 {/* Contract Price and Currency */}
                 <Section title="Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency">
                   {formData.supportType.includes(
-                    "Occasional legal support with the amendment process when needed (for example, commenting of amendment agreement documentation or specific legal advice during different stages of the process)"
+                    "Occasional legal support with the amendment process when needed (for example, commenting of amendment agreement documentation or specific legal advice during different stages of the process)",
                   ) ? (
                     <>
                       {`Flat Hourly Rate ${
@@ -1027,7 +1027,7 @@ export default function FinanceBreachWaiver() {
 
                 {/* Description of the Other Lenders and the Client's Role in Relation to the Other Lenders */}
                 {["On my own behalf and for other lenders"].includes(
-                  formData.financeAct
+                  formData.financeAct,
                 ) && (
                   <Section title="Description of the Other Lenders and the Client's Role in Relation to the Other Lenders">
                     <p>{formData.relationRole || "-"}</p>
@@ -1103,7 +1103,7 @@ export default function FinanceBreachWaiver() {
                 <Section title="Languages Required for the Performance of the Work">
                   {[
                     ...(formData.checkboxes || []).filter(
-                      (lang) => lang !== "Other:"
+                      (lang) => lang !== "Other:",
                     ),
                     formData.otherLang,
                   ]

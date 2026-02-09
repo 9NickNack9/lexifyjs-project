@@ -159,7 +159,7 @@ export default function DisputeDebt() {
     if (err) return alert(err);
 
     const isLetter = formData.need.startsWith(
-      "A legal letter addressed to a debtor"
+      "A legal letter addressed to a debtor",
     );
 
     setSubmitting(true);
@@ -190,7 +190,7 @@ export default function DisputeDebt() {
         currency: formData.currency,
         paymentRate: isLetter
           ? "Lump sum fixed price"
-          : "Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the Legal Service Provider. The offered hourly rate will be valid until the relevant outstanding debt(s) has been collected or the collection of the relevant outstanding debt(s) has been abandoned, whichever comes first.",
+          : "Blended Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the Legal Service Provider. The offered hourly rate will be valid until the relevant outstanding debt(s) has been collected or the collection of the relevant outstanding debt(s) has been abandoned, whichever comes first.",
         advanceRetainerFee: formData.retainerFee,
         invoiceType: formData.paymentTerms,
         language: languageCSV,
@@ -199,7 +199,7 @@ export default function DisputeDebt() {
         dateExpired: formData.date,
         details: {
           confidential: formData.confboxes.includes(
-            "Disclosed to Winning Bidder Only"
+            "Disclosed to Winning Bidder Only",
           )
             ? "Yes"
             : "No",
@@ -211,7 +211,7 @@ export default function DisputeDebt() {
       const form = new FormData();
       form.append(
         "data",
-        new Blob([JSON.stringify(payload)], { type: "application/json" })
+        new Blob([JSON.stringify(payload)], { type: "application/json" }),
       );
       for (const f of formData.backgroundFiles)
         form.append("backgroundFiles", f, f.name);
@@ -228,7 +228,7 @@ export default function DisputeDebt() {
         throw new Error(
           (json && (json.error || json.message)) ||
             text ||
-            "Failed to create request."
+            "Failed to create request.",
         );
 
       alert("LEXIFY Request submitted successfully.");
@@ -723,7 +723,7 @@ export default function DisputeDebt() {
                 />{" "}
                 {option}
               </label>
-            )
+            ),
           )}
           {formData.checkboxes.includes("Other:") && (
             <input
@@ -931,14 +931,14 @@ export default function DisputeDebt() {
                 {/* Client Name */}
                 <Section title="Client Name, Business Identity Code and Country of Domicile">
                   {formData.confboxes.includes(
-                    "Disclosed to Winning Bidder Only"
+                    "Disclosed to Winning Bidder Only",
                   )
                     ? "Disclosed to Winning Bidder Only"
                     : formData.contactPerson
-                    ? [company.name, company.id, company.country]
-                        .filter(Boolean)
-                        .join(", ")
-                    : "-"}
+                      ? [company.name, company.id, company.country]
+                          .filter(Boolean)
+                          .join(", ")
+                      : "-"}
                 </Section>
 
                 {/* Scope of Work */}
@@ -949,7 +949,7 @@ export default function DisputeDebt() {
                 {/* Contract Price and Currency */}
                 <Section title="Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency">
                   {formData.need.includes(
-                    "A legal letter addressed to a debtor demanding payment of an outstanding debt. The work includes the preparation of the legal letter, necessary revisions on the basis of the Client's feedback and sending the finalized legal letter to the debtor."
+                    "A legal letter addressed to a debtor demanding payment of an outstanding debt. The work includes the preparation of the legal letter, necessary revisions on the basis of the Client's feedback and sending the finalized legal letter to the debtor.",
                   ) ? (
                     <>
                       {`Lump Sum Fixed Fee ${
@@ -988,7 +988,7 @@ export default function DisputeDebt() {
 
                 <Section title="Name, Business Identity Code and Country of Domicile of the Debtor">
                   {formData.confboxes.includes(
-                    "Disclosed to Winning Bidder Only"
+                    "Disclosed to Winning Bidder Only",
                   )
                     ? "Disclosed to Winning Bidder Only"
                     : formData.confidential || "-"}
@@ -1064,7 +1064,7 @@ export default function DisputeDebt() {
                 <Section title="Languages Required for the Performance of the Work">
                   {[
                     ...(formData.checkboxes || []).filter(
-                      (lang) => lang !== "Other:"
+                      (lang) => lang !== "Other:",
                     ),
                     formData.otherLang,
                   ]

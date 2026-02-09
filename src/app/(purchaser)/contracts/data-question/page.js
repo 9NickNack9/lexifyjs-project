@@ -60,7 +60,7 @@ export default function DataQuestion() {
                 .trim();
               return n ? { label: n, value: n } : null;
             })
-            .filter(Boolean)
+            .filter(Boolean),
         );
       } catch {}
     })();
@@ -175,7 +175,7 @@ export default function DataQuestion() {
         currency: formData.currency,
         providerReferences: formData.providerReferences,
         paymentRate:
-          "Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the Legal Service Provider. The offered hourly rate will be valid for 12 calendar months from the date of the LEXIFY Contract between the Client and the Legal Service Provider.",
+          "Blended Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the Legal Service Provider. The offered hourly rate will be valid for 12 calendar months from the date of the LEXIFY Contract between the Client and the Legal Service Provider.",
         advanceRetainerFee: formData.retainerFee,
         invoiceType: formData.paymentTerms,
         language: languageCSV,
@@ -188,7 +188,7 @@ export default function DataQuestion() {
       const form = new FormData();
       form.append(
         "data",
-        new Blob([JSON.stringify(payload)], { type: "application/json" })
+        new Blob([JSON.stringify(payload)], { type: "application/json" }),
       );
       for (const f of formData.backgroundFiles)
         form.append("backgroundFiles", f, f.name);
@@ -205,7 +205,7 @@ export default function DataQuestion() {
         throw new Error(
           (json && (json.error || json.message)) ||
             text ||
-            "Failed to create request."
+            "Failed to create request.",
         );
 
       alert("LEXIFY Request submitted successfully.");
@@ -611,7 +611,7 @@ export default function DataQuestion() {
                 />{" "}
                 {option}
               </label>
-            )
+            ),
           )}
           {formData.checkboxes.includes("Other:") && (
             <input
@@ -893,7 +893,7 @@ export default function DataQuestion() {
                 <Section title="Languages Required for the Performance of the Work">
                   {[
                     ...(formData.checkboxes || []).filter(
-                      (lang) => lang !== "Other:"
+                      (lang) => lang !== "Other:",
                     ),
                     formData.otherLang,
                   ]

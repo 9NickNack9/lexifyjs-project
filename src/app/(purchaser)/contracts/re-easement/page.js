@@ -160,7 +160,7 @@ export default function ReEasement() {
     setSubmitting(true);
     try {
       const paymentRate = isHourly
-        ? "Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the Legal Service Provider. The offered hourly rate will be valid until the easement agreement has been signed (and the easement registered in the relevant official register, if applicable) or abandoned."
+        ? "Blended Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the Legal Service Provider. The offered hourly rate will be valid until the easement agreement has been signed (and the easement registered in the relevant official register, if applicable) or abandoned."
         : "Lump sum fixed price";
       const languageCSV = [
         ...(formData.checkboxes || []).filter((l) => l !== "Other:"),
@@ -196,7 +196,7 @@ export default function ReEasement() {
         dateExpired: formData.date,
         details: {
           confidential: formData.confboxes.includes(
-            "Disclosed to Winning Bidder Only"
+            "Disclosed to Winning Bidder Only",
           )
             ? "Yes"
             : "No",
@@ -208,7 +208,7 @@ export default function ReEasement() {
       const form = new FormData();
       form.append(
         "data",
-        new Blob([JSON.stringify(payload)], { type: "application/json" })
+        new Blob([JSON.stringify(payload)], { type: "application/json" }),
       );
       for (const f of formData.backgroundFiles)
         form.append("backgroundFiles", f, f.name);
@@ -223,7 +223,7 @@ export default function ReEasement() {
       } catch {}
       if (!res.ok)
         throw new Error(
-          (json && json.error) || text || "Failed to create request."
+          (json && json.error) || text || "Failed to create request.",
         );
 
       alert("LEXIFY Request submitted successfully.");
@@ -727,7 +727,7 @@ export default function ReEasement() {
                 />{" "}
                 {option}
               </label>
-            )
+            ),
           )}
           {formData.checkboxes.includes("Other:") && (
             <input
@@ -936,14 +936,14 @@ export default function ReEasement() {
                 {/* Client Name */}
                 <Section title="Client Name, Business Identity Code and Country of Domicile">
                   {formData.confboxes.includes(
-                    "Disclosed to Winning Bidder Only"
+                    "Disclosed to Winning Bidder Only",
                   )
                     ? "Disclosed to Winning Bidder Only"
                     : formData.contactPerson
-                    ? [company.name, company.id, company.country]
-                        .filter(Boolean)
-                        .join(", ")
-                    : "-"}
+                      ? [company.name, company.id, company.country]
+                          .filter(Boolean)
+                          .join(", ")
+                      : "-"}
                 </Section>
 
                 {/* Scope of Work */}
@@ -954,7 +954,7 @@ export default function ReEasement() {
                 {/* Contract Price and Currency */}
                 <Section title="Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency">
                   {formData.supportType.includes(
-                    "Occasional legal support with the easement agreement negotiation process when needed (for example, commenting of easement agreement documentation or legal advice during different stages of the process)."
+                    "Occasional legal support with the easement agreement negotiation process when needed (for example, commenting of easement agreement documentation or legal advice during different stages of the process).",
                   ) ? (
                     <>
                       {`Flat Hourly Rate ${
@@ -986,7 +986,7 @@ export default function ReEasement() {
 
                 <Section title="Name and (if applicable) Business Identity Code and Country of Domicile of the Client's Counterparty in the Easement Agreement; Property Identification Codes of the Properties Included in the Easement Agreement">
                   {formData.confboxes.includes(
-                    "Disclosed to Winning Bidder Only"
+                    "Disclosed to Winning Bidder Only",
                   )
                     ? "Disclosed to Winning Bidder Only"
                     : formData.confidential || "-"}
@@ -1067,7 +1067,7 @@ export default function ReEasement() {
                 <Section title="Languages Required for the Performance of the Work">
                   {[
                     ...(formData.checkboxes || []).filter(
-                      (lang) => lang !== "Other:"
+                      (lang) => lang !== "Other:",
                     ),
                     formData.otherLang,
                   ]

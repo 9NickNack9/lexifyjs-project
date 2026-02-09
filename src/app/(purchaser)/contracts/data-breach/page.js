@@ -69,7 +69,7 @@ export default function DataBreach() {
                 .trim();
               return n ? { label: n, value: n } : null;
             })
-            .filter(Boolean)
+            .filter(Boolean),
         );
       } catch {}
     })();
@@ -185,7 +185,7 @@ export default function DataBreach() {
         breachStatus: formData.breachStatus || "",
         involvedParties: formData.involvedParties || "",
         confidential: formData.confboxes.includes(
-          "Disclosed to Winning Bidder Only"
+          "Disclosed to Winning Bidder Only",
         )
           ? "Yes"
           : "No",
@@ -210,7 +210,7 @@ export default function DataBreach() {
         providerReferences: formData.providerReferences,
         currency: formData.currency,
         paymentRate:
-          "Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the Legal Service Provider. The offered hourly rate will be valid for 12 calendar months from the date of the LEXIFY Contract between the Client and the Legal Service Provider.",
+          "Blended Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the Legal Service Provider. The offered hourly rate will be valid for 12 calendar months from the date of the LEXIFY Contract between the Client and the Legal Service Provider.",
         advanceRetainerFee: formData.retainerFee,
         invoiceType: formData.paymentTerms,
         language: languageCSV,
@@ -223,7 +223,7 @@ export default function DataBreach() {
       const form = new FormData();
       form.append(
         "data",
-        new Blob([JSON.stringify(payload)], { type: "application/json" })
+        new Blob([JSON.stringify(payload)], { type: "application/json" }),
       );
       for (const f of formData.backgroundFiles)
         form.append("backgroundFiles", f, f.name);
@@ -240,7 +240,7 @@ export default function DataBreach() {
         throw new Error(
           (json && (json.error || json.message)) ||
             text ||
-            "Failed to create request."
+            "Failed to create request.",
         );
 
       alert("LEXIFY Request submitted successfully.");
@@ -782,7 +782,7 @@ export default function DataBreach() {
                 />{" "}
                 {option}
               </label>
-            )
+            ),
           )}
           {formData.checkboxes.includes("Other:") && (
             <input
@@ -857,7 +857,7 @@ export default function DataBreach() {
             </div>
           )}
           {["Yes, another identified company is involved"].includes(
-            formData.involvedParties
+            formData.involvedParties,
           ) && (
             <p className="text-xs">
               <strong>NOTE:</strong>{" "}
@@ -994,14 +994,14 @@ export default function DataBreach() {
                 {/* Client Name */}
                 <Section title="Client Name, Business Identity Code and Country of Domicile">
                   {formData.confboxes.includes(
-                    "Disclosed to Winning Bidder Only"
+                    "Disclosed to Winning Bidder Only",
                   )
                     ? "Disclosed to Winning Bidder Only"
                     : formData.contactPerson
-                    ? [company.name, company.id, company.country]
-                        .filter(Boolean)
-                        .join(", ")
-                    : "-"}
+                      ? [company.name, company.id, company.country]
+                          .filter(Boolean)
+                          .join(", ")
+                      : "-"}
                 </Section>
 
                 {/* Scope of Work */}
@@ -1048,18 +1048,18 @@ export default function DataBreach() {
                       "Legal support with creating for the Client an internal process and relevant document templates for reacting to personal data breaches")
                     ? "Not Applicable"
                     : formData.involvedParties === "" ||
-                      formData.involvedParties ===
-                        "No other company is involved"
-                    ? formData.involvedParties || "-"
-                    : `${formData.involvedParties}${
-                        formData.breachCompany
-                          ? formData.confboxes.includes(
-                              "Disclosed to Winning Bidder Only"
-                            )
-                            ? `: Disclosed to Winning Bidder Only`
-                            : `: ${formData.breachCompany}`
-                          : ""
-                      }`}
+                        formData.involvedParties ===
+                          "No other company is involved"
+                      ? formData.involvedParties || "-"
+                      : `${formData.involvedParties}${
+                          formData.breachCompany
+                            ? formData.confboxes.includes(
+                                "Disclosed to Winning Bidder Only",
+                              )
+                              ? `: Disclosed to Winning Bidder Only`
+                              : `: ${formData.breachCompany}`
+                            : ""
+                        }`}
 
                   <p className="text-xs mt-2 italic">
                     <strong>NOTE:</strong> If the above states &quot;Disclosed
@@ -1148,7 +1148,7 @@ export default function DataBreach() {
                 <Section title="Languages Required for the Performance of the Work">
                   {[
                     ...(formData.checkboxes || []).filter(
-                      (lang) => lang !== "Other:"
+                      (lang) => lang !== "Other:",
                     ),
                     formData.otherLang,
                   ]

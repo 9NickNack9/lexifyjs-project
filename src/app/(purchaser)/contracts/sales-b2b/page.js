@@ -179,7 +179,7 @@ export default function SalesB2B() {
     try {
       const paymentRate = isTemplateOption
         ? "Lump sum fixed price."
-        : "Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the legal service provider submitting the winning offer. The offered hourly rate will be valid until the relevant customer contract has been signed or abandoned, whichever comes first.";
+        : "Blended Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the legal service provider submitting the winning offer. The offered hourly rate will be valid until the relevant customer contract has been signed or abandoned, whichever comes first.";
       const languageCSV = [
         ...(formData.checkboxes || []).filter((l) => l !== "Other:"),
         formData.otherLang || null,
@@ -214,7 +214,7 @@ export default function SalesB2B() {
         dateExpired: formData.date,
         details: {
           confidential: formData.confboxes.includes(
-            "Disclosed to Winning Bidder Only"
+            "Disclosed to Winning Bidder Only",
           )
             ? "Yes"
             : "No",
@@ -226,7 +226,7 @@ export default function SalesB2B() {
       const form = new FormData();
       form.append(
         "data",
-        new Blob([JSON.stringify(payload)], { type: "application/json" })
+        new Blob([JSON.stringify(payload)], { type: "application/json" }),
       );
       for (const f of formData.backgroundFiles)
         form.append("backgroundFiles", f, f.name);
@@ -244,7 +244,7 @@ export default function SalesB2B() {
 
       if (!res.ok) {
         throw new Error(
-          (json && json.error) || text || "Failed to create request."
+          (json && json.error) || text || "Failed to create request.",
         );
       }
 
@@ -382,7 +382,7 @@ export default function SalesB2B() {
           <br />
 
           {!formData.need.includes(
-            "A sales contract template for the client's B2B business. The work includes preparation of the template documentation, necessary revisions based on client feedback and all related attorney-client communication."
+            "A sales contract template for the client's B2B business. The work includes preparation of the template documentation, necessary revisions based on client feedback and all related attorney-client communication.",
           ) && (
             <div>
               <h4 className="text-md font-medium mb-1 font-semibold">
@@ -786,7 +786,7 @@ export default function SalesB2B() {
                 />{" "}
                 {option}
               </label>
-            )
+            ),
           )}
           {formData.checkboxes.includes("Other:") && (
             <input
@@ -1000,14 +1000,14 @@ export default function SalesB2B() {
               <div id="lexify-preview" className="space-y-6 text-black p-8">
                 <Section title="Client Name, Business Identity Code and Country of Domicile">
                   {formData.confboxes.includes(
-                    "Disclosed to Winning Bidder Only"
+                    "Disclosed to Winning Bidder Only",
                   )
                     ? "Disclosed to Winning Bidder Only"
                     : formData.contactPerson
-                    ? [company.name, company.id, company.country]
-                        .filter(Boolean)
-                        .join(", ")
-                    : "-"}
+                      ? [company.name, company.id, company.country]
+                          .filter(Boolean)
+                          .join(", ")
+                      : "-"}
                 </Section>
 
                 <Section title="Scope of Work">{formData.need || "-"}</Section>
@@ -1045,12 +1045,12 @@ export default function SalesB2B() {
 
                 {formData.need &&
                   (formData.need.includes(
-                    "Legal review of a contract template"
+                    "Legal review of a contract template",
                   ) ||
                     formData.need.includes("Legal review of comments")) && (
                     <Section title="Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter">
                       {formData.confboxes.includes(
-                        "Disclosed to Winning Bidder Only"
+                        "Disclosed to Winning Bidder Only",
                       )
                         ? "Disclosed to Winning Bidder Only"
                         : formData.confidential || "-"}
@@ -1124,7 +1124,7 @@ export default function SalesB2B() {
                 <Section title="Languages Required for the Performance of the Work">
                   {[
                     ...(formData.checkboxes || []).filter(
-                      (lang) => lang !== "Other:"
+                      (lang) => lang !== "Other:",
                     ),
                     formData.otherLang,
                   ]

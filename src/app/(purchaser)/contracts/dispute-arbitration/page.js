@@ -159,7 +159,7 @@ export default function DisputeArbitration() {
     if (err) return alert(err);
 
     const isFull = formData.need.startsWith(
-      "Full legal representation in pending arbitration proceedings"
+      "Full legal representation in pending arbitration proceedings",
     );
 
     setSubmitting(true);
@@ -190,7 +190,7 @@ export default function DisputeArbitration() {
         currency: formData.currency,
         paymentRate: isFull
           ? "Capped Price. The capped price covers the pending proceedings in one court instance only and does not include fees or charges possibly levied by the competent court which fees and charges, if any, will be invoiced separately."
-          : "Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the legal service provider submitting the winning offer. The offered hourly rate will be valid until the pending arbitration proceedings have concluded.",
+          : "Blended Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the legal service provider submitting the winning offer. The offered hourly rate will be valid until the pending arbitration proceedings have concluded.",
         advanceRetainerFee: formData.retainerFee,
         invoiceType: formData.paymentTerms,
         language: languageCSV,
@@ -199,7 +199,7 @@ export default function DisputeArbitration() {
         dateExpired: formData.date,
         details: {
           confidential: formData.confboxes.includes(
-            "Disclosed to Winning Bidder Only"
+            "Disclosed to Winning Bidder Only",
           )
             ? "Yes"
             : "No",
@@ -211,7 +211,7 @@ export default function DisputeArbitration() {
       const form = new FormData();
       form.append(
         "data",
-        new Blob([JSON.stringify(payload)], { type: "application/json" })
+        new Blob([JSON.stringify(payload)], { type: "application/json" }),
       );
       for (const f of formData.backgroundFiles)
         form.append("backgroundFiles", f, f.name);
@@ -228,7 +228,7 @@ export default function DisputeArbitration() {
         throw new Error(
           (json && (json.error || json.message)) ||
             text ||
-            "Failed to create request."
+            "Failed to create request.",
         );
 
       alert("LEXIFY Request submitted successfully.");
@@ -726,7 +726,7 @@ export default function DisputeArbitration() {
                 />{" "}
                 {option}
               </label>
-            )
+            ),
           )}
           {formData.checkboxes.includes("Other:") && (
             <input
@@ -934,14 +934,14 @@ export default function DisputeArbitration() {
                 {/* Client Name */}
                 <Section title="Client Name, Business Identity Code and Country of Domicile">
                   {formData.confboxes.includes(
-                    "Disclosed to Winning Bidder Only"
+                    "Disclosed to Winning Bidder Only",
                   )
                     ? "Disclosed to Winning Bidder Only"
                     : formData.contactPerson
-                    ? [company.name, company.id, company.country]
-                        .filter(Boolean)
-                        .join(", ")
-                    : "-"}
+                      ? [company.name, company.id, company.country]
+                          .filter(Boolean)
+                          .join(", ")
+                      : "-"}
                 </Section>
 
                 {/* Scope of Work */}
@@ -952,7 +952,7 @@ export default function DisputeArbitration() {
                 {/* Contract Price and Currency */}
                 <Section title="Contract Price (Capped Price or Flat Hourly Rate) and Currency">
                   {formData.need.includes(
-                    "Full legal representation in pending arbitration proceedings (including, for example, drafting of legal briefs, representation in arbitration hearings and related attorney-client communications)"
+                    "Full legal representation in pending arbitration proceedings (including, for example, drafting of legal briefs, representation in arbitration hearings and related attorney-client communications)",
                   ) ? (
                     <>
                       {`Capped Price ${
@@ -996,7 +996,7 @@ export default function DisputeArbitration() {
 
                 <Section title="Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter">
                   {formData.confboxes.includes(
-                    "Disclosed to Winning Bidder Only"
+                    "Disclosed to Winning Bidder Only",
                   )
                     ? "Disclosed to Winning Bidder Only"
                     : formData.confidential || "-"}
@@ -1072,7 +1072,7 @@ export default function DisputeArbitration() {
                 <Section title="Languages Required for the Performance of the Work">
                   {[
                     ...(formData.checkboxes || []).filter(
-                      (lang) => lang !== "Other:"
+                      (lang) => lang !== "Other:",
                     ),
                     formData.otherLang,
                   ]

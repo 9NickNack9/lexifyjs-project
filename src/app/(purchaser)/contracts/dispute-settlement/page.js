@@ -159,7 +159,7 @@ export default function DisputeSettlement() {
     if (err) return alert(err);
 
     const isFull = formData.need.startsWith(
-      "Full legal representation in settlement negotiations"
+      "Full legal representation in settlement negotiations",
     );
 
     setSubmitting(true);
@@ -190,7 +190,7 @@ export default function DisputeSettlement() {
         currency: formData.currency,
         paymentRate: isFull
           ? "Lump sum fixed price"
-          : "Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the legal service provider submitting the winning offer. The offered hourly rate will be valid until a settlement agreement has been signed or until the pending settlement negotiations have otherwise concluded.",
+          : "Blended Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the legal service provider submitting the winning offer. The offered hourly rate will be valid until a settlement agreement has been signed or until the pending settlement negotiations have otherwise concluded.",
         advanceRetainerFee: formData.retainerFee,
         invoiceType: formData.paymentTerms,
         language: languageCSV,
@@ -199,7 +199,7 @@ export default function DisputeSettlement() {
         dateExpired: formData.date,
         details: {
           confidential: formData.confboxes.includes(
-            "Disclosed to Winning Bidder Only"
+            "Disclosed to Winning Bidder Only",
           )
             ? "Yes"
             : "No",
@@ -211,7 +211,7 @@ export default function DisputeSettlement() {
       const form = new FormData();
       form.append(
         "data",
-        new Blob([JSON.stringify(payload)], { type: "application/json" })
+        new Blob([JSON.stringify(payload)], { type: "application/json" }),
       );
       for (const f of formData.backgroundFiles)
         form.append("backgroundFiles", f, f.name);
@@ -228,7 +228,7 @@ export default function DisputeSettlement() {
         throw new Error(
           (json && (json.error || json.message)) ||
             text ||
-            "Failed to create request."
+            "Failed to create request.",
         );
 
       alert("LEXIFY Request submitted successfully.");
@@ -721,7 +721,7 @@ export default function DisputeSettlement() {
                 />{" "}
                 {option}
               </label>
-            )
+            ),
           )}
           {formData.checkboxes.includes("Other:") && (
             <input
@@ -929,14 +929,14 @@ export default function DisputeSettlement() {
                 {/* Client Name */}
                 <Section title="Client Name, Business Identity Code and Country of Domicile">
                   {formData.confboxes.includes(
-                    "Disclosed to Winning Bidder Only"
+                    "Disclosed to Winning Bidder Only",
                   )
                     ? "Disclosed to Winning Bidder Only"
                     : formData.contactPerson
-                    ? [company.name, company.id, company.country]
-                        .filter(Boolean)
-                        .join(", ")
-                    : "-"}
+                      ? [company.name, company.id, company.country]
+                          .filter(Boolean)
+                          .join(", ")
+                      : "-"}
                 </Section>
 
                 {/* Scope of Work */}
@@ -947,7 +947,7 @@ export default function DisputeSettlement() {
                 {/* Contract Price and Currency */}
                 <Section title="Contract Price (Lump Sum Fixed Fee or Flat Hourly Rate) and Currency">
                   {formData.need.includes(
-                    "Full legal representation in settlement negotiations (including, for example, drafting of a settlement agreement, negotiations with the counterparty and related attorney-client communications)"
+                    "Full legal representation in settlement negotiations (including, for example, drafting of a settlement agreement, negotiations with the counterparty and related attorney-client communications)",
                   ) ? (
                     <>
                       {`Lump Sum Fixed Fee ${
@@ -990,7 +990,7 @@ export default function DisputeSettlement() {
 
                 <Section title="Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter">
                   {formData.confboxes.includes(
-                    "Disclosed to Winning Bidder Only"
+                    "Disclosed to Winning Bidder Only",
                   )
                     ? "Disclosed to Winning Bidder Only"
                     : formData.confidential || "-"}
@@ -1066,7 +1066,7 @@ export default function DisputeSettlement() {
                 <Section title="Languages Required for the Performance of the Work">
                   {[
                     ...(formData.checkboxes || []).filter(
-                      (lang) => lang !== "Other:"
+                      (lang) => lang !== "Other:",
                     ),
                     formData.otherLang,
                   ]

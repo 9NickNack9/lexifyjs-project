@@ -207,7 +207,7 @@ export default function IctNegotiation() {
         providerReferences: formData.providerReferences,
         currency: formData.currency,
         paymentRate:
-          "Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the Legal Service Provider. The hourly rate offered by the Legal Service Provider will be valid until the pending agreement(s) has been signed or abandoned, whichever comes first.",
+          "Blended Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the Legal Service Provider. The hourly rate offered by the Legal Service Provider will be valid until the pending agreement(s) has been signed or abandoned, whichever comes first.",
         advanceRetainerFee: formData.retainerFee,
         invoiceType: formData.paymentTerms,
         language: languageCSV,
@@ -219,7 +219,7 @@ export default function IctNegotiation() {
           documentTypes: scopeList,
           expectedValue: formData.priceRange || "",
           confidential: formData.confboxes.includes(
-            "Disclosed to Winning Bidder Only"
+            "Disclosed to Winning Bidder Only",
           )
             ? "Yes"
             : "No",
@@ -230,7 +230,7 @@ export default function IctNegotiation() {
       const form = new FormData();
       form.append(
         "data",
-        new Blob([JSON.stringify(payload)], { type: "application/json" })
+        new Blob([JSON.stringify(payload)], { type: "application/json" }),
       );
       for (const f of formData.backgroundFiles)
         form.append("backgroundFiles", f, f.name);
@@ -245,7 +245,7 @@ export default function IctNegotiation() {
       } catch {}
       if (!res.ok)
         throw new Error(
-          (json && json.error) || text || "Failed to create request."
+          (json && json.error) || text || "Failed to create request.",
         );
 
       alert("LEXIFY Request submitted successfully.");
@@ -755,7 +755,7 @@ export default function IctNegotiation() {
                 />{" "}
                 {option}
               </label>
-            )
+            ),
           )}
           {formData.checkboxes.includes("Other:") && (
             <input
@@ -963,14 +963,14 @@ export default function IctNegotiation() {
                 {/* Client Name */}
                 <Section title="Client Name, Business Identity Code and Country of Domicile">
                   {formData.confboxes.includes(
-                    "Disclosed to Winning Bidder Only"
+                    "Disclosed to Winning Bidder Only",
                   )
                     ? "Disclosed to Winning Bidder Only"
                     : formData.contactPerson
-                    ? [company.name, company.id, company.country]
-                        .filter(Boolean)
-                        .join(", ")
-                    : "-"}
+                      ? [company.name, company.id, company.country]
+                          .filter(Boolean)
+                          .join(", ")
+                      : "-"}
                 </Section>
 
                 {/* Scope of Work */}
@@ -986,7 +986,7 @@ export default function IctNegotiation() {
                         .map((item) =>
                           item === "Other:" && formData.otherTemplate
                             ? `${formData.otherTemplate}`
-                            : item
+                            : item,
                         )
                         .join(", ")}
                     </>
@@ -1020,7 +1020,7 @@ export default function IctNegotiation() {
                 {/* Counterparty */}
                 <Section title="Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter">
                   {formData.confboxes.includes(
-                    "Disclosed to Winning Bidder Only"
+                    "Disclosed to Winning Bidder Only",
                   )
                     ? "Disclosed to Winning Bidder Only"
                     : formData.confidential || "-"}
@@ -1106,7 +1106,7 @@ export default function IctNegotiation() {
                 <Section title="Languages Required for the Performance of the Work">
                   {[
                     ...(formData.checkboxes || []).filter(
-                      (lang) => lang !== "Other:"
+                      (lang) => lang !== "Other:",
                     ),
                     formData.otherLang,
                   ]
