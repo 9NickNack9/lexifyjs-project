@@ -162,15 +162,6 @@ export default function Register() {
           <br />
           <input
             type="text"
-            name="username"
-            placeholder="Username"
-            className="p-2 border"
-            onChange={handleChange}
-            required
-          />
-          <br />
-          <input
-            type="text"
             name="companyName"
             placeholder="Company Name"
             className="p-2 border"
@@ -403,7 +394,15 @@ export default function Register() {
               required
             />
           </div>
-
+          <br />
+          <input
+            type="text"
+            name="username"
+            placeholder="Username"
+            className="p-2 border"
+            onChange={handleChange}
+            required
+          />
           <br />
           <div className="relative">
             <input
