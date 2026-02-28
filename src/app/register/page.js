@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import NarrowTooltip from "../components/QuestionmarkTooltip";
 
 export default function Register() {
   const [role, setRole] = useState("");
@@ -124,7 +125,8 @@ export default function Register() {
         >
           <div className="flex flex-col items-start">
             <label className="text-md font-medium mb-1">
-              I am registering as a:
+              I am registering as a:{" "}
+              <NarrowTooltip tooltipText="If your company is not yet registered with LEXIFY, please select 'New User for an Unregistered Company'. If your company is already registered with LEXIFY and you are adding yourself as a new user, please select 'New User for a Previously Registered Company'." />
             </label>
             <select
               value={companyJoinType}
