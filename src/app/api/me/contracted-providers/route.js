@@ -1,3 +1,4 @@
+// src/app/api/me/contracted-providers/route.js
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
@@ -5,39 +6,46 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(req) {
   const session = await getServerSession(authOptions);
-  if (!session) return NextResponse.json([], { status: 200 }); // empty list if not logged in
+  if (!session) return NextResponse.json([], { status: 200 });
 
-  const meId = Number(session.userId);
+  const myCompanyIdStr = session.companyId;
+  const myCompanyId = myCompanyIdStr ? BigInt(myCompanyIdStr) : null;
+  if (!myCompanyId) return NextResponse.json([], { status: 200 });
+
   const { searchParams } = new URL(req.url);
-  const q = (searchParams.get("q") || "").trim();
+  const q = (searchParams.get("q") || "").trim().toLowerCase();
 
-  // Find all contracts where current user is the client
+  // Find all contracts where current user's COMPANY is the client
   const contracts = await prisma.contract.findMany({
-    where: { clientId: meId },
-    select: { providerId: true },
+    where: { clientCompanyId: myCompanyId },
+    select: { providerCompanyId: true },
   });
 
-  const providerIds = [...new Set(contracts.map((c) => Number(c.providerId)))];
-  if (providerIds.length === 0) return NextResponse.json([]);
+  const providerCompanyIds = [
+    ...new Set(
+      contracts
+        .map((c) => (c.providerCompanyId ? String(c.providerCompanyId) : null))
+        .filter(Boolean),
+    ),
+  ];
 
-  const where = {
-    userId: { in: providerIds },
-    role: "PROVIDER",
-    ...(q ? { companyName: { contains: q, mode: "insensitive" } } : {}),
-  };
+  if (providerCompanyIds.length === 0) return NextResponse.json([]);
 
-  const providers = await prisma.appUser.findMany({
-    where,
-    select: { userId: true, username: true, companyName: true },
+  const providers = await prisma.company.findMany({
+    where: {
+      companyPkId: { in: providerCompanyIds.map((x) => BigInt(x)) },
+      role: "PROVIDER",
+      ...(q ? { companyName: { contains: q, mode: "insensitive" } } : {}),
+    },
+    select: { companyPkId: true, companyName: true, companyWebsite: true },
     orderBy: { companyName: "asc" },
     take: 20,
   });
 
-  // normalize BigInt if needed
-  const out = providers.map((p) => ({
-    userId: Number(p.userId),
-    username: p.username,
-    companyName: p.companyName,
+  const out = providers.map((c) => ({
+    companyId: String(c.companyPkId),
+    companyName: c.companyName,
+    companyWebsite: c.companyWebsite || null,
   }));
 
   return NextResponse.json(out);

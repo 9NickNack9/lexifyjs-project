@@ -7,7 +7,6 @@ export default function MergerAquisitions() {
   const router = useRouter();
 
   const initialFormState = {
-    contactPerson: "",
     customerType: "",
     objectType: "",
     description: "",
@@ -39,10 +38,11 @@ export default function MergerAquisitions() {
   const [formData, setFormData] = useState(initialFormState);
   const [showPreview, setShowPreview] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-
-  // NEW: contacts + company for preview header
-  const [contactOptions, setContactOptions] = useState([]);
-  const [company, setCompany] = useState({ name: "", id: "", country: "" });
+  const [company, setCompany] = useState({
+    name: "",
+    businessId: "",
+    country: "",
+  });
 
   // Load contacts + company from /api/me
   useEffect(() => {
@@ -52,24 +52,10 @@ export default function MergerAquisitions() {
         if (!res.ok) return;
         const me = await res.json();
         setCompany({
-          name: me?.companyName || "",
-          id: me?.companyId || "",
-          country: me?.companyCountry || "",
+          name: me?.company?.companyName || me?.companyName || "",
+          businessId: me?.company?.businessId || "",
+          country: me?.company?.companyCountry || me?.companyCountry || "",
         });
-        const list = Array.isArray(me.companyContactPersons)
-          ? me.companyContactPersons
-          : [];
-        setContactOptions(
-          list
-            .map((p) => {
-              const n = [p.firstName || "", p.lastName || ""]
-                .filter(Boolean)
-                .join(" ")
-                .trim();
-              return n ? { label: n, value: n } : null;
-            })
-            .filter(Boolean),
-        );
       } catch {
         // silent fail -> dropdown shows "Select"
       }
@@ -157,8 +143,6 @@ export default function MergerAquisitions() {
 
   // Validation
   const validate = () => {
-    if (!formData.contactPerson)
-      return "Please select a primary contact person.";
     if (!formData.supportType) return "Please select what you need.";
     if (dueDiligenceOptions && !formData.dueDiligence)
       return "Please choose the due diligence reporting format.";
@@ -214,7 +198,6 @@ export default function MergerAquisitions() {
       const payload = {
         requestState: "PENDING",
         requestCategory: "Help with Mergers & Acquisitions",
-        primaryContactPerson: formData.contactPerson,
         scopeOfWork: formData.supportType,
         description: formData.description || "",
         additionalBackgroundInfo: formData.background || "",
@@ -315,31 +298,6 @@ export default function MergerAquisitions() {
       <div className="w-full max-w-7xl p-6 rounded shadow-2xl bg-white text-black">
         {/* Form Section */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <h4 className="text-md font-medium mb-1 font-semibold">
-              Who is the primary contact person for this LEXIFY Request at your
-              company?{" "}
-              <QuestionMarkTooltip tooltipText="All updates and notifications regarding this LEXIFY Request will be sent to the designated person. If you do not see your name listed below, you can add new contact persons on the 'My Account' page (see My Account in the LEXIFY main menu)." />
-            </h4>
-            <select
-              name="contactPerson"
-              className="w-full border p-2"
-              onChange={handleChange}
-              value={formData.contactPerson}
-              required
-            >
-              <option value="">Select</option>
-              {contactOptions.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <br />
-          <hr />
-          <br />
           <h4 className="text-md font-medium mb-1 font-semibold">
             What do you need?
           </h4>
@@ -1100,11 +1058,9 @@ export default function MergerAquisitions() {
                     "Disclosed to Winning Bidder Only",
                   )
                     ? "Disclosed to Winning Bidder Only"
-                    : formData.contactPerson
-                      ? [company.name, company.id, company.country]
-                          .filter(Boolean)
-                          .join(", ")
-                      : "-"}
+                    : [company.name, company.businessId, company.country]
+                        .filter(Boolean)
+                        .join(", ") || "-"}
                 </Section>
 
                 {/* Scope of Work */}

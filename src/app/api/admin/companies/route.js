@@ -12,9 +12,14 @@ export async function GET(req) {
   const skip = parseInt(searchParams.get("skip") || "0", 10);
   const take = parseInt(searchParams.get("take") || "10", 10);
 
-  const where = search
-    ? { companyName: { contains: search, mode: "insensitive" } }
-    : {};
+  const role = searchParams.get("role") || "";
+
+  const where = {
+    ...(search
+      ? { companyName: { contains: search, mode: "insensitive" } }
+      : {}),
+    ...(role ? { role } : {}),
+  };
 
   const companies = await prisma.company.findMany({
     where,

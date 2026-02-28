@@ -3,7 +3,6 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
-import { TURBOPACK_CLIENT_MIDDLEWARE_MANIFEST } from "next/dist/shared/lib/constants";
 
 // BigInt-safe JSON helper
 const serialize = (obj) =>
@@ -48,12 +47,19 @@ export async function GET() {
     if (!session?.userId)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-    const meId = BigInt(session.userId);
+    // resolve purchaser companyId
+    const ua = await prisma.userAccount.findUnique({
+      where: { userPkId: BigInt(session.userId) },
+      select: { companyId: true },
+    });
+    if (!ua?.companyId)
+      return NextResponse.json({ error: "Company not found" }, { status: 404 });
+
     const now = new Date();
 
     const reqs = await prisma.request.findMany({
       where: {
-        clientId: meId,
+        clientId: ua.companyId,
         OR: [
           { requestState: "ON HOLD", acceptDeadline: { gt: now } },
           { requestState: "CONFLICT_CHECK" },
@@ -104,54 +110,49 @@ export async function GET() {
     const shaped = reqs.map((r) => {
       const maxPrice = maxFromDetails(r.details);
       const disqSet = new Set(
-        toStringArray(r.disqualifiedOfferIds).map(String), // use helper like in your select route
+        toStringArray(r.disqualifiedOfferIds).map(String),
       );
+
       const offers = (r.offers || [])
         .filter((o) => (o.offerStatus || "").toUpperCase() !== "DISQUALIFIED")
         .filter((o) => !disqSet.has(String(o.offerId)))
-        .map((o) => {
-          const providerReferenceFiles = Array.isArray(o.providerReferenceFiles)
+        .map((o) => ({
+          offerId:
+            typeof o.offerId === "bigint"
+              ? o.offerId.toString()
+              : String(o.offerId),
+          providerId:
+            typeof o.providerId === "bigint"
+              ? o.providerId.toString()
+              : String(o.providerId),
+
+          offeredPrice: toNum(o.offerPrice),
+          offerExpectedPrice: toNum(o.offerExpectedPrice),
+          offerLawyer: o.offerLawyer || "—",
+          providerAdditionalInfo: o.providerAdditionalInfo || "",
+          providerCompanyName: o.provider?.companyName || "—",
+          providerTotalRating: toNum(o.provider?.providerTotalRating) ?? null,
+          providerQualityRating:
+            toNum(o.provider?.providerQualityRating) ?? null,
+          providerCommunicationRating:
+            toNum(o.provider?.providerCommunicationRating) ?? null,
+          providerBillingRating:
+            toNum(o.provider?.providerBillingRating) ?? null,
+          providerHasRatings:
+            Array.isArray(o.provider?.providerIndividualRating) &&
+            o.provider.providerIndividualRating.length > 0,
+          providerRatingCount: Array.isArray(
+            o.provider?.providerIndividualRating,
+          )
+            ? o.provider.providerIndividualRating.length
+            : 0,
+          providerPracticalRatings:
+            o.provider?.providerPracticalRatings ?? null,
+          providerCompanyWebsite: o.provider?.companyWebsite || null,
+          providerReferenceFiles: Array.isArray(o.providerReferenceFiles)
             ? o.providerReferenceFiles
-            : [];
-
-          return {
-            offerId:
-              typeof o.offerId === "bigint"
-                ? o.offerId.toString()
-                : String(o.offerId),
-            providerId:
-              typeof o.providerId === "bigint"
-                ? o.providerId.toString()
-                : String(o.providerId),
-
-            offeredPrice: toNum(o.offerPrice),
-            offerExpectedPrice: toNum(o.offerExpectedPrice), // number | null
-            offerLawyer: o.offerLawyer || "—",
-            providerAdditionalInfo: o.providerAdditionalInfo || "",
-            providerCompanyName: o.provider?.companyName || "—",
-            providerTotalRating: toNum(o.provider?.providerTotalRating) ?? null,
-            providerQualityRating:
-              toNum(o.provider?.providerQualityRating) ?? null,
-            providerCommunicationRating:
-              toNum(o.provider?.providerCommunicationRating) ?? null,
-            providerBillingRating:
-              toNum(o.provider?.providerBillingRating) ?? null,
-            providerHasRatings:
-              Array.isArray(o.provider?.providerIndividualRating) &&
-              o.provider.providerIndividualRating.length > 0,
-            providerRatingCount: Array.isArray(
-              o.provider?.providerIndividualRating,
-            )
-              ? o.provider.providerIndividualRating.length
-              : 0,
-            providerPracticalRatings:
-              o.provider?.providerPracticalRatings ?? null,
-            providerCompanyWebsite: o.provider?.companyWebsite || null,
-
-            // pass S3 reference files through to the client
-            providerReferenceFiles,
-          };
-        })
+            : [],
+        }))
         .filter((o) => typeof o.offeredPrice === "number")
         .sort((a, b) => a.offeredPrice - b.offeredPrice)
         .slice(0, 5);
@@ -167,13 +168,12 @@ export async function GET() {
           typeof r.requestId === "bigint"
             ? r.requestId.toString()
             : String(r.requestId),
-
         requestTitle: r.title,
         dateCreated: r.dateCreated,
         dateExpired: r.dateExpired,
         acceptDeadline: r.acceptDeadline,
         currency: r.currency,
-        maxPrice, // number | null
+        maxPrice,
         topOffers: offers,
         requestState: r.requestState,
         selectedOfferId: r.selectedOfferId?.toString?.() ?? null,
@@ -198,17 +198,21 @@ export async function POST(req) {
     if (!session?.userId)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    const ua = await prisma.userAccount.findUnique({
+      where: { userPkId: BigInt(session.userId) },
+      select: { companyId: true },
+    });
+    if (!ua?.companyId)
+      return NextResponse.json({ error: "Company not found" }, { status: 404 });
+
     const body = await req.json().catch(() => ({}));
     const requestIdRaw = body?.requestId;
-    if (!requestIdRaw) {
+    if (!requestIdRaw)
       return NextResponse.json({ error: "Missing requestId" }, { status: 400 });
-    }
 
-    const meId = BigInt(session.userId);
     const requestId = BigInt(requestIdRaw);
     const now = new Date();
 
-    // load request owned by the purchaser
     const r = await prisma.request.findUnique({
       where: { requestId },
       select: {
@@ -219,11 +223,10 @@ export async function POST(req) {
       },
     });
 
-    if (!r || String(r.clientId) !== String(meId)) {
+    if (!r || String(r.clientId) !== String(ua.companyId)) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 
-    // only ON HOLD, not paused, and before deadline
     if (r.requestState !== "ON HOLD" || !r.acceptDeadline) {
       return NextResponse.json(
         { error: "Extension not allowed" },
@@ -251,7 +254,6 @@ export async function POST(req) {
 
     const currentDeadline = new Date(r.acceptDeadline);
     const remainingMs = Math.max(0, currentDeadline.getTime() - now.getTime());
-    // Convert to hours with decimals
     const remainingHours = remainingMs / (1000 * 60 * 60);
 
     await prisma.request.update({
@@ -261,8 +263,6 @@ export async function POST(req) {
         details: {
           ...(details || {}),
           acceptDeadlineExtendedOnce: true,
-          // Store HOW MUCH TIME WAS LEFT at the moment the user clicked
-          // This is a number (ms) so it's easy to analyze or display later.
           acceptDeadlineExtendedAt: Number(remainingHours.toFixed(3)),
         },
       },

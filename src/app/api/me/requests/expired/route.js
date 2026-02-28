@@ -13,16 +13,25 @@ export async function GET() {
     if (!session?.userId)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    // resolve purchaser company PK
+    const ua = await prisma.userAccount.findUnique({
+      where: { userPkId: BigInt(session.userId) },
+      select: { companyId: true },
+    });
+
+    if (!ua?.companyId) {
+      return NextResponse.json({ error: "Company not found" }, { status: 404 });
+    }
+
     const reqs = await prisma.request.findMany({
       where: {
-        clientId: BigInt(session.userId),
+        clientId: ua.companyId, // ✅ company PK
         requestState: "EXPIRED",
       },
       orderBy: { dateCreated: "desc" },
       select: {
         requestId: true,
         title: true,
-        primaryContactPerson: true,
         dateCreated: true,
         dateExpired: true,
         currency: true,
@@ -55,12 +64,12 @@ export async function GET() {
         }))
         .filter(
           (o) =>
-            typeof o.offeredPrice === "number" && !Number.isNaN(o.offeredPrice)
+            typeof o.offeredPrice === "number" && !Number.isNaN(o.offeredPrice),
         )
         .sort((a, b) => a.offeredPrice - b.offeredPrice);
 
       const bestOffer = offers[0] || null;
-      const runnerUps = offers.slice(1, 3); // up to top 2 runner-ups
+      const runnerUps = offers.slice(1, 3);
 
       return {
         requestId: safeNumber(r.requestId),

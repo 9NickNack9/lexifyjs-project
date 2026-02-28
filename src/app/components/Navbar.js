@@ -1,4 +1,3 @@
-// src/app/components/Navbar.js
 "use client";
 
 import Link from "next/link";
@@ -7,11 +6,21 @@ import { signOut, useSession } from "next-auth/react";
 export default function Navbar() {
   const { data: session, status } = useSession();
 
-  const username = status === "loading" ? "…" : session?.user?.name || "Guest";
-  const role = session?.role || null;
+  const isLoading = status === "loading";
 
+  // NextAuth still provides session.user?.name by default; we also support fallbacks.
+  const username = isLoading
+    ? "…"
+    : session?.user?.name || session?.user?.email || "Guest";
+
+  const role = session?.role ?? null; // "ADMIN" | "PROVIDER" | "PURCHASER"
+  const registerStatus = session?.registerStatus ?? null; // e.g. "pending" | "approved"
+  const companyName = session?.companyName ?? null;
+
+  // Choose home route by role (adjust if your routes differ)
   let logoHref = "/main";
   if (role === "PROVIDER") logoHref = "/provider";
+  if (role === "ADMIN") logoHref = "/admin";
 
   const handleLogout = () => {
     signOut({ callbackUrl: "/login" });
@@ -28,8 +37,22 @@ export default function Navbar() {
           />
         </Link>
       </div>
+
       <div className="absolute right-4 flex items-center gap-4">
-        <span>Logged in as, {username}</span>
+        <div className="text-right leading-tight">
+          <div>
+            Logged in as, <span className="font-semibold">{username}</span>
+          </div>
+
+          {/* Role + Company line (only when authenticated) */}
+          {!isLoading && role && username !== "Guest" && (
+            <div className="text-xs opacity-90">
+              {companyName ? ` ${companyName}` : ""}
+              {registerStatus === "pending" ? " • Pending approval" : ""}
+            </div>
+          )}
+        </div>
+
         <button
           onClick={handleLogout}
           className="bg-[#3a3a3c] px-3 py-1 rounded cursor-pointer"

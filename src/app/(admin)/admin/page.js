@@ -9,12 +9,8 @@ export default function AdminPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   // --- USERS state ---
-  const [users, setUsers] = useState([]);
   const [searchInput, setSearchInput] = useState(""); // typing here
   const [search, setSearch] = useState(""); // committed query
-  const [skip, setSkip] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
-  const [loading, setLoading] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
   const [reqs, setReqs] = useState([]);
   const [reqLoading, setReqLoading] = useState(false);
@@ -27,23 +23,36 @@ export default function AdminPage() {
   const reqBoxId = "admin-requests-scroll-box";
   const scrollRef = useRef(null);
 
+  const TAKE = 10;
+
+  const initTable = { items: [], skip: 0, hasMore: true, loading: false };
+
+  const [userTables, setUserTables] = useState({
+    ADMIN: { ...initTable },
+    PURCHASER: { ...initTable },
+    PROVIDER: { ...initTable },
+  });
+
+  const [companyTables, setCompanyTables] = useState({
+    PURCHASER: { ...initTable },
+    PROVIDER: { ...initTable },
+  });
+
+  const [accountTables, setAccountTables] = useState({
+    ADMIN: { ...initTable },
+    PURCHASER: { ...initTable },
+    PROVIDER: { ...initTable },
+  });
+
   // --- COMPANIES state ---
-  const [companies, setCompanies] = useState([]);
   const [companySearchInput, setCompanySearchInput] = useState("");
   const [companySearch, setCompanySearch] = useState("");
-  const [companySkip, setCompanySkip] = useState(0);
   const companyTake = 10;
-  const [companyHasMore, setCompanyHasMore] = useState(true);
-  const [companyLoading, setCompanyLoading] = useState(false);
 
   // --- USERACCOUNTS state ---
-  const [accounts, setAccounts] = useState([]);
   const [accountSearchInput, setAccountSearchInput] = useState("");
   const [accountSearch, setAccountSearch] = useState("");
-  const [accountSkip, setAccountSkip] = useState(0);
   const accountTake = 10;
-  const [accountHasMore, setAccountHasMore] = useState(true);
-  const [accountLoading, setAccountLoading] = useState(false);
 
   // --- COMPANY details modal ---
   const [selectedCompany, setSelectedCompany] = useState(null);
@@ -65,56 +74,127 @@ export default function AdminPage() {
     if (res.ok) setSelectedAccount(await res.json());
   };
 
-  const fetchCompanies = async (reset = false) => {
-    if (companyLoading) return;
-    setCompanyLoading(true);
-    const nextSkip = reset ? 0 : companySkip;
+  async function fetchUsersByRole(role, reset = false) {
+    setUserTables((prev) => {
+      if (prev[role].loading) return prev;
+      return { ...prev, [role]: { ...prev[role], loading: true } };
+    });
+
+    const nextSkip = reset ? 0 : userTables[role].skip;
 
     try {
       const res = await fetch(
-        `/api/admin/companies?search=${encodeURIComponent(companySearch)}&skip=${nextSkip}&take=${companyTake}`,
+        `/api/admin/users?role=${role}&search=${encodeURIComponent(search)}&skip=${nextSkip}&take=${TAKE}`,
+        { cache: "no-store" },
+      );
+      if (!res.ok) throw new Error("Failed to fetch users");
+      const data = await res.json();
+
+      setUserTables((prev) => {
+        const nextItems = reset
+          ? data.users
+          : [...prev[role].items, ...data.users];
+        return {
+          ...prev,
+          [role]: {
+            ...prev[role],
+            items: nextItems,
+            skip: nextSkip + data.users.length,
+            hasMore: data.hasMore,
+            loading: false,
+          },
+        };
+      });
+    } catch (e) {
+      console.error(e);
+      setUserTables((prev) => ({
+        ...prev,
+        [role]: { ...prev[role], loading: false },
+      }));
+    }
+  }
+
+  async function fetchCompaniesByRole(role, reset = false) {
+    setCompanyTables((prev) => {
+      if (prev[role].loading) return prev;
+      return { ...prev, [role]: { ...prev[role], loading: true } };
+    });
+
+    const nextSkip = reset ? 0 : companyTables[role].skip;
+
+    try {
+      const res = await fetch(
+        `/api/admin/companies?role=${role}&search=${encodeURIComponent(companySearch)}&skip=${nextSkip}&take=${TAKE}`,
         { cache: "no-store" },
       );
       if (!res.ok) throw new Error("Failed to load companies");
       const data = await res.json();
 
-      const nextList = reset
-        ? data.companies
-        : [...companies, ...data.companies];
-      setCompanies(nextList);
-      setCompanySkip(nextSkip + data.companies.length);
-      setCompanyHasMore(data.hasMore);
+      setCompanyTables((prev) => {
+        const nextItems = reset
+          ? data.companies
+          : [...prev[role].items, ...data.companies];
+        return {
+          ...prev,
+          [role]: {
+            ...prev[role],
+            items: nextItems,
+            skip: nextSkip + data.companies.length,
+            hasMore: data.hasMore,
+            loading: false,
+          },
+        };
+      });
     } catch (e) {
       console.error(e);
-    } finally {
-      setCompanyLoading(false);
+      setCompanyTables((prev) => ({
+        ...prev,
+        [role]: { ...prev[role], loading: false },
+      }));
     }
-  };
+  }
 
-  const fetchAccounts = async (reset = false) => {
-    if (accountLoading) return;
-    setAccountLoading(true);
-    const nextSkip = reset ? 0 : accountSkip;
+  async function fetchAccountsByRole(role, reset = false) {
+    setAccountTables((prev) => {
+      if (prev[role].loading) return prev;
+      return { ...prev, [role]: { ...prev[role], loading: true } };
+    });
+
+    const nextSkip = reset ? 0 : accountTables[role].skip;
 
     try {
       const res = await fetch(
-        `/api/admin/useraccounts?search=${encodeURIComponent(accountSearch)}&skip=${nextSkip}&take=${accountTake}`,
+        `/api/admin/useraccounts?role=${role}&search=${encodeURIComponent(accountSearch)}&skip=${nextSkip}&take=${TAKE}`,
         { cache: "no-store" },
       );
       if (!res.ok) throw new Error("Failed to load user accounts");
       const data = await res.json();
 
-      const nextList = reset ? data.accounts : [...accounts, ...data.accounts];
-      setAccounts(nextList);
-      setAccountSkip(nextSkip + data.accounts.length);
-      setAccountHasMore(data.hasMore);
+      setAccountTables((prev) => {
+        const nextItems = reset
+          ? data.accounts
+          : [...prev[role].items, ...data.accounts];
+        return {
+          ...prev,
+          [role]: {
+            ...prev[role],
+            items: nextItems,
+            skip: nextSkip + data.accounts.length,
+            hasMore: data.hasMore,
+            loading: false,
+          },
+        };
+      });
     } catch (e) {
       console.error(e);
-    } finally {
-      setAccountLoading(false);
+      setAccountTables((prev) => ({
+        ...prev,
+        [role]: { ...prev[role], loading: false },
+      }));
     }
-  };
+  }
 
+  /*
   const runBackfill = async () => {
     const ok = confirm("Run data backfill now? This may take a while.");
     if (!ok) return;
@@ -131,7 +211,7 @@ export default function AdminPage() {
     // Optional: refresh the new tables
     fetchCompanies(true);
     fetchAccounts(true);
-  };
+  };*/
 
   // --- OFFERS state ---
   const [offers, setOffers] = useState([]);
@@ -196,44 +276,6 @@ export default function AdminPage() {
   const [contractLoading, setContractLoading] = useState(false);
   const [contractSelected, setContractSelected] = useState(null);
 
-  const adminUsers = useMemo(
-    () => users.filter((u) => u.role === "ADMIN"),
-    [users],
-  );
-
-  const purchaserUsers = useMemo(
-    () => users.filter((u) => u.role === "PURCHASER"),
-    [users],
-  );
-
-  const providerUsers = useMemo(
-    () => users.filter((u) => u.role === "PROVIDER"),
-    [users],
-  );
-
-  const purchaserCompanies = useMemo(
-    () => companies.filter((c) => c.role === "PURCHASER"),
-    [companies],
-  );
-
-  const providerCompanies = useMemo(
-    () => companies.filter((c) => c.role === "PROVIDER"),
-    [companies],
-  );
-
-  const adminAccounts = useMemo(
-    () => accounts.filter((a) => a.role === "ADMIN"),
-    [accounts],
-  );
-  const purchaserAccounts = useMemo(
-    () => accounts.filter((a) => a.role === "PURCHASER"),
-    [accounts],
-  );
-  const providerAccounts = useMemo(
-    () => accounts.filter((a) => a.role === "PROVIDER"),
-    [accounts],
-  );
-
   const fetchContracts = async (reset = false) => {
     if (contractLoading) return;
     setContractLoading(true);
@@ -279,40 +321,6 @@ export default function AdminPage() {
     fetchContracts(true);
   };
 
-  // Fetch users
-  const fetchUsers = async (reset = false) => {
-    if (loading) return;
-    setLoading(true);
-
-    const res = await fetch(
-      `/api/admin/users?search=${encodeURIComponent(search)}&skip=${
-        reset ? 0 : skip
-      }&take=10`,
-      { cache: "no-store" },
-    );
-
-    if (!res.ok) {
-      console.error("Failed to fetch users");
-      setLoading(false);
-      return;
-    }
-
-    const data = await res.json();
-
-    if (reset) {
-      setUsers(data.users);
-      setSkip(10);
-      // scroll to top on reset
-      if (scrollRef.current) scrollRef.current.scrollTop = 0;
-    } else {
-      setUsers((prev) => [...prev, ...data.users]);
-      setSkip((prev) => prev + 10);
-    }
-
-    setHasMore(data.hasMore);
-    setLoading(false);
-  };
-
   const fetchRequests = async (reset = false) => {
     if (reqLoading) return;
     setReqLoading(true);
@@ -350,11 +358,35 @@ export default function AdminPage() {
       return;
     }
 
+    // reset all role tables
+    setUserTables({
+      ADMIN: { ...initTable },
+      PURCHASER: { ...initTable },
+      PROVIDER: { ...initTable },
+    });
+    setCompanyTables({
+      PURCHASER: { ...initTable },
+      PROVIDER: { ...initTable },
+    });
+    setAccountTables({
+      ADMIN: { ...initTable },
+      PURCHASER: { ...initTable },
+      PROVIDER: { ...initTable },
+    });
+
+    // fetch first page for each table
+    fetchUsersByRole("ADMIN", true);
+    fetchUsersByRole("PURCHASER", true);
+    fetchUsersByRole("PROVIDER", true);
+
+    fetchCompaniesByRole("PURCHASER", true);
+    fetchCompaniesByRole("PROVIDER", true);
+
+    fetchAccountsByRole("ADMIN", true);
+    fetchAccountsByRole("PURCHASER", true);
+    fetchAccountsByRole("PROVIDER", true);
+
     // reset state before new fetch
-    setSkip(0);
-    setUsers([]);
-    setHasMore(true);
-    fetchUsers(true);
     fetchRequests(true);
     setOfferSkip(0);
     setOffers([]);
@@ -366,18 +398,8 @@ export default function AdminPage() {
     setContractHasMore(true);
     fetchContracts(true);
 
-    setCompanySkip(0);
-    setCompanies([]);
-    setCompanyHasMore(true);
-    fetchCompanies(true);
-
-    setAccountSkip(0);
-    setAccounts([]);
-    setAccountHasMore(true);
-    fetchAccounts(true);
-
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [search, session, status]);
+  }, [search, companySearch, accountSearch, session, status]);
 
   useEffect(() => {
     // debounce search a little
@@ -399,18 +421,6 @@ export default function AdminPage() {
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contractSearch]);
-
-  useEffect(() => {
-    const t = setTimeout(() => fetchCompanies(true), 300);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [companySearch]);
-
-  useEffect(() => {
-    const t = setTimeout(() => fetchAccounts(true), 300);
-    return () => clearTimeout(t);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [accountSearch]);
 
   function formatTimeUntil(iso) {
     if (!iso) return "Expired";
@@ -475,65 +485,64 @@ export default function AdminPage() {
     fetchRequests();
   };
 
-  const updateRegisterStatus = async (id, newStatus) => {
+  const updateRegisterStatus = async (id, newStatus, role) => {
     await fetch(`/api/admin/users/${id}/status`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ registerStatus: newStatus }),
     });
-    // Refresh current view (preserves search & pagination state)
-    fetchUsers(true);
+    fetchUsersByRole(role, true);
   };
 
-  const updateCompanyRegisterStatus = async (companyPkId, newStatus) => {
+  const updateCompanyRegisterStatus = async (companyPkId, newStatus, role) => {
     await fetch(`/api/admin/companies/${companyPkId}/status`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ registerStatus: newStatus }),
     });
-    fetchCompanies(true);
+    fetchCompaniesByRole(role, true);
   };
 
-  const updateAccountRegisterStatus = async (userPkId, newStatus) => {
+  const updateAccountRegisterStatus = async (userPkId, newStatus, role) => {
     await fetch(`/api/admin/useraccounts/${userPkId}/status`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ registerStatus: newStatus }),
     });
-    fetchAccounts(true);
+    fetchAccountsByRole(role, true);
   };
 
-  const updateInvoiceFee = async (id, newFee) => {
+  const updateInvoiceFee = async (id, newFee, role) => {
     await fetch(`/api/admin/users/${id}/invoiceFee`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ invoiceFee: Number(newFee) }),
     });
-    fetchUsers(true);
+    fetchUsersByRole(role, true);
   };
 
-  const updateProviderType = async (id, value) => {
+  const updateProviderType = async (id, value, role) => {
     await fetch(`/api/admin/users/${id}/providerType`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ providerType: value }),
     });
-    fetchUsers(true);
+    fetchUsersByRole(role, true);
   };
 
-  const updateCompanyAge = async (id, value) => {
+  const updateCompanyAge = async (id, value, role) => {
     await fetch(`/api/admin/users/${id}/companyAge`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ companyAge: Number(value) }),
     });
-    fetchUsers(true);
+    fetchUsersByRole(role, true);
   };
 
-  const deleteUser = async (id) => {
+  const deleteUser = async (id, role) => {
     if (!confirm("Are you sure you want to delete this user?")) return;
     await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
-    fetchUsers(true);
+    fetchUsersByRole(role, true);
   };
 
   const deleteCompany = async (companyPkId) => {
@@ -551,12 +560,17 @@ export default function AdminPage() {
       return;
     }
 
-    // refresh both lists because deleting company cascades user accounts
-    fetchCompanies(true);
-    fetchAccounts(true);
+    // refresh both company role tables (we don't know the company's role here)
+    fetchCompaniesByRole("PURCHASER", true);
+    fetchCompaniesByRole("PROVIDER", true);
+
+    // refresh all account tables (company delete can cascade accounts)
+    fetchAccountsByRole("ADMIN", true);
+    fetchAccountsByRole("PURCHASER", true);
+    fetchAccountsByRole("PROVIDER", true);
   };
 
-  const deleteAccount = async (userPkId) => {
+  const deleteAccount = async (userPkId, role) => {
     if (!confirm("Are you sure you want to delete this user account?")) return;
 
     const res = await fetch(`/api/admin/useraccounts/${userPkId}`, {
@@ -568,7 +582,7 @@ export default function AdminPage() {
       return;
     }
 
-    fetchAccounts(true);
+    fetchAccountsByRole(role, true);
   };
 
   const showUserDetails = async (id) => {
@@ -606,690 +620,858 @@ export default function AdminPage() {
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-6">LEXIFY Admin Control</h1>
       <br />
-      <button
-        onClick={runBackfill}
-        className="bg-[#11999e] text-white px-4 py-2 rounded border cursor-pointer mb-4"
-      >
-        Run Data Backfill (AppUser → Company + UserAccount)
-      </button>
-      <br />
-      <h2 className="text-xl font-bold mb-6">Registered Users</h2>
+      {/* === USERS / COMPANIES / USERACCOUNTS (VISIBLE IMMEDIATELY) === */}
+      <div className="flex flex-col gap-6">
+        {/* ===================== USERS ===================== */}
+        <section className="rounded bg-black/20 p-4">
+          <h2 className="text-xl font-bold mb-3 text-white">
+            Registered Users
+          </h2>
 
-      <div className="flex items-center gap-2 mb-4">
-        <input
-          type="text"
-          placeholder="Search by company name"
-          className="border p-2 w-64"
-          value={searchInput}
-          onChange={(e) => setSearchInput(e.target.value)}
-          onKeyDown={onKeyDown}
-        />
-        <button
-          className="bg-[#11999e] text-white px-3 py-2 rounded border cursor-pointer"
-          onClick={onSearch}
-        >
-          Search
-        </button>
-        <button
-          className="bg-red-500 text-white px-3 py-2 rounded cursor-pointer"
-          onClick={onClear}
-        >
-          Clear
-        </button>
-      </div>
+          <div className="flex items-center gap-2 mb-4">
+            <input
+              type="text"
+              placeholder="Search by company name"
+              className="border p-2 w-full"
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={onKeyDown}
+            />
+            <button
+              className="bg-[#11999e] text-white px-3 py-2 rounded border cursor-pointer"
+              onClick={onSearch}
+            >
+              Search
+            </button>
+            <button
+              className="bg-red-500 text-white px-3 py-2 rounded cursor-pointer"
+              onClick={() => {
+                setSearchInput("");
+                setSearch(""); // triggers role table reset+fetch via useEffect
+              }}
+            >
+              Clear
+            </button>
+          </div>
 
-      <div
-        ref={scrollRef}
-        className="overflow-y-auto max-h-[70vh] text-black p-2"
-      >
-        {/* --- Admin Users --- */}
-        <h3 className="text-lg font-semibold mt-2 mb-2 text-white">
-          Admin Users
-        </h3>
-        <table className="w-full border-collapse mb-6 bg-white">
-          <thead className="bg-gray-200">
-            <tr>
-              <th className="border p-2">User ID</th>
-              <th className="border p-2">Role</th>
-              <th className="border p-2">Status</th>
-              <th className="border p-2">Company</th>
-              <th className="border p-2">Requests</th>
-              <th className="border p-2">Offers</th>
-              <th className="border p-2">Contracts</th>
-              <th className="border p-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {adminUsers.map((u) => (
-              <tr key={u.userId} className="text-center">
-                <td
-                  className="border p-2 text-blue-600 cursor-pointer underline"
-                  onClick={() => showUserDetails(u.userId)}
-                >
-                  {u.userId}
-                </td>
-                <td className="border p-2">{u.role}</td>
-                <td className="border p-2">
-                  <select
-                    className="border rounded"
-                    value={u.registerStatus}
-                    onChange={(e) =>
-                      updateRegisterStatus(u.userId, e.target.value)
-                    }
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="confirmed">Confirmed</option>
-                  </select>
-                </td>
-                <td className="border p-2">{u.companyName}</td>
-                <td className="border p-2">{u.requestsCount}</td>
-                <td className="border p-2">{u.offersCount}</td>
-                <td className="border p-2">{u.contractsCount}</td>
-                <td className="border p-2">
-                  <button
-                    onClick={() => deleteUser(u.userId)}
-                    className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {!adminUsers.length && !loading && (
-              <tr>
-                <td colSpan={8} className="text-center p-4 text-gray-500">
-                  No admin users found.
-                </td>
-              </tr>
+          {/* --- Admin Users --- */}
+          <h3 className="text-lg font-semibold mt-2 mb-2 text-white">
+            Admin Users
+          </h3>
+          <div className="max-h-[28vh] overflow-y-auto border rounded bg-white text-black">
+            <table className="w-full border-collapse">
+              <thead className="bg-gray-200 sticky top-0">
+                <tr>
+                  <th className="border p-2">User ID</th>
+                  <th className="border p-2">Role</th>
+                  <th className="border p-2">Status</th>
+                  <th className="border p-2">Company</th>
+                  <th className="border p-2">Requests</th>
+                  <th className="border p-2">Offers</th>
+                  <th className="border p-2">Contracts</th>
+                  <th className="border p-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {userTables.ADMIN.items.map((u) => (
+                  <tr key={u.userId} className="text-center">
+                    <td
+                      className="border p-2 text-blue-600 cursor-pointer underline"
+                      onClick={() => showUserDetails(u.userId)}
+                    >
+                      {u.userId}
+                    </td>
+                    <td className="border p-2">{u.role}</td>
+                    <td className="border p-2">
+                      <select
+                        className="border rounded"
+                        value={u.registerStatus}
+                        onChange={(e) =>
+                          updateRegisterStatus(u.userId, e.target.value, u.role)
+                        }
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="confirmed">Confirmed</option>
+                      </select>
+                    </td>
+                    <td className="border p-2">{u.companyName}</td>
+                    <td className="border p-2">{u.requestsCount}</td>
+                    <td className="border p-2">{u.offersCount}</td>
+                    <td className="border p-2">{u.contractsCount}</td>
+                    <td className="border p-2">
+                      <button
+                        onClick={() => deleteUser(u.userId, u.role)}
+                        className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+
+                {!userTables.ADMIN.loading &&
+                  userTables.ADMIN.items.length === 0 && (
+                    <tr>
+                      <td colSpan={8} className="text-center p-4 text-gray-500">
+                        No admin users found.
+                      </td>
+                    </tr>
+                  )}
+
+                {userTables.ADMIN.loading && (
+                  <tr>
+                    <td colSpan={8} className="text-center p-4">
+                      Loading…
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {userTables.ADMIN.hasMore && !userTables.ADMIN.loading && (
+            <button
+              onClick={() => fetchUsersByRole("ADMIN", false)}
+              className="w-full bg-gray-100 p-2 mt-2 rounded"
+            >
+              Load more
+            </button>
+          )}
+
+          {/* --- Purchasers --- */}
+          <h3 className="text-lg font-semibold mt-6 mb-2 text-white">
+            Registered Purchasers
+          </h3>
+          <div className="max-h-[28vh] overflow-y-auto border rounded bg-white text-black">
+            <table className="w-full border-collapse">
+              <thead className="bg-gray-200 sticky top-0">
+                <tr>
+                  <th className="border p-2">User ID</th>
+                  <th className="border p-2">Role</th>
+                  <th className="border p-2">Status</th>
+                  <th className="border p-2">Company</th>
+                  <th className="border p-2">Requests</th>
+                  <th className="border p-2">Contracts</th>
+                  <th className="border p-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {userTables.PURCHASER.items.map((u) => (
+                  <tr key={u.userId} className="text-center">
+                    <td
+                      className="border p-2 text-blue-600 cursor-pointer underline"
+                      onClick={() => showUserDetails(u.userId)}
+                    >
+                      {u.userId}
+                    </td>
+                    <td className="border p-2">{u.role}</td>
+                    <td className="border p-2">
+                      <select
+                        className="border rounded"
+                        value={u.registerStatus}
+                        onChange={(e) =>
+                          updateRegisterStatus(u.userId, e.target.value, u.role)
+                        }
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="confirmed">Confirmed</option>
+                      </select>
+                    </td>
+                    <td className="border p-2">{u.companyName}</td>
+                    <td className="border p-2">{u.requestsCount}</td>
+                    <td className="border p-2">{u.contractsCount}</td>
+                    <td className="border p-2">
+                      <button
+                        onClick={() => deleteUser(u.userId)}
+                        className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+
+                {!userTables.PURCHASER.loading &&
+                  userTables.PURCHASER.items.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="text-center p-4 text-gray-500">
+                        No purchasers found.
+                      </td>
+                    </tr>
+                  )}
+
+                {userTables.PURCHASER.loading && (
+                  <tr>
+                    <td colSpan={7} className="text-center p-4">
+                      Loading…
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {userTables.PURCHASER.hasMore && !userTables.PURCHASER.loading && (
+            <button
+              onClick={() => fetchUsersByRole("PURCHASER", false)}
+              className="w-full bg-gray-100 p-2 mt-2 rounded"
+            >
+              Load more
+            </button>
+          )}
+
+          {/* --- Providers --- */}
+          <h3 className="text-lg font-semibold mt-6 mb-2 text-white">
+            Registered Providers
+          </h3>
+          <div className="max-h-[28vh] overflow-y-auto border rounded bg-white text-black">
+            <table className="w-full border-collapse">
+              <thead className="bg-gray-200 sticky top-0">
+                <tr>
+                  <th className="border p-2">User ID</th>
+                  <th className="border p-2">Role</th>
+                  <th className="border p-2">Status</th>
+                  <th className="border p-2">Company</th>
+                  <th className="border p-2">Total Rating</th>
+                  <th className="border p-2">Invoice Fee</th>
+                  <th className="border p-2">Company Age</th>
+                  <th className="border p-2">Provider Type</th>
+                  <th className="border p-2">Offers</th>
+                  <th className="border p-2">Contracts</th>
+                  <th className="border p-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {userTables.PROVIDER.items.map((u) => (
+                  <tr key={u.userId} className="text-center">
+                    <td
+                      className="border p-2 text-blue-600 cursor-pointer underline"
+                      onClick={() => showUserDetails(u.userId)}
+                    >
+                      {u.userId}
+                    </td>
+                    <td className="border p-2">{u.role}</td>
+                    <td className="border p-2">
+                      <select
+                        className="border rounded"
+                        value={u.registerStatus}
+                        onChange={(e) =>
+                          updateRegisterStatus(u.userId, e.target.value, u.role)
+                        }
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="confirmed">Confirmed</option>
+                      </select>
+                    </td>
+                    <td className="border p-2">{u.companyName}</td>
+                    <td className="border p-2">
+                      {u.providerTotalRating ?? "N/A"}
+                    </td>
+                    <td className="border p-2">
+                      <input
+                        type="number"
+                        defaultValue={u.invoiceFee}
+                        onBlur={(e) =>
+                          updateInvoiceFee(u.userId, e.target.value, u.role)
+                        }
+                        className="w-20 border p-1 text-center"
+                      />
+                    </td>
+                    <td className="border p-2">
+                      <input
+                        type="number"
+                        min={0}
+                        defaultValue={u.companyAge ?? 0}
+                        onBlur={(e) =>
+                          updateCompanyAge(u.userId, e.target.value, u.role)
+                        }
+                        className="w-24 border p-1 text-center"
+                      />
+                    </td>
+                    <td className="border p-2">
+                      <select
+                        className="border rounded text-center"
+                        value={
+                          u.providerType && u.providerType.trim()
+                            ? u.providerType
+                            : "N/A"
+                        }
+                        onChange={(e) =>
+                          updateProviderType(u.userId, e.target.value, u.role)
+                        }
+                      >
+                        <option value="N/A">N/A</option>
+                        <option value="Attorneys-at-law">
+                          Attorneys-at-law
+                        </option>
+                        <option value="Law Firm">Law Firm</option>
+                      </select>
+                    </td>
+                    <td className="border p-2">{u.offersCount}</td>
+                    <td className="border p-2">{u.contractsCount}</td>
+                    <td className="border p-2">
+                      <button
+                        onClick={() => deleteUser(u.userId)}
+                        className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+
+                {!userTables.PROVIDER.loading &&
+                  userTables.PROVIDER.items.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={11}
+                        className="text-center p-4 text-gray-500"
+                      >
+                        No providers found.
+                      </td>
+                    </tr>
+                  )}
+
+                {userTables.PROVIDER.loading && (
+                  <tr>
+                    <td colSpan={11} className="text-center p-4">
+                      Loading…
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {userTables.PROVIDER.hasMore && !userTables.PROVIDER.loading && (
+            <button
+              onClick={() => fetchUsersByRole("PROVIDER", false)}
+              className="w-full bg-gray-100 p-2 mt-2 rounded"
+            >
+              Load more
+            </button>
+          )}
+        </section>
+
+        {/* ===================== COMPANIES ===================== */}
+        <section className="rounded bg-black/20 p-4">
+          <h2 className="text-xl font-bold mb-3 text-white">Companies</h2>
+
+          <div className="mb-3 flex items-center gap-2">
+            <input
+              type="text"
+              value={companySearchInput}
+              onChange={(e) => {
+                const val = e.target.value;
+                setCompanySearchInput(val);
+                setCompanySearch(val.trim());
+              }}
+              placeholder="Search companies by name…"
+              className="border rounded p-2 w-full"
+            />
+            <button
+              className="bg-[#11999e] text-white px-3 py-2 rounded border cursor-pointer"
+              onClick={() => setCompanySearch(companySearchInput.trim())}
+            >
+              Search
+            </button>
+            <button
+              className="bg-red-500 text-white px-3 py-2 rounded cursor-pointer"
+              onClick={() => {
+                setCompanySearchInput("");
+                setCompanySearch(""); // triggers reset+fetch via useEffect
+              }}
+            >
+              Clear
+            </button>
+          </div>
+
+          {/* Purchaser Companies */}
+          <h3 className="text-lg font-semibold mt-2 mb-2 text-white">
+            Purchaser Companies
+          </h3>
+          <div className="max-h-[40vh] overflow-y-auto border rounded bg-white text-black">
+            <table className="w-full border-collapse">
+              <thead className="bg-gray-200 sticky top-0">
+                <tr>
+                  <th className="border p-2">Company ID</th>
+                  <th className="border p-2">Role</th>
+                  <th className="border p-2">Register Status</th>
+                  <th className="border p-2">Company</th>
+                  <th className="border p-2">Members</th>
+                  <th className="border p-2">Requests</th>
+                  <th className="border p-2">Contracts</th>
+                  <th className="border p-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {companyTables.PURCHASER.items.map((c) => (
+                  <tr key={c.companyPkId} className="text-center">
+                    <td
+                      className="border p-2 text-blue-600 cursor-pointer underline"
+                      onClick={() => showCompanyDetails(c.companyPkId)}
+                    >
+                      {c.companyPkId}
+                    </td>
+                    <td className="border p-2">{c.role}</td>
+                    <td className="border p-2">
+                      <select
+                        className="border rounded"
+                        value={c.registerStatus}
+                        onChange={(e) =>
+                          updateCompanyRegisterStatus(
+                            c.companyPkId,
+                            e.target.value,
+                            c.role,
+                          )
+                        }
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="confirmed">Confirmed</option>
+                      </select>
+                    </td>
+                    <td className="border p-2">{c.companyName}</td>
+                    <td className="border p-2">{c.membersCount ?? 0}</td>
+                    <td className="border p-2">{c.requestsCount ?? 0}</td>
+                    <td className="border p-2">{c.contractsCount ?? 0}</td>
+                    <td className="border p-2">
+                      <button
+                        onClick={() => deleteCompany(c.companyPkId, c.role)}
+                        className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+
+                {!companyTables.PURCHASER.loading &&
+                  companyTables.PURCHASER.items.length === 0 && (
+                    <tr>
+                      <td colSpan={8} className="text-center p-4 text-gray-500">
+                        No purchaser companies found.
+                      </td>
+                    </tr>
+                  )}
+
+                {companyTables.PURCHASER.loading && (
+                  <tr>
+                    <td colSpan={8} className="text-center p-4">
+                      Loading…
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {companyTables.PURCHASER.hasMore &&
+            !companyTables.PURCHASER.loading && (
+              <button
+                onClick={() => fetchCompaniesByRole("PURCHASER", false)}
+                className="w-full bg-gray-100 p-2 mt-2 rounded"
+              >
+                Load more
+              </button>
             )}
-          </tbody>
-        </table>
 
-        {/* --- Registered Purchasers --- */}
-        <h3 className="text-lg font-semibold mt-2 mb-2 text-white">
-          Registered Purchasers
-        </h3>
-        <table className="w-full border-collapse mb-6 bg-white">
-          <thead className="bg-gray-200">
-            <tr>
-              <th className="border p-2">User ID</th>
-              <th className="border p-2">Role</th>
-              <th className="border p-2">Status</th>
-              <th className="border p-2">Company</th>
-              <th className="border p-2">Requests</th>
-              <th className="border p-2">Contracts</th>
-              <th className="border p-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {purchaserUsers.map((u) => (
-              <tr key={u.userId} className="text-center">
-                <td
-                  className="border p-2 text-blue-600 cursor-pointer underline"
-                  onClick={() => showUserDetails(u.userId)}
-                >
-                  {u.userId}
-                </td>
-                <td className="border p-2">{u.role}</td>
-                <td className="border p-2">
-                  <select
-                    className="border rounded"
-                    value={u.registerStatus}
-                    onChange={(e) =>
-                      updateRegisterStatus(u.userId, e.target.value)
-                    }
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="confirmed">Confirmed</option>
-                  </select>
-                </td>
-                <td className="border p-2">{u.companyName}</td>
-                <td className="border p-2">{u.requestsCount}</td>
-                <td className="border p-2">{u.contractsCount}</td>
-                <td className="border p-2">
-                  <button
-                    onClick={() => deleteUser(u.userId)}
-                    className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {!purchaserUsers.length && !loading && (
-              <tr>
-                <td colSpan={7} className="text-center p-4 text-gray-500">
-                  No purchasers found.
-                </td>
-              </tr>
+          {/* Provider Companies */}
+          <h3 className="text-lg font-semibold mt-6 mb-2 text-white">
+            Provider Companies
+          </h3>
+          <div className="max-h-[40vh] overflow-y-auto border rounded bg-white text-black">
+            <table className="w-full border-collapse">
+              <thead className="bg-gray-200 sticky top-0">
+                <tr>
+                  <th className="border p-2">Company ID</th>
+                  <th className="border p-2">Role</th>
+                  <th className="border p-2">Register Status</th>
+                  <th className="border p-2">Company</th>
+                  <th className="border p-2">Invoice Fee</th>
+                  <th className="border p-2">Company Age</th>
+                  <th className="border p-2">Provider Type</th>
+                  <th className="border p-2">Members</th>
+                  <th className="border p-2">Offers</th>
+                  <th className="border p-2">Rating</th>
+                  <th className="border p-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {companyTables.PROVIDER.items.map((c) => (
+                  <tr key={c.companyPkId} className="text-center">
+                    <td
+                      className="border p-2 text-blue-600 cursor-pointer underline"
+                      onClick={() => showCompanyDetails(c.companyPkId)}
+                    >
+                      {c.companyPkId}
+                    </td>
+                    <td className="border p-2">{c.role}</td>
+                    <td className="border p-2">
+                      <select
+                        className="border rounded"
+                        value={c.registerStatus}
+                        onChange={(e) =>
+                          updateCompanyRegisterStatus(
+                            c.companyPkId,
+                            e.target.value,
+                            c.role,
+                          )
+                        }
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="confirmed">Confirmed</option>
+                      </select>
+                    </td>
+                    <td className="border p-2">{c.companyName}</td>
+                    <td className="border p-2">{c.invoiceFee ?? "—"}</td>
+                    <td className="border p-2">{c.companyAge ?? "—"}</td>
+                    <td className="border p-2">{c.providerType ?? "—"}</td>
+                    <td className="border p-2">{c.membersCount ?? 0}</td>
+                    <td className="border p-2">{c.offersCount ?? 0}</td>
+                    <td className="border p-2">
+                      {c.providerTotalRating ?? "—"}
+                    </td>
+                    <td className="border p-2">
+                      <button
+                        onClick={() => deleteCompany(c.companyPkId)}
+                        className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+
+                {!companyTables.PROVIDER.loading &&
+                  companyTables.PROVIDER.items.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={11}
+                        className="text-center p-4 text-gray-500"
+                      >
+                        No provider companies found.
+                      </td>
+                    </tr>
+                  )}
+
+                {companyTables.PROVIDER.loading && (
+                  <tr>
+                    <td colSpan={11} className="text-center p-4">
+                      Loading…
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {companyTables.PROVIDER.hasMore &&
+            !companyTables.PROVIDER.loading && (
+              <button
+                onClick={() => fetchCompaniesByRole("PROVIDER", false)}
+                className="w-full bg-gray-100 p-2 mt-2 rounded"
+              >
+                Load more
+              </button>
             )}
-          </tbody>
-        </table>
+        </section>
 
-        {/* --- Registered Providers --- */}
-        <h3 className="text-lg font-semibold mt-2 mb-2 text-white">
-          Registered Providers
-        </h3>
-        <table className="w-full border-collapse mb-2 bg-white">
-          <thead className="bg-gray-200">
-            <tr>
-              <th className="border p-2">User ID</th>
-              <th className="border p-2">Role</th>
-              <th className="border p-2">Status</th>
-              <th className="border p-2">Company</th>
-              <th className="border p-2">Total Rating</th>
-              <th className="border p-2">Invoice Fee</th>
-              <th className="border p-2">Company Age</th>
-              <th className="border p-2">Provider Type</th>
-              <th className="border p-2">Offers</th>
-              <th className="border p-2">Contracts</th>
-              <th className="border p-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {providerUsers.map((u) => (
-              <tr key={u.userId} className="text-center">
-                <td
-                  className="border p-2 text-blue-600 cursor-pointer underline"
-                  onClick={() => showUserDetails(u.userId)}
-                >
-                  {u.userId}
-                </td>
-                <td className="border p-2">{u.role}</td>
-                <td className="border p-2">
-                  <select
-                    className="border rounded"
-                    value={u.registerStatus}
-                    onChange={(e) =>
-                      updateRegisterStatus(u.userId, e.target.value)
-                    }
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="confirmed">Confirmed</option>
-                  </select>
-                </td>
-                <td className="border p-2">{u.companyName}</td>
-                <td className="border p-2">
-                  {u.role === "PROVIDER"
-                    ? (u.providerTotalRating ?? "N/A")
-                    : "N/A"}
-                </td>
-                <td className="border p-2">
-                  <input
-                    type="number"
-                    defaultValue={u.invoiceFee}
-                    onBlur={(e) => updateInvoiceFee(u.userId, e.target.value)}
-                    className="w-20 border p-1 text-center"
-                  />
-                </td>
-                <td className="border p-2">
-                  <input
-                    type="number"
-                    min={0}
-                    defaultValue={u.companyAge ?? 0}
-                    onBlur={(e) => updateCompanyAge(u.userId, e.target.value)}
-                    className="w-24 border p-1 text-center"
-                  />
-                </td>
-                <td className="border p-2">
-                  <select
-                    className="border rounded text-center"
-                    value={
-                      u.providerType && u.providerType.trim()
-                        ? u.providerType
-                        : "N/A"
-                    }
-                    onChange={(e) =>
-                      updateProviderType(u.userId, e.target.value)
-                    }
-                  >
-                    <option value="N/A">N/A</option>
-                    <option value="Attorneys-at-law">Attorneys-at-law</option>
-                    <option value="Law Firm">Law Firm</option>
-                  </select>
-                </td>
-                <td className="border p-2">{u.offersCount}</td>
-                <td className="border p-2">{u.contractsCount}</td>
-                <td className="border p-2">
-                  <button
-                    onClick={() => deleteUser(u.userId)}
-                    className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {!providerUsers.length && !loading && (
-              <tr>
-                <td colSpan={11} className="text-center p-4 text-gray-500">
-                  No providers found.
-                </td>
-              </tr>
+        {/* ===================== USER ACCOUNTS ===================== */}
+        <section className="rounded bg-black/20 p-4">
+          <h2 className="text-xl font-bold mb-3 text-white">User Accounts</h2>
+
+          <div className="mb-3 flex items-center gap-2">
+            <input
+              type="text"
+              value={accountSearchInput}
+              onChange={(e) => {
+                const val = e.target.value;
+                setAccountSearchInput(val);
+                setAccountSearch(val.trim());
+              }}
+              placeholder="Search by last name, email, or company…"
+              className="border rounded p-2 w-full"
+            />
+            <button
+              className="bg-[#11999e] text-white px-3 py-2 rounded border cursor-pointer"
+              onClick={() => setAccountSearch(accountSearchInput.trim())}
+            >
+              Search
+            </button>
+            <button
+              className="bg-red-500 text-white px-3 py-2 rounded cursor-pointer"
+              onClick={() => {
+                setAccountSearchInput("");
+                setAccountSearch(""); // triggers reset+fetch via useEffect
+              }}
+            >
+              Clear
+            </button>
+          </div>
+
+          {/* Admin User Accounts */}
+          <h3 className="text-lg font-semibold mt-2 mb-2 text-white">
+            Admin User Accounts
+          </h3>
+          <div className="max-h-[24vh] overflow-y-auto border rounded bg-white text-black">
+            <table className="w-full border-collapse">
+              <thead className="bg-gray-200 sticky top-0">
+                <tr>
+                  <th className="border p-2">User ID</th>
+                  <th className="border p-2">Role</th>
+                  <th className="border p-2">Register Status</th>
+                  <th className="border p-2">Company</th>
+                  <th className="border p-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {accountTables.ADMIN.items.map((a) => (
+                  <tr key={a.userPkId} className="text-center">
+                    <td
+                      className="border p-2 text-blue-600 cursor-pointer underline"
+                      onClick={() => showAccountDetails(a.userPkId)}
+                    >
+                      {a.userPkId}
+                    </td>
+                    <td className="border p-2">{a.role}</td>
+                    <td className="border p-2">
+                      <select
+                        className="border rounded"
+                        value={a.registerStatus}
+                        onChange={(e) =>
+                          updateAccountRegisterStatus(
+                            a.userPkId,
+                            e.target.value,
+                            a.role,
+                          )
+                        }
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="confirmed">Confirmed</option>
+                      </select>
+                    </td>
+                    <td className="border p-2">{a.companyName}</td>
+                    <td className="border p-2">
+                      <button
+                        onClick={() => deleteAccount(a.userPkId, a.role)}
+                        className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+
+                {!accountTables.ADMIN.loading &&
+                  accountTables.ADMIN.items.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="text-center p-4 text-gray-500">
+                        No admin user accounts found.
+                      </td>
+                    </tr>
+                  )}
+
+                {accountTables.ADMIN.loading && (
+                  <tr>
+                    <td colSpan={5} className="text-center p-4">
+                      Loading…
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {accountTables.ADMIN.hasMore && !accountTables.ADMIN.loading && (
+            <button
+              onClick={() => fetchAccountsByRole("ADMIN", false)}
+              className="w-full bg-gray-100 p-2 mt-2 rounded"
+            >
+              Load more
+            </button>
+          )}
+
+          {/* Purchaser User Accounts */}
+          <h3 className="text-lg font-semibold mt-6 mb-2 text-white">
+            Purchaser User Accounts
+          </h3>
+          <div className="max-h-[24vh] overflow-y-auto border rounded bg-white text-black">
+            <table className="w-full border-collapse">
+              <thead className="bg-gray-200 sticky top-0">
+                <tr>
+                  <th className="border p-2">User ID</th>
+                  <th className="border p-2">User's Name</th>
+                  <th className="border p-2">Role</th>
+                  <th className="border p-2">Register Status</th>
+                  <th className="border p-2">Company</th>
+                  <th className="border p-2">Requests</th>
+                  <th className="border p-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {accountTables.PURCHASER.items.map((a) => (
+                  <tr key={a.userPkId} className="text-center">
+                    <td
+                      className="border p-2 text-blue-600 cursor-pointer underline"
+                      onClick={() => showAccountDetails(a.userPkId)}
+                    >
+                      {a.userPkId}
+                    </td>
+                    <td className="border p-2">
+                      {a.firstName} {a.lastName}
+                    </td>
+                    <td className="border p-2">{a.role}</td>
+                    <td className="border p-2">
+                      <select
+                        className="border rounded"
+                        value={a.registerStatus}
+                        onChange={(e) =>
+                          updateAccountRegisterStatus(
+                            a.userPkId,
+                            e.target.value,
+                            a.role,
+                          )
+                        }
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="confirmed">Confirmed</option>
+                      </select>
+                    </td>
+                    <td className="border p-2">{a.companyName}</td>
+                    <td className="border p-2">{a.requestsCount ?? 0}</td>
+                    <td className="border p-2">
+                      <button
+                        onClick={() => deleteAccount(a.userPkId)}
+                        className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+
+                {!accountTables.PURCHASER.loading &&
+                  accountTables.PURCHASER.items.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="text-center p-4 text-gray-500">
+                        No purchaser user accounts found.
+                      </td>
+                    </tr>
+                  )}
+
+                {accountTables.PURCHASER.loading && (
+                  <tr>
+                    <td colSpan={7} className="text-center p-4">
+                      Loading…
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {accountTables.PURCHASER.hasMore &&
+            !accountTables.PURCHASER.loading && (
+              <button
+                onClick={() => fetchAccountsByRole("PURCHASER", false)}
+                className="w-full bg-gray-100 p-2 mt-2 rounded"
+              >
+                Load more
+              </button>
             )}
-          </tbody>
-        </table>
 
-        <br />
-        <h2 className="text-xl font-bold mb-2 text-white">Companies</h2>
+          {/* Provider User Accounts */}
+          <h3 className="text-lg font-semibold mt-6 mb-2 text-white">
+            Provider User Accounts
+          </h3>
+          <div className="max-h-[24vh] overflow-y-auto border rounded bg-white text-black">
+            <table className="w-full border-collapse">
+              <thead className="bg-gray-200 sticky top-0">
+                <tr>
+                  <th className="border p-2">User ID</th>
+                  <th className="border p-2">User's Name</th>
+                  <th className="border p-2">Role</th>
+                  <th className="border p-2">Register Status</th>
+                  <th className="border p-2">Company</th>
+                  <th className="border p-2">Offers</th>
+                  <th className="border p-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {accountTables.PROVIDER.items.map((a) => (
+                  <tr key={a.userPkId} className="text-center">
+                    <td
+                      className="border p-2 text-blue-600 cursor-pointer underline"
+                      onClick={() => showAccountDetails(a.userPkId)}
+                    >
+                      {a.userPkId}
+                    </td>
+                    <td className="border p-2">
+                      {a.firstName} {a.lastName}
+                    </td>
+                    <td className="border p-2">{a.role}</td>
+                    <td className="border p-2">
+                      <select
+                        className="border rounded"
+                        value={a.registerStatus}
+                        onChange={(e) =>
+                          updateAccountRegisterStatus(
+                            a.userPkId,
+                            e.target.value,
+                            a.role,
+                          )
+                        }
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="confirmed">Confirmed</option>
+                      </select>
+                    </td>
+                    <td className="border p-2">{a.companyName}</td>
+                    <td className="border p-2">{a.offersCount ?? 0}</td>
+                    <td className="border p-2">
+                      <button
+                        onClick={() => deleteAccount(a.userPkId)}
+                        className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
 
-        <div className="mb-3 flex items-center gap-2">
-          <input
-            type="text"
-            value={companySearchInput}
-            onChange={(e) => {
-              const val = e.target.value;
-              setCompanySearchInput(val);
-              setCompanySearch(val.trim());
-            }}
-            placeholder="Search companies by name…"
-            className="border rounded p-2 w-full max-w-md"
-          />
-          <button
-            className="bg-[#11999e] text-white px-3 py-2 rounded border cursor-pointer"
-            onClick={() => setCompanySearch(companySearchInput.trim())}
-          >
-            Search
-          </button>
-          <button
-            className="bg-red-500 text-white px-3 py-2 rounded cursor-pointer"
-            onClick={() => {
-              setCompanySearchInput("");
-              setCompanySearch("");
-              setCompanySkip(0);
-              setCompanies([]);
-              setCompanyHasMore(true);
-              fetchCompanies(true);
-            }}
-          >
-            Clear
-          </button>
-        </div>
+                {!accountTables.PROVIDER.loading &&
+                  accountTables.PROVIDER.items.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="text-center p-4 text-gray-500">
+                        No provider user accounts found.
+                      </td>
+                    </tr>
+                  )}
 
-        <h3 className="text-lg font-semibold mt-2 mb-2 text-white">
-          Purchaser Companies
-        </h3>
-        <table className="w-full border-collapse mb-6 bg-white">
-          <thead className="bg-gray-200">
-            <tr>
-              <th className="border p-2">Company ID</th>
-              <th className="border p-2">Role</th>
-              <th className="border p-2">Register Status</th>
-              <th className="border p-2">Company</th>
-              <th className="border p-2">Members</th>
-              <th className="border p-2">Requests</th>
-              <th className="border p-2">Contracts</th>
-              <th className="border p-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {!companyLoading && purchaserCompanies.length === 0 && (
-              <tr>
-                <td colSpan={8} className="text-center p-4 text-gray-500">
-                  No purchaser companies found.
-                </td>
-              </tr>
+                {accountTables.PROVIDER.loading && (
+                  <tr>
+                    <td colSpan={7} className="text-center p-4">
+                      Loading…
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {accountTables.PROVIDER.hasMore &&
+            !accountTables.PROVIDER.loading && (
+              <button
+                onClick={() => fetchAccountsByRole("PROVIDER", false)}
+                className="w-full bg-gray-100 p-2 mt-2 rounded"
+              >
+                Load more
+              </button>
             )}
-            {purchaserCompanies.map((c) => (
-              <tr key={c.companyPkId} className="text-center">
-                <td
-                  className="border p-2 text-blue-600 cursor-pointer underline"
-                  onClick={() => showCompanyDetails(c.companyPkId)}
-                >
-                  {c.companyPkId}
-                </td>
-                <td className="border p-2">{c.role}</td>
-                <td className="border p-2">
-                  <select
-                    className="border rounded"
-                    value={c.registerStatus}
-                    onChange={(e) =>
-                      updateCompanyRegisterStatus(c.companyPkId, e.target.value)
-                    }
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="confirmed">Confirmed</option>
-                  </select>
-                </td>
-                <td className="border p-2">{c.companyName}</td>
-                <td className="border p-2">{c.membersCount ?? 0}</td>
-                <td className="border p-2">{c.requestsCount ?? 0}</td>
-                <td className="border p-2">{c.contractsCount ?? 0}</td>
-                <td className="border p-2">
-                  <button
-                    onClick={() => deleteCompany(c.companyPkId)}
-                    className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {companyHasMore && !companyLoading && companies.length > 0 && (
-              <tr>
-                <td colSpan={8} className="p-2">
-                  <button
-                    onClick={() => fetchCompanies(false)}
-                    className="w-full bg-gray-100 p-2"
-                  >
-                    Load more
-                  </button>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+        </section>
 
-        <h3 className="text-lg font-semibold mt-2 mb-2 text-white">
-          Provider Companies
-        </h3>
-        <table className="w-full border-collapse mb-6 bg-white">
-          <thead className="bg-gray-200">
-            <tr>
-              <th className="border p-2">Company ID</th>
-              <th className="border p-2">Role</th>
-              <th className="border p-2">Register Status</th>
-              <th className="border p-2">Company</th>
-              <th className="border p-2">Invoice Fee</th>
-              <th className="border p-2">Company Age</th>
-              <th className="border p-2">Provider Type</th>
-              <th className="border p-2">Members</th>
-              <th className="border p-2">Offers</th>
-              <th className="border p-2">Rating</th>
-              <th className="border p-2">Invoice Fee</th>
-              <th className="border p-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {!companyLoading && providerCompanies.length === 0 && (
-              <tr>
-                <td colSpan={12} className="text-center p-4 text-gray-500">
-                  No provider companies found.
-                </td>
-              </tr>
-            )}
-            {providerCompanies.map((c) => (
-              <tr key={c.companyPkId} className="text-center">
-                <td
-                  className="border p-2 text-blue-600 cursor-pointer underline"
-                  onClick={() => showCompanyDetails(c.companyPkId)}
-                >
-                  {c.companyPkId}
-                </td>
-                <td className="border p-2">{c.role}</td>
-                <td className="border p-2">
-                  <select
-                    className="border rounded"
-                    value={c.registerStatus}
-                    onChange={(e) =>
-                      updateCompanyRegisterStatus(c.companyPkId, e.target.value)
-                    }
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="confirmed">Confirmed</option>
-                  </select>
-                </td>
-                <td className="border p-2">{c.companyName}</td>
-                <td className="border p-2">{c.invoiceFee}</td>
-                <td className="border p-2">{c.companyAge}</td>
-                <td className="border p-2">{c.providerType}</td>
-                <td className="border p-2">{c.membersCount ?? 0}</td>
-                <td className="border p-2">{c.offersCount ?? 0}</td>
-                <td className="border p-2">{c.providerTotalRating ?? "—"}</td>
-                <td className="border p-2">{c.invoiceFee ?? "—"}</td>
-                <td className="border p-2">
-                  <button
-                    onClick={() => deleteCompany(c.companyPkId)}
-                    className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        <br />
-        <h2 className="text-xl font-bold mb-2 text-white">User Accounts</h2>
-
-        <div className="mb-3 flex items-center gap-2">
-          <input
-            type="text"
-            value={accountSearchInput}
-            onChange={(e) => {
-              const val = e.target.value;
-              setAccountSearchInput(val);
-              setAccountSearch(val.trim());
-            }}
-            placeholder="Search by last name, email, or company…"
-            className="border rounded p-2 w-full max-w-md"
-          />
-          <button
-            className="bg-[#11999e] text-white px-3 py-2 rounded border cursor-pointer"
-            onClick={() => setAccountSearch(accountSearchInput.trim())}
-          >
-            Search
-          </button>
-          <button
-            className="bg-red-500 text-white px-3 py-2 rounded cursor-pointer"
-            onClick={() => {
-              setAccountSearchInput("");
-              setAccountSearch("");
-              setAccountSkip(0);
-              setAccounts([]);
-              setAccountHasMore(true);
-              fetchAccounts(true);
-            }}
-          >
-            Clear
-          </button>
-        </div>
-
-        {/* Admin UserAccounts */}
-        <h3 className="text-lg font-semibold mt-2 mb-2 text-white">
-          Admin User Accounts
-        </h3>
-        <table className="w-full border-collapse mb-6 bg-white">
-          <thead className="bg-gray-200">
-            <tr>
-              <th className="border p-2">User ID</th>
-              <th className="border p-2">Role</th>
-              <th className="border p-2">Register Status</th>
-              <th className="border p-2">Company</th>
-              <th className="border p-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {!accountLoading && adminAccounts.length === 0 && (
-              <tr>
-                <td colSpan={5} className="text-center p-4 text-gray-500">
-                  No admin user accounts found.
-                </td>
-              </tr>
-            )}
-            {adminAccounts.map((a) => (
-              <tr key={a.userPkId} className="text-center">
-                <td
-                  className="border p-2 text-blue-600 cursor-pointer underline"
-                  onClick={() => showAccountDetails(a.userPkId)}
-                >
-                  {a.userPkId}
-                </td>
-                <td className="border p-2">{a.role}</td>
-                <td className="border p-2">
-                  <select
-                    className="border rounded"
-                    value={a.registerStatus}
-                    onChange={(e) =>
-                      updateAccountRegisterStatus(a.userPkId, e.target.value)
-                    }
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="confirmed">Confirmed</option>
-                  </select>
-                </td>
-                <td className="border p-2">{a.companyName}</td>
-                <td className="border p-2">
-                  <button
-                    onClick={() => deleteAccount(a.userPkId)}
-                    className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {/* Purchaser UserAccounts */}
-        <h3 className="text-lg font-semibold mt-2 mb-2 text-white">
-          Purchaser User Accounts
-        </h3>
-        <table className="w-full border-collapse mb-6 bg-white">
-          <thead className="bg-gray-200">
-            <tr>
-              <th className="border p-2">User ID</th>
-              <th className="border p-2">User's Name</th>
-              <th className="border p-2">Role</th>
-              <th className="border p-2">Register Status</th>
-              <th className="border p-2">Company</th>
-              <th className="border p-2">Requests</th>
-              <th className="border p-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {!accountLoading && purchaserAccounts.length === 0 && (
-              <tr>
-                <td colSpan={7} className="text-center p-4 text-gray-500">
-                  No purchaser user accounts found.
-                </td>
-              </tr>
-            )}
-            {purchaserAccounts.map((a) => (
-              <tr key={a.userPkId} className="text-center">
-                <td
-                  className="border p-2 text-blue-600 cursor-pointer underline"
-                  onClick={() => showAccountDetails(a.userPkId)}
-                >
-                  {a.userPkId}
-                </td>
-                <td className="border p-2">
-                  {a.firstName} {a.lastName}
-                </td>
-                <td className="border p-2">{a.role}</td>
-                <td className="border p-2">
-                  <select
-                    className="border rounded"
-                    value={a.registerStatus}
-                    onChange={(e) =>
-                      updateAccountRegisterStatus(a.userPkId, e.target.value)
-                    }
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="confirmed">Confirmed</option>
-                  </select>
-                </td>
-                <td className="border p-2">{a.companyName}</td>
-                <td className="border p-2">{a.requestsCount ?? 0}</td>
-                <td className="border p-2">
-                  <button
-                    onClick={() => deleteAccount(a.userPkId)}
-                    className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-
-        {/* Provider UserAccounts */}
-        <h3 className="text-lg font-semibold mt-2 mb-2 text-white">
-          Provider User Accounts
-        </h3>
-        <table className="w-full border-collapse mb-6 bg-white">
-          <thead className="bg-gray-200">
-            <tr>
-              <th className="border p-2">User ID</th>
-              <th className="border p-2">User's Name</th>
-              <th className="border p-2">Role</th>
-              <th className="border p-2">Register Status</th>
-              <th className="border p-2">Company</th>
-              <th className="border p-2">Offers</th>
-              <th className="border p-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {!accountLoading && providerAccounts.length === 0 && (
-              <tr>
-                <td colSpan={7} className="text-center p-4 text-gray-500">
-                  No provider user accounts found.
-                </td>
-              </tr>
-            )}
-            {providerAccounts.map((a) => (
-              <tr key={a.userPkId} className="text-center">
-                <td
-                  className="border p-2 text-blue-600 cursor-pointer underline"
-                  onClick={() => showAccountDetails(a.userPkId)}
-                >
-                  {a.userPkId}
-                </td>
-                <td className="border p-2">
-                  {a.firstName} {a.lastName}
-                </td>
-                <td className="border p-2">{a.role}</td>
-                <td className="border p-2">
-                  <select
-                    className="border rounded"
-                    value={a.registerStatus}
-                    onChange={(e) =>
-                      updateAccountRegisterStatus(a.userPkId, e.target.value)
-                    }
-                  >
-                    <option value="pending">Pending</option>
-                    <option value="confirmed">Confirmed</option>
-                  </select>
-                </td>
-                <td className="border p-2">{a.companyName}</td>
-                <td className="border p-2">{a.offersCount ?? 0}</td>
-                <td className="border p-2">
-                  <button
-                    onClick={() => deleteAccount(a.userPkId)}
-                    className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {accountHasMore && !accountLoading && accounts.length > 0 && (
-              <tr>
-                <td colSpan={7} className="p-2">
-                  <button
-                    onClick={() => fetchAccounts(false)}
-                    className="w-full bg-gray-100 p-2"
-                  >
-                    Load more
-                  </button>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-
-        {hasMore && !loading && users.length > 0 && (
-          <button
-            onClick={() => fetchUsers(false)}
-            className="w-full bg-gray-100 p-2 mt-2"
-          >
-            Load more
-          </button>
-        )}
-        {loading && <p className="text-center p-4">Loading...</p>}
+        {/* === Requests search bar belongs OUTSIDE these 3 columns in your layout.
+      If you want it under this grid (full width), keep it AFTER this grid. === */}
       </div>
 
       {/* User details modal */}
@@ -1492,7 +1674,6 @@ export default function AdminPage() {
           Clear
         </button>
       </div>
-
       <h2 className="text-xl font-bold mb-6">All Purchaser Requests</h2>
 
       <div

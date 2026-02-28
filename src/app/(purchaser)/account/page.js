@@ -50,6 +50,16 @@ export default function Account() {
   const [lpLoading, setLpLoading] = useState(false);
   const [legalPanelProviders, setLegalPanelProviders] = useState([]);
 
+  // MFA
+  const [mfaEnabled, setMfaEnabled] = useState(false);
+  const [mfaQr, setMfaQr] = useState("");
+  const [mfaOtpAuth, setMfaOtpAuth] = useState("");
+  const [mfaCode, setMfaCode] = useState("");
+  const [mfaBusy, setMfaBusy] = useState(false);
+  const [mfaMsg, setMfaMsg] = useState("");
+  const [mfaErr, setMfaErr] = useState("");
+  const [recoveryCodes, setRecoveryCodes] = useState([]);
+
   // tickbox selection
   const AREAS_OF_LAW = [
     "Help with Contracts",
@@ -96,7 +106,7 @@ export default function Account() {
     setNotificationPrefs(
       Array.isArray(json.notificationPreferences)
         ? json.notificationPreferences
-        : []
+        : [],
     );
   };
 
@@ -116,9 +126,12 @@ export default function Account() {
         if (!res.ok) throw new Error("Failed to load profile");
         const data = await res.json();
         setMe(data);
+        setMfaEnabled(
+          !!(data?.userAccount?.twoFactorEnabled ?? data?.twoFactorEnabled),
+        );
         setUsername(data.username || "");
         setIsAutomatic(
-          (data.winningOfferSelection || "automatic") === "automatic"
+          (data.winningOfferSelection || "automatic") === "automatic",
         );
         const blocked = Array.isArray(data.blockedServiceProviders)
           ? data.blockedServiceProviders
@@ -127,29 +140,14 @@ export default function Account() {
         setPreferredProviders(
           Array.isArray(data.preferredLegalServiceProviders)
             ? data.preferredLegalServiceProviders
-            : []
+            : [],
         );
         setLegalPanelProviders(
           Array.isArray(data.legalPanelServiceProviders)
             ? data.legalPanelServiceProviders
-            : []
+            : [],
         );
 
-        const arr = Array.isArray(data.companyContactPersons)
-          ? data.companyContactPersons
-          : [];
-        setContacts(
-          arr.map((c, i) => ({
-            id: i + 1,
-            firstName: c.firstName || "",
-            lastName: c.lastName || "",
-            position: c.title || c.position || "",
-            telephone: c.telephone || "",
-            email: c.email || "",
-            allNotifications: !!c.allNotifications,
-            isEditing: false,
-          }))
-        );
         // fetch notification preferences
         try {
           const pr = await fetch("/api/me/notification-preferences/purchaser", {
@@ -159,7 +157,7 @@ export default function Account() {
           setNotificationPrefs(
             Array.isArray(pj.notificationPreferences)
               ? pj.notificationPreferences
-              : []
+              : [],
           );
         } catch {
           setNotificationPrefs([]);
@@ -176,13 +174,13 @@ export default function Account() {
 
   const updateContact = (id, field, value) =>
     setContacts((xs) =>
-      xs.map((c) => (c.id === id ? { ...c, [field]: value } : c))
+      xs.map((c) => (c.id === id ? { ...c, [field]: value } : c)),
     );
 
   const toggleAllNotifications = async (id, checked) => {
     // Optimistic UI
     const next = contacts.map((c) =>
-      c.id === id ? { ...c, allNotifications: checked } : c
+      c.id === id ? { ...c, allNotifications: checked } : c,
     );
     setContacts(next);
 
@@ -247,7 +245,7 @@ export default function Account() {
     if (!row.isEditing) {
       // enter edit mode
       setContacts((xs) =>
-        xs.map((c) => (c.id === id ? { ...c, isEditing: true } : c))
+        xs.map((c) => (c.id === id ? { ...c, isEditing: true } : c)),
       );
       return;
     }
@@ -257,7 +255,7 @@ export default function Account() {
     await saveContacts(next);
 
     setContacts((xs) =>
-      xs.map((c) => (c.id === id ? { ...c, isEditing: false } : c))
+      xs.map((c) => (c.id === id ? { ...c, isEditing: false } : c)),
     );
   };
 
@@ -332,7 +330,7 @@ export default function Account() {
         `/api/me/blocked-providers?companyName=${encodeURIComponent(name)}`,
         {
           method: "DELETE",
-        }
+        },
       );
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error || "Failed to unblock provider");
@@ -394,7 +392,7 @@ export default function Account() {
     try {
       const res = await fetch(
         `/api/me/preferred-providers?companyName=${encodeURIComponent(name)}`,
-        { method: "DELETE" }
+        { method: "DELETE" },
       );
       const json = await res.json();
       if (!res.ok)
@@ -418,7 +416,7 @@ export default function Account() {
 
   const toggleEditArea = (area, checked) => {
     setEditAreas((xs) =>
-      checked ? [...xs, area] : xs.filter((a) => a !== area)
+      checked ? [...xs, area] : xs.filter((a) => a !== area),
     );
   };
 
@@ -498,7 +496,7 @@ export default function Account() {
     try {
       const res = await fetch(
         `/api/me/legal-panel?companyName=${encodeURIComponent(name)}`,
-        { method: "DELETE" }
+        { method: "DELETE" },
       );
       const json = await res.json();
       if (!res.ok)
@@ -541,187 +539,300 @@ export default function Account() {
     </div>
   );
 
+  const startMfaSetup = async () => {
+    setMfaBusy(true);
+    setMfaErr("");
+    setMfaMsg("");
+    setMfaCode("");
+    try {
+      const res = await fetch("/api/me/mfa/setup", { cache: "no-store" });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || "Failed to start MFA setup");
+      setMfaQr(json.qrDataUrl || "");
+      setMfaOtpAuth(json.otpauth || "");
+      setMfaMsg(
+        "Scan the QR code with your authenticator app, then enter the 6-digit code to enable MFA.",
+      );
+    } catch (e) {
+      setMfaErr(e.message);
+    } finally {
+      setMfaBusy(false);
+    }
+  };
+
+  const enableMfa = async () => {
+    setMfaBusy(true);
+    setMfaErr("");
+    setMfaMsg("");
+    try {
+      const res = await fetch("/api/me/mfa/enable", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: mfaCode }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || "Failed to enable MFA");
+      setMfaEnabled(true);
+      if (Array.isArray(json.recoveryCodes))
+        setRecoveryCodes(json.recoveryCodes);
+      setMfaQr("");
+      setMfaOtpAuth("");
+      setMfaCode("");
+      setMfaMsg("MFA enabled.");
+    } catch (e) {
+      setMfaErr(e.message);
+    } finally {
+      setMfaBusy(false);
+    }
+  };
+
+  const disableMfa = async () => {
+    if (!confirm("Disable MFA for your account?")) return;
+    setMfaBusy(true);
+    setMfaErr("");
+    setMfaMsg("");
+    try {
+      const res = await fetch("/api/me/mfa/disable", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ code: mfaCode }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || "Failed to disable MFA");
+      setMfaEnabled(false);
+      setMfaQr("");
+      setMfaOtpAuth("");
+      setMfaCode("");
+      setMfaMsg("MFA disabled.");
+    } catch (e) {
+      setMfaErr(e.message);
+    } finally {
+      setMfaBusy(false);
+    }
+  };
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-6">
       <h1 className="text-3xl font-bold mb-6">My LEXIFY Account</h1>
 
       {/* My Contact Information */}
-      <div className="w-full max-w-6xl p-6 rounded shadow-2xl bg-white text-black">
-        <h2 className="text-2xl font-semibold mb-4">My Contact Information</h2>
-        <div className="grid grid-cols-2 gap-4">
-          <h4 className="text-md font-semibold">My Company</h4>
-          <br />
-          <div className="w-full text-sm border p-2">
-            Name: {me?.companyName || "-"}
-          </div>
-          <div className="w-full text-sm border p-2">
-            Business ID (in country of domicile): {me?.companyId || "-"}
-          </div>
-          <div className="w-full text-sm border p-2">
-            Street Address: {me?.companyAddress || "-"}
-          </div>
-          <div className="w-full text-sm border p-2">
-            Postal Code: {me?.companyPostalCode || "-"}
-          </div>
-          <div className="w-full text-sm border p-2">
-            City: {me?.companyCity || "-"}
-          </div>
-          <div className="w-full text-sm border p-2">
-            Country of Domicile: {me?.companyCountry || "-"}
-          </div>
-        </div>
+      <div className="w-full max-w-6xl p-6 rounded bg-white text-black">
+        {/* My Contact Information */}
+        <div className="w-full max-w-6xl p-6 rounded bg-white text-black">
+          <h2 className="text-2xl font-semibold mb-4">
+            My Contact Information
+          </h2>
 
-        <br />
-        <div className="grid grid-cols-2 gap-4">
-          <h4 className="text-md font-semibold col-span-2">
-            My Company&apos;s Contact Persons{" "}
-            <NarrowTooltip tooltipText="Please add all current users of LEXIFY at your company as contact persons. This will help you designate the correct LEXIFY Request owner whenever a new LEXIFY Request is created for your company." />
-          </h4>
-          <div className="col-span-2">
-            <table className="w-full border border-gray-300 text-sm">
-              <thead className="bg-gray-200">
-                <tr className="bg-[#3a3a3c] text-white">
-                  <th className="border p-2">First Name</th>
-                  <th className="border p-2">Last Name</th>
-                  <th className="border p-2">Title / Position in Company</th>
-                  <th className="border p-2">Telephone (with country code)</th>
-                  <th className="border p-2">Email</th>
-                  <th className="border p-2">
-                    Receive All Notifications{" "}
-                    <NarrowTooltip tooltipText="If 'Receive All Notifications' is checked, the user will receive all automatic notifications related to all LEXIFY Requests made by any representative of your company. If 'Receive All Notifications' is unchecked, the user will receive only automatic notifications related to his/her own LEXIFY Requests." />
-                  </th>
-                  <th className="border p-2">Edit</th>
-                  <th className="border p-2">Delete</th>
-                </tr>
-              </thead>
-              <tbody>
-                {contacts.map((c) => (
-                  <tr key={c.id}>
-                    <td className="border p-2 text-center">
-                      {c.isEditing ? (
-                        <input
-                          className="border p-1 w-full"
-                          value={c.firstName}
-                          onChange={(e) =>
-                            updateContact(c.id, "firstName", e.target.value)
-                          }
-                        />
-                      ) : (
-                        c.firstName
-                      )}
-                    </td>
-                    <td className="border p-2 text-center">
-                      {c.isEditing ? (
-                        <input
-                          className="border p-1 w-full"
-                          value={c.lastName}
-                          onChange={(e) =>
-                            updateContact(c.id, "lastName", e.target.value)
-                          }
-                        />
-                      ) : (
-                        c.lastName
-                      )}
-                    </td>
-                    <td className="border p-2 text-center">
-                      {c.isEditing ? (
-                        <input
-                          className="border p-1 w-full"
-                          value={c.position}
-                          onChange={(e) =>
-                            updateContact(c.id, "position", e.target.value)
-                          }
-                        />
-                      ) : (
-                        c.position
-                      )}
-                    </td>
-                    <td className="border p-2 text-center">
-                      {c.isEditing ? (
-                        <input
-                          className="border p-1 w-full"
-                          value={c.telephone}
-                          onChange={(e) =>
-                            updateContact(c.id, "telephone", e.target.value)
-                          }
-                        />
-                      ) : (
-                        c.telephone
-                      )}
-                    </td>
-                    <td className="border p-2 text-center">
-                      {c.isEditing ? (
-                        <input
-                          className="border p-1 w-full"
-                          value={c.email}
-                          onChange={(e) =>
-                            updateContact(c.id, "email", e.target.value)
-                          }
-                        />
-                      ) : (
-                        c.email
-                      )}
-                    </td>
-                    <td className="border p-2 text-center">
-                      <input
-                        type="checkbox"
-                        checked={!!c.allNotifications}
-                        onChange={(e) =>
-                          toggleAllNotifications(c.id, e.target.checked)
-                        }
-                      />
-                    </td>
-                    <td className="border p-2 text-center">
-                      <button
-                        disabled={busy}
-                        onClick={() => toggleEdit(c.id)}
-                        className="text-blue-500 hover:text-blue-700 disabled:opacity-50 cursor-pointer"
-                      >
-                        {c.isEditing ? (
-                          <Save size={16} />
-                        ) : (
-                          <Pencil size={16} />
-                        )}
-                      </button>
-                    </td>
-                    <td className="border p-2 text-center">
-                      <button
-                        disabled={busy}
-                        onClick={() => removeContact(c.id)}
-                        className="text-red-500 hover:text-red-700 disabled:opacity-50 cursor-pointer"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          {/* Company information */}
+          <div className="grid grid-cols-2 gap-4">
+            <h4 className="text-md font-semibold col-span-2">
+              My Company Information
+            </h4>
 
-            <button
-              onClick={addContact}
-              className="mt-4 bg-[#11999e] text-white px-4 py-2 rounded cursor-pointer"
-            >
-              Add New Contact Person
-            </button>
-          </div>
-        </div>
-
-        <br />
-        {/* Username & Password */}
-        <div className="grid grid-cols-2 gap-4">
-          <h4 className="text-md font-semibold">Username & Password</h4>
-          <br />
-          <div className="col-span-2">
-            <div className="w-1/3 text-sm border p-2">
-              Username: {username || "-"}
+            <div className="w-full text-sm border p-2">
+              Name: {me?.company?.companyName || me?.companyName || "-"}
             </div>
-            <button
-              onClick={() => router.push("/change-password")}
-              className="mt-4 bg-[#11999e] text-white px-11 py-2 rounded cursor-pointer"
-            >
-              Change Password
-            </button>
+            <div className="w-full text-sm border p-2">
+              Business ID (in country of domicile):{" "}
+              {me?.company?.businessId || me?.companyId || "-"}
+            </div>
+            <div className="w-full text-sm border p-2">
+              Street Address:{" "}
+              {me?.company?.companyAddress || me?.companyAddress || "-"}
+            </div>
+            <div className="w-full text-sm border p-2">
+              Postal Code:{" "}
+              {me?.company?.companyPostalCode || me?.companyPostalCode || "-"}
+            </div>
+            <div className="w-full text-sm border p-2">
+              City: {me?.company?.companyCity || me?.companyCity || "-"}
+            </div>
+            <div className="w-full text-sm border p-2">
+              Country of Domicile:{" "}
+              {me?.company?.companyCountry || me?.companyCountry || "-"}
+            </div>
+          </div>
+
+          <br />
+
+          {/* UserAccount information */}
+          <div className="grid grid-cols-2 gap-4">
+            <h4 className="text-md font-semibold col-span-2">
+              My Account Information
+            </h4>
+
+            <div className="w-full text-sm border p-2">
+              Username: {me?.userAccount?.username || me?.username || "-"}
+            </div>
+            <div className="w-full text-sm border p-2">
+              Role: {me?.userAccount?.role || me?.role || "-"}
+            </div>
+            <div className="w-full text-sm border p-2">
+              First Name: {me?.userAccount?.firstName || "-"}
+            </div>
+            <div className="w-full text-sm border p-2">
+              Last Name: {me?.userAccount?.lastName || "-"}
+            </div>
+            <div className="w-full text-sm border p-2">
+              E-mail: {me?.userAccount?.email || "-"}
+            </div>
+            <div className="w-full text-sm border p-2">
+              Telephone: {me?.userAccount?.telephone || "-"}
+            </div>
+          </div>
+
+          <br />
+
+          <br />
+
+          {/* Username & Password (keep, but read username from userAccount/aliases) */}
+          <div className="grid grid-cols-2 gap-4">
+            <h4 className="text-md font-semibold col-span-2">
+              Username & Password
+            </h4>
+
+            <div className="col-span-2">
+              <div className="w-1/3 text-sm border p-2">
+                Username: {me?.userAccount?.username || username || "-"}
+              </div>
+              <button
+                onClick={() => router.push("/change-password")}
+                className="mt-4 bg-[#11999e] text-white px-11 py-2 rounded cursor-pointer"
+              >
+                Change Password
+              </button>
+            </div>
+          </div>
+          <br />
+          <div className="w-full max-w-6xl rounded bg-white text-black mt-8">
+            <h2 className="text-md font-semibold mb-2">
+              Multi-Factor Authentication
+            </h2>
+            <br />
+            <div className="text-sm mb-4">
+              Status:{" "}
+              <span
+                className={
+                  mfaEnabled
+                    ? "text-green-700 font-semibold"
+                    : "text-red-700 font-semibold"
+                }
+              >
+                {mfaEnabled ? "Enabled" : "Disabled"}
+              </span>
+            </div>
+
+            {mfaErr && (
+              <div className="mb-3 text-sm text-red-700">{mfaErr}</div>
+            )}
+            {mfaMsg && (
+              <div className="mb-3 text-sm text-green-700">{mfaMsg}</div>
+            )}
+            <br />
+            {!mfaEnabled && (
+              <>
+                <button
+                  disabled={mfaBusy}
+                  onClick={startMfaSetup}
+                  className="bg-[#11999e] text-white px-4 py-2 rounded cursor-pointer disabled:opacity-50"
+                >
+                  Set up MFA (Authenticator App)
+                </button>
+
+                {mfaQr && (
+                  <div className="mt-4 grid grid-cols-2 gap-6 items-start">
+                    <div>
+                      <div className="text-sm font-semibold mb-2">
+                        Scan this QR code
+                      </div>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={mfaQr}
+                        alt="MFA QR code"
+                        className="border p-2 bg-white w-64 h-64"
+                      />
+                      <div className="text-xs text-gray-600 mt-2">
+                        If you can&apos;t scan, your authenticator can also
+                        accept an otpauth URI.
+                      </div>
+                      <div className="text-xs break-all text-gray-600">
+                        {mfaOtpAuth}
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-sm font-semibold mb-2">
+                        Enter the 6-digit code
+                      </div>
+                      <input
+                        value={mfaCode}
+                        onChange={(e) => setMfaCode(e.target.value)}
+                        placeholder="123456"
+                        className="border p-2 w-full"
+                        inputMode="numeric"
+                        autoComplete="one-time-code"
+                      />
+                      <button
+                        disabled={mfaBusy || !mfaCode.trim()}
+                        onClick={enableMfa}
+                        className="mt-3 bg-green-600 text-white px-4 py-2 rounded cursor-pointer disabled:opacity-50"
+                      >
+                        Enable MFA
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+
+            {mfaEnabled && (
+              <div className="max-w-md">
+                <div className="text-sm mb-2">
+                  To disable MFA, confirm with a current 6-digit authenticator
+                  code:
+                </div>
+                <input
+                  value={mfaCode}
+                  onChange={(e) => setMfaCode(e.target.value)}
+                  placeholder="123456"
+                  className="border p-2 w-full"
+                  inputMode="numeric"
+                  autoComplete="one-time-code"
+                />
+                <button
+                  disabled={mfaBusy || !mfaCode.trim()}
+                  onClick={disableMfa}
+                  className="mt-3 bg-red-600 text-white px-4 py-2 rounded cursor-pointer disabled:opacity-50"
+                >
+                  Disable MFA
+                </button>
+              </div>
+            )}
+            {recoveryCodes.length > 0 && (
+              <div className="mt-4 p-4 border rounded bg-gray-50">
+                <div className="font-semibold mb-2">
+                  Recovery codes (save these now)
+                </div>
+                <div className="text-sm text-gray-700 mb-2">
+                  Each code can be used once if you can’t access your
+                  authenticator app. They won’t be shown again.
+                </div>
+                <pre className="text-sm whitespace-pre-wrap">
+                  {recoveryCodes.join("\n")}
+                </pre>
+                <button
+                  className="mt-3 bg-[#11999e] text-white px-4 py-2 rounded"
+                  onClick={async () => {
+                    await navigator.clipboard.writeText(
+                      recoveryCodes.join("\n"),
+                    );
+                    alert("Copied recovery codes to clipboard.");
+                  }}
+                >
+                  Copy recovery codes
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

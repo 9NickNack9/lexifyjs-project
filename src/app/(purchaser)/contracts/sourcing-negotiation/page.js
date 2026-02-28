@@ -8,7 +8,6 @@ export default function SourcingNegotiation() {
   const router = useRouter();
 
   const initialFormState = {
-    contactPerson: "",
     negotiationType: "",
     confidential: "",
     confboxes: [],
@@ -35,8 +34,11 @@ export default function SourcingNegotiation() {
 
   const [formData, setFormData] = useState(initialFormState);
   const [showPreview, setShowPreview] = useState(false);
-  const [contactOptions, setContactOptions] = useState([]);
-  const [company, setCompany] = useState({ name: "", id: "", country: "" });
+  const [company, setCompany] = useState({
+    name: "",
+    businessId: "",
+    country: "",
+  });
   const [submitting, setSubmitting] = useState(false);
 
   // Load company + contacts
@@ -47,24 +49,10 @@ export default function SourcingNegotiation() {
         if (!res.ok) return;
         const me = await res.json();
         setCompany({
-          name: me?.companyName || "",
-          id: me?.companyId || "",
-          country: me?.companyCountry || "",
+          name: me?.company?.companyName || me?.companyName || "",
+          businessId: me?.company?.businessId || "",
+          country: me?.company?.companyCountry || me?.companyCountry || "",
         });
-        const list = Array.isArray(me.companyContactPersons)
-          ? me.companyContactPersons
-          : [];
-        setContactOptions(
-          list
-            .map((p) => {
-              const n = [p.firstName || "", p.lastName || ""]
-                .filter(Boolean)
-                .join(" ")
-                .trim();
-              return n ? { label: n, value: n } : null;
-            })
-            .filter(Boolean),
-        );
       } catch {}
     })();
   }, []);
@@ -125,8 +113,6 @@ export default function SourcingNegotiation() {
   };
 
   const validate = () => {
-    if (!formData.contactPerson)
-      return "Please select a primary contact person.";
     if (!formData.description) return "Please provide the brief description.";
     if (!formData.negotiationType)
       return "Please select negotiation template type.";
@@ -176,7 +162,6 @@ export default function SourcingNegotiation() {
         requestCategory: "Help with Contracts",
         requestSubcategory: "Sourcing",
         assignmentType: "Support with sourcing agreement negotiations",
-        primaryContactPerson: formData.contactPerson,
         scopeOfWork:
           "Legal support with negotiating a sourcing agreement. The legal support can include, for example, commenting on sourcing agreement documentation or legal advice during different stages of the negotiation process.",
         description: formData.description,
@@ -273,30 +258,6 @@ export default function SourcingNegotiation() {
       <div className="fw-full max-w-7xl p-6 rounded shadow-2xl text-black bg-white">
         {/* Form Section */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <h4 className="text-md font-medium mb-1 font-semibold">
-              Who is the primary contact person for this LEXIFY Request at your
-              company?{" "}
-              <QuestionMarkTooltip tooltipText="All updates and notifications regarding this LEXIFY Request will be sent to the designated person. If you do not see your name listed below, you can add new contact persons on the 'My Account' page (see My Account in the LEXIFY main menu)." />
-            </h4>
-            <select
-              name="contactPerson"
-              className="w-full border p-2"
-              onChange={handleChange}
-              value={formData.contactPerson}
-              required
-            >
-              <option value="">Select</option>
-              {contactOptions.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <br />
-          <hr />
-          <br />
           <h4 className="text-md font-medium mb-1 font-semibold">
             Please provide a brief description of the product or service you are
             buying with the agreement under negotiation
@@ -910,11 +871,9 @@ export default function SourcingNegotiation() {
                     "Disclosed to Winning Bidder Only",
                   )
                     ? "Disclosed to Winning Bidder Only"
-                    : formData.contactPerson
-                      ? [company.name, company.id, company.country]
-                          .filter(Boolean)
-                          .join(", ")
-                      : "-"}
+                    : [company.name, company.businessId, company.country]
+                        .filter(Boolean)
+                        .join(", ") || "-"}
                 </Section>
 
                 {/* Scope of Work */}

@@ -75,13 +75,13 @@ export async function POST(req) {
   if (!companyName || !Array.isArray(areasOfLaw) || areasOfLaw.length === 0) {
     return NextResponse.json(
       { error: "companyName and at least one areaOfLaw required" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
   // Load and normalize current map
-  const me = await prisma.appUser.findUnique({
-    where: { userId: BigInt(session.userId) },
+  const me = await prisma.userAccount.findUnique({
+    where: { userPkId: BigInt(session.userId) },
     select: { preferredLegalServiceProviders: true },
   });
   const areaMap = toAreaMap(me?.preferredLegalServiceProviders);
@@ -101,8 +101,8 @@ export async function POST(req) {
     if (!areaMap[area].includes(companyName)) areaMap[area].push(companyName);
   }
 
-  await prisma.appUser.update({
-    where: { userId: BigInt(session.userId) },
+  await prisma.userAccount.update({
+    where: { userPkId: BigInt(session.userId) },
     data: { preferredLegalServiceProviders: areaMap },
   });
 
@@ -125,11 +125,11 @@ export async function DELETE(req) {
   if (!companyName)
     return NextResponse.json(
       { error: "companyName required" },
-      { status: 400 }
+      { status: 400 },
     );
 
-  const me = await prisma.appUser.findUnique({
-    where: { userId: BigInt(session.userId) },
+  const me = await prisma.userAccount.findUnique({
+    where: { userPkId: BigInt(session.userId) },
     select: { preferredLegalServiceProviders: true },
   });
   const areaMap = toAreaMap(me?.preferredLegalServiceProviders);
@@ -150,8 +150,8 @@ export async function DELETE(req) {
     }
   }
 
-  await prisma.appUser.update({
-    where: { userId: BigInt(session.userId) },
+  await prisma.userAccount.update({
+    where: { userPkId: BigInt(session.userId) },
     data: { preferredLegalServiceProviders: areaMap },
   });
 

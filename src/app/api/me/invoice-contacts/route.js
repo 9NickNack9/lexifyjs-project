@@ -19,31 +19,25 @@ export async function PUT(req) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  let body;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
-
+  const body = await req.json().catch(() => null);
   const input = Array.isArray(body?.contacts) ? body.contacts : null;
   if (!input) {
     return NextResponse.json(
       { error: "`contacts` must be an array" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
   const cleaned = input
     .map(normalizeContact)
     .filter(
-      (c) => c.firstName || c.lastName || c.email || c.telephone || c.title
+      (c) => c.firstName || c.lastName || c.email || c.telephone || c.title,
     );
 
   if (cleaned.length < 1) {
     return NextResponse.json(
       { error: "At least one invoicing contact is required." },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -54,13 +48,23 @@ export async function PUT(req) {
           error:
             "Each invoicing contact must include first name, last name, and email.",
         },
-        { status: 400 }
+        { status: 400 },
       );
     }
   }
 
-  await prisma.appUser.update({
-    where: { userId: BigInt(session.userId) },
+  // Find user's companyId via UserAccount
+  const ua = await prisma.userAccount.findUnique({
+    where: { userPkId: BigInt(session.userId) },
+    select: { companyId: true },
+  });
+
+  if (!ua?.companyId) {
+    return NextResponse.json({ error: "Company not found." }, { status: 404 });
+  }
+
+  await prisma.company.update({
+    where: { companyPkId: ua.companyId },
     data: { companyInvoiceContactPersons: cleaned },
   });
 

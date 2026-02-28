@@ -13,6 +13,9 @@ export default function Login() {
   });
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
+  const [mfaStep, setMfaStep] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [rememberDevice, setRememberDevice] = useState(true);
 
   const handleChange = (e) => {
     setCredentials((s) => ({ ...s, [e.target.name]: e.target.value }));
@@ -24,15 +27,41 @@ export default function Login() {
     setLoading(true);
 
     // 1) Try to sign in (no auto redirect)
-    const res = await signIn("credentials", {
+    const payload = {
       username: credentials.username,
       password: credentials.password,
-      redirect: false, // ⬅️ important
-    });
+      redirect: false,
+    };
+
+    if (mfaStep) {
+      payload.otp = otp.replace(/\D/g, "").slice(0, 6);
+    }
+
+    const res = await signIn("credentials", payload);
+
+    if (res?.error === "MFA_REQUIRED") {
+      setLoading(false);
+      setMfaStep(true);
+      setOtp("");
+      setErr("");
+      return;
+    }
+
+    if (res?.error === "MFA_INVALID") {
+      setLoading(false);
+      setErr("Invalid authentication code");
+      return;
+    }
 
     if (res?.error === "REGISTER_PENDING") {
       // Not logged in; send them to the screening page
       router.replace("/register-screening");
+      return;
+    }
+
+    if (res?.error === "RATE_LIMIT") {
+      setLoading(false);
+      setErr("Too many attempts. Try again in a few minutes.");
       return;
     }
 
@@ -42,6 +71,11 @@ export default function Login() {
       return;
     }
 
+    if (res?.ok && mfaStep && rememberDevice) {
+      // best-effort; don’t block login if it fails
+      fetch("/api/me/trusted-device", { method: "POST" }).catch(() => {});
+    }
+
     // 2) Session now exists; read it and route by role
     const session = await getSession();
     const role = session?.role;
@@ -49,7 +83,7 @@ export default function Login() {
 
     if (role === "ADMIN") {
       router.replace("/main");
-    } else if (status === "pending") {
+    } else if (String(status || "").toUpperCase() === "PENDING") {
       router.replace("/register-screening");
     } else if (role === "PROVIDER") {
       router.replace("/provider");
@@ -95,6 +129,30 @@ export default function Login() {
             </button>
           </div>
 
+          {mfaStep && (
+            <input
+              type="text"
+              name="otp"
+              placeholder="Authenticator code (6 digits)"
+              className="p-2 border"
+              value={otp}
+              onChange={(e) => setOtp(e.target.value)}
+              inputMode="numeric"
+              autoComplete="one-time-code"
+              required
+            />
+          )}
+          {mfaStep && (
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={rememberDevice}
+                onChange={(e) => setRememberDevice(e.target.checked)}
+              />
+              Remember this device for 30 days
+            </label>
+          )}
+
           {err && <p className="text-red-600 text-sm">{err}</p>}
 
           <button
@@ -102,7 +160,7 @@ export default function Login() {
             disabled={loading}
             className="p-2 bg-[#11999e] text-white cursor-pointer disabled:opacity-60"
           >
-            {loading ? "Logging in…" : "Login"}
+            {loading ? "Logging in…" : mfaStep ? "Verify code" : "Login"}
           </button>
         </form>
 

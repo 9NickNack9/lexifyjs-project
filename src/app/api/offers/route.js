@@ -1,3 +1,4 @@
+// src/app/api/offers/route.js
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
@@ -68,20 +69,39 @@ async function saveBlobLocally(file, prefix = "uploads") {
   return { key, url };
 }
 
+const fullName = (u) =>
+  [u?.firstName, u?.lastName].filter(Boolean).join(" ").trim();
+
 export async function POST(req) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.userId) {
+    // expectation: session.userId = UserAccount.userPkId, session.companyId = Company.companyPkId
+    if (!session?.userId || !session?.companyId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Provider making the offer → providerId must be this user
-    let providerIdBigInt;
+    let createdByUserId;
+    let providerCompanyId;
     try {
-      providerIdBigInt = BigInt(String(session.userId));
+      createdByUserId = BigInt(String(session.userId));
+      providerCompanyId = BigInt(String(session.companyId));
     } catch {
+      return NextResponse.json({ error: "Invalid session" }, { status: 400 });
+    }
+
+    // Load UserAccount to derive offerLawyer
+    const me = await prisma.userAccount.findUnique({
+      where: { userPkId: createdByUserId },
+      select: { firstName: true, lastName: true },
+    });
+
+    const offerLawyer = fullName(me);
+    if (!offerLawyer) {
       return NextResponse.json(
-        { error: "Invalid providerId" },
+        {
+          error:
+            "Your user profile is missing first/last name; cannot set offerLawyer.",
+        },
         { status: 400 },
       );
     }
@@ -110,18 +130,16 @@ export async function POST(req) {
       referenceFilesBlobs = form.getAll("referenceFiles") || [];
     } else {
       body = await req.json().catch(() => null);
-      if (!body) {
+      if (!body)
         return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-      }
     }
 
     const {
-      requestId, // string or number
-      offerLawyer, // required (string)
-      offerPrice, // required (string/number)
-      offerExpectedPrice, // optional; required only if paymentRate = "capped price"
-      offerTitle, // required (string)
-      offerStatus, // optional; defaults to "Pending"
+      requestId,
+      offerPrice,
+      offerExpectedPrice,
+      offerTitle,
+      offerStatus,
       providerAdditionalInfo,
     } = body || {};
 
@@ -130,18 +148,15 @@ export async function POST(req) {
         ? providerAdditionalInfo.trim()
         : "";
 
-    // Basic required fields
-    if (!requestId || !offerLawyer || !offerPrice || !offerTitle) {
+    if (!requestId || !offerPrice || !offerTitle) {
       return NextResponse.json(
         {
-          error:
-            "Missing required fields: requestId, offerLawyer, offerPrice, offerTitle",
+          error: "Missing required fields: requestId, offerPrice, offerTitle",
         },
         { status: 400 },
       );
     }
 
-    // Parse requestId
     let requestIdBigInt;
     try {
       requestIdBigInt = BigInt(String(requestId));
@@ -149,25 +164,20 @@ export async function POST(req) {
       return NextResponse.json({ error: "Invalid requestId" }, { status: 400 });
     }
 
-    // Fetch the related request to determine paymentRate rule
+    // Read request rules
     const reqRow = await prisma.request.findUnique({
       where: { requestId: requestIdBigInt },
       select: { paymentRate: true, providerReferences: true },
     });
-
-    if (!reqRow) {
+    if (!reqRow)
       return NextResponse.json({ error: "Request not found" }, { status: 404 });
-    }
 
     const paymentRate = String(reqRow.paymentRate || "").toLowerCase();
     const isCapped = paymentRate === "capped price";
 
-    // Enforce expected price rule
-    let expectedPriceToStore = null;
     if (isCapped) {
       if (
-        offerExpectedPrice === undefined ||
-        offerExpectedPrice === null ||
+        offerExpectedPrice == null ||
         String(offerExpectedPrice).trim() === ""
       ) {
         return NextResponse.json(
@@ -178,12 +188,9 @@ export async function POST(req) {
           { status: 400 },
         );
       }
-      expectedPriceToStore = String(offerExpectedPrice);
-    } else {
-      expectedPriceToStore = null; // force null unless capped price
     }
 
-    // Enforce written references rule based on the original request
+    // Written references rule
     const providerRefs = String(reqRow.providerReferences || "")
       .trim()
       .toLowerCase();
@@ -205,11 +212,6 @@ export async function POST(req) {
       }
     }
 
-    // Process uploaded reference files (if any)
-    let providerReferenceFiles = Array.isArray(body.providerReferenceFiles)
-      ? body.providerReferenceFiles
-      : [];
-
     async function processUploads(fileBlobs, prefix) {
       const out = [];
       for (const f of fileBlobs) {
@@ -227,6 +229,7 @@ export async function POST(req) {
       return out;
     }
 
+    let providerReferenceFiles = [];
     if (referenceFilesBlobs.length > 0) {
       providerReferenceFiles = await processUploads(
         referenceFilesBlobs,
@@ -234,21 +237,22 @@ export async function POST(req) {
       );
     }
 
-    // Build data object conditionally
-    const data = {
-      request: { connect: { requestId: requestIdBigInt } },
-      provider: { connect: { userId: providerIdBigInt } },
-      offerLawyer: String(offerLawyer),
-      offerPrice: String(offerPrice),
-      offerTitle: String(offerTitle),
-      offerStatus: offerStatus ?? "Pending",
-      ...(isCapped ? { offerExpectedPrice: String(offerExpectedPrice) } : {}),
-      providerReferenceFiles,
-      providerAdditionalInfo: providerAdditionalInfoToStore,
-    };
-
     const created = await prisma.offer.create({
-      data,
+      data: {
+        request: { connect: { requestId: requestIdBigInt } },
+
+        // links
+        providerCompany: { connect: { companyPkId: providerCompanyId } },
+        createdByUser: { connect: { userPkId: createdByUserId } },
+
+        offerLawyer,
+        offerPrice: String(offerPrice),
+        offerTitle: String(offerTitle),
+        offerStatus: offerStatus ?? "Pending",
+        ...(isCapped ? { offerExpectedPrice: String(offerExpectedPrice) } : {}),
+        providerReferenceFiles,
+        providerAdditionalInfo: providerAdditionalInfoToStore,
+      },
       select: { offerId: true },
     });
 

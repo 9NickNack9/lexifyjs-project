@@ -8,7 +8,6 @@ export default function SourcingAgreement() {
   const router = useRouter();
 
   const initialFormState = {
-    contactPerson: "",
     templateType: "",
     description: "",
     background: "",
@@ -33,8 +32,11 @@ export default function SourcingAgreement() {
 
   const [formData, setFormData] = useState(initialFormState);
   const [showPreview, setShowPreview] = useState(false);
-  const [contactOptions, setContactOptions] = useState([]);
-  const [company, setCompany] = useState({ name: "", id: "", country: "" });
+  const [company, setCompany] = useState({
+    name: "",
+    businessId: "",
+    country: "",
+  });
   const [submitting, setSubmitting] = useState(false);
 
   // Load company + contacts
@@ -45,24 +47,10 @@ export default function SourcingAgreement() {
         if (!res.ok) return;
         const me = await res.json();
         setCompany({
-          name: me?.companyName || "",
-          id: me?.companyId || "",
-          country: me?.companyCountry || "",
+          name: me?.company?.companyName || me?.companyName || "",
+          businessId: me?.company?.businessId || "",
+          country: me?.company?.companyCountry || me?.companyCountry || "",
         });
-        const list = Array.isArray(me.companyContactPersons)
-          ? me.companyContactPersons
-          : [];
-        setContactOptions(
-          list
-            .map((p) => {
-              const n = [p.firstName || "", p.lastName || ""]
-                .filter(Boolean)
-                .join(" ")
-                .trim();
-              return n ? { label: n, value: n } : null;
-            })
-            .filter(Boolean)
-        );
       } catch {}
     })();
   }, []);
@@ -118,8 +106,6 @@ export default function SourcingAgreement() {
   };
 
   const validate = () => {
-    if (!formData.contactPerson)
-      return "Please select a primary contact person.";
     if (!formData.templateType) return "Please select a template type.";
     if (
       formData.templateType?.includes("specific product") &&
@@ -173,7 +159,6 @@ export default function SourcingAgreement() {
         requestCategory: "Help with Contracts",
         requestSubcategory: "Sourcing",
         assignmentType: "Prepare agreement template",
-        primaryContactPerson: formData.contactPerson,
         scopeOfWork:
           "Preparation of a sourcing agreement template for the Client. The work includes the preparation of the agreement template documentation and necessary revisions on the basis of the Client's feedback to the Legal Service Provider. The Sourcing Agreement Template should be: " +
           formData.templateType,
@@ -203,7 +188,7 @@ export default function SourcingAgreement() {
       const form = new FormData();
       form.append(
         "data",
-        new Blob([JSON.stringify(payload)], { type: "application/json" })
+        new Blob([JSON.stringify(payload)], { type: "application/json" }),
       );
       for (const f of formData.backgroundFiles)
         form.append("backgroundFiles", f, f.name);
@@ -219,7 +204,7 @@ export default function SourcingAgreement() {
       } catch {}
       if (!res.ok)
         throw new Error(
-          (json && json.error) || text || "Failed to create request."
+          (json && json.error) || text || "Failed to create request.",
         );
 
       alert("LEXIFY Request submitted successfully.");
@@ -263,30 +248,6 @@ export default function SourcingAgreement() {
       <div className="fw-full max-w-7xl p-6 rounded shadow-2xl text-black bg-white">
         {/* Form Section */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <h4 className="text-md font-medium mb-1 font-semibold">
-              Who is the primary contact person for this LEXIFY Request at your
-              company?{" "}
-              <QuestionMarkTooltip tooltipText="All updates and notifications regarding this LEXIFY Request will be sent to the designated person. If you do not see your name listed below, you can add new contact persons on the 'My Account' page (see My Account in the LEXIFY main menu)." />
-            </h4>
-            <select
-              name="contactPerson"
-              className="w-full border p-2"
-              onChange={handleChange}
-              value={formData.contactPerson}
-              required
-            >
-              <option value="">Select</option>
-              {contactOptions.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <br />
-          <hr />
-          <br />
           <div>
             <h4 className="text-md font-medium mb-1 font-semibold">
               Do you want your new sourcing agreement template to be:{" "}
@@ -677,7 +638,7 @@ export default function SourcingAgreement() {
                 />{" "}
                 {option}
               </label>
-            )
+            ),
           )}
           {formData.checkboxes.includes("Other:") && (
             <input
@@ -874,11 +835,9 @@ export default function SourcingAgreement() {
               <div id="lexify-preview" className="space-y-6 text-black p-8">
                 {/* Client Name */}
                 <Section title="Client Name, Business Identity Code and Country of Domicile">
-                  {formData.contactPerson
-                    ? [company.name, company.id, company.country]
-                        .filter(Boolean)
-                        .join(", ")
-                    : "-"}
+                  {[company.name, company.businessId, company.country]
+                    .filter(Boolean)
+                    .join(", ") || "-"}
                 </Section>
 
                 {/* Scope of Work */}
@@ -904,7 +863,7 @@ export default function SourcingAgreement() {
                 {/* Description of Template */}
                 <Section title="Should the Sourcing Agreement Template be General in Nature (Applicable to Buying of All or Most Products and Services) or Customized for the Buying of a Specific Product or Service Type?">
                   {formData.templateType.includes(
-                    "Customized for the buying of a specific product or service type"
+                    "Customized for the buying of a specific product or service type",
                   )
                     ? formData.templateType + ": " + formData.description
                     : formData.templateType}
@@ -969,7 +928,7 @@ export default function SourcingAgreement() {
                 <Section title="Languages Required for the Performance of the Work">
                   {[
                     ...(formData.checkboxes || []).filter(
-                      (lang) => lang !== "Other:"
+                      (lang) => lang !== "Other:",
                     ),
                     formData.otherLang,
                   ]

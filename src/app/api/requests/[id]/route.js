@@ -6,40 +6,48 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { notifyProvidersRequestCancelled } from "@/lib/mailer";
 
-// --- email helpers (place near other helpers) ---
+// --- email helpers ---
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const isEmail = (s) => typeof s === "string" && EMAIL_RE.test(s.trim());
 
-// Find the primary contact person object (not just email) by offerLawyer name
-function findPrimaryContactByLawyer(offerLawyer, contacts) {
-  const norm = (s) => (s ?? "").toString().trim().toLowerCase();
-  const full = (p) =>
-    [p?.firstName, p?.lastName].filter(Boolean).join(" ").trim();
+const norm = (s) => (s ?? "").toString().trim().toLowerCase();
+const fullName = (p) =>
+  [p?.firstName, p?.lastName].filter(Boolean).join(" ").trim();
+
+// normalize Json / legacy {set:[]} / string → string[]
+function toStringArray(val) {
+  if (Array.isArray(val)) return val.filter((v) => typeof v === "string");
+  if (val && typeof val === "object") {
+    if (Array.isArray(val.set))
+      return val.set.filter((v) => typeof v === "string");
+    if (Array.isArray(val.value))
+      return val.value.filter((v) => typeof v === "string");
+  }
+  if (typeof val === "string") {
+    try {
+      const parsed = JSON.parse(val);
+      if (Array.isArray(parsed))
+        return parsed.filter((v) => typeof v === "string");
+      return val ? [val] : [];
+    } catch {
+      return val ? [val] : [];
+    }
+  }
+  return [];
+}
+
+// Find primary contact person object by offerLawyer name (UserAccount member)
+function findPrimaryMemberByLawyer(offerLawyer, members) {
   const name = norm(offerLawyer);
-  if (!Array.isArray(contacts)) return null;
+  if (!Array.isArray(members)) return null;
 
   return (
-    contacts.find((c) => norm(full(c)) === name) ||
-    contacts.find(
-      (c) => norm(c?.firstName) === name || norm(c?.lastName) === name
+    members.find((m) => norm(fullName(m)) === name) ||
+    members.find(
+      (m) => norm(m?.firstName) === name || norm(m?.lastName) === name,
     ) ||
     null
   );
-}
-
-// Given a primary contact (or email) + the same user's contacts,
-// return [primaryEmail, ...all allNotifications=true emails (excluding primary)]
-function expandWithAllNotificationContacts(primary, contacts) {
-  const primaryEmail =
-    typeof primary === "string" ? primary : primary?.email || "";
-  const base = new Set();
-  if (isEmail(primaryEmail)) base.add(primaryEmail.trim());
-
-  (Array.isArray(contacts) ? contacts : [])
-    .filter((c) => c && c.allNotifications === true && isEmail(c.email))
-    .forEach((c) => base.add(c.email.trim()));
-
-  return Array.from(base);
 }
 
 // Only used by PATCH below
@@ -55,23 +63,31 @@ const RequestPatch = z.object({
 
 async function requireSession() {
   const session = await getServerSession(authOptions);
-  if (!session?.userId) {
+  // Expect: session.userId = UserAccount.userPkId, session.companyId = Company.companyPkId
+  if (!session?.userId || !session?.companyId) {
     throw NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
   return session;
+}
+
+function safeBigInt(v) {
+  try {
+    return v == null ? null : BigInt(v);
+  } catch {
+    return null;
+  }
 }
 
 // ---------- GET /api/requests/:id ----------
 export async function GET(_req, ctx) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.userId) {
+    if (!session?.userId)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
 
     let id;
     try {
-      const { id: idParam } = await ctx.params; // Next.js: params is now async
+      const { id: idParam } = await ctx.params; // Next.js: params is async
       id = BigInt(idParam);
     } catch {
       return NextResponse.json({ error: "Bad request" }, { status: 400 });
@@ -109,12 +125,21 @@ export async function GET(_req, ctx) {
 
         // dates
         dateExpired: true,
-        offersDeadline: true, // if null in schema, harmlessly returns null
+        offersDeadline: true,
 
-        // JSON blob (contains confidential, winnerBidderOnlyStatus, maximumPrice, etc.)
+        // JSON blob
         details: true,
 
-        // client line
+        // schema preferred:
+        clientCompany: {
+          select: {
+            companyName: true,
+            businessId: true,
+            companyCountry: true,
+          },
+        },
+
+        // legacy fallback (still exists in schema):
         client: {
           select: {
             companyName: true,
@@ -134,12 +159,25 @@ export async function GET(_req, ctx) {
       if (typeof val === "string") return val.trim() || null;
       return null;
     }
+
     const langTop = toCSV(r.language);
     const langDetails =
-      toCSV(d.language) ??
-      toCSV(d.languageCSV) ?? // some forms might name it languageCSV
-      toCSV(d.languages); // or languages[]
-    // --- end normalization ---
+      toCSV(d.language) ?? toCSV(d.languageCSV) ?? toCSV(d.languages);
+
+    // Prefer Company fields; fall back to legacy AppUser fields
+    const clientOut = r.clientCompany
+      ? {
+          companyName: r.clientCompany.companyName,
+          companyId: r.clientCompany.businessId,
+          companyCountry: r.clientCompany.companyCountry,
+        }
+      : r.client
+        ? {
+            companyName: r.client.companyName,
+            companyId: r.client.companyId,
+            companyCountry: r.client.companyCountry,
+          }
+        : { companyName: null, companyId: null, companyCountry: null };
 
     const out = {
       ...r,
@@ -160,7 +198,7 @@ export async function GET(_req, ctx) {
         d.background ??
         null,
 
-      // from details only (not top-level columns)
+      // from details only
       confidential: d.confidential ?? null,
       winnerBidderOnlyStatus: d.winnerBidderOnlyStatus ?? null,
       maximumPrice: d.maximumPrice ?? null,
@@ -171,9 +209,15 @@ export async function GET(_req, ctx) {
 
       language: langTop ?? langDetails ?? null,
 
+      // maintain the "client" shape your UI expects
+      client: clientOut,
+
       // keep full details for preview parity
       details: d,
     };
+
+    // remove raw relations from payload to avoid ambiguity in UI
+    delete out.clientCompany;
 
     return NextResponse.json(out);
   } catch (e) {
@@ -182,32 +226,13 @@ export async function GET(_req, ctx) {
   }
 }
 
-// normalize Json / legacy {set:[]} / string → string[]
-function toStringArray(val) {
-  if (Array.isArray(val)) return val.filter((v) => typeof v === "string");
-  if (val && typeof val === "object") {
-    if (Array.isArray(val.set))
-      return val.set.filter((v) => typeof v === "string");
-    if (Array.isArray(val.value))
-      return val.value.filter((v) => typeof v === "string");
-  }
-  if (typeof val === "string") {
-    try {
-      const parsed = JSON.parse(val);
-      if (Array.isArray(parsed))
-        return parsed.filter((v) => typeof v === "string");
-      return val ? [val] : [];
-    } catch {
-      return val ? [val] : [];
-    }
-  }
-  return [];
-}
-
 // ---------- PATCH /api/requests/:id ----------
 export async function PATCH(req, ctx) {
   try {
     const session = await requireSession();
+    const sessionUserPkId = safeBigInt(session.userId); // UserAccount.userPkId
+    const sessionCompanyId = safeBigInt(session.companyId); // Company.companyPkId
+    const legacyAppUserId = safeBigInt(session.legacyAppUserId); // optional
 
     let id;
     try {
@@ -217,14 +242,21 @@ export async function PATCH(req, ctx) {
       return NextResponse.json({ error: "Bad request" }, { status: 400 });
     }
 
-    // Only allow patching your own request
+    // Only allow patching your own request (new system)
     const existing = await prisma.request.findFirst({
-      where: { requestId: id, clientId: BigInt(session.userId) },
+      where: {
+        requestId: id,
+        OR: [
+          sessionCompanyId ? { clientCompanyId: sessionCompanyId } : undefined,
+          sessionUserPkId ? { createdByUserId: sessionUserPkId } : undefined,
+          legacyAppUserId ? { clientId: legacyAppUserId } : undefined, // legacy fallback
+        ].filter(Boolean),
+      },
       select: { requestId: true },
     });
-    if (!existing) {
+
+    if (!existing)
       return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
 
     const body = await req.json();
     const parsed = RequestPatch.parse(body);
@@ -240,8 +272,8 @@ export async function PATCH(req, ctx) {
         parsed.scopeOfWork === undefined
           ? undefined
           : Array.isArray(parsed.scopeOfWork)
-          ? parsed.scopeOfWork.join(", ")
-          : String(parsed.scopeOfWork ?? ""),
+            ? parsed.scopeOfWork.join(", ")
+            : String(parsed.scopeOfWork ?? ""),
     };
 
     const updated = await prisma.request.update({
@@ -257,14 +289,18 @@ export async function PATCH(req, ctx) {
     if (err instanceof Response) return err;
     return NextResponse.json(
       { error: "Invalid payload or not found" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 }
 
 // ---------- DELETE /api/requests/:id ----------
-export async function DELETE(_, ctx) {
+export async function DELETE(_req, ctx) {
   const session = await requireSession();
+  const sessionUserPkId = safeBigInt(session.userId);
+  const sessionCompanyId = safeBigInt(session.companyId);
+  const legacyAppUserId = safeBigInt(session.legacyAppUserId); // optional
+
   let id;
   try {
     const { id: idParam } = await ctx.params;
@@ -275,64 +311,88 @@ export async function DELETE(_, ctx) {
 
   // verify ownership & not expired
   const row = await prisma.request.findFirst({
-    where: { requestId: id, clientId: BigInt(session.userId) },
+    where: {
+      requestId: id,
+      OR: [
+        sessionCompanyId ? { clientCompanyId: sessionCompanyId } : undefined,
+        sessionUserPkId ? { createdByUserId: sessionUserPkId } : undefined,
+        legacyAppUserId ? { clientId: legacyAppUserId } : undefined, // legacy fallback
+      ].filter(Boolean),
+    },
     select: { dateExpired: true },
   });
+
   if (!row) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const now = new Date();
   if (now >= row.dateExpired) {
     return NextResponse.json(
       { error: "Cannot cancel after deadline" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
   // --- collect recipient emails for all offers on this request ---
-  // Load offers with provider relation and contact persons
+  // NEW: get providerCompany members + notificationPreferences
   const offers = await prisma.offer.findMany({
     where: { requestId: id },
     select: {
       offerLawyer: true,
       offerTitle: true,
-      provider: {
+      providerCompany: {
         select: {
-          companyContactPersons: true, // [{firstName,lastName,email,telephone,position}]
-          notificationPreferences: true,
+          companyName: true,
+          members: {
+            select: {
+              firstName: true,
+              lastName: true,
+              email: true,
+              notificationPreferences: true,
+            },
+          },
         },
       },
     },
   });
 
-  // send grouped personal emails per provider (primary + all-notification contacts)
   for (const o of offers) {
-    const prefs = toStringArray(o?.provider?.notificationPreferences);
-    if (!prefs.includes("request-cancelled")) continue;
-
-    const contacts = Array.isArray(o?.provider?.companyContactPersons)
-      ? o.provider.companyContactPersons
+    const members = Array.isArray(o?.providerCompany?.members)
+      ? o.providerCompany.members
       : [];
 
-    const primaryContact = findPrimaryContactByLawyer(o?.offerLawyer, contacts);
-    const primaryEmail = (primaryContact?.email || "").trim();
+    // Members who opted into "request-cancelled"
+    const optedIn = members.filter((m) =>
+      toStringArray(m?.notificationPreferences).includes("request-cancelled"),
+    );
 
-    if (!isEmail(primaryEmail)) continue;
+    const primary = findPrimaryMemberByLawyer(o?.offerLawyer, members);
+    const primaryEmail = primary?.email ? primary.email.trim() : "";
 
-    const toGroup = expandWithAllNotificationContacts(primaryContact, contacts);
+    // recipients: primary (if valid) + all opted-in (valid emails)
+    const toSet = new Set();
+    if (isEmail(primaryEmail)) toSet.add(primaryEmail);
+    for (const m of optedIn) {
+      const em = (m?.email || "").trim();
+      if (isEmail(em)) toSet.add(em);
+    }
+    const toGroup = Array.from(toSet);
 
-    try {
-      await notifyProvidersRequestCancelled({
-        to: toGroup, // personal per provider, grouped with all-notifs
-        offerTitle: o?.offerTitle || "",
-      });
-    } catch (e) {
-      console.error("Request-cancelled email failed for provider:", e);
+    if (toGroup.length) {
+      try {
+        await notifyProvidersRequestCancelled({
+          to: toGroup,
+          offerTitle: o?.offerTitle || "",
+        });
+      } catch (e) {
+        console.error("Request-cancelled email failed for provider:", e);
+      }
     }
 
+    // always notify support
     try {
       await notifyProvidersRequestCancelled({
-        to: ["support@lexify.online"], // support noti of cancellation
-        offerTitle: id || "",
+        to: ["support@lexify.online"],
+        offerTitle: id.toString(),
       });
     } catch (e) {
       console.error("Request-cancelled email failed for support:", e);

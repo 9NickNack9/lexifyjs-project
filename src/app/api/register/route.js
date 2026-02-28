@@ -27,40 +27,48 @@ const calcCompanyAge = (foundingYear) => {
   return age < 0 ? 0 : age;
 };
 
-/** Base shape (strings, then we refine/transform) */
+const roleToUserRole = (role) =>
+  role === "provider" ? "PROVIDER" : "PURCHASER";
+const roleToCompanyRole = (role) =>
+  role === "provider" ? "PROVIDER" : "PURCHASER";
+
+/** Incoming payload schema (matches your register page payload) */
 const BaseSchema = z.object({
   role: z.string(), // "provider" | "purchaser"
+  companyJoinType: z.enum(["new_company", "existing_company"]),
+
   username: z.string().min(3, "Username must be at least 3 characters"),
   password: z.string().min(8, "Password must be at least 8 characters"),
-  companyName: z.string().min(2, "Company name is required"),
-  companyId: z.string().min(2, "Company ID is required"),
-  companyAddress: z.string().min(2, "Address is required"),
-  companyPostalCode: z.string().min(1, "Postal code is required"),
-  companyCity: z.string().min(1, "City is required"),
-  companyCountry: z.string().min(1, "Country is required"),
-  companyWebsite: z.string().optional().nullable(),
 
-  // Provider-only inputs (can arrive as strings; we gate them later)
+  companyName: z.string().min(2, "Company name is required"),
+  companyId: z.string().min(2, "Business ID is required"),
+
+  // OPTIONAL (conditionally required later)
+  companyAddress: z.string().optional(),
+  companyPostalCode: z.string().optional(),
+  companyCity: z.string().optional(),
+  companyCountry: z.string().optional(),
+  companyWebsite: z.string().optional(),
+
+  // Provider-only inputs remain optional here
   companyProfessionals: z.union([z.string(), z.number(), z.null()]).optional(),
   companyFoundingYear: z.union([z.string(), z.number(), z.null()]).optional(),
   providerType: z.string().optional(),
 
   contactFirstName: z.string().min(1, "First name is required"),
   contactLastName: z.string().min(1, "Last name is required"),
-  contactEmail: z.string().email("A valid email is required"),
+  contactEmail: z.email("A valid email is required"),
   contactPosition: z.string().min(1, "Position is required"),
   countryCode: z.string().min(1, "Country code is required"),
   phone: z.string().min(3, "Phone is required"),
 });
 
-/** Final schema with normalization + conditional requirements */
+/** Normalization + conditional validation */
 const RegisterSchema = BaseSchema.transform((raw) => {
-  // Trim everything
   const s = Object.fromEntries(
     Object.entries(raw).map(([k, v]) => [k, trim(v)]),
   );
 
-  // Normalize role
   const role = (s.role || "").toLowerCase();
   if (role !== "provider" && role !== "purchaser") {
     throw new z.ZodError([
@@ -72,8 +80,26 @@ const RegisterSchema = BaseSchema.transform((raw) => {
     ]);
   }
 
-  // Normalize website (optional)
-  const website = s.companyWebsite ? ensureHttps(s.companyWebsite) : "";
+  const companyJoinType = s.companyJoinType;
+
+  if (companyJoinType === "new_company") {
+    const requiredCompanyFields = [
+      ["companyAddress", "Address is required"],
+      ["companyPostalCode", "Postal code is required"],
+      ["companyCity", "City is required"],
+      ["companyCountry", "Country is required"],
+      ["companyWebsite", "Website is required"],
+    ];
+
+    for (const [key, msg] of requiredCompanyFields) {
+      if (!s[key] || !String(s[key]).trim()) {
+        throw new z.ZodError([{ code: "custom", message: msg, path: [key] }]);
+      }
+    }
+  }
+
+  const companyWebsite =
+    companyJoinType === "new_company" ? ensureHttps(s.companyWebsite) : "";
 
   // Normalize phone parts
   const cc = s.countryCode ? `+${stripNonDigits(s.countryCode)}` : "";
@@ -92,12 +118,16 @@ const RegisterSchema = BaseSchema.transform((raw) => {
       { code: "custom", message: "Invalid phone number", path: ["phone"] },
     ]);
   }
-  const contactTelephone = `${cc}${phoneDigits}`;
+  const telephone = `${cc}${phoneDigits}`;
 
-  // Professionals (required only for provider)
-  let professionals = toIntOrNull(s.companyProfessionals);
+  // Provider-only fields
+  let companyProfessionals = toIntOrNull(s.companyProfessionals);
+  let providerType = null;
+  let companyFoundingYear = null;
+  let companyAge = null;
+
   if (role === "provider") {
-    if (professionals === null || professionals < 0) {
+    if (companyProfessionals === null || companyProfessionals < 0) {
       throw new z.ZodError([
         {
           code: "custom",
@@ -106,17 +136,7 @@ const RegisterSchema = BaseSchema.transform((raw) => {
         },
       ]);
     }
-  } else {
-    professionals = null;
-  }
 
-  // Provider-only: founding year & providerType
-  let providerType = null;
-  let companyFoundingYear = null;
-  let companyAge = null;
-
-  if (role === "provider") {
-    // providerType required
     providerType = (s.providerType || "").trim();
     if (!providerType) {
       throw new z.ZodError([
@@ -128,7 +148,6 @@ const RegisterSchema = BaseSchema.transform((raw) => {
       ]);
     }
 
-    // founding year required & plausible
     companyFoundingYear = toIntOrNull(s.companyFoundingYear);
     const nowY = new Date().getFullYear();
     if (
@@ -144,36 +163,37 @@ const RegisterSchema = BaseSchema.transform((raw) => {
         },
       ]);
     }
-
-    // compute companyAge
     companyAge = calcCompanyAge(companyFoundingYear);
+  } else {
+    companyProfessionals = null;
   }
 
   return {
     role,
+    companyJoinType,
     username: s.username,
     password: s.password,
 
     companyName: s.companyName,
-    companyId: s.companyId,
-    companyAddress: s.companyAddress,
-    companyPostalCode: s.companyPostalCode,
-    companyCity: s.companyCity,
-    companyCountry: s.companyCountry,
-    companyWebsite: website || null,
+    businessId: s.companyId, // map frontend companyId -> Company.businessId
 
-    // provider-only persisted fields
-    // provider-only persisted fields (undefined when not provider)
-    companyProfessionals: role === "provider" ? professionals : undefined,
-    providerType: role === "provider" ? providerType : undefined,
-    companyFoundingYear: role === "provider" ? companyFoundingYear : undefined,
-    companyAge: role === "provider" ? companyAge : undefined,
+    companyAddress: companyJoinType === "new_company" ? s.companyAddress : "",
+    companyPostalCode:
+      companyJoinType === "new_company" ? s.companyPostalCode : "",
+    companyCity: companyJoinType === "new_company" ? s.companyCity : "",
+    companyCountry: companyJoinType === "new_company" ? s.companyCountry : "",
+    companyWebsite,
 
-    contactFirstName: s.contactFirstName,
-    contactLastName: s.contactLastName,
-    contactEmail: s.contactEmail,
-    contactPosition: s.contactPosition,
-    contactTelephone,
+    companyProfessionals: role === "provider" ? companyProfessionals : null,
+    providerType: role === "provider" ? providerType : "",
+    companyFoundingYear: role === "provider" ? companyFoundingYear : null,
+    companyAge: role === "provider" ? companyAge : null,
+
+    firstName: s.contactFirstName,
+    lastName: s.contactLastName,
+    email: s.contactEmail,
+    position: s.contactPosition,
+    telephone,
   };
 });
 
@@ -181,7 +201,6 @@ export async function POST(req) {
   try {
     const body = await req.json();
 
-    // Validate & normalize
     const parsed = RegisterSchema.safeParse(body);
     if (!parsed.success) {
       const flat = parsed.error.flatten();
@@ -196,133 +215,149 @@ export async function POST(req) {
     }
     const data = parsed.data;
 
-    // Uniqueness checks
-    const [userTaken, companyTaken, companyNameTaken] = await Promise.all([
-      prisma.appUser.findFirst({
+    // Uniqueness checks on UserAccount
+    const [usernameTaken, emailTaken] = await Promise.all([
+      prisma.userAccount.findUnique({
         where: { username: data.username },
-        select: { userId: true },
+        select: { userPkId: true },
       }),
-      prisma.appUser.findFirst({
-        where: { companyId: data.companyId },
-        select: { userId: true },
-      }),
-      prisma.appUser.findFirst({
-        where: { companyName: data.companyName },
-        select: { userId: true },
+      prisma.userAccount.findUnique({
+        where: { email: data.email },
+        select: { userPkId: true },
       }),
     ]);
-    if (userTaken) {
+
+    if (usernameTaken) {
       return NextResponse.json(
         { error: "This username is already taken.", field: "username" },
         { status: 409 },
       );
     }
-    if (companyTaken) {
+    if (emailTaken) {
       return NextResponse.json(
-        { error: "This company Id is already registered.", field: "companyId" },
+        { error: "This email is already registered.", field: "contactEmail" },
         { status: 409 },
       );
     }
-    if (companyNameTaken) {
+
+    // Hash password
+    const passwordHash = await bcrypt.hash(data.password, 10);
+
+    // Find existing company by companyName OR businessId
+    const existingCompany = await prisma.company.findFirst({
+      where: {
+        OR: [
+          { companyName: data.companyName },
+          { businessId: data.businessId },
+        ],
+      },
+      select: { companyPkId: true, role: true },
+    });
+
+    if (data.companyJoinType === "existing_company" && !existingCompany) {
       return NextResponse.json(
         {
-          error: "This company name is already registered",
+          error:
+            "No existing company found with this name or Business ID. Please choose 'Unregistered Company' instead.",
+          field: "companyId",
+        },
+        { status: 404 },
+      );
+    }
+
+    const companyRole = roleToCompanyRole(data.role);
+
+    // Optional safety: if company exists but role differs, block
+    if (existingCompany && existingCompany.role !== companyRole) {
+      return NextResponse.json(
+        {
+          error:
+            "A company with this name or Business ID already exists with a different role.",
           field: "companyName",
         },
         { status: 409 },
       );
     }
 
-    // Hash password
-    const hashed = await bcrypt.hash(data.password, 10);
+    const result = await prisma.$transaction(async (tx) => {
+      let company = existingCompany;
 
-    // Build provider-only fields (nulls for purchasers)
-    const providerOnly =
-      data.role === "provider"
-        ? {
-            companyProfessionals: data.companyProfessionals,
-            providerType: data.providerType,
-            companyFoundingYear: data.companyFoundingYear,
-            companyAge: data.companyAge,
-          }
-        : {
-            companyProfessionals: data.companyProfessionals,
-            providerType: data.providerType,
-            companyFoundingYear: data.companyFoundingYear,
-            companyAge: data.companyAge,
-          };
+      // Create company if not exists
+      if (!company) {
+        company = await tx.company.create({
+          data: {
+            role: companyRole,
+            companyName: data.companyName,
+            businessId: data.businessId,
+            companyAddress: data.companyAddress,
+            companyPostalCode: data.companyPostalCode,
+            companyCity: data.companyCity,
+            companyCountry: data.companyCountry,
+            companyWebsite: data.companyWebsite,
 
-    // Create user
-    const created = await prisma.appUser.create({
-      data: {
-        username: data.username,
-        passwordHash: hashed,
-        role: data.role === "provider" ? "PROVIDER" : "PURCHASER",
-        registerStatus: "pending",
+            // provider-only fields (safe for purchaser too)
+            companyProfessionals:
+              data.role === "provider" ? data.companyProfessionals : null,
+            providerType: data.role === "provider" ? data.providerType : "",
+            companyFoundingYear:
+              data.role === "provider" ? data.companyFoundingYear : null,
+            companyAge: data.role === "provider" ? data.companyAge : null,
 
-        companyName: data.companyName,
-        companyId: data.companyId,
-        companyAddress: data.companyAddress,
-        companyPostalCode: data.companyPostalCode,
-        companyCity: data.companyCity,
-        companyCountry: data.companyCountry,
-        companyWebsite: data.companyWebsite,
-
-        ...providerOnly,
-
-        contactFirstName: data.contactFirstName,
-        contactLastName: data.contactLastName,
-        contactEmail: data.contactEmail,
-        contactPosition: data.contactPosition,
-        contactTelephone: data.contactTelephone,
-
-        companyContactPersons: [
-          {
-            firstName: data.contactFirstName,
-            lastName: data.contactLastName,
-            email: data.contactEmail,
-            telephone: data.contactTelephone,
-            position: data.contactPosition,
+            // required Json field on Company
+            companyInvoiceContactPersons: [
+              {
+                firstName: data.firstName,
+                lastName: data.lastName,
+                email: data.email,
+                telephone: data.telephone,
+                position: data.position,
+              },
+            ],
           },
-        ],
+          select: { companyPkId: true },
+        });
+      }
 
-        companyInvoiceContactPersons:
-          data.role === "provider" || data.role === "admin"
-            ? [
-                {
-                  firstName: data.contactFirstName,
-                  lastName: data.contactLastName,
-                  email: data.contactEmail,
-                  telephone: data.contactTelephone,
-                  position: data.contactPosition,
-                },
-              ]
-            : [],
+      // Create user and connect to company (adds to Company.members)
+      const user = await tx.userAccount.create({
+        data: {
+          role: roleToUserRole(data.role),
+          username: data.username,
+          email: data.email,
+          passwordHash,
 
-        // sensible defaults used elsewhere in your app
-        winningOfferSelection: "Manual",
-        blockedServiceProviders: [],
-        preferredLegalServiceProviders: [],
-        legalPanelServiceProviders: [],
-        providerTotalRating: "5",
-        providerIndividualRating: [],
-        invoiceFee: "0",
-      },
-      select: { userId: true },
+          firstName: data.firstName,
+          lastName: data.lastName,
+          telephone: data.telephone,
+          position: data.position,
+
+          // first registrant becomes company admin by default
+          isCompanyAdmin: data.companyJoinType === "new_company",
+
+          company: { connect: { companyPkId: company.companyPkId } },
+        },
+        select: { userPkId: true, companyId: true },
+      });
+
+      return { companyPkId: company.companyPkId, userPkId: user.userPkId };
     });
 
-    // Fire-and-forget support notification (don’t fail the registration if email fails)
+    // Support notification (don’t fail registration if email fails)
     try {
       await notifySupportNewRegistration({
-        role: data.role, // "provider" | "purchaser" as selected by user
-        companyName: data.companyName, // company name from the form
+        role: data.role, // "provider" | "purchaser"
+        companyName: data.companyName,
       });
     } catch (e) {
       console.error("New registration support email failed:", e);
     }
 
     return NextResponse.json(
-      { ok: true, userId: String(created.userId) },
+      {
+        ok: true,
+        companyId: String(result.companyPkId),
+        userId: String(result.userPkId),
+      },
       { status: 201 },
     );
   } catch (err) {

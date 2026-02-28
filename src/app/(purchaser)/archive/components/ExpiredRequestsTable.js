@@ -1,6 +1,7 @@
 // src/app/(purchaser)/archive/components/ExpiredRequestsTable.js
 "use client";
 
+import { useEffect, useMemo, useState } from "react";
 import { fmtMoney } from "../utils/format";
 import NarrowTooltip from "../../../components/NarrowTooltip";
 
@@ -22,102 +23,136 @@ function formatDateDDMMYYYY(isoish) {
 }
 
 export default function ExpiredRequestsTable({ rows }) {
+  const safeRows = useMemo(() => rows || [], [rows]);
+
+  const PAGE_SIZE = 5;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [safeRows.length]);
+
+  const visibleRows = safeRows.slice(0, visibleCount);
+  const canLoadMore = visibleCount < safeRows.length;
+
   return (
     <div className="w-full mb-8">
       <h2 className="text-2xl font-semibold mb-4">
         My Expired LEXIFY Requests
       </h2>
 
-      {rows.length === 0 ? (
+      {safeRows.length === 0 ? (
         <div className="p-4 bg-white rounded border text-black">N/A</div>
       ) : (
-        <table className="w-full border-collapse border border-gray-300 bg-white text-black">
-          <thead>
-            <tr className="bg-[#3a3a3c] text-white">
-              <th className="border p-2 text-center">Title</th>
-              <th className="border p-2 text-center">Date Created</th>
-              <th className="border p-2 text-center">Date Expired</th>
-              <th className="border p-2 text-center">
-                Did Request Result in Contract?
-              </th>
-              <th className="border p-2 text-center">
-                My Max. Price (VAT 0%){" "}
-                <NarrowTooltip tooltipText="If you have included a maximum price for the legal service in your LEXIFY Request, the maximum price is displayed here. A maximum price can be set for lump sum offers only. " />
-              </th>
-              <th className="border p-2 text-center">Best Offer (VAT 0%)</th>
-              <th className="border p-2 text-center">
-                Top 2 Runner-up Offers (VAT 0%)
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => {
-              const best = formatOfferLine(
-                r.bestOffer,
-                r.currency,
-                r.paymentRate
-              );
+        <>
+          <table className="w-full border-collapse border border-gray-300 bg-white text-black">
+            <thead>
+              <tr className="bg-[#3a3a3c] text-white">
+                <th className="border p-2 text-center">Title</th>
+                <th className="border p-2 text-center">Date Created</th>
+                <th className="border p-2 text-center">Date Expired</th>
+                <th className="border p-2 text-center">
+                  Did Request Result in Contract?
+                </th>
+                <th className="border p-2 text-center">
+                  My Max. Price (VAT 0%){" "}
+                  <NarrowTooltip tooltipText="If you have included a maximum price for the legal service in your LEXIFY Request, the maximum price is displayed here. A maximum price can be set for lump sum offers only. " />
+                </th>
+                <th className="border p-2 text-center">Best Offer (VAT 0%)</th>
+                <th className="border p-2 text-center">
+                  Top 2 Runner-up Offers (VAT 0%)
+                </th>
+              </tr>
+            </thead>
 
-              let runnerUpContent = "N/A";
-              if (Array.isArray(r.runnerUps) && r.runnerUps.length > 0) {
-                if (r.runnerUps.length === 1) {
-                  runnerUpContent = formatOfferLine(
-                    r.runnerUps[0],
-                    r.currency,
-                    r.paymentRate
-                  );
-                } else {
-                  runnerUpContent = (
-                    <div className="flex flex-col items-start gap-1">
-                      <span>
-                        {formatOfferLine(
-                          r.runnerUps[0],
-                          r.currency,
-                          r.paymentRate
-                        )}
-                      </span>
-                      <span>
-                        {formatOfferLine(
-                          r.runnerUps[1],
-                          r.currency,
-                          r.paymentRate
-                        )}
-                      </span>
-                    </div>
-                  );
+            <tbody>
+              {visibleRows.map((r) => {
+                const best = formatOfferLine(
+                  r.bestOffer,
+                  r.currency,
+                  r.paymentRate,
+                );
+
+                let runnerUpContent = "N/A";
+                if (Array.isArray(r.runnerUps) && r.runnerUps.length > 0) {
+                  if (r.runnerUps.length === 1) {
+                    runnerUpContent = formatOfferLine(
+                      r.runnerUps[0],
+                      r.currency,
+                      r.paymentRate,
+                    );
+                  } else {
+                    runnerUpContent = (
+                      <div className="flex flex-col items-start gap-1">
+                        <span>
+                          {formatOfferLine(
+                            r.runnerUps[0],
+                            r.currency,
+                            r.paymentRate,
+                          )}
+                        </span>
+                        <span>
+                          {formatOfferLine(
+                            r.runnerUps[1],
+                            r.currency,
+                            r.paymentRate,
+                          )}
+                        </span>
+                      </div>
+                    );
+                  }
                 }
-              }
 
-              const suffixForMax = r.paymentRate
-                ?.toLowerCase()
-                .startsWith("hourly rate")
-                ? "/h"
-                : "";
+                const suffixForMax = r.paymentRate
+                  ?.toLowerCase()
+                  .startsWith("hourly rate")
+                  ? "/h"
+                  : "";
 
-              return (
-                <tr key={r.requestId}>
-                  <td className="border p-2 text-center">{r.requestTitle}</td>
-                  <td className="border p-2 text-center">
-                    {formatDateDDMMYYYY(r.dateCreated)}
-                  </td>
-                  <td className="border p-2 text-center">
-                    {formatDateDDMMYYYY(r.dateExpired)}
-                  </td>
-                  <td className="border p-2 text-center">
-                    {r.contractResult ?? "—"}
-                  </td>
-                  <td className="border p-2 text-center">
-                    {r.maxPrice != null && r.maxPrice !== ""
-                      ? `${fmtMoney(r.maxPrice, r.currency)}${suffixForMax}`
-                      : "N/A"}
-                  </td>
-                  <td className="border p-2 text-center">{best}</td>
-                  <td className="border p-2 text-center">{runnerUpContent}</td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                return (
+                  <tr key={r.requestId}>
+                    <td className="border p-2 text-center">
+                      {r.requestTitle || "—"}
+                    </td>
+                    <td className="border p-2 text-center">
+                      {formatDateDDMMYYYY(r.dateCreated)}
+                    </td>
+                    <td className="border p-2 text-center">
+                      {formatDateDDMMYYYY(r.dateExpired)}
+                    </td>
+                    <td className="border p-2 text-center">
+                      {r.contractResult ?? "—"}
+                    </td>
+                    <td className="border p-2 text-center">
+                      {r.maxPrice != null
+                        ? `${fmtMoney(r.maxPrice, r.currency)}${suffixForMax}`
+                        : "N/A"}
+                    </td>
+                    <td className="border p-2 text-center">{best}</td>
+                    <td className="border p-2 text-center">
+                      {runnerUpContent}
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+
+          {canLoadMore && (
+            <div className="mt-4 flex justify-center">
+              <button
+                className="bg-white text-black px-4 py-2 rounded cursor-pointer"
+                onClick={() =>
+                  setVisibleCount((n) =>
+                    Math.min(n + PAGE_SIZE, safeRows.length),
+                  )
+                }
+              >
+                Load more
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

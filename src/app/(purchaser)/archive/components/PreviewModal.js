@@ -208,13 +208,24 @@ function buildClientLine(row, companyName) {
     row.companyName ||
     row.clientName ||
     row?.purchaser?.companyName ||
+    row?.client?.companyName ||
     null;
 
   const id =
-    row.companyId || row.businessId || row?.purchaser?.companyId || null;
+    row.companyId ||
+    row.businessId ||
+    row?.purchaser?.businessId ||
+    row?.client?.businessId ||
+    row?.purchaser?.companyId ||
+    row?.client?.companyId ||
+    null;
 
   const country =
-    row.companyCountry || row.country || row?.purchaser?.companyCountry || null;
+    row.companyCountry ||
+    row.country ||
+    row?.purchaser?.companyCountry ||
+    row?.client?.companyCountry ||
+    null;
 
   const parts = [name, id, country].filter(Boolean);
   return parts.length ? parts.join(", ") : "—";
@@ -391,6 +402,6 @@ function renderNamedBlock(name, row, companyName) {
       return d ? formatLocalDDMMYYYY_HHMM(d) : "—";
     }
     default:
-      return row?.[path] ?? row?.details?.[path] ?? "—";
+      return row?.[name] ?? row?.details?.[name] ?? "—";
   }
 }

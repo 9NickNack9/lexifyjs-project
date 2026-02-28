@@ -15,24 +15,27 @@ export async function GET(req) {
     const q = (searchParams.get("q") || "").trim();
     if (!q) return NextResponse.json([]);
 
-    const results = await prisma.appUser.findMany({
+    // Search PROVIDER companies by companyName
+    const results = await prisma.company.findMany({
       where: {
+        // If your Company.role enum differs, adjust this value accordingly.
         role: "PROVIDER",
         companyName: { contains: q, mode: "insensitive" },
       },
       select: {
-        userId: true, // likely BIGINT in Postgres → BigInt in JS
-        username: true,
+        companyPkId: true, // BigInt in Postgres
         companyName: true,
       },
       take: 25,
-      orderBy: [{ companyName: "asc" }, { username: "asc" }],
+      orderBy: [{ companyName: "asc" }],
     });
 
-    // Serialize BigInt → string to avoid TypeError
+    // Keep the response contract your UI expects:
+    // { userId, username, companyName }
     const payload = results.map((r) => ({
-      ...r,
-      userId: r.userId != null ? String(r.userId) : null,
+      userId: r.companyPkId != null ? String(r.companyPkId) : null,
+      username: null,
+      companyName: r.companyName ?? null,
     }));
 
     return NextResponse.json(payload);
@@ -43,14 +46,14 @@ export async function GET(req) {
         JSON.stringify(
           err?.message
             ? { error: err.message }
-            : { error: "Internal Server Error" }
+            : { error: "Internal Server Error" },
         ),
-        { status: 500, headers: { "content-type": "application/json" } }
+        { status: 500, headers: { "content-type": "application/json" } },
       );
     } catch {
       return NextResponse.json(
         { error: "Internal Server Error" },
-        { status: 500 }
+        { status: 500 },
       );
     }
   }

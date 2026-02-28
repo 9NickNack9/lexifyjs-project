@@ -13,17 +13,24 @@ export async function GET(req) {
   const take = parseInt(searchParams.get("take") || "10", 10);
 
   // Search across username/email and company name
-  const where = search
-    ? {
-        OR: [
-          { lastName: { contains: search, mode: "insensitive" } },
-          { email: { contains: search, mode: "insensitive" } },
-          {
-            company: { companyName: { contains: search, mode: "insensitive" } },
-          },
-        ],
-      }
-    : {};
+  const role = searchParams.get("role") || "";
+
+  const where = {
+    ...(role ? { role } : {}),
+    ...(search
+      ? {
+          OR: [
+            { lastName: { contains: search, mode: "insensitive" } },
+            { email: { contains: search, mode: "insensitive" } },
+            {
+              company: {
+                companyName: { contains: search, mode: "insensitive" },
+              },
+            },
+          ],
+        }
+      : {}),
+  };
 
   const accounts = await prisma.userAccount.findMany({
     where,

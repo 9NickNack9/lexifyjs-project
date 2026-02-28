@@ -10,7 +10,6 @@ export default function GdprCompliance() {
 
   // ---- initial state ----
   const initialFormState = {
-    contactPerson: "",
     description: "",
     companyRevenue: "",
     employeeCount: "",
@@ -52,10 +51,11 @@ export default function GdprCompliance() {
   const [formData, setFormData] = useState(initialFormState);
   const [showPreview, setShowPreview] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-
-  // NEW: contacts + company for preview header
-  const [contactOptions, setContactOptions] = useState([]);
-  const [company, setCompany] = useState({ name: "", id: "", country: "" });
+  const [company, setCompany] = useState({
+    name: "",
+    businessId: "",
+    country: "",
+  });
 
   // Load contacts + company from /api/me
   useEffect(() => {
@@ -65,24 +65,10 @@ export default function GdprCompliance() {
         if (!res.ok) return;
         const me = await res.json();
         setCompany({
-          name: me?.companyName || "",
-          id: me?.companyId || "",
-          country: me?.companyCountry || "",
+          name: me?.company?.companyName || me?.companyName || "",
+          businessId: me?.company?.businessId || "",
+          country: me?.company?.companyCountry || me?.companyCountry || "",
         });
-        const list = Array.isArray(me.companyContactPersons)
-          ? me.companyContactPersons
-          : [];
-        setContactOptions(
-          list
-            .map((p) => {
-              const n = [p.firstName || "", p.lastName || ""]
-                .filter(Boolean)
-                .join(" ")
-                .trim();
-              return n ? { label: n, value: n } : null;
-            })
-            .filter(Boolean)
-        );
       } catch {}
     })();
   }, []);
@@ -145,8 +131,6 @@ export default function GdprCompliance() {
 
   // ---- validation ----
   const validate = () => {
-    if (!formData.contactPerson)
-      return "Please select a primary contact person.";
     if (!formData.offerer) return "Choose which providers can offer.";
     if (!formData.providerCountry) return "Choose domestic/foreign offers.";
     if (!formData.lawyerCount) return "Choose a minimum provider size.";
@@ -210,7 +194,6 @@ export default function GdprCompliance() {
         requestState: "PENDING",
         requestCategory: "Help with Personal Data Protection",
         requestSubcategory: "GDPR Compliance Analysis",
-        primaryContactPerson: formData.contactPerson,
         scopeOfWork:
           "Legal assessment of the Client's current level of compliance with GDPR requirements.",
         description: formData.description || "",
@@ -237,7 +220,7 @@ export default function GdprCompliance() {
       const form = new FormData();
       form.append(
         "data",
-        new Blob([JSON.stringify(payload)], { type: "application/json" })
+        new Blob([JSON.stringify(payload)], { type: "application/json" }),
       );
       for (const f of formData.backgroundFiles)
         form.append("backgroundFiles", f, f.name);
@@ -254,7 +237,7 @@ export default function GdprCompliance() {
         throw new Error(
           (json && (json.error || json.message)) ||
             text ||
-            "Failed to create request."
+            "Failed to create request.",
         );
 
       alert("LEXIFY Request submitted successfully.");
@@ -300,30 +283,6 @@ export default function GdprCompliance() {
       <div className="w-full max-w-7xl p-6 rounded shadow-2xl bg-white text-black">
         {/* Form Section */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <h4 className="text-md font-medium mb-1 font-semibold">
-              Who is the primary contact person for this LEXIFY Request at your
-              company?{" "}
-              <QuestionMarkTooltip tooltipText="All updates and notifications regarding this LEXIFY Request will be sent to the designated person. If you do not see your name listed below, you can add new contact persons on the 'My Account' page (see My Account in the LEXIFY main menu)." />
-            </h4>
-            <select
-              name="contactPerson"
-              className="w-full border p-2"
-              onChange={handleChange}
-              value={formData.contactPerson}
-              required
-            >
-              <option value="">Select</option>
-              {contactOptions.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <br />
-          <hr />
-          <br />
           <h4 className="text-md font-medium mb-1 font-semibold">
             Please provide a brief description of your company&apos;s line of
             business (including whether the business is B2B, B2C or both){" "}
@@ -928,7 +887,7 @@ export default function GdprCompliance() {
                 />{" "}
                 {option}
               </label>
-            )
+            ),
           )}
           {formData.checkboxes.includes("Other:") && (
             <input
@@ -1125,11 +1084,9 @@ export default function GdprCompliance() {
               <div id="lexify-preview" className="space-y-6 text-black p-8">
                 {/* Client Name */}
                 <Section title="Client Name, Business Identity Code and Country of Domicile">
-                  {formData.contactPerson
-                    ? [company.name, company.id, company.country]
-                        .filter(Boolean)
-                        .join(", ")
-                    : "-"}
+                  {[company.name, company.businessId, company.country]
+                    .filter(Boolean)
+                    .join(", ") || "-"}
                 </Section>
 
                 {/* Scope of Work */}
@@ -1251,13 +1208,13 @@ export default function GdprCompliance() {
                     {!formData.interviewLocation
                       ? "-"
                       : formData.interviewLocation ===
-                        "Remotely (for example, over Microsoft Teams)"
-                      ? formData.interviewLocation
-                      : `${formData.interviewLocation}${
-                          formData.locationDescription
-                            ? `: ${formData.locationDescription}`
-                            : ""
-                        }`}
+                          "Remotely (for example, over Microsoft Teams)"
+                        ? formData.interviewLocation
+                        : `${formData.interviewLocation}${
+                            formData.locationDescription
+                              ? `: ${formData.locationDescription}`
+                              : ""
+                          }`}
                   </>
                 </Section>
 
@@ -1315,7 +1272,7 @@ export default function GdprCompliance() {
                 <Section title="Languages Required for the Performance of the Work">
                   {[
                     ...(formData.checkboxes || []).filter(
-                      (lang) => lang !== "Other:"
+                      (lang) => lang !== "Other:",
                     ),
                     formData.otherLang,
                   ]

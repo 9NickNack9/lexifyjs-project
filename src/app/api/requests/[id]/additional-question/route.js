@@ -1,51 +1,79 @@
+// src/app/api/requests/[id]/additional-question/route.js
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import { notifyPurchaserAdditionalQuestion } from "@/lib/mailer";
 
-export async function POST(req, { params }) {
+const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const isEmail = (s) => typeof s === "string" && EMAIL_RE.test(s.trim());
+const norm = (s) =>
+  (s || "").toString().trim().replace(/\s+/g, " ").toLowerCase();
+const fullName = (p) =>
+  [p?.firstName, p?.lastName].filter(Boolean).join(" ").trim();
+
+// normalize Json / legacy {set:[]} / string → string[]
+function toStringArray(val) {
+  if (Array.isArray(val)) return val.filter((v) => typeof v === "string");
+  if (val && typeof val === "object") {
+    if (Array.isArray(val.set))
+      return val.set.filter((v) => typeof v === "string");
+    if (Array.isArray(val.value))
+      return val.value.filter((v) => typeof v === "string");
+  }
+  if (typeof val === "string") {
+    try {
+      const parsed = JSON.parse(val);
+      if (Array.isArray(parsed))
+        return parsed.filter((v) => typeof v === "string");
+      return val ? [val] : [];
+    } catch {
+      return val ? [val] : [];
+    }
+  }
+  return [];
+}
+
+export async function POST(req, ctx) {
   try {
     const session = await getServerSession(authOptions);
     if (!session?.userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { id } = params || {};
-    if (!id) {
+    const { id } = (await ctx.params) || {};
+    if (!id)
       return NextResponse.json(
         { error: "Missing request id" },
-        { status: 400 }
+        { status: 400 },
       );
-    }
 
     const body = await req.json().catch(() => null);
     const questionRaw = body?.question;
     const question = typeof questionRaw === "string" ? questionRaw.trim() : "";
-
-    if (!question) {
+    if (!question)
       return NextResponse.json(
         { error: "Question is required" },
-        { status: 400 }
+        { status: 400 },
       );
-    }
 
-    // Load existing request with metadata we need for email
     const existing = await prisma.request.findUnique({
-      where: { requestId: BigInt(id) },
+      where: { requestId: BigInt(String(id)) },
       select: {
         requestId: true,
         title: true,
-        clientId: true,
         primaryContactPerson: true,
         details: true,
+        clientCompanyId: true, // NEW
+        // legacy fallback (if still present)
+        clientId: true,
       },
     });
 
-    if (!existing) {
+    if (!existing)
       return NextResponse.json({ error: "Request not found" }, { status: 404 });
-    }
 
+    // Update details.additionalQuestions
     const currentDetails = existing.details || {};
     let additionalQuestions = currentDetails.additionalQuestions;
 
@@ -56,25 +84,77 @@ export async function POST(req, { params }) {
     ) {
       additionalQuestions = {};
     }
-
-    // Add question if not already present
     if (!Object.prototype.hasOwnProperty.call(additionalQuestions, question)) {
       additionalQuestions[question] = "";
     }
 
-    const newDetails = {
-      ...currentDetails,
-      additionalQuestions,
-    };
-
     await prisma.request.update({
-      where: { requestId: BigInt(id) },
-      data: { details: newDetails },
+      where: { requestId: BigInt(String(id)) },
+      data: {
+        details: {
+          ...currentDetails,
+          additionalQuestions,
+        },
+      },
     });
 
-    // ----------------- Send notification email to purchaser -----------------
+    // Email purchaser contacts (best-effort; do not fail API)
     try {
-      if (existing.clientId) {
+      // Prefer new system
+      if (existing.clientCompanyId) {
+        const company = await prisma.company.findUnique({
+          where: { companyPkId: existing.clientCompanyId },
+          select: {
+            members: {
+              select: {
+                firstName: true,
+                lastName: true,
+                email: true,
+                notificationPreferences: true,
+              },
+            },
+          },
+        });
+
+        const members = Array.isArray(company?.members) ? company.members : [];
+        const primaryName = norm(
+          existing.primaryContactPerson ||
+            existing.details?.primaryContactPerson ||
+            "",
+        );
+
+        const recipientsSet = new Set();
+
+        // Primary contact by name match
+        if (primaryName) {
+          for (const m of members) {
+            const mName = norm(fullName(m));
+            const em = (m?.email || "").trim();
+            if (mName && mName === primaryName && isEmail(em))
+              recipientsSet.add(em);
+          }
+        }
+
+        // Also notify anyone opted into purchaser additional-question notifications
+        for (const m of members) {
+          const em = (m?.email || "").trim();
+          if (!isEmail(em)) continue;
+          const prefs = toStringArray(m?.notificationPreferences);
+          if (prefs.includes("additional-question")) recipientsSet.add(em);
+        }
+
+        const recipients = Array.from(recipientsSet);
+        if (recipients.length) {
+          await notifyPurchaserAdditionalQuestion({
+            to: recipients,
+            requestTitle:
+              existing.title ||
+              existing.details?.requestTitle ||
+              "LEXIFY Request",
+          });
+        }
+      } else if (existing.clientId) {
+        // Legacy fallback (kept so mixed data continues working)
         const client = await prisma.appUser.findUnique({
           where: { userId: existing.clientId },
           select: { companyContactPersons: true },
@@ -84,56 +164,40 @@ export async function POST(req, { params }) {
           ? client.companyContactPersons
           : [];
 
-        if (contacts.length > 0) {
-          const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-          const normalizeName = (s) =>
-            (s || "").toString().trim().replace(/\s+/g, " ").toLowerCase();
+        const primaryName = norm(
+          existing.primaryContactPerson ||
+            existing.details?.primaryContactPerson ||
+            "",
+        );
 
-          const primaryName = normalizeName(
-            existing.primaryContactPerson ||
-              existing.details?.primaryContactPerson ||
-              ""
+        const recipientsSet = new Set();
+        for (const person of contacts) {
+          const personName = norm(
+            [person?.firstName, person?.lastName].filter(Boolean).join(" "),
           );
+          const email = (person?.email || "").trim();
+          if (!isEmail(email)) continue;
 
-          const recipientsSet = new Set();
+          if (primaryName && personName === primaryName)
+            recipientsSet.add(email);
+          if (person?.allNotifications === true) recipientsSet.add(email);
+        }
 
-          for (const person of contacts) {
-            const fullName = normalizeName(
-              [person?.firstName, person?.lastName].filter(Boolean).join(" ")
-            );
-            const email = (person?.email || "").trim();
-
-            if (!EMAIL_RE.test(email)) continue;
-
-            // Primary contact person's email, matched by name
-            if (primaryName && fullName && fullName === primaryName) {
-              recipientsSet.add(email);
-            }
-
-            // All contacts with allNotifications = true
-            if (person?.allNotifications === true) {
-              recipientsSet.add(email);
-            }
-          }
-
-          const recipients = Array.from(recipientsSet);
-
-          if (recipients.length > 0) {
-            await notifyPurchaserAdditionalQuestion({
-              to: recipients,
-              requestTitle:
-                existing.title ||
-                existing.details?.requestTitle ||
-                "LEXIFY Request",
-            });
-          }
+        const recipients = Array.from(recipientsSet);
+        if (recipients.length) {
+          await notifyPurchaserAdditionalQuestion({
+            to: recipients,
+            requestTitle:
+              existing.title ||
+              existing.details?.requestTitle ||
+              "LEXIFY Request",
+          });
         }
       }
     } catch (mailErr) {
-      // Don't fail the API just because email sending failed
       console.error(
-        "Failed to send additional question notification email:",
-        mailErr
+        "Failed to send purchaser additional-question email:",
+        mailErr,
       );
     }
 
@@ -142,7 +206,7 @@ export async function POST(req, { params }) {
     console.error("POST /api/requests/[id]/additional-question failed:", e);
     return NextResponse.json(
       { error: "Server error while saving additional question" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

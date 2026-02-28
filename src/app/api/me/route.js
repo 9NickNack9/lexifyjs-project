@@ -14,10 +14,10 @@ const safeJson = (data, status = 200) =>
         "content-type": "application/json",
         "cache-control": "no-store",
       },
-    }
+    },
   );
 
-// --- NEW HELPERS to support multi-provider-per-area storage ---
+// --- HELPERS to support multi-provider-per-area storage ---
 /** Normalize any DB value into: { [area]: string[] } with unique providers */
 function normalizePreferredToAreaMap(value) {
   const out = {};
@@ -73,60 +73,105 @@ function groupPreferredByProvider(areaMap) {
 
 export async function GET() {
   const session = await getServerSession(authOptions);
-  if (!session?.userId) {
-    return safeJson({ error: "Unauthorized" }, 401);
-  }
+  if (!session?.userId) return safeJson({ error: "Unauthorized" }, 401);
 
-  // Pull everything the account pages need
-  const me = await prisma.appUser.findUnique({
-    where: { userId: BigInt(session.userId) },
+  // session.userId is userPkId (string) from NextAuth session callback
+  const userPkId = BigInt(session.userId);
+
+  // New system: userAccount + related company
+  const row = await prisma.userAccount.findUnique({
+    where: { userPkId },
     select: {
+      // UserAccount fields
+      userPkId: true,
       username: true,
       role: true,
-      companyName: true,
-      companyId: true,
-      companyAddress: true,
-      companyPostalCode: true,
-      companyCity: true,
-      companyCountry: true,
-      contactFirstName: true,
-      contactLastName: true,
-      contactEmail: true,
-      contactTelephone: true,
-      contactPosition: true,
-      companyContactPersons: true,
-      companyInvoiceContactPersons: true,
-      winningOfferSelection: true,
+      firstName: true,
+      lastName: true,
+      email: true,
+      telephone: true,
+      twoFactorEnabled: true,
 
-      // These three are what your tables use
-      blockedServiceProviders: true, // string[]
-      preferredLegalServiceProviders: true, // map | array | string — we normalize below
-      legalPanelServiceProviders: true, // string[]
+      // purchaser prefs (these used to be on appUser)
+      winningOfferSelection: true,
+      blockedServiceProviders: true,
+      preferredLegalServiceProviders: true,
+      legalPanelServiceProviders: true,
+
+      // Relationship
+      companyId: true,
+      company: {
+        select: {
+          companyPkId: true,
+          companyName: true,
+          businessId: true, // business id
+          companyAddress: true,
+          companyPostalCode: true,
+          companyCity: true,
+          companyCountry: true,
+          companyInvoiceContactPersons: true,
+          registerStatus: true,
+        },
+      },
     },
   });
 
-  if (!me) return safeJson({ error: "Not found" }, 404);
+  if (!row) return safeJson({ error: "Not found" }, 404);
 
   // Preferred providers: normalize to area→string[]
   const prefAreaMap = normalizePreferredToAreaMap(
-    me?.preferredLegalServiceProviders
+    row?.preferredLegalServiceProviders,
   );
 
   // Return grouped array (UI format) for the preferred table only
   const preferredArray = groupPreferredByProvider(prefAreaMap);
 
+  // Build a payload that:
+  // 1) Adds explicit company + userAccount objects
+  // 2) Keeps existing flat keys for backwards compatibility (your page currently expects them)
   const payload = {
-    ...me,
+    userAccount: {
+      userPkId: row.userPkId,
+      username: row.username,
+      role: row.role,
+      firstName: row.firstName,
+      lastName: row.lastName,
+      email: row.email,
+      telephone: row.telephone,
+      twoFactorEnabled: row.twoFactorEnabled,
+      winningOfferSelection: row.winningOfferSelection,
+      blockedServiceProviders: Array.isArray(row.blockedServiceProviders)
+        ? row.blockedServiceProviders
+        : [],
+      preferredLegalServiceProviders: preferredArray,
+      legalPanelServiceProviders: Array.isArray(row.legalPanelServiceProviders)
+        ? row.legalPanelServiceProviders
+        : [],
+      companyId: row.companyId,
+    },
 
-    // Leave these two exactly as they are (tables expect raw arrays)
-    blockedServiceProviders: Array.isArray(me?.blockedServiceProviders)
-      ? me.blockedServiceProviders
-      : [],
-    legalPanelServiceProviders: Array.isArray(me?.legalPanelServiceProviders)
-      ? me.legalPanelServiceProviders
-      : [],
+    company: row.company ?? null,
 
-    // Preferred table gets the grouped array (compatible with existing UI)
+    // --- Backwards-compatible aliases (existing UI uses these today) ---
+    username: row.username,
+    role: row.role,
+    winningOfferSelection: row.winningOfferSelection,
+
+    companyName: row.company?.companyName ?? null,
+    companyId: row.company?.companyPkId ?? null,
+    companyAddress: row.company?.companyAddress ?? null,
+    companyPostalCode: row.company?.companyPostalCode ?? null,
+    companyCity: row.company?.companyCity ?? null,
+    companyCountry: row.company?.companyCountry ?? null,
+    companyInvoiceContactPersons:
+      row.company?.companyInvoiceContactPersons ?? [],
+
+    blockedServiceProviders: Array.isArray(row.blockedServiceProviders)
+      ? row.blockedServiceProviders
+      : [],
+    legalPanelServiceProviders: Array.isArray(row.legalPanelServiceProviders)
+      ? row.legalPanelServiceProviders
+      : [],
     preferredLegalServiceProviders: preferredArray,
   };
 
@@ -146,17 +191,16 @@ export async function PATCH(req) {
     return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
   }
 
-  // Currently we support updating just winningOfferSelection
   const { winningOfferSelection } = body || {};
   if (!["automatic", "manual"].includes(winningOfferSelection)) {
     return NextResponse.json(
       { error: "winningOfferSelection must be 'automatic' or 'manual'." },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
-  await prisma.appUser.update({
-    where: { userId: BigInt(session.userId) },
+  await prisma.userAccount.update({
+    where: { userPkId: BigInt(session.userId) },
     data: { winningOfferSelection },
   });
 

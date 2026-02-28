@@ -8,8 +8,6 @@ export default function IctTemplate() {
   const router = useRouter();
 
   const initialFormState = {
-    contactPerson: "",
-
     // page-specific
     templateboxes: [],
     otherTemplate: "",
@@ -40,8 +38,11 @@ export default function IctTemplate() {
   const [showPreview, setShowPreview] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  const [contactOptions, setContactOptions] = useState([]);
-  const [company, setCompany] = useState({ name: "", id: "", country: "" });
+  const [company, setCompany] = useState({
+    name: "",
+    businessId: "",
+    country: "",
+  });
 
   // Load company + contacts
   useEffect(() => {
@@ -51,23 +52,10 @@ export default function IctTemplate() {
         if (!res.ok) return;
         const me = await res.json();
         setCompany({
-          name: me?.companyName || "",
-          id: me?.companyId || "",
-          country: me?.companyCountry || "",
+          name: me?.company?.companyName || me?.companyName || "",
+          businessId: me?.company?.businessId || "",
+          country: me?.company?.companyCountry || me?.companyCountry || "",
         });
-        const list = Array.isArray(me.companyContactPersons)
-          ? me.companyContactPersons
-          : [];
-        const opts = list
-          .map((p) => {
-            const n = [p.firstName || "", p.lastName || ""]
-              .filter(Boolean)
-              .join(" ")
-              .trim();
-            return n ? { label: n, value: n } : null;
-          })
-          .filter(Boolean);
-        setContactOptions(opts);
       } catch {}
     })();
   }, []);
@@ -126,8 +114,6 @@ export default function IctTemplate() {
   };
 
   const validate = () => {
-    if (!formData.contactPerson)
-      return "Please select a primary contact person.";
     if (formData.templateboxes.length === 0)
       return "Please choose at least one template type.";
     if (formData.templateboxes.includes("Other:") && !formData.otherTemplate)
@@ -182,7 +168,6 @@ export default function IctTemplate() {
         requestCategory: "Help with Contracts",
         requestSubcategory: "ICT and IT",
         assignmentType: "Prepare contract template",
-        primaryContactPerson: formData.contactPerson,
         scopeOfWork:
           "Preparation of the following ICT/IT related contract and/or document template(s) for the Client: " +
           scopeList +
@@ -213,7 +198,7 @@ export default function IctTemplate() {
       const form = new FormData();
       form.append(
         "data",
-        new Blob([JSON.stringify(payload)], { type: "application/json" })
+        new Blob([JSON.stringify(payload)], { type: "application/json" }),
       );
       for (const f of formData.backgroundFiles)
         form.append("backgroundFiles", f, f.name);
@@ -228,7 +213,7 @@ export default function IctTemplate() {
       } catch {}
       if (!res.ok)
         throw new Error(
-          (json && json.error) || text || "Failed to create request."
+          (json && json.error) || text || "Failed to create request.",
         );
 
       alert("LEXIFY Request submitted successfully.");
@@ -272,30 +257,6 @@ export default function IctTemplate() {
       <div className="fw-full max-w-7xl p-6 rounded shadow-2xl text-black bg-white">
         {/* Form Section */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <h4 className="text-md font-medium mb-1 font-semibold">
-              Who is the primary contact person for this LEXIFY Request at your
-              company?{" "}
-              <QuestionMarkTooltip tooltipText="All updates and notifications regarding this LEXIFY Request will be sent to the designated person. If you do not see your name listed below, you can add new contact persons on the 'My Account' page (see My Account in the LEXIFY main menu)." />
-            </h4>
-            <select
-              name="contactPerson"
-              className="w-full border p-2"
-              onChange={handleChange}
-              value={formData.contactPerson}
-              required
-            >
-              <option value="">Select</option>
-              {contactOptions.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <br />
-          <hr />
-          <br />
           <div>
             <h4 className="text-md font-medium mb-1 font-semibold">
               What kind of template(s) do you need?
@@ -685,7 +646,7 @@ export default function IctTemplate() {
                 />{" "}
                 {option}
               </label>
-            )
+            ),
           )}
           {formData.checkboxes.includes("Other:") && (
             <input
@@ -882,11 +843,9 @@ export default function IctTemplate() {
               <div id="lexify-preview" className="space-y-6 text-black p-8">
                 {/* Client Name */}
                 <Section title="Client Name, Business Identity Code and Country of Domicile">
-                  {formData.contactPerson
-                    ? [company.name, company.id, company.country]
-                        .filter(Boolean)
-                        .join(", ")
-                    : "-"}
+                  {[company.name, company.businessId, company.country]
+                    .filter(Boolean)
+                    .join(", ") || "-"}
                 </Section>
 
                 {/* Scope of Work */}
@@ -902,7 +861,7 @@ export default function IctTemplate() {
                         .map((item) =>
                           item === "Other:" && formData.otherTemplate
                             ? `${formData.otherTemplate}`
-                            : item
+                            : item,
                         )
                         .join(", ")}
                     </>
@@ -992,7 +951,7 @@ export default function IctTemplate() {
                 <Section title="Languages Required for the Performance of the Work">
                   {[
                     ...(formData.checkboxes || []).filter(
-                      (lang) => lang !== "Other:"
+                      (lang) => lang !== "Other:",
                     ),
                     formData.otherLang,
                   ]

@@ -4,12 +4,15 @@ import { useState } from "react";
 import Link from "next/link";
 
 export default function Register() {
-  const [role, setRole] = useState("legal");
+  const [role, setRole] = useState("");
+  const [companyJoinType, setCompanyJoinType] = useState(""); // "new_company" | "existing_company"
   const [showPassword, setShowPassword] = useState(false);
   const [showRePassword, setShowRePassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [acceptedPrivacy, setAcceptedPrivacy] = useState(false);
   const [acceptedGeneral, setAcceptedGeneral] = useState(false);
+
+  const isExistingCompany = companyJoinType === "existing_company";
 
   const [formData, setFormData] = useState({
     role: "",
@@ -54,19 +57,15 @@ export default function Register() {
     }
 
     const payload = {
-      role, // "provider" | "purchaser"  (from your radio)
+      role, // "provider" | "purchaser"
+      companyJoinType, // "new_company" | "existing_company"
+
       username: formData.username.trim(),
       password: formData.password,
+
       companyName: formData.companyName.trim(),
-      companyId: formData.companyID.trim(), // will map to companyId in API
-      companyAddress: formData.companyAddress.trim(),
-      companyPostalCode: formData.companyPostalCode.trim(),
-      companyCity: formData.companyCity.trim(),
-      companyCountry: formData.companyCountry,
-      companyWebsite: formData.companyWebsite.trim(),
-      companyFoundingYear: formData.companyFoundingYear.trim(),
-      providerType: formData.providerType.trim(),
-      companyProfessionals: formData.companyProfessionals, // only validated if provider
+      companyId: formData.companyID.trim(),
+
       contactFirstName: formData.contactFirstName.trim(),
       contactLastName: formData.contactLastName.trim(),
       contactEmail: formData.contactEmail.trim(),
@@ -74,6 +73,21 @@ export default function Register() {
       countryCode: formData.countryCode,
       phone: String(formData.phone).trim(),
     };
+
+    if (companyJoinType === "new_company") {
+      Object.assign(payload, {
+        companyAddress: formData.companyAddress.trim(),
+        companyPostalCode: formData.companyPostalCode.trim(),
+        companyCity: formData.companyCity.trim(),
+        companyCountry: formData.companyCountry,
+        companyWebsite: formData.companyWebsite.trim(),
+
+        // provider-only fields (backend will only validate if role === "provider")
+        companyFoundingYear: formData.companyFoundingYear.trim(),
+        providerType: formData.providerType.trim(),
+        companyProfessionals: formData.companyProfessionals,
+      });
+    }
 
     try {
       const res = await fetch("/api/register", {
@@ -108,28 +122,42 @@ export default function Register() {
           onSubmit={handleSubmit}
           className="flex flex-col w-full space-y-2"
         >
-          <div className="flex gap-4 items-center justify-center">
-            <p className="text-md">I am a:</p>
-            <label>
-              <input
-                type="radio"
-                name="role"
-                value="provider"
-                checked={role === "provider"}
-                onChange={() => setRole("provider")}
-              />{" "}
-              Legal Services Provider
+          <div className="flex flex-col items-start">
+            <label className="text-md font-medium mb-1">
+              I am registering as a:
             </label>
-            <label>
-              <input
-                type="radio"
-                name="role"
-                value="purchaser"
-                checked={role === "purchaser"}
-                onChange={() => setRole("purchaser")}
-              />{" "}
-              Purchaser of Legal Services
-            </label>
+            <select
+              value={companyJoinType}
+              onChange={(e) => setCompanyJoinType(e.target.value)}
+              className="p-2 border w-full"
+              required
+            >
+              <option value="" disabled>
+                Select
+              </option>
+              <option value="new_company">
+                New User To an Unregistered Company
+              </option>
+              <option value="existing_company">
+                New User To a Previously Registered Company
+              </option>
+            </select>
+          </div>
+          <br />
+          <div className="flex flex-col items-start">
+            <label className="text-md font-medium mb-1">My company is a:</label>
+            <select
+              value={role}
+              onChange={(e) => setRole(e.target.value)}
+              className="p-2 border w-full"
+              required
+            >
+              <option value="" disabled>
+                Select
+              </option>
+              <option value="provider">Legal Services Provider</option>
+              <option value="purchaser">Purchaser of Legal Services</option>
+            </select>
           </div>
           <br />
           <input
@@ -159,79 +187,83 @@ export default function Register() {
             required
           />
           <br />
-          <input
-            type="text"
-            name="companyAddress"
-            placeholder="Company Street Address"
-            className="p-2 border"
-            onChange={handleChange}
-            required
-          />
-          <br />
-          <input
-            type="text"
-            name="companyPostalCode"
-            placeholder="Company Postal Code"
-            className="p-2 border"
-            onChange={handleChange}
-            required
-          />
-          <br />
-          <input
-            type="text"
-            name="companyCity"
-            placeholder="Company City"
-            className="p-2 border"
-            onChange={handleChange}
-            required
-          />
-          <br />
-          <select
-            name="companyCountry"
-            className="p-2 border"
-            onChange={handleChange}
-            required
-          >
-            <option value="">Company Country of Domicile</option>
-            <option value="Austria">Austria</option>
-            <option value="Belgium">Belgium</option>
-            <option value="Bulgaria">Bulgaria</option>
-            <option value="Croatia">Croatia</option>
-            <option value="Cyprus">Cyprus</option>
-            <option value="Czechia">Czechia</option>
-            <option value="Denmark">Denmark</option>
-            <option value="Estonia">Estonia</option>
-            <option value="Finland">Finland</option>
-            <option value="France">France</option>
-            <option value="Germany">Germany</option>
-            <option value="Greece">Greece</option>
-            <option value="Hungary">Hungary</option>
-            <option value="Ireland">Ireland</option>
-            <option value="Italy">Italy</option>
-            <option value="Latvia">Latvia</option>
-            <option value="Lithuania">Lithuania</option>
-            <option value="Luxembourg">Luxembourg</option>
-            <option value="Malta">Malta</option>
-            <option value="Netherlands">Netherlands</option>
-            <option value="Poland">Poland</option>
-            <option value="Portugal">Portugal</option>
-            <option value="Romania">Romania</option>
-            <option value="Slovakia">Slovakia</option>
-            <option value="Slovenia">Slovenia</option>
-            <option value="Spain">Spain</option>
-            <option value="Sweden">Sweden</option>
-          </select>
-          <br />
-          <input
-            type="text"
-            name="companyWebsite"
-            placeholder="Company Website"
-            className="p-2 border"
-            onChange={handleChange}
-            required
-          />
-          <br />
-          {role === "provider" && (
+          {!isExistingCompany && (
+            <>
+              <input
+                type="text"
+                name="companyAddress"
+                placeholder="Company Street Address"
+                className="p-2 border"
+                onChange={handleChange}
+                required={!isExistingCompany}
+              />
+              <br />
+              <input
+                type="text"
+                name="companyPostalCode"
+                placeholder="Company Postal Code"
+                className="p-2 border"
+                onChange={handleChange}
+                required
+              />
+              <br />
+              <input
+                type="text"
+                name="companyCity"
+                placeholder="Company City"
+                className="p-2 border"
+                onChange={handleChange}
+                required
+              />
+              <br />
+              <select
+                name="companyCountry"
+                className="p-2 border"
+                onChange={handleChange}
+                required
+              >
+                <option value="">Company Country of Domicile</option>
+                <option value="Austria">Austria</option>
+                <option value="Belgium">Belgium</option>
+                <option value="Bulgaria">Bulgaria</option>
+                <option value="Croatia">Croatia</option>
+                <option value="Cyprus">Cyprus</option>
+                <option value="Czechia">Czechia</option>
+                <option value="Denmark">Denmark</option>
+                <option value="Estonia">Estonia</option>
+                <option value="Finland">Finland</option>
+                <option value="France">France</option>
+                <option value="Germany">Germany</option>
+                <option value="Greece">Greece</option>
+                <option value="Hungary">Hungary</option>
+                <option value="Ireland">Ireland</option>
+                <option value="Italy">Italy</option>
+                <option value="Latvia">Latvia</option>
+                <option value="Lithuania">Lithuania</option>
+                <option value="Luxembourg">Luxembourg</option>
+                <option value="Malta">Malta</option>
+                <option value="Netherlands">Netherlands</option>
+                <option value="Poland">Poland</option>
+                <option value="Portugal">Portugal</option>
+                <option value="Romania">Romania</option>
+                <option value="Slovakia">Slovakia</option>
+                <option value="Slovenia">Slovenia</option>
+                <option value="Spain">Spain</option>
+                <option value="Sweden">Sweden</option>
+              </select>
+              <br />
+              <input
+                type="text"
+                name="companyWebsite"
+                placeholder="Company Website"
+                className="p-2 border"
+                onChange={handleChange}
+                required
+              />
+              <br />
+            </>
+          )}
+          {role === "provider" && !isExistingCompany && (
             <>
               <input
                 type="number"
@@ -248,10 +280,6 @@ export default function Register() {
                 </em>
               </p>
               <br />
-            </>
-          )}
-          {role === "provider" && (
-            <>
               <select
                 name="providerType"
                 className="p-2 border"
@@ -269,10 +297,6 @@ export default function Register() {
                 </option>
               </select>
               <br />
-            </>
-          )}
-          {role === "provider" && (
-            <>
               <input
                 type="number"
                 name="companyProfessionals"
@@ -302,7 +326,7 @@ export default function Register() {
           <input
             type="text"
             name="contactFirstName"
-            placeholder="Primary Contact Person First Name"
+            placeholder="First Name"
             className="p-2 border"
             onChange={handleChange}
             required
@@ -311,7 +335,7 @@ export default function Register() {
           <input
             type="text"
             name="contactLastName"
-            placeholder="Primary Contact Person Last Name"
+            placeholder="Last Name"
             className="p-2 border"
             onChange={handleChange}
             required
@@ -320,7 +344,7 @@ export default function Register() {
           <input
             type="email"
             name="contactEmail"
-            placeholder="Primary Contact Person Email"
+            placeholder="Email"
             className="p-2 border"
             onChange={handleChange}
             required
@@ -329,7 +353,7 @@ export default function Register() {
           <input
             type="text"
             name="contactPosition"
-            placeholder="Primary Contact Person Title/Position in Company"
+            placeholder="Title/Position in Company"
             className="p-2 border"
             onChange={handleChange}
             required
@@ -373,7 +397,7 @@ export default function Register() {
             <input
               type="tel"
               name="phone"
-              placeholder="Primary Contact Person Telephone"
+              placeholder="Telephone"
               className="p-2 border flex-1"
               onChange={handleChange}
               required

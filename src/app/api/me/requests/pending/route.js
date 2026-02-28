@@ -34,25 +34,31 @@ export async function GET() {
     if (!session?.userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
-    const meIdBig = BigInt(session.userId);
 
-    // Read purchaser org meta (for header fields)
-    const me = await prisma.appUser.findUnique({
-      where: { userId: meIdBig },
+    // session.userId is UserAccount.userPkId → resolve purchaser company
+    const ua = await prisma.userAccount.findUnique({
+      where: { userPkId: BigInt(session.userId) },
       select: {
-        winningOfferSelection: true, // for UI display only
-        companyName: true,
+        winningOfferSelection: true,
         companyId: true,
-        companyCountry: true,
+        company: {
+          select: {
+            companyName: true,
+            businessId: true, // business id
+            companyCountry: true,
+          },
+        },
       },
     });
 
-    // READ-ONLY: just fetch PENDING/ON HOLD requests to show in the table.
-    // All lifecycle mutations (expiry, auto-award, contract creation, emails)
-    // are handled exclusively by the cron API.
+    if (!ua?.companyId) {
+      return NextResponse.json({ error: "Company not found" }, { status: 404 });
+    }
+
+    // filter by purchaser Company PK
     const requests = await prisma.request.findMany({
       where: {
-        clientId: meIdBig,
+        clientId: ua.companyId,
         requestState: { in: ["PENDING", "ON HOLD"] },
       },
       orderBy: { dateCreated: "desc" },
@@ -123,30 +129,34 @@ export async function GET() {
         requestCategory: r.requestCategory,
         requestSubcategory: r.requestSubcategory || null,
         assignmentType: r.assignmentType || null,
-        companyName: me?.companyName || null,
-        companyId: me?.companyId || null,
-        companyCountry: me?.companyCountry || null,
+
+        // meta (kept for UI)
+        companyName: ua.company?.companyName || null,
+        businessId: ua.company?.businessId || null,
+        companyCountry: ua.company?.companyCountry || null,
+
         details: r.details || {},
         offersDeadline,
         offersReceived,
         bestOffer,
-        maximumPrice, // number | null
+        maximumPrice,
         requestState: r.requestState,
       };
     });
 
     return NextResponse.json({
-      winningOfferSelection: me?.winningOfferSelection || "Automatic",
-      companyName: me?.companyName || null,
-      companyId: me?.companyId || null,
-      companyCountry: me?.companyCountry || null,
+      // keep your old casing expectation (UI uses this string)
+      winningOfferSelection: ua?.winningOfferSelection || "Automatic",
+      companyName: ua.company?.companyName || null,
+      businessId: ua.company?.businessId || null,
+      companyCountry: ua.company?.companyCountry || null,
       requests: shaped,
     });
   } catch (err) {
     console.error("GET /api/me/requests/pending failed:", err);
     return NextResponse.json(
       { error: "Server error loading pending requests" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

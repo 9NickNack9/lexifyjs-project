@@ -8,7 +8,6 @@ export default function SourcingComments() {
   const router = useRouter();
 
   const initialFormState = {
-    contactPerson: "",
     description: "",
     confidential: "",
     confboxes: [],
@@ -35,8 +34,11 @@ export default function SourcingComments() {
 
   const [formData, setFormData] = useState(initialFormState);
   const [showPreview, setShowPreview] = useState(false);
-  const [contactOptions, setContactOptions] = useState([]);
-  const [company, setCompany] = useState({ name: "", id: "", country: "" });
+  const [company, setCompany] = useState({
+    name: "",
+    businessId: "",
+    country: "",
+  });
   const [submitting, setSubmitting] = useState(false);
 
   // Load company + contacts
@@ -47,24 +49,10 @@ export default function SourcingComments() {
         if (!res.ok) return;
         const me = await res.json();
         setCompany({
-          name: me?.companyName || "",
-          id: me?.companyId || "",
-          country: me?.companyCountry || "",
+          name: me?.company?.companyName || me?.companyName || "",
+          businessId: me?.company?.businessId || "",
+          country: me?.company?.companyCountry || me?.companyCountry || "",
         });
-        const list = Array.isArray(me.companyContactPersons)
-          ? me.companyContactPersons
-          : [];
-        setContactOptions(
-          list
-            .map((p) => {
-              const n = [p.firstName || "", p.lastName || ""]
-                .filter(Boolean)
-                .join(" ")
-                .trim();
-              return n ? { label: n, value: n } : null;
-            })
-            .filter(Boolean)
-        );
       } catch {}
     })();
   }, []);
@@ -125,8 +113,6 @@ export default function SourcingComments() {
   };
 
   const validate = () => {
-    if (!formData.contactPerson)
-      return "Please select a primary contact person.";
     if (!formData.description) return "Please provide the brief description.";
     if (!formData.offerer) return "Please choose which providers can offer.";
     if (!formData.providerCountry)
@@ -174,7 +160,6 @@ export default function SourcingComments() {
         requestCategory: "Help with Contracts",
         requestSubcategory: "Sourcing",
         assignmentType: "Legal review of sourcing agreement",
-        primaryContactPerson: formData.contactPerson,
         scopeOfWork:
           "Legal review of a sourcing agreement provided by a supplier of the Client. The work includes a legal review of the documentation referred to above with proposed changes and legal observations provided to the Client in writing. Additional work (for example, legal advice during further negotiation rounds) is not included.",
         description: formData.description,
@@ -197,7 +182,7 @@ export default function SourcingComments() {
         dateExpired: formData.date,
         details: {
           confidential: formData.confboxes.includes(
-            "Disclosed to Winning Bidder Only"
+            "Disclosed to Winning Bidder Only",
           )
             ? "Yes"
             : "No",
@@ -210,7 +195,7 @@ export default function SourcingComments() {
       const form = new FormData();
       form.append(
         "data",
-        new Blob([JSON.stringify(payload)], { type: "application/json" })
+        new Blob([JSON.stringify(payload)], { type: "application/json" }),
       );
       for (const f of formData.backgroundFiles)
         form.append("backgroundFiles", f, f.name);
@@ -226,7 +211,7 @@ export default function SourcingComments() {
       } catch {}
       if (!res.ok)
         throw new Error(
-          (json && json.error) || text || "Failed to create request."
+          (json && json.error) || text || "Failed to create request.",
         );
 
       alert("LEXIFY Request submitted successfully.");
@@ -270,30 +255,6 @@ export default function SourcingComments() {
       <div className="fw-full max-w-7xl p-6 rounded shadow-2xl text-black bg-white">
         {/* Form Section */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <h4 className="text-md font-medium mb-1 font-semibold">
-              Who is the primary contact person for this LEXIFY Request at your
-              company?{" "}
-              <QuestionMarkTooltip tooltipText="All updates and notifications regarding this LEXIFY Request will be sent to the designated person. If you do not see your name listed below, you can add new contact persons on the 'My Account' page (see My Account in the LEXIFY main menu)." />
-            </h4>
-            <select
-              name="contactPerson"
-              className="w-full border p-2"
-              onChange={handleChange}
-              value={formData.contactPerson}
-              required
-            >
-              <option value="">Select</option>
-              {contactOptions.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <br />
-          <hr />
-          <br />
           <h4 className="text-md font-medium mb-1 font-semibold">
             Please provide a brief description of the product or service you are
             buying with the agreement sent by the supplier. Please also confirm
@@ -701,7 +662,7 @@ export default function SourcingComments() {
                 />{" "}
                 {option}
               </label>
-            )
+            ),
           )}
           {formData.checkboxes.includes("Other:") && (
             <input
@@ -909,14 +870,12 @@ export default function SourcingComments() {
                 {/* Client Name */}
                 <Section title="Client Name, Business Identity Code and Country of Domicile">
                   {formData.confboxes.includes(
-                    "Disclosed to Winning Bidder Only"
+                    "Disclosed to Winning Bidder Only",
                   )
                     ? "Disclosed to Winning Bidder Only"
-                    : formData.contactPerson
-                    ? [company.name, company.id, company.country]
+                    : [company.name, company.businessId, company.country]
                         .filter(Boolean)
-                        .join(", ")
-                    : "-"}
+                        .join(", ") || "-"}
                 </Section>
 
                 {/* Scope of Work */}
@@ -949,7 +908,7 @@ export default function SourcingComments() {
                 {/* Counterparty */}
                 <Section title="Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter">
                   {formData.confboxes.includes(
-                    "Disclosed to Winning Bidder Only"
+                    "Disclosed to Winning Bidder Only",
                   )
                     ? "Disclosed to Winning Bidder Only"
                     : formData.confidential || "-"}
@@ -1030,7 +989,7 @@ export default function SourcingComments() {
                 <Section title="Languages Required for the Performance of the Work">
                   {[
                     ...(formData.checkboxes || []).filter(
-                      (lang) => lang !== "Other:"
+                      (lang) => lang !== "Other:",
                     ),
                     formData.otherLang,
                   ]

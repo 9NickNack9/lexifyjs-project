@@ -1,5 +1,6 @@
 "use client";
 // Uses api/me/contracts/route.js
+import { useEffect, useMemo, useState } from "react";
 import { fmtMoney } from "../utils/format";
 
 function formatDateDDMMYYYY(isoish) {
@@ -77,10 +78,26 @@ function RatingDetails({ label, rating, hasRatings = true }) {
 }
 
 export default function ContractsTable({ rows, onShowContract }) {
-  const enriched = (rows || []).map((c) => ({
-    ...c,
-    providerRating: coerceProviderRating(c),
-  }));
+  const enriched = useMemo(
+    () =>
+      (rows || []).map((c) => ({
+        ...c,
+        providerRating: coerceProviderRating(c),
+      })),
+    [rows],
+  );
+
+  // show 5 initially
+  const PAGE_SIZE = 5;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  // reset when data changes
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [enriched.length]);
+
+  const visibleRows = enriched.slice(0, visibleCount);
+  const canLoadMore = visibleCount < enriched.length;
 
   return (
     <div className="w-full mb-8">
@@ -89,65 +106,96 @@ export default function ContractsTable({ rows, onShowContract }) {
       {enriched.length === 0 ? (
         <div className="p-4 bg-white rounded border text-black">N/A</div>
       ) : (
-        <table className="w-full border-collapse border border-gray-300 bg-white text-black">
-          <thead>
-            <tr className="bg-[#3a3a3c] text-white">
-              <th className="border p-2 text-center">Title</th>
-              <th className="border p-2 text-center">Date of Contract</th>
-              <th className="border p-2 text-center">Legal Service Provider</th>
-              <th className="border p-2 text-center">Contract Price</th>
-              <th className="border p-2 text-center">View LEXIFY Contract</th>
-              <th className="border p-2 text-center">
-                My Rating of the Legal Service Provider on LEXIFY
-              </th>
-              <th className="border p-2 text-center">
-                Aggregate Rating of the Legal Service Provider on LEXIFY
-              </th>
-            </tr>
-          </thead>
-          <tbody>
-            {enriched.map((c) => (
-              <tr key={c.contractId}>
-                <td className="border p-2 text-center">
-                  {c.request?.title || "—"}
-                </td>
-                <td className="border p-2 text-center">
-                  {formatDateDDMMYYYY(c.contractDate)}
-                </td>
-                <td className="border p-2 text-center">
-                  {c.provider?.companyName || "—"}
-                </td>
-                <td className="border p-2 text-center">
-                  {fmtMoney(c.contractPrice, c.contractPriceCurrency)}
-                </td>
-                <td className="border p-2 text-center">
-                  <button
-                    className="bg-[#11999e] text-white px-3 py-1 rounded cursor-pointer"
-                    onClick={() => onShowContract(c)}
-                  >
-                    View
-                  </button>
-                </td>
-
-                <td className="border p-2 text-center">
-                  <RatingDetails
-                    label="My Rating"
-                    rating={c.myRating}
-                    hasRatings={c.myHasRating}
-                  />
-                </td>
-
-                <td className="border p-2 text-center">
-                  <RatingDetails
-                    label="Provider Total Rating"
-                    rating={c.providerRating}
-                    hasRatings={c.providerHasRatings}
-                  />
-                </td>
+        <>
+          <table className="w-full border-collapse border border-gray-300 bg-white text-black">
+            <thead>
+              <tr className="bg-[#3a3a3c] text-white">
+                <th className="border p-2 text-center">Title</th>
+                <th className="border p-2 text-center">Date of Contract</th>
+                <th className="border p-2 text-center">
+                  Legal Service Provider
+                </th>
+                <th className="border p-2 text-center">Contract Price</th>
+                <th className="border p-2 text-center">View LEXIFY Contract</th>
+                <th className="border p-2 text-center">
+                  My Rating of the Legal Service Provider on LEXIFY
+                </th>
+                <th className="border p-2 text-center">
+                  Aggregate Rating of the Legal Service Provider on LEXIFY
+                </th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+
+            <tbody>
+              {visibleRows.map((c) => (
+                <tr key={c.contractId}>
+                  <td className="border p-2 text-center">
+                    {c.request?.title || "—"}
+                  </td>
+
+                  <td className="border p-2 text-center">
+                    {formatDateDDMMYYYY(c.contractDate)}
+                  </td>
+
+                  <td className="border p-2 text-center">
+                    {c.provider?.companyName || "—"}
+                  </td>
+
+                  <td className="border p-2 text-center">
+                    {c.contractPrice != null
+                      ? fmtMoney(c.contractPrice, c.contractPriceCurrency)
+                      : "—"}
+                    {c.contractPriceType
+                      ?.toLowerCase?.()
+                      .startsWith("hourly rate")
+                      ? "/h"
+                      : ""}
+                  </td>
+
+                  <td className="border p-2 text-center">
+                    <button
+                      className="bg-[#11999e] text-white px-3 py-1 rounded cursor-pointer"
+                      onClick={() => onShowContract?.(c)}
+                    >
+                      View
+                    </button>
+                  </td>
+
+                  <td className="border p-2 text-center">
+                    <RatingDetails
+                      label="My rating"
+                      rating={c.myRating}
+                      hasRatings={c.myHasRating}
+                    />
+                  </td>
+
+                  <td className="border p-2 text-center">
+                    <RatingDetails
+                      label="Aggregate rating"
+                      rating={c.providerRating}
+                      hasRatings={c.providerHasRatings}
+                    />
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+
+          {canLoadMore && (
+            <div className="mt-4 flex justify-center">
+              <button
+                className="bg-white text-black px-4 py-2 rounded cursor-pointer"
+                onClick={() =>
+                  setVisibleCount((n) =>
+                    Math.min(n + PAGE_SIZE, enriched.length),
+                  )
+                }
+              >
+                Load more
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

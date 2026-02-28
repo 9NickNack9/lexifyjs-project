@@ -141,7 +141,7 @@ async function uploadBlobToS3(file, prefix = "uploads") {
       Body: Buffer.from(arrayBuf),
       ContentType: file.type || "application/octet-stream",
       ACL: "public-read",
-    })
+    }),
   );
 
   const base = process.env.S3_PUBLIC_BASE_URL;
@@ -184,7 +184,7 @@ export async function POST(req) {
     if (!dataPart) {
       return NextResponse.json(
         { error: "Missing 'data' part" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     try {
@@ -192,7 +192,7 @@ export async function POST(req) {
     } catch {
       return NextResponse.json(
         { error: "Invalid JSON in 'data' part" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     backgroundFilesBlobs = form.getAll("backgroundFiles") || [];
@@ -208,7 +208,6 @@ export async function POST(req) {
   const required = [
     "requestState",
     "requestCategory",
-    "primaryContactPerson",
     "scopeOfWork",
     "description",
     "serviceProviderType",
@@ -234,15 +233,44 @@ export async function POST(req) {
     ) {
       return NextResponse.json(
         { error: `Missing field: ${k}` },
-        { status: 400 }
+        { status: 400 },
       );
     }
   }
 
-  const me = await prisma.appUser.findUnique({
-    where: { userId: BigInt(session.userId) },
-    select: { companyName: true },
+  const userPkId = BigInt(session.userId);
+  const me = await prisma.userAccount.findUnique({
+    where: { userPkId },
+    select: {
+      userPkId: true,
+      firstName: true,
+      lastName: true,
+      companyId: true,
+      company: {
+        select: {
+          companyPkId: true,
+          companyName: true,
+          businessId: true,
+          companyCountry: true,
+        },
+      },
+    },
   });
+  if (!me?.company) {
+    return NextResponse.json(
+      { error: "User company not found" },
+      { status: 400 },
+    );
+  }
+
+  const primaryContactPerson =
+    `${(me.firstName || "").trim()} ${(me.lastName || "").trim()}`.trim();
+  if (!primaryContactPerson) {
+    return NextResponse.json(
+      { error: "User first/last name missing" },
+      { status: 400 },
+    );
+  }
 
   const additionalBackgroundInfo = body.additionalBackgroundInfo ?? "";
 
@@ -250,7 +278,7 @@ export async function POST(req) {
     ? body.backgroundInfoFiles
     : [];
   let supplierCodeOfConductFiles = Array.isArray(
-    body.supplierCodeOfConductFiles
+    body.supplierCodeOfConductFiles,
   )
     ? body.supplierCodeOfConductFiles
     : [];
@@ -275,13 +303,13 @@ export async function POST(req) {
   if (backgroundFilesBlobs.length > 0) {
     backgroundInfoFiles = await processUploads(
       backgroundFilesBlobs,
-      "background"
+      "background",
     );
   }
   if (supplierFilesBlobs.length > 0) {
     supplierCodeOfConductFiles = await processUploads(
       supplierFilesBlobs,
-      "supplier"
+      "supplier",
     );
   }
 
@@ -303,9 +331,12 @@ export async function POST(req) {
       requestCategory: body.requestCategory,
       requestSubcategory,
       assignmentType,
-      clientCompanyName: me?.companyName ?? null,
+      clientCompanyName: me.company.companyName ?? null,
 
-      primaryContactPerson: body.primaryContactPerson,
+      primaryContactPerson,
+      clientCompanyId: me.company.companyPkId,
+      createdByUserId: me.userPkId,
+
       scopeOfWork: body.scopeOfWork,
       description: body.description,
 
@@ -358,7 +389,7 @@ export async function POST(req) {
 
   const reqPracticalCategoryKey = mapRequestToCategory(
     body.requestCategory,
-    requestSubcategory
+    requestSubcategory,
   );
 
   // Fetch Providers with fields needed for gating and notifications
@@ -415,7 +446,7 @@ export async function POST(req) {
       : 0;
     const pRating = getPracticalCategoryTotal(
       p?.providerPracticalRatings,
-      reqPracticalCategoryKey
+      reqPracticalCategoryKey,
     );
 
     const pTypeNorm = normalizeProviderType(p?.providerType);
@@ -467,6 +498,6 @@ export async function POST(req) {
 
   return NextResponse.json(
     { ok: true, requestId: String(created.requestId) },
-    { status: 201 }
+    { status: 201 },
   );
 }

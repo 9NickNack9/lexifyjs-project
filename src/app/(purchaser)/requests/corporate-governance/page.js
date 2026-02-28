@@ -7,7 +7,6 @@ export default function CorporateGovernance() {
   const router = useRouter();
 
   const initialFormState = {
-    contactPerson: "",
     areaboxes: [],
     appDescription: "",
     confidential: "",
@@ -38,10 +37,11 @@ export default function CorporateGovernance() {
   const [formData, setFormData] = useState(initialFormState);
   const [showPreview, setShowPreview] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-
-  // NEW: contacts + company for preview header
-  const [contactOptions, setContactOptions] = useState([]);
-  const [company, setCompany] = useState({ name: "", id: "", country: "" });
+  const [company, setCompany] = useState({
+    name: "",
+    businessId: "",
+    country: "",
+  });
 
   // Load contacts + company from /api/me
   useEffect(() => {
@@ -51,24 +51,10 @@ export default function CorporateGovernance() {
         if (!res.ok) return;
         const me = await res.json();
         setCompany({
-          name: me?.companyName || "",
-          id: me?.companyId || "",
-          country: me?.companyCountry || "",
+          name: me?.company?.companyName || me?.companyName || "",
+          businessId: me?.company?.businessId || "",
+          country: me?.company?.companyCountry || me?.companyCountry || "",
         });
-        const list = Array.isArray(me.companyContactPersons)
-          ? me.companyContactPersons
-          : [];
-        setContactOptions(
-          list
-            .map((p) => {
-              const n = [p.firstName || "", p.lastName || ""]
-                .filter(Boolean)
-                .join(" ")
-                .trim();
-              return n ? { label: n, value: n } : null;
-            })
-            .filter(Boolean)
-        );
       } catch {
         // silent fail -> dropdown will just show "Select"
       }
@@ -131,8 +117,6 @@ export default function CorporateGovernance() {
 
   // Validation
   const validate = () => {
-    if (!formData.contactPerson)
-      return "Please select a primary contact person.";
     if ((formData.areaboxes || []).length === 0)
       return "Please choose at least one support item.";
     if (!formData.offerer) return "Choose which providers can offer.";
@@ -178,7 +162,6 @@ export default function CorporateGovernance() {
       const payload = {
         requestState: "PENDING",
         requestCategory: "Help with Corporate Governance",
-        primaryContactPerson: formData.contactPerson,
         scopeOfWork:
           "Lump sum corporate governance support as specified in the request. " +
           selectedWork,
@@ -206,7 +189,7 @@ export default function CorporateGovernance() {
           policyPurpose: formData.policyDescription || "",
           maximumPrice: formData.maxPrice,
           confidential: formData.confboxes.includes(
-            "Disclosed to Winning Bidder Only"
+            "Disclosed to Winning Bidder Only",
           )
             ? "Yes"
             : "No",
@@ -217,7 +200,7 @@ export default function CorporateGovernance() {
       const form = new FormData();
       form.append(
         "data",
-        new Blob([JSON.stringify(payload)], { type: "application/json" })
+        new Blob([JSON.stringify(payload)], { type: "application/json" }),
       );
       for (const f of formData.backgroundFiles)
         form.append("backgroundFiles", f, f.name);
@@ -234,7 +217,7 @@ export default function CorporateGovernance() {
         throw new Error(
           (json && (json.error || json.message)) ||
             text ||
-            "Failed to create request."
+            "Failed to create request.",
         );
       }
 
@@ -283,31 +266,6 @@ export default function CorporateGovernance() {
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <h4 className="text-md font-medium mb-1 font-semibold">
-              Who is the primary contact person for this LEXIFY Request at your
-              company?{" "}
-              <QuestionMarkTooltip tooltipText="All updates and notifications regarding this LEXIFY Request will be sent to the designated person. If you do not see your name listed below, you can add new contact persons on the 'My Account' page (see My Account in the LEXIFY main menu)." />
-            </h4>
-            <select
-              name="contactPerson"
-              className="w-full border p-2"
-              onChange={handleChange}
-              value={formData.contactPerson}
-              required
-            >
-              <option value="">Select</option>
-              {contactOptions.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <br />
-          <hr />
-          <br />
-          <div>
-            <h4 className="text-md font-medium mb-1 font-semibold">
               What kind of support do you need?
             </h4>
             {[
@@ -348,7 +306,7 @@ export default function CorporateGovernance() {
               </em>
             </p>
             {formData.areaboxes.includes(
-              "Comprehensive legal support with preparing a notification or application regarding a specific matter (for example, registration of new board members or applying for a business license) to the competent authority (including necessary attorney-client communications, preparation of needed documentation and required communications with the competent authority)."
+              "Comprehensive legal support with preparing a notification or application regarding a specific matter (for example, registration of new board members or applying for a business license) to the competent authority (including necessary attorney-client communications, preparation of needed documentation and required communications with the competent authority).",
             ) && (
               <>
                 <br />
@@ -365,7 +323,7 @@ export default function CorporateGovernance() {
               </>
             )}
             {formData.areaboxes.includes(
-              "Preparation of a corporate policy for a specific purpose. The work includes the preparation of the first version of the document(s) and necessary revisions on the basis of the Client's feedback to the Legal Service Provider."
+              "Preparation of a corporate policy for a specific purpose. The work includes the preparation of the first version of the document(s) and necessary revisions on the basis of the Client's feedback to the Legal Service Provider.",
             ) && (
               <>
                 <br />
@@ -384,10 +342,10 @@ export default function CorporateGovernance() {
               </>
             )}
             {(formData.areaboxes.includes(
-              "Comprehensive legal support throughout a shareholders' agreement negotiation process (including, but not limited to, drafting the shareholders' agreement and conducting required negotiations with the other parties to the agreement)."
+              "Comprehensive legal support throughout a shareholders' agreement negotiation process (including, but not limited to, drafting the shareholders' agreement and conducting required negotiations with the other parties to the agreement).",
             ) ||
               formData.areaboxes.includes(
-                "A shareholders' agreement (including revisions based on client feedback)."
+                "A shareholders' agreement (including revisions based on client feedback).",
               )) && (
               <>
                 <br />
@@ -757,7 +715,7 @@ export default function CorporateGovernance() {
                 />{" "}
                 {option}
               </label>
-            )
+            ),
           )}
           {formData.checkboxes.includes("Other:") && (
             <input
@@ -966,14 +924,12 @@ export default function CorporateGovernance() {
                 {/* Client Name */}
                 <Section title="Client Name, Business Identity Code and Country of Domicile">
                   {formData.confboxes.includes(
-                    "Disclosed to Winning Bidder Only"
+                    "Disclosed to Winning Bidder Only",
                   )
                     ? "Disclosed to Winning Bidder Only"
-                    : formData.contactPerson
-                    ? [company.name, company.id, company.country]
+                    : [company.name, company.businessId, company.country]
                         .filter(Boolean)
-                        .join(", ")
-                    : "-"}
+                        .join(", ") || "-"}
                 </Section>
 
                 {/* Scope of Work */}
@@ -1028,14 +984,14 @@ export default function CorporateGovernance() {
 
                 {/* Counterparty */}
                 {(formData.areaboxes.includes(
-                  "Comprehensive legal support throughout a shareholders' agreement negotiation process (including, but not limited to, drafting the shareholders' agreement and conducting required negotiations with the other parties to the agreement)."
+                  "Comprehensive legal support throughout a shareholders' agreement negotiation process (including, but not limited to, drafting the shareholders' agreement and conducting required negotiations with the other parties to the agreement).",
                 ) ||
                   formData.areaboxes.includes(
-                    "A shareholders' agreement (including revisions based on client feedback)."
+                    "A shareholders' agreement (including revisions based on client feedback).",
                   )) && (
                   <Section title="Name, Business Identity Code and Country of Domicile of Other Parties to the Shareholders' Agreement">
                     {formData.confboxes.includes(
-                      "Disclosed to Winning Bidder Only"
+                      "Disclosed to Winning Bidder Only",
                     )
                       ? "Disclosed to Winning Bidder Only"
                       : formData.confidential || "-"}
@@ -1112,7 +1068,7 @@ export default function CorporateGovernance() {
                 <Section title="Languages Required for the Performance of the Work">
                   {[
                     ...(formData.checkboxes || []).filter(
-                      (lang) => lang !== "Other:"
+                      (lang) => lang !== "Other:",
                     ),
                     formData.otherLang,
                   ]

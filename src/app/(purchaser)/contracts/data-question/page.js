@@ -8,7 +8,6 @@ export default function DataQuestion() {
   const router = useRouter();
 
   const initialFormState = {
-    contactPerson: "",
     description: "",
     background: "",
     backgroundFiles: [],
@@ -32,10 +31,11 @@ export default function DataQuestion() {
   const [formData, setFormData] = useState(initialFormState);
   const [showPreview, setShowPreview] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-
-  // contacts + company
-  const [contactOptions, setContactOptions] = useState([]);
-  const [company, setCompany] = useState({ name: "", id: "", country: "" });
+  const [company, setCompany] = useState({
+    name: "",
+    businessId: "",
+    country: "",
+  });
 
   useEffect(() => {
     (async () => {
@@ -44,24 +44,10 @@ export default function DataQuestion() {
         if (!res.ok) return;
         const me = await res.json();
         setCompany({
-          name: me?.companyName || "",
-          id: me?.companyId || "",
-          country: me?.companyCountry || "",
+          name: me?.company?.companyName || me?.companyName || "",
+          businessId: me?.company?.businessId || "",
+          country: me?.company?.companyCountry || me?.companyCountry || "",
         });
-        const list = Array.isArray(me.companyContactPersons)
-          ? me.companyContactPersons
-          : [];
-        setContactOptions(
-          list
-            .map((p) => {
-              const n = [p.firstName || "", p.lastName || ""]
-                .filter(Boolean)
-                .join(" ")
-                .trim();
-              return n ? { label: n, value: n } : null;
-            })
-            .filter(Boolean),
-        );
       } catch {}
     })();
   }, []);
@@ -115,8 +101,6 @@ export default function DataQuestion() {
 
   // validate
   const validate = () => {
-    if (!formData.contactPerson)
-      return "Please select a primary contact person.";
     if (!formData.description) return "Please type your data privacy question.";
     if (!formData.offerer) return "Choose which providers can offer.";
     if (!formData.providerCountry) return "Choose domestic/foreign offers.";
@@ -159,7 +143,6 @@ export default function DataQuestion() {
         requestState: "PENDING",
         requestCategory: "Help with Personal Data Protection",
         requestSubcategory: "Specific Privacy related Question",
-        primaryContactPerson: formData.contactPerson,
         scopeOfWork:
           "Legal support for the Client with the following specific data privacy related question/inquiry:" +
           formData.description,
@@ -251,31 +234,6 @@ export default function DataQuestion() {
       <div className="w-full max-w-7xl p-6 rounded shadow-2xl bg-white text-black">
         {/* Form Section */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <h4 className="text-md font-medium mb-1 font-semibold">
-              Who is the primary contact person for this LEXIFY Request at your
-              company?{" "}
-              <QuestionMarkTooltip tooltipText="All updates and notifications regarding this LEXIFY Request will be sent to the designated person. If you do not see your name listed below, you can add new contact persons on the 'My Account' page (see My Account in the LEXIFY main menu)." />
-            </h4>
-            <select
-              name="contactPerson"
-              className="w-full border p-2"
-              onChange={handleChange}
-              value={formData.contactPerson}
-              required
-            >
-              <option value="">Select</option>
-              {contactOptions.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <br />
-          <hr />
-          <br />
           <h4 className="text-md font-medium mb-1 font-semibold">
             Please type below the data privacy related question or inquiry with
             which you need legal support{" "}
@@ -808,11 +766,9 @@ export default function DataQuestion() {
               <div id="lexify-preview" className="space-y-6 text-black p-8">
                 {/* Client Name */}
                 <Section title="Client Name, Business Identity Code and Country of Domicile">
-                  {formData.contactPerson
-                    ? [company.name, company.id, company.country]
-                        .filter(Boolean)
-                        .join(", ")
-                    : "-"}
+                  {[company.name, company.businessId, company.country]
+                    .filter(Boolean)
+                    .join(", ") || "-"}
                 </Section>
 
                 {/* Scope of Work */}

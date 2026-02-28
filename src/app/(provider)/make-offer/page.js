@@ -536,11 +536,9 @@ export default function MakeOffer() {
 
   const [loading, setLoading] = useState(true);
   const [request, setRequest] = useState(null);
-  const [contacts, setContacts] = useState([]);
   const [defs, setDefs] = useState(null);
 
   // form state
-  const [offerLawyer, setOfferLawyer] = useState("");
   const [offerPrice, setOfferPrice] = useState("");
   const [offerExpectedPrice, setOfferExpectedPrice] = useState("");
   const [offerTitle, setOfferTitle] = useState("");
@@ -555,7 +553,10 @@ export default function MakeOffer() {
   const paymentRate = (request?.paymentRate || "").toLowerCase();
   const isCapped = paymentRate.startsWith("capped price");
   const deadline =
-    request?.details?.offersDeadline || request?.dateExpired || null;
+    request?.details?.offersDeadline ||
+    request?.dateExpired ||
+    request?.offersDeadline ||
+    null;
 
   const providerRefs = (request?.providerReferences || "").trim().toLowerCase();
   const requires1 = providerRefs.startsWith("yes, 1");
@@ -571,22 +572,18 @@ export default function MakeOffer() {
     (async () => {
       try {
         setLoading(true);
-        const [reqRes, conRes, defRes] = await Promise.all([
+        const [reqRes, defRes] = await Promise.all([
           fetch(`/api/requests/${requestId}`, { cache: "no-store" }),
-          fetch(`/api/me/contacts`, { cache: "no-store" }),
           fetch(`/previews/all-previews.json`, { cache: "no-store" }),
         ]);
         const reqJson = reqRes.ok ? await reqRes.json() : null;
-        const conJson = conRes.ok ? await conRes.json() : { contacts: [] };
         const defJson = defRes.ok ? await defRes.json() : null;
         if (!active) return;
         setRequest(reqJson);
-        setContacts(Array.isArray(conJson?.contacts) ? conJson.contacts : []);
         setDefs(defJson);
       } catch {
         if (!active) return;
         setRequest(null);
-        setContacts([]);
         setDefs(null);
       } finally {
         if (!active) return;
@@ -623,7 +620,6 @@ export default function MakeOffer() {
 
   const canSubmit =
     !!requestId &&
-    !!offerLawyer &&
     !!offerPrice &&
     !!offerTitle &&
     (!isCapped || !!offerExpectedPrice) &&
@@ -653,7 +649,6 @@ export default function MakeOffer() {
 
       const payload = {
         requestId: requestId,
-        offerLawyer,
         offerPrice,
         offerTitle,
         providerAdditionalInfo,
@@ -888,25 +883,6 @@ export default function MakeOffer() {
               placeholder="Insert offer title"
               required
             />
-          </div>
-
-          <div>
-            <label className="block font-semibold mb-2">
-              Select Partner/Lawyer Responsible for the Offer
-            </label>
-            <select
-              className="w-full border p-2 rounded"
-              value={offerLawyer}
-              onChange={(e) => setOfferLawyer(e.target.value)}
-              required
-            >
-              <option value="">Select Partner/Lawyer</option>
-              {contacts.map((name) => (
-                <option key={name} value={name}>
-                  {name}
-                </option>
-              ))}
-            </select>
           </div>
 
           <div>

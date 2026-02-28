@@ -1,4 +1,3 @@
-// app/api/me/legal-panel/route.js
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
@@ -9,38 +8,30 @@ export async function POST(req) {
   if (!session?.userId)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
-  let body;
-  try {
-    body = await req.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON" }, { status: 400 });
-  }
-
+  const body = await req.json().catch(() => null);
   const name = (body?.companyName || "").trim();
   if (!name)
     return NextResponse.json(
       { error: "companyName required" },
-      { status: 400 }
+      { status: 400 },
     );
 
-  const me = await prisma.appUser.findUnique({
-    where: { userId: BigInt(session.userId) },
+  const me = await prisma.userAccount.findUnique({
+    where: { userPkId: BigInt(session.userId) },
     select: { legalPanelServiceProviders: true },
   });
 
   const current = Array.isArray(me?.legalPanelServiceProviders)
     ? me.legalPanelServiceProviders
     : [];
-  if (current.includes(name)) {
-    return NextResponse.json({ ok: true, legalPanelServiceProviders: current });
+  const next = current.includes(name) ? current : [...current, name]; // ✅ companyName string
+
+  if (next !== current) {
+    await prisma.userAccount.update({
+      where: { userPkId: BigInt(session.userId) },
+      data: { legalPanelServiceProviders: next },
+    });
   }
-
-  const next = [...current, name];
-
-  await prisma.appUser.update({
-    where: { userId: BigInt(session.userId) },
-    data: { legalPanelServiceProviders: next },
-  });
 
   return NextResponse.json({ ok: true, legalPanelServiceProviders: next });
 }
@@ -55,11 +46,11 @@ export async function DELETE(req) {
   if (!name)
     return NextResponse.json(
       { error: "companyName required" },
-      { status: 400 }
+      { status: 400 },
     );
 
-  const me = await prisma.appUser.findUnique({
-    where: { userId: BigInt(session.userId) },
+  const me = await prisma.userAccount.findUnique({
+    where: { userPkId: BigInt(session.userId) },
     select: { legalPanelServiceProviders: true },
   });
 
@@ -68,8 +59,8 @@ export async function DELETE(req) {
     : [];
   const next = current.filter((n) => n !== name);
 
-  await prisma.appUser.update({
-    where: { userId: BigInt(session.userId) },
+  await prisma.userAccount.update({
+    where: { userPkId: BigInt(session.userId) },
     data: { legalPanelServiceProviders: next },
   });
 

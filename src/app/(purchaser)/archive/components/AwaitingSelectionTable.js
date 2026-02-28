@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { fmtMoney, formatTimeUntil } from "../utils/format";
 import NarrowTooltip from "../../../components/NarrowTooltip";
 
@@ -33,6 +33,18 @@ export default function AwaitingSelectionTable({
 
   const [fullOfferPopupOpen, setFullOfferPopupOpen] = useState(false);
   const [fullOfferPopupData, setFullOfferPopupData] = useState(null);
+
+  const safeRows = useMemo(() => rows || [], [rows]);
+
+  const PAGE_SIZE = 5;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [safeRows.length]);
+
+  const visibleRows = safeRows.slice(0, visibleCount);
+  const canLoadMore = visibleCount < safeRows.length;
 
   const postSelect = async (requestId, offerId, extra = {}) => {
     const res = await fetch("/api/me/requests/awaiting/select", {
@@ -257,240 +269,266 @@ export default function AwaitingSelectionTable({
         Awaiting Winning Offer Selection
       </h2>
 
-      {rows.length === 0 ? (
+      {safeRows.length === 0 ? (
         <div className="p-4 bg-white rounded border text-black">N/A</div>
       ) : (
-        <table className="w-full border-collapse border border-gray-300 bg-white text-black">
-          <thead>
-            <tr className="bg-[#3a3a3c] text-white">
-              <th className="border p-2 text-center">Title</th>
-              <th className="border p-2 text-center">Date Created</th>
-              <th className="border p-2 text-center">Date Expired</th>
-              <th className="border p-2 text-center">
-                My Max. Price (VAT 0%){" "}
-                <NarrowTooltip tooltipText="If you have included a maximum price for the legal service in your LEXIFY Request, the maximum price is displayed here. A maximum price can be set for lump sum offers only. " />
-              </th>
-              <th className="border p-2 text-center">
-                5 Best Offers{" "}
-                <NarrowTooltip tooltipText="You can click a legal service provider's company name to access their website." />
-              </th>
-              <th className="border p-2 text-center">
-                Time until Automatic Rejection of All Offers{" "}
-                <NarrowTooltip tooltipText="If you need additional time to decide, click the 'I need more time' button to extend your offer selection deadline by 7 days (168 hours). This extension can only be used once." />
-              </th>
-              <th className="border p-2 text-center">Cancel LEXIFY Request</th>
-            </tr>
-          </thead>
-          <tbody>
-            {rows.map((r) => {
-              const timeLeft =
-                r.requestState === "CONFLICT_CHECK"
-                  ? r.pausedRemainingMs != null
-                    ? `Paused (${formatTimeUntil(
-                        Date.now() + r.pausedRemainingMs,
-                      )})`
-                    : "Paused"
-                  : r.acceptDeadline
-                    ? formatTimeUntil(r.acceptDeadline)
-                    : "";
+        <>
+          <table className="w-full border-collapse border border-gray-300 bg-white text-black">
+            <thead>
+              <tr className="bg-[#3a3a3c] text-white">
+                <th className="border p-2 text-center">Title</th>
+                <th className="border p-2 text-center">Date Created</th>
+                <th className="border p-2 text-center">Date Expired</th>
+                <th className="border p-2 text-center">
+                  My Max. Price (VAT 0%){" "}
+                  <NarrowTooltip tooltipText="If you have included a maximum price for the legal service in your LEXIFY Request, the maximum price is displayed here. A maximum price can be set for lump sum offers only. " />
+                </th>
+                <th className="border p-2 text-center">
+                  5 Best Offers{" "}
+                  <NarrowTooltip tooltipText="You can click a legal service provider's company name to access their website." />
+                </th>
+                <th className="border p-2 text-center">
+                  Time until Automatic Rejection of All Offers{" "}
+                  <NarrowTooltip tooltipText="If you need additional time to decide, click the 'I need more time' button to extend your offer selection deadline by 7 days (168 hours). This extension can only be used once." />
+                </th>
+                <th className="border p-2 text-center">
+                  Cancel LEXIFY Request
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {visibleRows.map((r) => {
+                const timeLeft =
+                  r.requestState === "CONFLICT_CHECK"
+                    ? r.pausedRemainingMs != null
+                      ? `Paused (${formatTimeUntil(
+                          Date.now() + r.pausedRemainingMs,
+                        )})`
+                      : "Paused"
+                    : r.acceptDeadline
+                      ? formatTimeUntil(r.acceptDeadline)
+                      : "";
 
-              return (
-                <tr key={r.requestId}>
-                  <td className="border p-2 text-center">{r.requestTitle}</td>
+                return (
+                  <tr key={r.requestId}>
+                    <td className="border p-2 text-center">{r.requestTitle}</td>
 
-                  <td className="border p-2 text-center">
-                    {formatDateDDMMYYYY(r.dateCreated)}
-                  </td>
+                    <td className="border p-2 text-center">
+                      {formatDateDDMMYYYY(r.dateCreated)}
+                    </td>
 
-                  <td className="border p-2 text-center">
-                    {formatDateDDMMYYYY(r.dateExpired)}
-                  </td>
+                    <td className="border p-2 text-center">
+                      {formatDateDDMMYYYY(r.dateExpired)}
+                    </td>
 
-                  <td className="border p-2 text-center">
-                    {r.maxPrice != null && r.maxPrice !== ""
-                      ? fmtMoney(r.maxPrice, r.currency)
-                      : "N/A"}
-                  </td>
+                    <td className="border p-2 text-center">
+                      {r.maxPrice != null && r.maxPrice !== ""
+                        ? fmtMoney(r.maxPrice, r.currency)
+                        : "N/A"}
+                    </td>
 
-                  <td className="border p-2 align-top">
-                    {r.requestState === "CONFLICT_CHECK" && (
-                      <div className="mb-2 text-sm text-black">
-                        Thank you for selecting your legal service provider.
-                        LEXIFY will next verify with your selected provider
-                        whether a conflict exists that would prevent the
-                        provider from performing the assignment. If no conflict
-                        is found, LEXIFY will send the LEXIFY Contract for the
-                        assignment to you and your selected provider without
-                        delay. If a conflict is identified, you will be notified
-                        accordingly and requested to select an alternative
-                        service provider from the received offers.
-                      </div>
-                    )}
+                    <td className="border p-2 align-top">
+                      {r.requestState === "CONFLICT_CHECK" && (
+                        <div className="mb-2 text-sm text-black">
+                          Thank you for selecting your legal service provider.
+                          LEXIFY will next verify with your selected provider
+                          whether a conflict exists that would prevent the
+                          provider from performing the assignment. If no
+                          conflict is found, LEXIFY will send the LEXIFY
+                          Contract for the assignment to you and your selected
+                          provider without delay. If a conflict is identified,
+                          you will be notified accordingly and requested to
+                          select an alternative service provider from the
+                          received offers.
+                        </div>
+                      )}
 
-                    {(() => {
-                      // During conflict check: only show the selected offer (if we know its id)
-                      const offers =
-                        r.requestState === "CONFLICT_CHECK" && r.selectedOfferId
-                          ? (r.topOffers || []).filter(
-                              (o) =>
-                                String(o.offerId) === String(r.selectedOfferId),
-                            )
-                          : r.topOffers || [];
+                      {(() => {
+                        // During conflict check: only show the selected offer (if we know its id)
+                        const offers =
+                          r.requestState === "CONFLICT_CHECK" &&
+                          r.selectedOfferId
+                            ? (r.topOffers || []).filter(
+                                (o) =>
+                                  String(o.offerId) ===
+                                  String(r.selectedOfferId),
+                              )
+                            : r.topOffers || [];
 
-                      if (!Array.isArray(offers) || offers.length === 0)
-                        return "—";
+                        if (!Array.isArray(offers) || offers.length === 0)
+                          return "—";
 
-                      return (
-                        <ul className="space-y-2">
-                          {offers.map((o) => (
-                            <li key={o.offerId} className="text-sm">
-                              <div className="flex items-center gap-2">
-                                {/* Select button */}
-                                <button
-                                  className={`px-3 py-1 rounded cursor-pointer ${
-                                    r.requestState === "CONFLICT_CHECK"
-                                      ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                                      : "bg-[#11999e] text-white"
-                                  }`}
-                                  disabled={r.requestState === "CONFLICT_CHECK"}
-                                  onClick={() => confirmAndSelect(r, o)}
-                                >
-                                  Select
-                                </button>
+                        return (
+                          <ul className="space-y-2">
+                            {offers.map((o) => (
+                              <li key={o.offerId} className="text-sm">
+                                <div className="flex items-center gap-2">
+                                  {/* Select button */}
+                                  <button
+                                    className={`px-3 py-1 rounded cursor-pointer ${
+                                      r.requestState === "CONFLICT_CHECK"
+                                        ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                                        : "bg-[#11999e] text-white"
+                                    }`}
+                                    disabled={
+                                      r.requestState === "CONFLICT_CHECK"
+                                    }
+                                    onClick={() => confirmAndSelect(r, o)}
+                                  >
+                                    Select
+                                  </button>
 
-                                {/* Summary line: price + company + rating */}
-                                <div className="flex-1">
-                                  <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                    <span className="text-md">
-                                      {fmtMoney(o.offeredPrice, r.currency)}
-                                    </span>
+                                  {/* Summary line: price + company + rating */}
+                                  <div className="flex-1">
+                                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                      <span className="text-md">
+                                        {fmtMoney(o.offeredPrice, r.currency)}
+                                      </span>
 
-                                    <span>(</span>
-                                    {o.providerCompanyWebsite ? (
-                                      <a
-                                        href={o.providerCompanyWebsite}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-blue-600 hover:underline cursor-pointer"
-                                      >
-                                        {o.providerCompanyName}
-                                      </a>
-                                    ) : (
-                                      <span>{o.providerCompanyName}</span>
-                                    )}
+                                      <span>(</span>
+                                      {o.providerCompanyWebsite ? (
+                                        <a
+                                          href={o.providerCompanyWebsite}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-blue-600 hover:underline cursor-pointer"
+                                        >
+                                          {o.providerCompanyName}
+                                        </a>
+                                      ) : (
+                                        <span>{o.providerCompanyName}</span>
+                                      )}
 
-                                    <span>/</span>
+                                      <span>/</span>
 
-                                    {/* Category rating (NON-clickable) */}
-                                    {(() => {
-                                      const categoryKey = mapRequestToCategory(
-                                        r.requestCategory,
-                                        r.requestSubcategory,
-                                      );
-
-                                      const practicalMap =
-                                        normalizePracticalRatings(
-                                          o.providerPracticalRatings,
-                                        );
-                                      const categoryEntry =
-                                        practicalMap?.[categoryKey];
-                                      const categoryTotal =
-                                        getCategoryTotal(categoryEntry);
-
-                                      const ratingText =
-                                        categoryTotal == null
-                                          ? "No Ratings Yet"
-                                          : `${Number(categoryTotal).toFixed(2)} / 5`;
-
-                                      return (
-                                        <span>LEXIFY Rating: {ratingText}</span>
-                                      );
-                                    })()}
-
-                                    <span>)</span>
-
-                                    {/* Full offer details button */}
-                                    <button
-                                      type="button"
-                                      className="ml-2 px-3 py-1 rounded bg-[#11999e] text-white cursor-pointer"
-                                      onClick={() => {
+                                      {/* Category rating (NON-clickable) */}
+                                      {(() => {
                                         const categoryKey =
                                           mapRequestToCategory(
                                             r.requestCategory,
                                             r.requestSubcategory,
                                           );
-                                        setFullOfferPopupData({
-                                          offer: o,
-                                          request: r,
-                                          categoryKey,
-                                        });
-                                        setFullOfferPopupOpen(true);
 
-                                        // Reset expanders (reuse the same expander state you already have for rating UI)
-                                        setPopupShowTotalBreakdown(false);
-                                        setPopupExpandedCategories({});
-                                      }}
-                                    >
-                                      Show full offer details
-                                    </button>
+                                        const practicalMap =
+                                          normalizePracticalRatings(
+                                            o.providerPracticalRatings,
+                                          );
+                                        const categoryEntry =
+                                          practicalMap?.[categoryKey];
+                                        const categoryTotal =
+                                          getCategoryTotal(categoryEntry);
+
+                                        const ratingText =
+                                          categoryTotal == null
+                                            ? "No Ratings Yet"
+                                            : `${Number(categoryTotal).toFixed(2)} / 5`;
+
+                                        return (
+                                          <span>
+                                            LEXIFY Rating: {ratingText}
+                                          </span>
+                                        );
+                                      })()}
+
+                                      <span>)</span>
+
+                                      {/* Full offer details button */}
+                                      <button
+                                        type="button"
+                                        className="ml-2 px-3 py-1 rounded bg-[#11999e] text-white cursor-pointer"
+                                        onClick={() => {
+                                          const categoryKey =
+                                            mapRequestToCategory(
+                                              r.requestCategory,
+                                              r.requestSubcategory,
+                                            );
+                                          setFullOfferPopupData({
+                                            offer: o,
+                                            request: r,
+                                            categoryKey,
+                                          });
+                                          setFullOfferPopupOpen(true);
+
+                                          // Reset expanders (reuse the same expander state you already have for rating UI)
+                                          setPopupShowTotalBreakdown(false);
+                                          setPopupExpandedCategories({});
+                                        }}
+                                      >
+                                        Show full offer details
+                                      </button>
+                                    </div>
                                   </div>
                                 </div>
-                              </div>
-                            </li>
-                          ))}
-                        </ul>
-                      );
-                    })()}
-                  </td>
+                              </li>
+                            ))}
+                          </ul>
+                        );
+                      })()}
+                    </td>
 
-                  <td
-                    className="border p-2 text-center"
-                    title={
-                      r.acceptDeadline
-                        ? new Date(r.acceptDeadline).toString()
-                        : ""
-                    }
-                  >
-                    <div className="flex items-center justify-center gap-2">
-                      <span>{timeLeft || "Expired"}</span>
-                      {r.requestState === "ON HOLD" && timeLeft && (
+                    <td
+                      className="border p-2 text-center"
+                      title={
+                        r.acceptDeadline
+                          ? new Date(r.acceptDeadline).toString()
+                          : ""
+                      }
+                    >
+                      <div className="flex items-center justify-center gap-2">
+                        <span>{timeLeft || "Expired"}</span>
+                        {r.requestState === "ON HOLD" && timeLeft && (
+                          <button
+                            className={`px-2 py-1 rounded text-white ${
+                              r.canExtend
+                                ? "bg-[#11999e] cursor-pointer"
+                                : "bg-gray-400 cursor-not-allowed"
+                            }`}
+                            disabled={!r.canExtend}
+                            onClick={() => handleExtend(r.requestId)}
+                            title={
+                              r.canExtend
+                                ? "Adds 24 hours. Can be used only once."
+                                : r.extendedOnce
+                                  ? "Already extended once."
+                                  : "Extension not available."
+                            }
+                          >
+                            I need more time
+                          </button>
+                        )}
+                      </div>
+                    </td>
+
+                    <td className="border p-2 text-center">
+                      <div className="flex items-center justify-center gap-2">
                         <button
-                          className={`px-2 py-1 rounded text-white ${
-                            r.canExtend
-                              ? "bg-[#11999e] cursor-pointer"
-                              : "bg-gray-400 cursor-not-allowed"
-                          }`}
-                          disabled={!r.canExtend}
-                          onClick={() => handleExtend(r.requestId)}
-                          title={
-                            r.canExtend
-                              ? "Adds 24 hours. Can be used only once."
-                              : r.extendedOnce
-                                ? "Already extended once."
-                                : "Extension not available."
-                          }
+                          className="bg-red-500 text-white px-3 py-1 rounded cursor-pointer"
+                          onClick={() => onCancel?.(r.requestId)}
                         >
-                          I need more time
+                          Cancel
                         </button>
-                      )}
-                    </div>
-                  </td>
-
-                  <td className="border p-2 text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      <button
-                        className="bg-red-500 text-white px-3 py-1 rounded cursor-pointer"
-                        onClick={() => onCancel?.(r.requestId)}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </td>
-                </tr>
-              );
-            })}
-          </tbody>
-        </table>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+          {canLoadMore && (
+            <div className="mt-4 flex justify-center">
+              <button
+                className="bg-[#11999e] text-white px-4 py-2 rounded cursor-pointer"
+                onClick={() =>
+                  setVisibleCount((n) =>
+                    Math.min(n + PAGE_SIZE, safeRows.length),
+                  )
+                }
+              >
+                Load more
+              </button>
+            </div>
+          )}
+        </>
       )}
       {modalOpen && modalRow && modalOffer && (
         <div className="fixed inset-0 bg-[#11999e] bg-opacity-40 flex items-center justify-center z-50">

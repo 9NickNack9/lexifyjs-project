@@ -35,9 +35,10 @@ export default withAuth(
     }
 
     // 3) If logged in but registration is pending (non-admin), force screening
+    const rs = String(token?.registerStatus || "").toUpperCase();
     if (
       token &&
-      token.registerStatus === "pending" &&
+      rs === "PENDING" &&
       token.role !== "ADMIN" &&
       pathname !== "/register-screening"
     ) {
@@ -56,7 +57,7 @@ export default withAuth(
     // Let the function above decide what to do; don't auto-block here
     callbacks: { authorized: () => true },
     pages: { signIn: "/login" },
-  }
+  },
 );
 
 // Apply to "/" explicitly and to (most) other pages; exclude APIs & static assets

@@ -1,8 +1,81 @@
+// app/api/provider/requests/available/route.js
+export const runtime = "nodejs";
+
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 
+/** BigInt-safe JSON + no-store */
+const safeJson = (data, status = 200) =>
+  new NextResponse(
+    JSON.stringify(data, (_, v) => (typeof v === "bigint" ? v.toString() : v)),
+    {
+      status,
+      headers: {
+        "content-type": "application/json",
+        "cache-control": "no-store",
+      },
+    },
+  );
+
+// -------------------------
+// Helpers
+// -------------------------
+
+function toStringArray(val) {
+  if (Array.isArray(val)) return val.map(String).filter(Boolean);
+  if (!val) return [];
+  if (typeof val === "string") {
+    try {
+      const parsed = JSON.parse(val);
+      return Array.isArray(parsed) ? parsed.map(String).filter(Boolean) : [val];
+    } catch {
+      return [val];
+    }
+  }
+  if (typeof val === "object") {
+    if (Array.isArray(val.set)) return val.set.map(String).filter(Boolean);
+    if (Array.isArray(val.value)) return val.value.map(String).filter(Boolean);
+  }
+  return [];
+}
+
+function normalizePracticalRatings(pr) {
+  if (!pr) return {};
+  if (Array.isArray(pr)) {
+    // Some older writes store as array; try to convert to map if possible
+    // If it’s already [{ key, ... }], we’ll do a best-effort conversion.
+    const out = {};
+    for (const row of pr) {
+      const k = row?.categoryKey || row?.key || row?.category;
+      if (k) out[k] = row;
+    }
+    return out;
+  }
+  if (typeof pr === "string") {
+    try {
+      const parsed = JSON.parse(pr);
+      return normalizePracticalRatings(parsed);
+    } catch {
+      return {};
+    }
+  }
+  if (typeof pr === "object") return pr;
+  return {};
+}
+
+function getPracticalCategoryTotal(providerPracticalRatings, categoryKey) {
+  const practicalMap = normalizePracticalRatings(providerPracticalRatings);
+  const entry = practicalMap?.[categoryKey];
+  const total =
+    entry?.total ?? entry?.providerTotalRating ?? entry?.totalRating ?? null;
+
+  const n = Number(total);
+  return Number.isFinite(n) ? n : 0;
+}
+
+// Map request category/subcategory into the practical rating key used in providerPracticalRatings
 function mapRequestToCategory(requestCategory, requestSubcategory) {
   const sub = (requestSubcategory || "").trim();
   const cat = (requestCategory || "").trim();
@@ -30,47 +103,11 @@ function mapRequestToCategory(requestCategory, requestSubcategory) {
   return sub || cat || "Other";
 }
 
-function normalizePracticalRatings(pr) {
-  const map = {};
-
-  if (Array.isArray(pr)) {
-    for (const item of pr) {
-      const key = (
-        item?.category ||
-        item?.categoryLabel ||
-        item?.name ||
-        ""
-      ).trim();
-      if (key) map[key] = item;
-    }
-    return map;
-  }
-
-  if (pr && typeof pr === "object") {
-    for (const [key, val] of Object.entries(pr)) {
-      if (key) map[key] = val;
-    }
-  }
-
-  return map;
-}
-
-function getPracticalCategoryTotal(providerPracticalRatings, categoryKey) {
-  const practicalMap = normalizePracticalRatings(providerPracticalRatings);
-  const entry = practicalMap?.[categoryKey];
-
-  const total =
-    entry?.total ?? entry?.providerTotalRating ?? entry?.totalRating ?? null;
-
-  const n = Number(total);
-  return Number.isFinite(n) ? n : 0;
-}
-
 // Parse "Any", "Any Age", "≥5", "5" → number (min years) or 0 for Any
 function parseMinFromLabel(label) {
   if (label == null) return null;
   const s = String(label).trim();
-  if (/^any(\s+age)?/i.test(s)) return 0; // "Any" or "Any Age"
+  if (/^any(\s+age)?/i.test(s)) return 0;
   const m = s.match(/(\d+)/);
   return m ? Number(m[1]) : null;
 }
@@ -87,250 +124,292 @@ function normalizeProviderType(value) {
   if (!s) return "";
   if (s === "all") return "all";
 
-  // remove duplicate whitespace/hyphens for pattern checks
   const simple = s.replace(/[_-]+/g, "-").replace(/\s+/g, " ").trim();
 
   if (simple.includes("attorney")) return "attorneys-at-law";
   if (simple.startsWith("law firm") || simple.startsWith("law-firm"))
     return "law firm";
   if (simple.startsWith("law firms") || simple.startsWith("law-firms"))
-    return "law firm"; // plural → singular
+    return "law firm";
 
-  // fall back to raw simplified string
   return simple;
 }
 
-export async function GET(req) {
-  const session = await getServerSession(authOptions);
-  if (!session?.userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+/** Normalize purchaser preferred providers into { [area]: string[] } */
+function normalizePreferredToAreaMap(value) {
+  const out = {};
+  if (!value) return out;
 
-  const { searchParams } = new URL(req.url);
-  const category = searchParams.get("category") || "";
-  const subcategory = searchParams.get("subcategory") || "";
-  const assignment = searchParams.get("assignment") || "";
-  const now = new Date();
-
-  // Current user
-  const me = await prisma.appUser.findUnique({
-    where: { userId: Number(session.userId) },
-    select: {
-      role: true,
-      companyProfessionals: true,
-      providerTotalRating: true,
-      providerPracticalRatings: true,
-      companyAge: true,
-      providerType: true,
-      companyName: true, // needed for blocked/preferred/panel checks
-    },
-  });
-
-  const myRole = (session.role || me?.role || "").toUpperCase();
-  const myCompanyName = (me?.companyName || "").trim();
-
-  // Providers: collect requestIds they've already offered on
-  let alreadyOfferedIds = [];
-  if (myRole === "PROVIDER") {
-    let providerIdBigInt;
-    try {
-      providerIdBigInt = BigInt(String(session.userId));
-    } catch {
-      return NextResponse.json({ requests: [] });
+  // Legacy: [{ companyName, areasOfLaw: [] }]
+  if (Array.isArray(value)) {
+    for (const row of value) {
+      const company = row?.companyName;
+      for (const area of row?.areasOfLaw || []) {
+        if (!company || !area) continue;
+        if (!Array.isArray(out[area])) out[area] = [];
+        if (!out[area].includes(company)) out[area].push(company);
+      }
     }
-    const myOffers = await prisma.offer.findMany({
-      where: { provider: { userId: providerIdBigInt } },
-      select: { request: { select: { requestId: true } } },
-    });
-    alreadyOfferedIds = myOffers
-      .map((o) => o.request?.requestId)
-      .filter((id) => id != null);
+    return out;
   }
 
-  // Base where
-  const baseWhere = {
-    requestState: "PENDING",
-    dateExpired: { gt: now },
-    ...(category && { requestCategory: category }),
-    ...(subcategory && { requestSubcategory: subcategory }),
-    ...(assignment && {
-      OR: [
-        { details: { path: ["assignmentType"], equals: assignment } },
-        { assignmentType: assignment },
-      ],
-    }),
-  };
+  // Object: { [area]: string | string[] }
+  if (typeof value === "object") {
+    for (const [area, v] of Object.entries(value)) {
+      if (!area) continue;
+      if (Array.isArray(v)) {
+        const uniq = [];
+        for (const name of v) {
+          if (typeof name === "string" && name.trim() && !uniq.includes(name))
+            uniq.push(name.trim());
+        }
+        if (uniq.length) out[area] = uniq;
+      } else if (typeof v === "string" && v.trim()) {
+        out[area] = [v.trim()];
+      }
+    }
+  }
 
-  const where =
-    myRole === "PROVIDER" && alreadyOfferedIds.length > 0
-      ? { ...baseWhere, requestId: { notIn: alreadyOfferedIds } }
-      : baseWhere;
+  // String JSON?
+  if (typeof value === "string") {
+    try {
+      const parsed = JSON.parse(value);
+      return normalizePreferredToAreaMap(parsed);
+    } catch {
+      return out;
+    }
+  }
 
-  // Fetch
-  const rows = await prisma.request.findMany({
-    where,
-    orderBy: { dateCreated: "desc" },
-    select: {
-      requestId: true,
-      requestCategory: true,
-      requestSubcategory: true,
-      assignmentType: true,
-      dateExpired: true,
-      providerSize: true,
-      providerMinimumRating: true,
-      providerCompanyAge: true, // may be string label like "Any Age" or a number
-      serviceProviderType: true, // "All" | "Law firm(s)" | "Attorneys-at-law" | ""
-      details: true,
-      client: {
-        select: {
-          companyName: true,
-          blockedServiceProviders: true, // string[]
-          preferredLegalServiceProviders: true, // may be legacy array, single string, or { [area]: string[] }
-          legalPanelServiceProviders: true, // string[]
+  return out;
+}
+
+export async function GET(req) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.userId) return safeJson({ error: "Unauthorized" }, 401);
+
+    const { searchParams } = new URL(req.url);
+    const category = searchParams.get("category") || "";
+    const subcategory = searchParams.get("subcategory") || "";
+    const assignment = searchParams.get("assignment") || "";
+    const now = new Date();
+
+    // session.userId is UserAccount.userPkId (string)
+    const userPkId = BigInt(session.userId);
+
+    // Load provider UA + Company (gating fields live on Company)
+    const ua = await prisma.userAccount.findUnique({
+      where: { userPkId },
+      select: {
+        role: true,
+        companyId: true,
+        company: {
+          select: {
+            companyPkId: true,
+            companyName: true,
+            companyProfessionals: true,
+            providerPracticalRatings: true,
+            companyAge: true,
+            providerType: true,
+          },
         },
       },
-    },
-  });
+    });
 
-  // Admins: skip provider gating
-  if (myRole !== "PROVIDER") {
-    const shaped = rows.map((r) => ({
+    const myRole = String(session.role || ua?.role || "").toUpperCase();
+    const myCompanyId = ua?.companyId ?? null;
+    const myCompanyName = (ua?.company?.companyName || "").trim();
+
+    // If not provider, just return the un-gated list (admin debugging etc.)
+    // (Your UI probably won’t call this for purchasers anyway.)
+    const isProvider = myRole === "PROVIDER" && myCompanyId && myCompanyName;
+
+    // Providers: exclude requests that already have an offer from this provider company
+    let alreadyOfferedRequestIds = [];
+    if (isProvider) {
+      const myOffers = await prisma.offer.findMany({
+        where: { providerCompanyId: BigInt(myCompanyId) },
+        select: { requestId: true },
+      });
+      alreadyOfferedRequestIds = myOffers
+        .map((o) => o.requestId)
+        .filter((id) => id != null);
+    }
+
+    const baseWhere = {
+      requestState: "PENDING",
+      dateExpired: { gt: now },
+      ...(category ? { requestCategory: category } : {}),
+      ...(subcategory ? { requestSubcategory: subcategory } : {}),
+      ...(assignment
+        ? {
+            OR: [
+              { details: { path: ["assignmentType"], equals: assignment } },
+              { assignmentType: assignment },
+            ],
+          }
+        : {}),
+    };
+
+    const where =
+      isProvider && alreadyOfferedRequestIds.length > 0
+        ? { ...baseWhere, requestId: { notIn: alreadyOfferedRequestIds } }
+        : baseWhere;
+
+    // Fetch requests + purchaser gating fields from createdByUser (UserAccount)
+    const rows = await prisma.request.findMany({
+      where,
+      orderBy: { dateCreated: "desc" },
+      select: {
+        requestId: true,
+        requestCategory: true,
+        requestSubcategory: true,
+        assignmentType: true,
+        dateExpired: true,
+        providerSize: true,
+        providerMinimumRating: true,
+        providerCompanyAge: true,
+        serviceProviderType: true,
+        details: true,
+
+        clientCompany: {
+          select: {
+            companyName: true,
+          },
+        },
+
+        createdByUser: {
+          select: {
+            blockedServiceProviders: true,
+            preferredLegalServiceProviders: true,
+            legalPanelServiceProviders: true,
+          },
+        },
+      },
+    });
+
+    // Admins/non-providers: skip provider gating
+    if (!isProvider) {
+      const shaped = rows.map((r) => ({
+        requestId: r.requestId?.toString?.() ?? String(r.requestId),
+        category: r.requestCategory || "—",
+        subcategory: r.requestSubcategory || "—",
+        assignmentType: r.assignmentType || r.details?.assignmentType || "—",
+        clientCompanyName: r.clientCompany?.companyName || "—",
+        offersDeadline: r.details?.offersDeadline || r.dateExpired || null,
+        confidential: r.details?.confidential || "—",
+      }));
+      return safeJson({ requests: shaped });
+    }
+
+    // Provider metrics from Company
+    const myPros = Number.isFinite(Number(ua?.company?.companyProfessionals))
+      ? Number(ua.company.companyProfessionals)
+      : 0;
+
+    const myAge = Number.isFinite(Number(ua?.company?.companyAge))
+      ? Number(ua.company.companyAge)
+      : 0;
+
+    const myTypeNorm = normalizeProviderType(ua?.company?.providerType);
+
+    const getMyRatingForRequest = (r) => {
+      const categoryKey = mapRequestToCategory(
+        r.requestCategory,
+        r.requestSubcategory,
+      );
+      return getPracticalCategoryTotal(
+        ua?.company?.providerPracticalRatings,
+        categoryKey,
+      );
+    };
+
+    const visible = rows.filter((r) => {
+      const maker = r.createdByUser || {};
+
+      // 1) Blocked: if purchaser blocked my company -> hide
+      const blocked = toStringArray(maker.blockedServiceProviders);
+      if (blocked.includes(myCompanyName)) return false;
+
+      // 2) Legal panel: if purchaser uses panel and I'm not in it -> hide
+      // (Only enforce if they actually have a panel list populated)
+      const panel = toStringArray(maker.legalPanelServiceProviders);
+      if (panel.length > 0 && !panel.includes(myCompanyName)) return false;
+
+      // 3) Preferred: preferred providers can bypass some gating constraints
+      const prefMap = normalizePreferredToAreaMap(
+        maker.preferredLegalServiceProviders,
+      );
+      const categoryKey = mapRequestToCategory(
+        r.requestCategory,
+        r.requestSubcategory,
+      );
+      const preferredForArea = Array.isArray(prefMap?.[categoryKey])
+        ? prefMap[categoryKey].includes(myCompanyName)
+        : false;
+
+      // 4) Provider size gating (unless preferred)
+      if (!preferredForArea) {
+        const reqSize = (r.providerSize || "").toString().trim().toLowerCase();
+        if (reqSize) {
+          // This is intentionally “soft” because providerSize labels can vary.
+          // If request says "Any", allow.
+          if (!reqSize.includes("any")) {
+            // If request expects e.g. "≥10", parse numeric and compare to companyProfessionals.
+            const n = parseMinFromLabel(reqSize);
+            if (typeof n === "number" && myPros < n) return false;
+          }
+        }
+      }
+
+      // 5) Minimum rating gating (unless preferred)
+      if (!preferredForArea) {
+        const minRating = parseMinFromLabel(r.providerMinimumRating);
+        if (typeof minRating === "number" && minRating > 0) {
+          const myRating = getMyRatingForRequest(r);
+          if (Number(myRating) < Number(minRating)) return false;
+        }
+      }
+
+      // 6) Company age gating (unless preferred)
+      if (!preferredForArea) {
+        const minAge = parseMinAge(r.providerCompanyAge);
+        if (typeof minAge === "number" && minAge > 0) {
+          if (Number(myAge) < Number(minAge)) return false;
+        }
+      }
+
+      // 7) Provider type gating (unless preferred)
+      if (!preferredForArea) {
+        const reqTypeNorm = normalizeProviderType(r.serviceProviderType);
+        // request type empty/all => allow
+        if (reqTypeNorm && reqTypeNorm !== "all") {
+          if (
+            myTypeNorm &&
+            myTypeNorm !== "all" &&
+            myTypeNorm !== reqTypeNorm
+          ) {
+            return false;
+          }
+        }
+      }
+
+      return true;
+    });
+
+    const shaped = visible.map((r) => ({
       requestId: r.requestId?.toString?.() ?? String(r.requestId),
       category: r.requestCategory || "—",
       subcategory: r.requestSubcategory || "—",
       assignmentType: r.assignmentType || r.details?.assignmentType || "—",
-      clientCompanyName: r.client?.companyName || "—",
+      clientCompanyName: r.clientCompany?.companyName || "—",
       offersDeadline: r.details?.offersDeadline || r.dateExpired || null,
       confidential: r.details?.confidential || "—",
     }));
-    return NextResponse.json({ requests: shaped });
+
+    return safeJson({ requests: shaped });
+  } catch (e) {
+    console.error("provider available requests failed:", e);
+    return safeJson({ error: "Server error" }, 500);
   }
-
-  // Provider metrics (null-safe; preferred can override these)
-  const myPros = Number.isFinite(Number(me?.companyProfessionals))
-    ? Number(me.companyProfessionals)
-    : 0;
-  const getMyRatingForRequest = (r) => {
-    const categoryKey = mapRequestToCategory(
-      r.requestCategory,
-      r.requestSubcategory
-    );
-    return getPracticalCategoryTotal(me?.providerPracticalRatings, categoryKey);
-  };
-
-  const myAge = Number.isFinite(Number(me?.companyAge))
-    ? Number(me.companyAge)
-    : 0;
-  const myTypeNorm = normalizeProviderType(me.providerType);
-
-  // --- Helpers for preferred providers normalization ---
-  const toPreferredAreaMap = (value) => {
-    const out = {};
-    if (!value) return out;
-    if (Array.isArray(value)) {
-      // legacy: [{ companyName, areasOfLaw: [] }]
-      for (const row of value) {
-        const c = row?.companyName;
-        for (const a of row?.areasOfLaw || []) {
-          if (!a || !c) continue;
-          if (!Array.isArray(out[a])) out[a] = [];
-          if (!out[a].includes(c)) out[a].push(c);
-        }
-      }
-      return out;
-    }
-    if (typeof value === "object") {
-      for (const [area, v] of Object.entries(value)) {
-        if (!area) continue;
-        if (Array.isArray(v)) {
-          const uniq = [];
-          for (const s of v)
-            if (typeof s === "string" && s && !uniq.includes(s)) uniq.push(s);
-          if (uniq.length) out[area] = uniq;
-        } else if (typeof v === "string" && v.trim()) {
-          out[area] = [v.trim()];
-        }
-      }
-    }
-    return out;
-  };
-
-  const visible = rows.filter((r) => {
-    // ---------- Client-based gating first (blocked/panel) ----------
-    const maker = r.client || {};
-
-    // 1) Blocked: if maker has blocked me → hide
-    const blocked = Array.isArray(maker.blockedServiceProviders)
-      ? maker.blockedServiceProviders
-      : [];
-    if (myCompanyName && blocked.includes(myCompanyName)) return false;
-
-    // 2) Preferred-by-category: if maker has preferred list for this category AND I'm in that list → hide
-    // Normalize preferred data
-    const prefMap = toPreferredAreaMap(maker.preferredLegalServiceProviders);
-    const cat = r.requestCategory || "";
-    const preferredForCategory = Array.isArray(prefMap[cat])
-      ? prefMap[cat]
-      : [];
-    const iAmPreferred =
-      preferredForCategory.length > 0 &&
-      myCompanyName &&
-      preferredForCategory.includes(myCompanyName);
-
-    // 3) Legal panel: if maker has a non-empty panel and I'm NOT on it → hide
-    const panel = Array.isArray(maker.legalPanelServiceProviders)
-      ? maker.legalPanelServiceProviders
-      : [];
-    const iAmOnPanel =
-      panel.length > 0 && myCompanyName && panel.includes(myCompanyName);
-    if (panel.length > 0 && myCompanyName && !iAmOnPanel) {
-      return false;
-    }
-
-    // ---------- Capability gates (with preferred override) ----------
-    // size/rating gates
-    const minPros = parseMinFromLabel(r.providerSize);
-    const minRating = parseMinFromLabel(r.providerMinimumRating);
-    let passPros = (minPros ?? 0) <= myPros;
-    const myRatingForThisRequest = getMyRatingForRequest(r);
-    let passRating = (minRating ?? 0) <= myRatingForThisRequest;
-
-    // age gate with "Any Age" pass
-    const reqAgeRaw =
-      r.providerCompanyAge ?? r.details?.providerCompanyAge ?? null;
-    const isAnyAge =
-      typeof reqAgeRaw === "string" &&
-      /^any(\s+age)?/i.test(reqAgeRaw?.trim?.() || "");
-    const minAge = isAnyAge ? 0 : parseMinAge(reqAgeRaw);
-    let passAge = isAnyAge ? true : (minAge ?? 0) <= myAge;
-
-    // type gate with plural/synonym normalization
-    const reqTypeRaw =
-      r.serviceProviderType ?? r.details?.serviceProviderType ?? "";
-    const reqTypeNorm = normalizeProviderType(reqTypeRaw);
-    let passType =
-      reqTypeNorm === "" || reqTypeNorm === "all" || reqTypeNorm === myTypeNorm;
-
-    // Preferred override: if I'm preferred for this category, auto-pass all capability gates
-    // Capability override:
-    // - Preferred for this category  → auto-pass
-    // - OR on the client's legal panel → auto-pass
-    if (iAmPreferred || iAmOnPanel) {
-      passPros = passRating = passAge = passType = true;
-    }
-
-    return passPros && passRating && passAge && passType;
-  });
-
-  const shaped = visible.map((r) => ({
-    requestId: r.requestId?.toString?.() ?? String(r.requestId),
-    category: r.requestCategory || "—",
-    subcategory: r.requestSubcategory || "—",
-    assignmentType: r.assignmentType || r.details?.assignmentType || "—",
-    clientCompanyName: r.client?.companyName || "—",
-    offersDeadline: r.details?.offersDeadline || r.dateExpired || null,
-    confidential: r.details?.confidential || "—",
-  }));
-
-  return NextResponse.json({ requests: shaped });
 }

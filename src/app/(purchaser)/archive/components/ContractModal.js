@@ -62,10 +62,10 @@ export default function ContractModal({
         (d) =>
           norm(d.category) === cat &&
           norm(d.subcategory) === sub &&
-          norm(d.assignmentType) === asg
+          norm(d.assignmentType) === asg,
       ) ||
       list.find(
-        (d) => norm(d.category) === cat && norm(d.subcategory) === sub
+        (d) => norm(d.category) === cat && norm(d.subcategory) === sub,
       ) ||
       list.find((d) => norm(d.category) === cat) ||
       null
@@ -121,21 +121,27 @@ export default function ContractModal({
       row?.purchaser?.companyName ||
       row?.client?.companyName ||
       null;
+
     const id =
       row.companyId ||
       row.businessId ||
+      row?.purchaser?.businessId ||
+      row?.client?.businessId ||
       row?.purchaser?.companyId ||
       row?.client?.companyId ||
       null;
+
     const country =
       row.companyCountry ||
       row.country ||
       row?.purchaser?.companyCountry ||
       row?.client?.companyCountry ||
       null;
+
     const parts = [name, id, country].filter(Boolean);
     return parts.length ? parts.join(", ") : "—";
   }
+
   function getAssignmentType(row) {
     return row?.assignmentType ?? row?.details?.assignmentType ?? "";
   }
@@ -204,7 +210,7 @@ export default function ContractModal({
     if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "—";
     const pad = (n) => String(n).padStart(2, "0");
     return `${pad(date.getDate())}/${pad(
-      date.getMonth() + 1
+      date.getMonth() + 1,
     )}/${date.getFullYear()} ${pad(date.getHours())}:${pad(date.getMinutes())}`;
   }
   function parseIfDateLike(value, pathHint) {
@@ -266,14 +272,22 @@ export default function ContractModal({
           return "—";
       }
     }
-    return deepGet(row, path) ?? "—";
+    const v = deepGet(row, path);
+    return v === "" ? "—" : (v ?? "—");
   }
   function renderValue(v, pathHint) {
     // Pretty-print a PrimaryContactPerson object if present
+    // Pretty-print PrimaryContactPerson (string OR object)
     if ((pathHint || "").toLowerCase().includes("primarycontactperson")) {
-      const p = v || {};
-      const name = [p.firstName, p.lastName].filter(Boolean).join(" ").trim();
-      return name || "—";
+      if (typeof v === "string") {
+        const s = v.trim();
+        return s ? s : "—";
+      }
+      if (v && typeof v === "object") {
+        const name = [v.firstName, v.lastName].filter(Boolean).join(" ").trim();
+        return name || "—";
+      }
+      return "—";
     }
     if (
       pathHint === "backgroundInfoFiles" ||
@@ -503,7 +517,10 @@ export default function ContractModal({
             {contract.provider?.companyName || "—"}
           </p>
           <p>
-            <strong>Business ID:</strong> {contract.provider?.businessId || "—"}
+            <strong>Business ID:</strong>{" "}
+            {contract.provider?.businessId ||
+              contract.provider?.companyId ||
+              "—"}
           </p>
           <p>
             <strong>Representative Name:</strong>{" "}
@@ -525,7 +542,9 @@ export default function ContractModal({
           </p>
           <p>
             <strong>Business ID:</strong>{" "}
-            {contract.purchaser?.businessId || "—"}
+            {contract.purchaser?.businessId ||
+              contract.purchaser?.companyId ||
+              "—"}
           </p>
           <p>
             <strong>Representative Name:</strong>{" "}
@@ -547,7 +566,11 @@ export default function ContractModal({
 
           <p>
             <strong>Contract Price (VAT 0%):</strong>{" "}
-            {contract.contractPrice?.toLocaleString() || "—"}{" "}
+            {typeof contract.contractPrice === "number"
+              ? contract.contractPrice.toLocaleString("fi-FI")
+              : contract.contractPrice
+                ? String(contract.contractPrice)
+                : "—"}{" "}
             {contract.contractPriceCurrency || ""}
           </p>
           <p>
@@ -646,14 +669,14 @@ export default function ContractModal({
                               let raw = resolvePath(
                                 contract.request,
                                 f.path,
-                                companyName
+                                companyName,
                               );
                               let display = renderValue(raw, f.path);
                               // 2) fallback by label
                               if (display === "—") {
                                 const byLabel = resolveByLabel(
                                   contract.request,
-                                  label
+                                  label,
                                 );
                                 if (byLabel !== undefined) {
                                   raw = byLabel;
@@ -678,9 +701,9 @@ export default function ContractModal({
                             resolvePath(
                               contract.request,
                               section.value,
-                              companyName
+                              companyName,
                             ),
-                            section.value
+                            section.value,
                           )}
                         </div>
                       ) : (

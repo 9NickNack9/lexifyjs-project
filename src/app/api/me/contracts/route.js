@@ -7,7 +7,7 @@ import { prisma } from "@/lib/prisma";
 // BigInt-safe JSON
 const serialize = (obj) =>
   JSON.parse(
-    JSON.stringify(obj, (_, v) => (typeof v === "bigint" ? v.toString() : v))
+    JSON.stringify(obj, (_, v) => (typeof v === "bigint" ? v.toString() : v)),
   );
 
 // Safe number parser for Decimal | number | "5"
@@ -27,24 +27,21 @@ const fullName = (c) =>
 function matchContactByName(contacts, name) {
   if (!Array.isArray(contacts) || !name) return null;
   const want = normalize(name);
-  // exact full name first, then startsWith by either part
   return (
     contacts.find((c) => normalize(fullName(c)) === want) ||
     contacts.find(
       (c) =>
         normalize(c?.firstName).startsWith(want) ||
-        normalize(c?.lastName).startsWith(want)
+        normalize(c?.lastName).startsWith(want),
     ) ||
     null
   );
 }
 
-// helper near top
 const joinName = (p) =>
   [p?.firstName, p?.lastName].filter(Boolean).join(" ").trim();
 
 function resolvePurchaserContact(req) {
-  // 1) request.primaryContactPerson
   if (
     req?.primaryContactPerson &&
     (req.primaryContactPerson.email || req.primaryContactPerson.telephone)
@@ -57,7 +54,7 @@ function resolvePurchaserContact(req) {
       raw: pc,
     };
   }
-  // 2) details.primaryContactPerson
+
   const dpc = req?.details?.primaryContactPerson;
   if (dpc && (dpc.email || dpc.telephone)) {
     return {
@@ -67,14 +64,14 @@ function resolvePurchaserContact(req) {
       raw: dpc,
     };
   }
-  // 3) fallback to client contact persons
+
   const list = req?.client?.companyContactPersons || [];
   if (Array.isArray(list) && list.length) {
     const primaryLike =
       list.find((c) =>
         String(c?.position || "")
           .toLowerCase()
-          .includes("primary")
+          .includes("primary"),
       ) || list[0];
     return {
       contactName: joinName(primaryLike) || "—",
@@ -83,6 +80,7 @@ function resolvePurchaserContact(req) {
       raw: primaryLike,
     };
   }
+
   return { contactName: "—", email: "—", phone: "—", raw: null };
 }
 
@@ -93,14 +91,24 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const me = await prisma.appUser.findUnique({
-      where: { userId: BigInt(session.userId) },
-      select: { companyName: true },
+    // ✅ session.userId is UserAccount.userPkId
+    const ua = await prisma.userAccount.findUnique({
+      where: { userPkId: BigInt(session.userId) },
+      select: {
+        companyId: true,
+        company: { select: { companyName: true } },
+      },
     });
 
-    // NOTE: no 'offer' relation on Contract — read offers via the linked request
+    if (!ua?.companyId) {
+      return NextResponse.json({ error: "Company not found" }, { status: 404 });
+    }
+
+    const myCompanyName = ua.company?.companyName || "";
+
     const contracts = await prisma.contract.findMany({
-      where: { request: { clientId: BigInt(session.userId) } },
+      // Request.clientId is purchaser company pk
+      where: { request: { clientId: ua.companyId } },
       orderBy: { contractDate: "desc" },
       select: {
         contractId: true,
@@ -116,8 +124,8 @@ export async function GET() {
             requestSubcategory: true,
             assignmentType: true,
             title: true,
-            currency: true, // -> contractPriceCurrency
-            paymentRate: true, // -> contractPriceType
+            currency: true,
+            paymentRate: true,
             scopeOfWork: true,
             description: true,
             invoiceType: true,
@@ -127,24 +135,22 @@ export async function GET() {
             backgroundInfoFiles: true,
             supplierCodeOfConductFiles: true,
 
-            // purchaser representative + company info
-            primaryContactPerson: true, // { firstName,lastName,email,telephone }
-            details: true, // may contain .primaryContactPerson
+            primaryContactPerson: true,
+            details: true,
             client: {
               select: {
                 companyName: true,
                 companyId: true,
                 companyCountry: true,
-                companyContactPersons: true, // [{firstName,lastName,email,telephone,position}]
+                companyContactPersons: true,
               },
             },
 
-            // gather all offers; we will pick the one from this provider
             offers: {
               select: {
                 providerId: true,
                 offerLawyer: true,
-                offerStatus: true, // "WON" | "LOST" | ...
+                offerStatus: true,
               },
             },
           },
@@ -154,13 +160,13 @@ export async function GET() {
           select: {
             userId: true,
             companyName: true,
-            companyId: true, // provider business id
+            companyId: true,
             providerTotalRating: true,
             providerQualityRating: true,
             providerCommunicationRating: true,
             providerBillingRating: true,
             providerIndividualRating: true,
-            companyContactPersons: true, // [{ firstName,lastName,email,telephone,position }]
+            companyContactPersons: true,
           },
         },
       },
@@ -185,16 +191,12 @@ export async function GET() {
         billing: b ?? null,
       };
 
-      // Determine if provider actually has any individual ratings.
-      // Field is Json @default("[]"), which may come as [] or "[]".
       const rawInd = p.providerIndividualRating;
       let providerHasRatings = false;
 
-      if (Array.isArray(rawInd)) {
-        providerHasRatings = rawInd.length > 0;
-      } else if (typeof rawInd === "string") {
+      if (Array.isArray(rawInd)) providerHasRatings = rawInd.length > 0;
+      else if (typeof rawInd === "string") {
         const trimmed = rawInd.trim();
-        // Treat empty string / "[]" / "{}" as "no ratings"
         providerHasRatings =
           trimmed !== "" && trimmed !== "[]" && trimmed !== "{}";
       }
@@ -203,37 +205,27 @@ export async function GET() {
       let myRating = null;
       let myHasRating = false;
 
-      // Normalize providerIndividualRating into an array of rating objects
       let indArr = [];
-      if (Array.isArray(rawInd)) {
-        indArr = rawInd;
-      } else if (typeof rawInd === "string") {
+      if (Array.isArray(rawInd)) indArr = rawInd;
+      else if (typeof rawInd === "string") {
         const trimmed = rawInd.trim();
         if (trimmed.startsWith("[")) {
           try {
             const parsed = JSON.parse(trimmed);
             if (Array.isArray(parsed)) indArr = parsed;
-          } catch {
-            // ignore parse errors, treat as no ratings
-          }
+          } catch {}
         }
       }
 
-      const myCompanyName = me?.companyName || "";
       const norm = (s) => (s ?? "").toString().trim().toLowerCase();
 
       if (indArr.length > 0 && myCompanyName) {
-        // Find ratings where raterCompanyName (or ratingCompanyName proxy) matches my company
         const mine = indArr.filter((r) => {
-          const rc =
-            r.raterCompanyName ??
-            r.ratingCompanyName ?? // in case of naming mismatch
-            "";
+          const rc = r.raterCompanyName ?? r.ratingCompanyName ?? "";
           return norm(rc) === norm(myCompanyName);
         });
 
         if (mine.length > 0) {
-          // If multiple, pick the latest by updatedAt if available
           let latest = mine[0];
           for (const r of mine) {
             if (
@@ -252,7 +244,7 @@ export async function GET() {
           const mParts = [mq, mr, mb].filter((n) => typeof n === "number");
           const myTotal = mParts.length
             ? Number(
-                (mParts.reduce((s, v) => s + v, 0) / mParts.length).toFixed(1)
+                (mParts.reduce((s, v) => s + v, 0) / mParts.length).toFixed(1),
               )
             : null;
 
@@ -267,18 +259,17 @@ export async function GET() {
         }
       }
 
-      // ---- find the offerLawyer from offers on the same request by this provider ----
+      // ---- find offerLawyer from offers on this request by this provider ----
       const offers = Array.isArray(c.request?.offers) ? c.request.offers : [];
       const byProvider = offers.filter(
-        (o) => String(o.providerId) === String(c.providerId)
+        (o) => String(o.providerId) === String(c.providerId),
       );
       const won =
         byProvider.find((o) => (o.offerStatus || "").toUpperCase() === "WON") ||
         byProvider[0] ||
         null;
-      const offerLawyerName = won?.offerLawyer?.toString?.().trim() || null;
 
-      // ---- match provider company contact by offerLawyer name ----
+      const offerLawyerName = won?.offerLawyer?.toString?.().trim() || null;
       const matched =
         matchContactByName(p.companyContactPersons, offerLawyerName) || null;
 
@@ -286,16 +277,15 @@ export async function GET() {
         userId: p.userId ? safeNumber(p.userId) : null,
         companyName: p.companyName || "—",
         businessId: p.companyId || "—",
-        // representative from matched contact (fallback to the offerLawyer name)
         contactName: matched ? fullName(matched) : offerLawyerName || "—",
         email: matched?.email || "—",
         phone: matched?.telephone || "—",
       };
 
-      // ---- purchaser representative with fallbacks (request field → details → client contacts) ----
       const purchaserContact = resolvePurchaserContact(c.request);
       const purchaser = {
-        companyName: c.request?.client?.companyName || me?.companyName || "—",
+        companyName:
+          c.request?.client?.companyName || ua.company?.companyName || "—",
         businessId: c.request?.client?.companyId || "—",
         contactName: purchaserContact.contactName,
         email: purchaserContact.email,
@@ -328,7 +318,6 @@ export async function GET() {
 
           currency: c.request?.currency || null,
           paymentRate: c.request?.paymentRate || null,
-          // derive from details.maximumPrice since it's not a top-level column
           maximumPrice:
             typeof c.request?.details?.maximumPrice === "number"
               ? c.request.details.maximumPrice
@@ -338,21 +327,20 @@ export async function GET() {
             c.request?.additionalBackgroundInfo ??
             c.request?.details?.additionalBackgroundInfo ??
             null,
+
           backgroundInfoFiles:
             c.request?.backgroundInfoFiles ??
             c.request?.details?.backgroundInfoFiles ??
             [],
+
           supplierCodeOfConductFiles:
             c.request?.supplierCodeOfConductFiles ??
             c.request?.details?.supplierCodeOfConductFiles ??
             [],
-          // ✅ expose the actual primary contact for the preview section
-          primaryContactPerson: purchaserContact.raw || null,
 
-          // include details so the modal preview can resolve nested paths (e.g., details.*)
+          primaryContactPerson: purchaserContact.raw || null,
           details: c.request?.details || {},
 
-          // expose client so the preview can build "Client, BIC, Country"
           client: {
             companyName: c.request?.client?.companyName || null,
             companyId: c.request?.client?.companyId || null,
@@ -368,7 +356,10 @@ export async function GET() {
     });
 
     return NextResponse.json(
-      serialize({ companyName: me?.companyName || null, contracts: shaped })
+      serialize({
+        companyName: ua.company?.companyName || null,
+        contracts: shaped,
+      }),
     );
   } catch (e) {
     console.error("GET /api/me/contracts failed:", e);

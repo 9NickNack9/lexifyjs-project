@@ -1,3 +1,4 @@
+// src/app/api/providers/[id]/rating/route.js
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
@@ -13,11 +14,9 @@ function mapRequestToCategory(requestCategory, requestSubcategory) {
   const sub = (requestSubcategory || "").trim();
   const cat = (requestCategory || "").trim();
 
-  // Special: use subcategory for these
   if (sub === "Real Estate and Construction" || sub === "ICT and IT")
     return sub;
 
-  // Otherwise map categories
   if (cat === "Help with Contracts") return "Contracts";
   if (cat === "Day-to-day Legal Advice") return "Day-to-day Legal Advice";
   if (cat === "Help with Employment related Documents") return "Employment";
@@ -35,25 +34,19 @@ function mapRequestToCategory(requestCategory, requestSubcategory) {
     return "Legal Training";
   if (cat === "Help with Banking & Finance Matters") return "Banking & Finance";
 
-  // Fallback (keeps system resilient if you add new categories later)
   return sub || cat || "Other";
 }
 
 function recomputeOverallAggregates(entries) {
   if (!entries.length) {
-    return {
-      avgQuality: 5.0,
-      avgComm: 5.0,
-      avgBilling: 5.0,
-      totalAvg: 5.0,
-    };
+    return { avgQuality: 5.0, avgComm: 5.0, avgBilling: 5.0, totalAvg: 5.0 };
   }
 
   const count = entries.length;
   const sumQuality = entries.reduce((a, r) => a + Number(r.quality || 0), 0);
   const sumComm = entries.reduce(
     (a, r) => a + Number(r.responsiveness || 0),
-    0
+    0,
   );
   const sumBilling = entries.reduce((a, r) => a + Number(r.billing || 0), 0);
 
@@ -66,17 +59,18 @@ function recomputeOverallAggregates(entries) {
       (Number(r.quality || 0) +
         Number(r.responsiveness || 0) +
         Number(r.billing || 0)) /
-      3
+      3,
   );
   const totalAvg = Number(
-    (perEntryMeans.reduce((a, b) => a + b, 0) / perEntryMeans.length).toFixed(2)
+    (perEntryMeans.reduce((a, b) => a + b, 0) / perEntryMeans.length).toFixed(
+      2,
+    ),
   );
 
   return { avgQuality, avgComm, avgBilling, totalAvg };
 }
 
 function recomputePracticalRatings(entries) {
-  // groups by category and averages the 3 subratings + total
   const grouped = new Map();
 
   for (const r of entries) {
@@ -102,12 +96,12 @@ function recomputePracticalRatings(entries) {
         (Number(r.quality || 0) +
           Number(r.responsiveness || 0) +
           Number(r.billing || 0)) /
-        3
+        3,
     );
     const total = Number(
       (perEntryMeans.reduce((a, b) => a + b, 0) / perEntryMeans.length).toFixed(
-        2
-      )
+        2,
+      ),
     );
 
     out[category] = { quality, responsiveness, billing, total, count };
@@ -116,22 +110,28 @@ function recomputePracticalRatings(entries) {
   return out;
 }
 
-export async function GET(req, { params }) {
-  const session = await getServerSession(authOptions);
-  if (!session)
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+const dec = (v) => (v == null ? 0 : Number(v));
 
-  const { id } = await params;
-  const providerId = parseInt(id, 10);
-  if (!providerId) return NextResponse.json({});
+export async function GET(req, context) {
+  const params = await context.params;
+  const session = await getServerSession(authOptions);
+  if (!session) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const providerCompanyIdStr = params?.id;
+  const providerCompanyId = providerCompanyIdStr
+    ? BigInt(providerCompanyIdStr)
+    : null;
+  if (!providerCompanyId) return NextResponse.json({});
 
   const { searchParams } = new URL(req.url);
   const contractIdParam = searchParams.get("contractId");
-  const contractId = contractIdParam ? Number(contractIdParam) : null;
+  const contractId = contractIdParam ? BigInt(contractIdParam) : null;
 
-  // Fetch provider rating data
-  const provider = await prisma.appUser.findUnique({
-    where: { userId: providerId },
+  // Fetch provider COMPANY rating data
+  const provider = await prisma.company.findUnique({
+    where: { companyPkId: providerCompanyId },
     select: {
       providerIndividualRating: true,
       providerQualityRating: true,
@@ -148,12 +148,14 @@ export async function GET(req, { params }) {
   const ratingCount = arr.length;
 
   // Only return "mine" when contractId is specified (contract-specific rating)
+  const myCompanyId = session.companyId ? BigInt(session.companyId) : null;
+
   const mine =
-    contractId != null
+    contractId && myCompanyId
       ? arr.find(
           (r) =>
-            Number(r.raterId) === Number(session.userId) &&
-            Number(r.contractId) === Number(contractId)
+            String(r.raterCompanyPkId) === String(myCompanyId) &&
+            String(r.contractId) === String(contractId),
         ) || null
       : null;
 
@@ -161,42 +163,39 @@ export async function GET(req, { params }) {
 
   const aggregates = hasRealRatings
     ? {
-        quality: Number(provider?.providerQualityRating ?? 0),
-        communication: Number(provider?.providerCommunicationRating ?? 0),
-        billing: Number(provider?.providerBillingRating ?? 0),
-        total: Number(provider?.providerTotalRating ?? 0),
+        quality: dec(provider?.providerQualityRating),
+        communication: dec(provider?.providerCommunicationRating),
+        billing: dec(provider?.providerBillingRating),
+        total: dec(provider?.providerTotalRating),
       }
-    : {
-        quality: 5.0,
-        communication: 5.0,
-        billing: 5.0,
-        total: 5.0,
-      };
+    : { quality: 5.0, communication: 5.0, billing: 5.0, total: 5.0 };
 
-  // Contracts between this purchaser and this provider, used by UI dropdown
-  const contracts = await prisma.contract.findMany({
-    where: {
-      clientId: Number(session.userId),
-      providerId: providerId,
-    },
-    orderBy: { contractDate: "desc" },
-    select: {
-      contractId: true,
-      requestId: true,
-      contractDate: true,
-      request: {
-        select: {
-          title: true,
-          requestCategory: true,
-          requestSubcategory: true,
+  // Contracts between this purchaser COMPANY and this provider COMPANY, used by UI dropdown
+  const contracts = myCompanyId
+    ? await prisma.contract.findMany({
+        where: {
+          clientCompanyId: myCompanyId,
+          providerCompanyId: providerCompanyId,
         },
-      },
-    },
-  });
+        orderBy: { contractDate: "desc" },
+        select: {
+          contractId: true,
+          requestId: true,
+          contractDate: true,
+          request: {
+            select: {
+              title: true,
+              requestCategory: true,
+              requestSubcategory: true,
+            },
+          },
+        },
+      })
+    : [];
 
   const contractOut = contracts.map((c) => ({
-    contractId: Number(c.contractId),
-    requestId: Number(c.requestId),
+    contractId: String(c.contractId),
+    requestId: String(c.requestId),
     contractDate: c.contractDate,
     requestTitle: c.request?.title || "(Untitled Request)",
     requestCategory: c.request?.requestCategory || "",
@@ -212,23 +211,41 @@ export async function GET(req, { params }) {
   });
 }
 
-export async function POST(req, { params }) {
+export async function POST(req, context) {
+  const params = await context.params;
   const session = await getServerSession(authOptions);
-  if (!session)
+  if (!session) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
 
-  const { id } = await params;
-  const providerId = parseInt(id, 10);
-  if (!providerId)
-    return NextResponse.json({ error: "Bad provider id" }, { status: 400 });
+  const providerCompanyIdStr = params?.id;
+  const providerCompanyId = providerCompanyIdStr
+    ? BigInt(providerCompanyIdStr)
+    : null;
+  if (!providerCompanyId) {
+    return NextResponse.json(
+      { error: "Bad provider company id" },
+      { status: 400 },
+    );
+  }
+
+  const myCompanyId = session.companyId ? BigInt(session.companyId) : null;
+  const myUserPkId = session.userId ? BigInt(session.userId) : null;
+  if (!myCompanyId || !myUserPkId) {
+    return NextResponse.json(
+      { error: "Missing session company/user" },
+      { status: 401 },
+    );
+  }
 
   const body = await req.json().catch(() => ({}));
-  const contractId = Number(body.contractId);
+  const contractIdNum = body.contractId;
+  const contractId = contractIdNum ? BigInt(contractIdNum) : null;
 
   if (!contractId) {
     return NextResponse.json(
       { error: "Missing contractId (must rate per contract)." },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -236,12 +253,12 @@ export async function POST(req, { params }) {
   const responsiveness = sanitize(body.responsiveness);
   const billing = sanitize(body.billing);
 
-  // Validate contract belongs to current user and provider
+  // Validate contract belongs to current COMPANY and provider COMPANY
   const contract = await prisma.contract.findFirst({
     where: {
-      contractId: BigInt(contractId),
-      clientId: BigInt(Number(session.userId)),
-      providerId: BigInt(providerId),
+      contractId,
+      clientCompanyId: myCompanyId,
+      providerCompanyId: providerCompanyId,
     },
     select: {
       contractId: true,
@@ -257,25 +274,24 @@ export async function POST(req, { params }) {
       {
         error: "You can only rate providers for contracts you are a party to.",
       },
-      { status: 403 }
+      { status: 403 },
     );
   }
 
   const category = mapRequestToCategory(
     contract.request?.requestCategory,
-    contract.request?.requestSubcategory
+    contract.request?.requestSubcategory,
   );
 
   // Purchaser companyName for storage alongside the rating
-  const purchaser = await prisma.appUser.findUnique({
-    where: { userId: BigInt(Number(session.userId)) },
+  const purchaserCompany = await prisma.company.findUnique({
+    where: { companyPkId: myCompanyId },
     select: { companyName: true },
   });
-  const purchaserCompany = purchaser?.companyName || "Unknown Company";
 
-  // Read existing ratings array
-  const provider = await prisma.appUser.findUnique({
-    where: { userId: BigInt(providerId) },
+  // Read existing ratings array from provider COMPANY
+  const provider = await prisma.company.findUnique({
+    where: { companyPkId: providerCompanyId },
     select: { providerIndividualRating: true },
   });
 
@@ -284,13 +300,15 @@ export async function POST(req, { params }) {
     : [];
 
   const now = new Date().toISOString();
-  const raterIdNum = Number(session.userId);
 
   const newEntry = {
-    raterId: raterIdNum,
-    raterCompanyName: purchaserCompany,
-    contractId: Number(contract.contractId),
-    requestId: Number(contract.requestId),
+    raterUserPkId: String(myUserPkId),
+    raterCompanyPkId: String(myCompanyId),
+    raterCompanyName: purchaserCompany?.companyName || "Unknown Company",
+
+    contractId: String(contract.contractId),
+    requestId: String(contract.requestId),
+
     category,
     quality,
     responsiveness,
@@ -299,11 +317,11 @@ export async function POST(req, { params }) {
     updatedAt: now,
   };
 
-  // Upsert by (raterId + contractId)
+  // Upsert by (raterCompanyPkId + contractId)
   const idx = arr.findIndex(
     (r) =>
-      Number(r.raterId) === raterIdNum &&
-      Number(r.contractId) === Number(contract.contractId)
+      String(r.raterCompanyPkId) === String(myCompanyId) &&
+      String(r.contractId) === String(contract.contractId),
   );
 
   const next =
@@ -311,15 +329,13 @@ export async function POST(req, { params }) {
       ? [...arr.slice(0, idx), newEntry, ...arr.slice(idx + 1)]
       : [...arr, newEntry];
 
-  // Recompute overall provider aggregates
   const { avgQuality, avgComm, avgBilling, totalAvg } =
     recomputeOverallAggregates(next);
 
-  // Recompute providerPracticalRatings per category
   const practical = recomputePracticalRatings(next);
 
-  const updated = await prisma.appUser.update({
-    where: { userId: BigInt(providerId) },
+  const updated = await prisma.company.update({
+    where: { companyPkId: providerCompanyId },
     data: {
       providerIndividualRating: next,
       providerQualityRating: avgQuality,
@@ -329,7 +345,7 @@ export async function POST(req, { params }) {
       providerPracticalRatings: practical,
     },
     select: {
-      userId: true,
+      companyPkId: true,
       providerQualityRating: true,
       providerCommunicationRating: true,
       providerBillingRating: true,
@@ -339,12 +355,12 @@ export async function POST(req, { params }) {
 
   return NextResponse.json({
     ok: true,
-    providerId: Number(updated.userId),
+    companyId: String(updated.companyPkId),
     aggregates: {
-      quality: Number(updated.providerQualityRating ?? 0),
-      communication: Number(updated.providerCommunicationRating ?? 0),
-      billing: Number(updated.providerBillingRating ?? 0),
-      total: Number(updated.providerTotalRating ?? 0),
+      quality: dec(updated.providerQualityRating),
+      communication: dec(updated.providerCommunicationRating),
+      billing: dec(updated.providerBillingRating),
+      total: dec(updated.providerTotalRating),
     },
     category,
   });

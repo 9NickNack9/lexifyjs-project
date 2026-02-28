@@ -145,17 +145,17 @@ async function sendContractPackageEmail(prisma, requestId) {
   });
   if (!contract) return;
 
-  // Fallback: if request.client is null, load it by clientId
+  // Fallback: if request.client is null, load it by clientId (Company PK)
   let requestClient = contract.request?.client || null;
   if (!requestClient && contract.request?.clientId) {
-    requestClient = await prisma.appUser.findUnique({
-      where: { userId: contract.request.clientId },
+    requestClient = await prisma.company.findUnique({
+      where: { companyPkId: contract.request.clientId },
       select: {
         companyName: true,
-        companyId: true,
+        businessId: true,
         companyCountry: true,
         companyContactPersons: true,
-        userId: true,
+        companyPkId: true,
       },
     });
   }
@@ -390,10 +390,11 @@ async function sendContractPackageEmail(prisma, requestId) {
     : [];
 
   const primaryPurchaser =
-    shaped.request.primaryContactPerson &&
-    shaped.request.primaryContactPerson.email
-      ? shaped.request.primaryContactPerson
-      : { email: purchaser.email };
+    purchaserContact && isEmail(purchaserContact.email)
+      ? { email: purchaserContact.email }
+      : isEmail(purchaser.email)
+        ? { email: purchaser.email }
+        : null;
 
   const toPurchaser = expandWithAllNotificationContacts(
     primaryPurchaser,
@@ -483,19 +484,31 @@ const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const isEmail = (s) => typeof s === "string" && EMAIL_RE.test(s.trim());
 
 // Find the primary contact person object (not just email) by offerLawyer name
-function findPrimaryContactByLawyer(offerLawyer, contacts) {
-  const norm = (s) => (s ?? "").toString().trim().toLowerCase();
-  const full = (p) =>
-    [p?.firstName, p?.lastName].filter(Boolean).join(" ").trim();
-  const name = norm(offerLawyer);
-  if (!Array.isArray(contacts)) return null;
+const norm = (s) => (s ?? "").toString().trim().toLowerCase();
+const fullName = (p) =>
+  [p?.firstName, p?.lastName].filter(Boolean).join(" ").trim();
 
-  return (
-    contacts.find((c) => norm(full(c)) === name) ||
+function findPrimaryContactByLawyer(offerLawyerName, contacts) {
+  if (!Array.isArray(contacts) || !offerLawyerName) return null;
+  const want = norm(offerLawyerName);
+
+  // exact full-name match
+  const exact =
+    contacts.find((c) => norm(fullName(c)) === want) ||
     contacts.find(
-      (c) => norm(c?.firstName) === name || norm(c?.lastName) === name,
+      (c) => norm(c?.firstName) === want || norm(c?.lastName) === want,
     ) ||
-    null
+    null;
+
+  if (exact) return exact;
+
+  // fallback: startsWith on either part
+  return (
+    contacts.find(
+      (c) =>
+        norm(c?.firstName).startsWith(want) ||
+        norm(c?.lastName).startsWith(want),
+    ) || null
   );
 }
 
@@ -516,59 +529,89 @@ function expandWithAllNotificationContacts(primary, contacts) {
 
 // normalize Json / legacy {set:[]} / string → string[]
 function toStringArray(val) {
-  if (Array.isArray(val)) return val.filter((v) => typeof v === "string");
-  if (val && typeof val === "object") {
-    if (Array.isArray(val.set))
-      return val.set.filter((v) => typeof v === "string");
-    if (Array.isArray(val.value))
-      return val.value.filter((v) => typeof v === "string");
-  }
+  if (Array.isArray(val)) return val.map(String);
+  if (!val) return [];
   if (typeof val === "string") {
     try {
       const parsed = JSON.parse(val);
-      if (Array.isArray(parsed))
-        return parsed.filter((v) => typeof v === "string");
-      return val ? [val] : [];
+      return Array.isArray(parsed) ? parsed.map(String) : [val];
     } catch {
-      return val ? [val] : [];
+      return [val];
     }
+  }
+  if (typeof val === "object") {
+    if (Array.isArray(val.set)) return val.set.map(String);
+    if (Array.isArray(val.value)) return val.value.map(String);
   }
   return [];
 }
 
 // Map offerLawyer name to provider's companyContactPersons email
-function findLawyerEmail(offerLawyer, contacts) {
-  const norm = (s) => (s ?? "").toString().trim().toLowerCase();
-  const full = (p) =>
-    [p?.firstName, p?.lastName].filter(Boolean).join(" ").trim();
-  const name = norm(offerLawyer);
-
-  if (!Array.isArray(contacts)) return "";
-
-  const exact =
-    contacts.find((c) => norm(full(c)) === name) ||
-    contacts.find(
-      (c) => norm(c?.firstName) === name || norm(c?.lastName) === name,
-    ) ||
-    null;
-
+function findLawyerEmail(offerLawyerName, contacts) {
+  const exact = findPrimaryContactByLawyer(offerLawyerName, contacts);
   return (exact?.email || "").trim();
+}
+
+// Provider prefs = union across all provider UserAccounts in that provider company
+async function getProviderMeta(providerCompanyIdBig) {
+  const [company, accounts] = await Promise.all([
+    prisma.company.findUnique({
+      where: { companyPkId: providerCompanyIdBig },
+      select: { companyContactPersons: true },
+    }),
+    prisma.userAccount.findMany({
+      where: {
+        companyId: providerCompanyIdBig,
+        role: "PROVIDER",
+      },
+      select: {
+        practicalNotificationPreferences: true,
+        notificationPreferences: true,
+      },
+    }),
+  ]);
+
+  const contacts = Array.isArray(company?.companyContactPersons)
+    ? company.companyContactPersons
+    : [];
+
+  const prefSet = new Set();
+  for (const a of accounts || []) {
+    const prefs = toStringArray(
+      a?.practicalNotificationPreferences ?? a?.notificationPreferences,
+    );
+    for (const p of prefs) prefSet.add(String(p));
+  }
+
+  return { contacts, prefs: Array.from(prefSet) };
 }
 
 export async function POST(req) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.userId)
+    if (!session?.userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // session.userId = UserAccount.userPkId
+    const ua = await prisma.userAccount.findUnique({
+      where: { userPkId: BigInt(session.userId) },
+      select: { companyId: true },
+    });
+
+    if (!ua?.companyId) {
+      return NextResponse.json({ error: "Company not found" }, { status: 404 });
+    }
+
+    const purchaserCompanyIdBig = ua.companyId;
 
     const body = await req.json().catch(() => ({}));
     const { requestId, offerId, selectReason, teamRequest } = body || {};
 
-    let reqIdBig, offerIdBig, clientIdBig;
+    let reqIdBig, offerIdBig;
     try {
       reqIdBig = BigInt(String(requestId));
       offerIdBig = BigInt(String(offerId));
-      clientIdBig = BigInt(String(session.userId));
     } catch {
       return NextResponse.json({ error: "Bad request" }, { status: 400 });
     }
@@ -583,28 +626,12 @@ export async function POST(req) {
       },
     });
 
-    if (!requestRow || requestRow.clientId !== clientIdBig) {
+    // ownership check uses purchaser company PK now
+    if (
+      !requestRow ||
+      String(requestRow.clientId) !== String(purchaserCompanyIdBig)
+    ) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
-    }
-
-    const baseDetails =
-      requestRow.details && typeof requestRow.details === "object"
-        ? { ...requestRow.details }
-        : {};
-
-    // Only update when values are provided (Confirm Selection)
-    if (typeof selectReason === "string") {
-      const val = selectReason.trim();
-      if (val) {
-        baseDetails.selectReason = val;
-      }
-    }
-
-    if (typeof teamRequest === "string") {
-      const val = teamRequest.trim();
-      if (val) {
-        baseDetails.teamRequest = val;
-      }
     }
 
     if (requestRow.requestState !== "ON HOLD") {
@@ -614,21 +641,37 @@ export async function POST(req) {
       );
     }
 
+    const baseDetails =
+      requestRow.details && typeof requestRow.details === "object"
+        ? { ...requestRow.details }
+        : {};
+
+    if (typeof selectReason === "string") {
+      const v = selectReason.trim();
+      if (v) baseDetails.selectReason = v;
+    }
+
+    if (typeof teamRequest === "string") {
+      const v = teamRequest.trim();
+      if (v) baseDetails.teamRequest = v;
+    }
+
     const offerRow = await prisma.offer.findUnique({
       where: { offerId: offerIdBig },
       select: {
         offerId: true,
         offerPrice: true,
-        providerId: true,
+        providerId: true, // provider company PK
         requestId: true,
         offerTitle: true,
       },
     });
-    if (!offerRow || offerRow.requestId !== reqIdBig) {
+
+    if (!offerRow || String(offerRow.requestId) !== String(reqIdBig)) {
       return NextResponse.json({ error: "Offer not found" }, { status: 404 });
     }
 
-    // Check for confidentiality for conflict check before creating contract
+    // Check for confidentiality: if yes, pause and go to CONFLICT_CHECK (no contract yet)
     const confidentialYes =
       (requestRow?.details?.confidential || "")
         .toString()
@@ -653,38 +696,22 @@ export async function POST(req) {
         },
       });
 
-      // === email offer's lawyer + provider allNotifications contacts ===
+      // === notify provider: conflict check ===
       try {
-        // Load provider's contacts + prefs and the chosen offer's title & lawyer
-        const [provider, offerFull] = await Promise.all([
-          prisma.appUser.findUnique({
-            where: { userId: offerRow.providerId },
-            select: {
-              companyContactPersons: true,
-              notificationPreferences: true,
-            },
-          }),
-          prisma.offer.findUnique({
-            where: { offerId: offerRow.offerId },
-            select: { offerTitle: true, offerLawyer: true },
-          }),
-        ]);
+        const offerFull = await prisma.offer.findUnique({
+          where: { offerId: offerRow.offerId },
+          select: { offerTitle: true, offerLawyer: true },
+        });
 
-        const prefs = toStringArray(provider?.notificationPreferences);
-        const contacts = provider?.companyContactPersons || [];
+        const meta = await getProviderMeta(offerRow.providerId);
+        const prefs = meta.prefs || [];
+        const contacts = meta.contacts || [];
 
         if (prefs.includes("winner-conflict-check")) {
-          // Provider opted in → email offerLawyer + allNotifications contacts, BCC Support
           const lawyerPrimary =
             findPrimaryContactByLawyer(offerFull?.offerLawyer, contacts) ||
             null;
-
-          // Fallback: if we didn't find a full contact, at least get the email by name
           const lawyerEmail = findLawyerEmail(offerFull?.offerLawyer, contacts);
-
-          // Primary passed to expandWithAllNotificationContacts:
-          //  - full contact (with email) if we have it
-          //  - otherwise a bare { email } object if we only have the email
           const primaryForExpand =
             lawyerPrimary || (lawyerEmail ? { email: lawyerEmail } : null);
 
@@ -701,18 +728,16 @@ export async function POST(req) {
             });
           }
         } else {
-          // Provider opted out → still notify admins only
+          // opted out → admins only
           await notifyProviderConflictCheck({
             to: ["support@lexify.online"],
             offerTitle: offerFull?.offerTitle || "",
-            // No extra BCC needed here; Support is already in "to"
           });
         }
       } catch (e) {
         console.error("confidentiality notification failed:", e);
       }
 
-      // Do NOT create contract, update statuses, or send emails yet
       return NextResponse.json(
         { ok: true, conflictCheck: true },
         { status: 200 },
@@ -724,17 +749,18 @@ export async function POST(req) {
       data: [
         {
           requestId: reqIdBig,
-          clientId: clientIdBig,
-          providerId: offerRow.providerId,
+          clientId: purchaserCompanyIdBig, // purchaser company pk
+          providerId: offerRow.providerId, // provider company pk
           contractPrice:
             offerRow.offerPrice?.toString?.() ?? String(offerRow.offerPrice),
         },
       ],
       skipDuplicates: true,
     });
+
     const createdNow = (createRes?.count || 0) > 0;
 
-    // 2) Update statuses in a clean transaction
+    // 2) Update statuses atomically
     await prisma.$transaction([
       prisma.offer.update({
         where: { offerId: offerRow.offerId },
@@ -754,7 +780,7 @@ export async function POST(req) {
       }),
     ]);
 
-    // 3) Email contract package only when newly created
+    // 3) Send contract package only when newly created
     if (createdNow) {
       try {
         await sendContractPackageEmail(prisma, reqIdBig);
@@ -763,18 +789,50 @@ export async function POST(req) {
       }
     }
 
+    // 4) Notifications (winner + losers) only when newly created
     if (createdNow) {
+      // === Notify Purchaser: Contract Formed ===
       try {
-        // Fetch request + offers + purchaser + provider contacts to build all emails
+        const purchaserContacts = Array.isArray(
+          data?.client?.companyContactPersons,
+        )
+          ? data.client.companyContactPersons
+          : [];
+
+        const primaryPurchaser =
+          purchaserContacts.find((c) =>
+            String(c?.position || "")
+              .toLowerCase()
+              .includes("primary"),
+          ) ||
+          purchaserContacts[0] ||
+          null;
+
+        if (primaryPurchaser?.email && isEmail(primaryPurchaser.email)) {
+          const toGroup = expandWithAllNotificationContacts(
+            primaryPurchaser,
+            purchaserContacts,
+          );
+
+          if (toGroup.length > 0) {
+            await notifyPurchaserContractFormed({
+              to: toGroup,
+              requestTitle: data?.title || "",
+            });
+          }
+        }
+      } catch (e) {
+        console.error("notifyPurchaserContractFormed failed:", e);
+      }
+      try {
+        // Pull enough to email purchaser + providers
         const data = await prisma.request.findUnique({
           where: { requestId: reqIdBig },
           select: {
             title: true,
             primaryContactPerson: true,
             details: true,
-            client: {
-              select: { companyContactPersons: true },
-            },
+            client: { select: { companyContactPersons: true } },
             offers: {
               select: {
                 offerId: true,
@@ -787,94 +845,60 @@ export async function POST(req) {
           },
         });
 
-        // Purchaser email
-        const norm = (s) => (s ?? "").toString().trim().toLowerCase();
-        const full = (p) =>
-          [p?.firstName, p?.lastName].filter(Boolean).join(" ").trim();
-
-        const pc = data?.primaryContactPerson || null;
         const purchaserContacts = Array.isArray(
           data?.client?.companyContactPersons,
         )
           ? data.client.companyContactPersons
           : [];
-        let purchaserEmail = "";
-        if (pc) {
-          const target = norm(full(pc));
-          const match =
-            purchaserContacts.find((c) => norm(full(c)) === target) ||
-            purchaserContacts.find(
-              (c) =>
-                norm(c?.firstName) === norm(pc.firstName) ||
-                norm(c?.lastName) === norm(pc.lastName),
-            ) ||
-            null;
-          purchaserEmail = (match?.email || pc.email || "").trim();
-        }
-        if (!purchaserEmail && purchaserContacts.length > 0) {
-          purchaserEmail = (purchaserContacts[0]?.email || "").trim();
-        }
-        if (purchaserEmail) {
-          const toGroup = expandWithAllNotificationContacts(
-            { email: purchaserEmail },
-            purchaserContacts,
-          );
-          await notifyPurchaserContractFormed({
-            to: toGroup,
-            requestTitle: data?.title || "",
-          });
-        }
 
-        // Provider contacts for all offers
+        // Purchaser email (if your existing code notifies purchaser here, keep it)
+
+        // Build provider meta cache: providerId -> { contacts, prefs }
         const providerIds = Array.from(
           new Set((data?.offers || []).map((o) => String(o.providerId))),
-        ).map((id) => BigInt(id));
-        const providers = await prisma.appUser.findMany({
-          where: { userId: { in: providerIds } },
-          select: {
-            userId: true,
-            companyContactPersons: true,
-            notificationPreferences: true,
-          },
-        });
-        const providerMeta = new Map(
-          providers.map((p) => [
-            String(p.userId),
-            {
-              contacts: p.companyContactPersons || [],
-              prefs: toStringArray(p.notificationPreferences),
-            },
-          ]),
+        ).filter(Boolean);
+
+        const providerMeta = new Map();
+        await Promise.all(
+          providerIds.map(async (pid) => {
+            try {
+              const meta = await getProviderMeta(BigInt(pid));
+              providerMeta.set(pid, meta);
+            } catch {
+              providerMeta.set(pid, { contacts: [], prefs: [] });
+            }
+          }),
         );
 
         // Winner
         const winner = (data?.offers || []).find(
           (o) => (o.offerStatus || "").toUpperCase() === "WON",
         );
+
         if (winner) {
-          const wMeta = providerMeta.get(String(winner.providerId)) || {
+          const meta = providerMeta.get(String(winner.providerId)) || {
             contacts: [],
             prefs: [],
           };
-          const wPrimary = findPrimaryContactByLawyer(
+
+          // If your existing behavior is "always notify winner" regardless of prefs,
+          // leave it as-is. If you gate it on prefs, keep the gate.
+          const primary = findPrimaryContactByLawyer(
             winner.offerLawyer,
-            wMeta.contacts,
+            meta.contacts,
           );
 
-          if (wPrimary?.email && isEmail(wPrimary.email)) {
+          if (primary?.email && isEmail(primary.email)) {
             const toGroup = expandWithAllNotificationContacts(
-              wPrimary,
-              wMeta.contacts,
+              primary,
+              meta.contacts,
             );
 
-            // read teamRequest from request.details
+            // Team request info: keep the exact semantics you had before
             let teamReq = "";
             const rawTeamReq = data?.details?.teamRequest;
-            if (typeof rawTeamReq === "string") {
-              teamReq = rawTeamReq.trim();
-            } else if (rawTeamReq != null) {
-              teamReq = String(rawTeamReq).trim();
-            }
+            if (typeof rawTeamReq === "string") teamReq = rawTeamReq.trim();
+            else if (rawTeamReq != null) teamReq = String(rawTeamReq).trim();
 
             const basePayload = {
               to: toGroup,
@@ -892,7 +916,6 @@ export async function POST(req) {
                   "Please confirm team availability when discussing engagement details with the client.",
               });
             } else {
-              // No team request
               await notifyWinningLawyerContractFormed(basePayload);
             }
           }
@@ -901,10 +924,13 @@ export async function POST(req) {
         // Losers
         for (const o of data?.offers || []) {
           if ((o.offerStatus || "").toUpperCase() === "WON") continue;
+
           const meta = providerMeta.get(String(o.providerId)) || {
             contacts: [],
             prefs: [],
           };
+
+          // keep same preference key you already used
           if (!meta.prefs.includes("no-winning-offer")) continue;
 
           const primary = findPrimaryContactByLawyer(

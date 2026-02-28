@@ -142,7 +142,7 @@ export default function ProviderRatingPage() {
           `/api/me/contracted-providers?q=${encodeURIComponent(query)}`,
           {
             cache: "no-store",
-          }
+          },
         );
         const json = await res.json();
         if (!active) return;
@@ -173,7 +173,7 @@ export default function ProviderRatingPage() {
     setSelectedCategoryLabel("");
 
     try {
-      const res = await fetch(`/api/providers/${p.userId}/rating`, {
+      const res = await fetch(`/api/providers/${p.companyId}/rating`, {
         cache: "no-store",
       });
       if (res.ok) {
@@ -197,13 +197,13 @@ export default function ProviderRatingPage() {
     setBill(0);
 
     const c = contractsForSelected.find(
-      (x) => String(x.contractId) === String(contractIdStr)
+      (x) => String(x.contractId) === String(contractIdStr),
     );
     setSelectedRequestTitle(c?.requestTitle || "");
 
     const category = mapRequestToCategory(
       c?.requestCategory,
-      c?.requestSubcategory
+      c?.requestSubcategory,
     );
     setSelectedCategoryLabel(category);
 
@@ -212,9 +212,9 @@ export default function ProviderRatingPage() {
     try {
       const res = await fetch(
         `/api/providers/${
-          selected.userId
+          selected.companyId
         }/rating?contractId=${encodeURIComponent(contractIdStr)}`,
-        { cache: "no-store" }
+        { cache: "no-store" },
       );
 
       if (res.ok) {
@@ -246,7 +246,7 @@ export default function ProviderRatingPage() {
     setSaving(true);
     setMessage("");
     try {
-      const res = await fetch(`/api/providers/${selected.userId}/rating`, {
+      const res = await fetch(`/api/providers/${selected.companyId}/rating`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -281,7 +281,7 @@ export default function ProviderRatingPage() {
           `/api/providers/search?q=${encodeURIComponent(queryAny)}`,
           {
             cache: "no-store",
-          }
+          },
         );
         const json = await res.json();
         if (!active) return;
@@ -311,7 +311,7 @@ export default function ProviderRatingPage() {
 
     try {
       // Aggregated “total” ratings (existing behavior)
-      const res = await fetch(`/api/providers/${p.userId}/rating`, {
+      const res = await fetch(`/api/providers/${p.companyId}/rating`, {
         cache: "no-store",
       });
       if (res.ok) {
@@ -329,7 +329,9 @@ export default function ProviderRatingPage() {
       });
       const list = await resPractical.json().catch(() => []);
       if (resPractical.ok && Array.isArray(list)) {
-        const full = list.find((x) => String(x.userId) === String(p.userId));
+        const full = list.find(
+          (x) => String(x.companyId) === String(p.companyId),
+        );
         if (full) setSelectedAnyFull(full);
       }
     } catch {
@@ -513,10 +515,10 @@ export default function ProviderRatingPage() {
               </div>
             ) : (
               results.map((r) => {
-                const isSel = selected?.userId === r.userId;
+                const isSel = selected?.companyId === r.companyId;
                 return (
                   <div
-                    key={String(r.userId)}
+                    key={String(r.companyId)}
                     className={`p-2 text-sm cursor-pointer ${
                       isSel ? "bg-[#e6f7f7] border-l-4 border-[#11999e]" : ""
                     }`}
@@ -642,10 +644,10 @@ export default function ProviderRatingPage() {
               </div>
             ) : (
               resultsAny.map((r) => {
-                const isSel = selectedAny?.userId === r.userId;
+                const isSel = selectedAny?.companyId === r.companyId;
                 return (
                   <div
-                    key={String(r.userId)}
+                    key={String(r.companyId)}
                     className={`p-2 text-sm cursor-pointer hover:bg-gray-100 ${
                       isSel ? "bg-[#e6f7f7] border-l-4 border-[#11999e]" : ""
                     }`}
@@ -738,14 +740,14 @@ export default function ProviderRatingPage() {
                           const providerForCategories =
                             selectedAnyFull || selectedAny;
                           const practicalMap = normalizePracticalRatings(
-                            providerForCategories
+                            providerForCategories,
                           );
 
                           const categoriesToShow = Array.from(
                             new Set([
                               ...PRACTICAL_CATEGORIES,
                               ...Object.keys(practicalMap || {}),
-                            ])
+                            ]),
                           ).filter(Boolean);
 
                           if (!categoriesToShow.length) {
@@ -910,12 +912,12 @@ export default function ProviderRatingPage() {
                       new Set([
                         ...PRACTICAL_CATEGORIES,
                         ...Object.keys(practicalMap || {}),
-                      ])
+                      ]),
                     ).filter(Boolean);
 
                     return (
                       <div
-                        key={String(p.userId)}
+                        key={String(p.companyId)}
                         className="border rounded p-4 bg-white"
                       >
                         <div className="text-lg font-semibold mb-1">
@@ -937,7 +939,8 @@ export default function ProviderRatingPage() {
                           {/* Total rating (expandable) */}
                           {(() => {
                             const totalExpanded =
-                              expandedProviders?.[p.userId]?.__TOTAL__ ?? false;
+                              expandedProviders?.[p.companyId]?.__TOTAL__ ??
+                              false;
 
                             const hasTotalRatings =
                               Array.isArray(p.providerIndividualRating) &&
@@ -960,8 +963,8 @@ export default function ProviderRatingPage() {
                                   type="button"
                                   onClick={() =>
                                     toggleProviderCategoryExpand(
-                                      p.userId,
-                                      "__TOTAL__"
+                                      p.companyId,
+                                      "__TOTAL__",
                                     )
                                   }
                                   className="w-full -mx-2 px-2 py-1 rounded flex items-center justify-between hover:bg-gray-50 cursor-pointer"
@@ -1017,7 +1020,7 @@ export default function ProviderRatingPage() {
                           {categoriesToShow.map((categoryKey) => {
                             const entry = practicalMap?.[categoryKey];
                             const expanded =
-                              expandedProviders?.[p.userId]?.[categoryKey] ??
+                              expandedProviders?.[p.companyId]?.[categoryKey] ??
                               false;
 
                             const hasRatings = categoryHasRatings(entry);
@@ -1047,8 +1050,8 @@ export default function ProviderRatingPage() {
                                   type="button"
                                   onClick={() =>
                                     toggleProviderCategoryExpand(
-                                      p.userId,
-                                      categoryKey
+                                      p.companyId,
+                                      categoryKey,
                                     )
                                   }
                                   className="w-full -mx-2 px-2 py-1 rounded flex items-center justify-between hover:bg-gray-50 cursor-pointer"

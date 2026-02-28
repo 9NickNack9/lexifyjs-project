@@ -8,7 +8,6 @@ export default function DisputeArbitration() {
   const router = useRouter();
 
   const initialFormState = {
-    contactPerson: "",
     need: "", // radio: full vs occasional
     confidential: "",
     confboxes: [],
@@ -36,10 +35,11 @@ export default function DisputeArbitration() {
   const [formData, setFormData] = useState(initialFormState);
   const [showPreview, setShowPreview] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-
-  // NEW: contacts + company
-  const [contactOptions, setContactOptions] = useState([]);
-  const [company, setCompany] = useState({ name: "", id: "", country: "" });
+  const [company, setCompany] = useState({
+    name: "",
+    businessId: "",
+    country: "",
+  });
 
   useEffect(() => {
     (async () => {
@@ -48,23 +48,10 @@ export default function DisputeArbitration() {
         if (!res.ok) return;
         const me = await res.json();
         setCompany({
-          name: me?.companyName || "",
-          id: me?.companyId || "",
-          country: me?.companyCountry || "",
+          name: me?.company?.companyName || me?.companyName || "",
+          businessId: me?.company?.businessId || "",
+          country: me?.company?.companyCountry || me?.companyCountry || "",
         });
-        const list = Array.isArray(me.companyContactPersons)
-          ? me.companyContactPersons
-          : [];
-        const opts = list
-          .map((p) => {
-            const n = [p.firstName || "", p.lastName || ""]
-              .filter(Boolean)
-              .join(" ")
-              .trim();
-            return n ? { label: n, value: n } : null;
-          })
-          .filter(Boolean);
-        setContactOptions(opts);
       } catch {}
     })();
   }, []);
@@ -127,8 +114,6 @@ export default function DisputeArbitration() {
 
   // validate
   const validate = () => {
-    if (!formData.contactPerson)
-      return "Please select a primary contact person.";
     if (!formData.need) return "Please select what kind of support you need.";
     if (!formData.offerer) return "Choose which providers can offer.";
     if (!formData.providerCountry) return "Choose domestic/foreign offers.";
@@ -175,7 +160,6 @@ export default function DisputeArbitration() {
         requestState: "PENDING",
         requestCategory: "Help with Dispute Resolution or Debt Collection",
         requestSubcategory: "Support with Arbitration Proceedings",
-        primaryContactPerson: formData.contactPerson,
         scopeOfWork: formData.need,
         description: formData.description || "",
         additionalBackgroundInfo: formData.background || "",
@@ -274,30 +258,6 @@ export default function DisputeArbitration() {
       <div className="w-full max-w-7xl p-6 rounded shadow-2xl bg-white text-black">
         {/* Form Section */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <h4 className="text-md font-medium mb-1 font-semibold">
-              Who is the primary contact person for this LEXIFY Request at your
-              company?{" "}
-              <QuestionMarkTooltip tooltipText="All updates and notifications regarding this LEXIFY Request will be sent to the designated person. If you do not see your name listed below, you can add new contact persons on the 'My Account' page (see My Account in the LEXIFY main menu)." />
-            </h4>
-            <select
-              name="contactPerson"
-              className="w-full border p-2"
-              onChange={handleChange}
-              value={formData.contactPerson}
-              required
-            >
-              <option value="">Select</option>
-              {contactOptions.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
-          </div>
-          <br />
-          <hr />
-          <br />
           <h4 className="text-md font-medium mb-1  font-semibold">
             What kind of support do you need?
           </h4>
@@ -937,11 +897,9 @@ export default function DisputeArbitration() {
                     "Disclosed to Winning Bidder Only",
                   )
                     ? "Disclosed to Winning Bidder Only"
-                    : formData.contactPerson
-                      ? [company.name, company.id, company.country]
-                          .filter(Boolean)
-                          .join(", ")
-                      : "-"}
+                    : [company.name, company.businessId, company.country]
+                        .filter(Boolean)
+                        .join(", ") || "-"}
                 </Section>
 
                 {/* Scope of Work */}

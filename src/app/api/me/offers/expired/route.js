@@ -6,6 +6,9 @@ import { prisma } from "@/lib/prisma";
 const toNum = (d) => (d == null ? null : Number(d));
 const safeNumber = (v) => (typeof v === "bigint" ? Number(v) : v);
 
+const fullName = (u) =>
+  [u?.firstName, u?.lastName].filter(Boolean).join(" ").trim();
+
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
@@ -13,21 +16,29 @@ export async function GET() {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const me = await prisma.appUser.findUnique({
-      where: { userId: BigInt(session.userId) },
+    const me = await prisma.userAccount.findUnique({
+      where: { userPkId: BigInt(session.userId) },
+      select: { firstName: true, lastName: true, companyId: true },
+    });
+
+    if (!me?.companyId) {
+      return NextResponse.json(
+        { error: "User has no company" },
+        { status: 400 },
+      );
+    }
+
+    const company = await prisma.company.findUnique({
+      where: { companyPkId: me.companyId },
       select: {
-        companyContactPersons: true,
-        contactFirstName: true,
-        contactLastName: true,
+        members: { select: { firstName: true, lastName: true } },
       },
     });
 
     const offers = await prisma.offer.findMany({
       where: {
-        providerId: BigInt(session.userId),
-        offerStatus: {
-          in: ["WON", "LOST"],
-        },
+        providerCompanyId: me.companyId,
+        offerStatus: { in: ["WON", "LOST"] },
       },
       orderBy: { createdAt: "desc" },
       select: {
@@ -38,42 +49,24 @@ export async function GET() {
         offerLawyer: true,
         offerStatus: true,
         requestId: true,
+        createdByUser: { select: { firstName: true, lastName: true } },
         request: {
           select: {
             title: true,
-            clientId: true,
             details: true,
+            clientCompany: {
+              select: {
+                companyName: true,
+              },
+            },
           },
         },
       },
     });
 
-    // Load client company details
-    const clientIds = Array.from(
-      new Set(offers.map((o) => o.request?.clientId).filter(Boolean))
-    );
-
-    const clients = clientIds.length
-      ? await prisma.appUser.findMany({
-          where: { userId: { in: clientIds } },
-          select: {
-            userId: true,
-            companyName: true,
-          },
-        })
-      : [];
-
-    const clientById = new Map(
-      clients.map((c) => [String(c.userId), c.companyName || "—"])
-    );
-
-    const defaultName = [me?.contactFirstName, me?.contactLastName]
-      .filter(Boolean)
-      .join(" ");
-
     const shaped = offers.map((o) => {
       const req = o.request || {};
-      const clientName = clientById.get(String(req.clientId)) || "—";
+      const clientName = req.clientCompany?.companyName || "—";
       const selectReason = req.details?.selectReason ?? null;
 
       return {
@@ -81,7 +74,8 @@ export async function GET() {
         requestId: safeNumber(o.requestId),
         title: o.offerTitle || req.title || "—",
         clientName,
-        offerSubmittedBy: o.offerLawyer || defaultName || "—",
+        offerSubmittedBy:
+          fullName(o.createdByUser) || o.offerLawyer || fullName(me) || "—",
         offerSubmissionDate: o.createdAt || null,
         offeredPrice: toNum(o.offerPrice),
         offerStatus: o.offerStatus || "—",
@@ -89,25 +83,23 @@ export async function GET() {
       };
     });
 
-    const contactList = Array.isArray(me?.companyContactPersons)
-      ? me.companyContactPersons
-          .map((p) =>
-            [p?.firstName, p?.lastName].filter(Boolean).join(" ").trim()
-          )
-          .filter(Boolean)
+    const contactsFromMembers = Array.isArray(company?.members)
+      ? company.members.map(fullName).filter(Boolean)
       : [];
-    const mainName = defaultName?.trim();
-    if (mainName && !contactList.includes(mainName)) contactList.push(mainName);
+    const meName = fullName(me);
+    const contacts = Array.from(
+      new Set([...contactsFromMembers, meName].filter(Boolean)),
+    );
 
     return NextResponse.json({
-      contacts: contactList,
+      contacts,
       offers: shaped,
     });
   } catch (e) {
     console.error("GET /api/me/offers/expired failed:", e);
     return NextResponse.json(
       { error: "Server error loading expired offers" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }

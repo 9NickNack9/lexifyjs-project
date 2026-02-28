@@ -4,55 +4,44 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 
-// Normalize any historical value into a clean array of strings
 function toStringArray(val) {
-  // Already an array?
   if (Array.isArray(val)) return val.filter((v) => typeof v === "string");
-
-  // JSON string?
   if (typeof val === "string") {
-    // try to parse JSON
     try {
       const parsed = JSON.parse(val);
-      if (Array.isArray(parsed)) {
+      if (Array.isArray(parsed))
         return parsed.filter((v) => typeof v === "string");
-      }
-      // non-array string content -> treat as single value
       return val ? [val] : [];
     } catch {
-      // plain string, not JSON
       return val ? [val] : [];
     }
   }
-
-  // Objects like Prisma.JsonObject -> not supported for this field; ignore
   return [];
 }
 
-// GET /api/me/notification-preferences/purchaser
-export async function GET() {
-  const session = await getServerSession(authOptions);
-  if (!session?.userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
-  const row = await prisma.appUser.findUnique({
-    where: { userId: BigInt(session.userId) },
-    select: { notificationPreferences: true },
-  });
-
-  const prefs = toStringArray(row?.notificationPreferences);
-
-  return NextResponse.json({ notificationPreferences: prefs });
+function pickPrefs(row) {
+  return toStringArray(row?.notificationPreferences);
 }
 
-// PATCH /api/me/notification-preferences/purchaser
-// Body: { key: "no_offers" | "over_max_price" | "pending_offer_selection", enabled: boolean }
+export async function GET() {
+  const session = await getServerSession(authOptions);
+  if (!session?.userId)
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+
+  const row = await prisma.userAccount.findUnique({
+    where: { userPkId: BigInt(session.userId) },
+    select: {
+      notificationPreferences: true,
+    },
+  });
+
+  return NextResponse.json({ notificationPreferences: pickPrefs(row) });
+}
+
 export async function PATCH(req) {
   const session = await getServerSession(authOptions);
-  if (!session?.userId) {
+  if (!session?.userId)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
 
   let body;
   try {
@@ -71,21 +60,21 @@ export async function PATCH(req) {
     return NextResponse.json({ error: "Invalid payload." }, { status: 400 });
   }
 
-  // Load current and normalize
-  const current = await prisma.appUser.findUnique({
-    where: { userId: BigInt(session.userId) },
-    select: { notificationPreferences: true },
+  const current = await prisma.userAccount.findUnique({
+    where: { userPkId: BigInt(session.userId) },
+    select: {
+      notificationPreferences: true,
+    },
   });
 
-  const prev = toStringArray(current?.notificationPreferences);
-
+  const prev = pickPrefs(current);
   const next = enabled
-    ? Array.from(new Set([...prev, key])) // add key once
-    : prev.filter((k) => k !== key); // remove key
+    ? Array.from(new Set([...prev, key]))
+    : prev.filter((k) => k !== key);
 
-  // JSON column: write the array directly
-  await prisma.appUser.update({
-    where: { userId: BigInt(session.userId) },
+  // Write to the new field if present in your schema; if you *don’t* have it, switch to notificationPreferences.
+  await prisma.userAccount.update({
+    where: { userPkId: BigInt(session.userId) },
     data: { notificationPreferences: next },
   });
 

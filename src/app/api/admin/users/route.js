@@ -13,9 +13,14 @@ export async function GET(req) {
   const skip = parseInt(searchParams.get("skip") || "0", 10);
   const take = parseInt(searchParams.get("take") || "10", 10);
 
-  const where = search
-    ? { companyName: { contains: search, mode: "insensitive" } }
-    : {};
+  const role = searchParams.get("role") || "";
+
+  const where = {
+    ...(search
+      ? { companyName: { contains: search, mode: "insensitive" } }
+      : {}),
+    ...(role ? { role } : {}),
+  };
 
   const users = await prisma.appUser.findMany({
     where,
@@ -51,7 +56,7 @@ export async function GET(req) {
       const computedAge =
         typeof u.companyFoundingYear === "number"
           ? Math.max(0, currentYear - u.companyFoundingYear)
-          : u.companyAge ?? 0; // fallback to stored age if no founding year
+          : (u.companyAge ?? 0); // fallback to stored age if no founding year
 
       return {
         ...u,

@@ -6,31 +6,48 @@ import { prisma } from "@/lib/prisma";
 const toNum = (d) => (d == null ? null : Number(d));
 const safeNumber = (v) => (typeof v === "bigint" ? Number(v) : v);
 
+const fullName = (u) =>
+  [u?.firstName, u?.lastName].filter(Boolean).join(" ").trim();
+
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.userId)
+    if (!session?.userId) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-    const me = await prisma.appUser.findUnique({
-      where: { userId: BigInt(session.userId) },
+    // NEW: session.userId is UserAccount.userPkId
+    const me = await prisma.userAccount.findUnique({
+      where: { userPkId: BigInt(session.userId) },
       select: {
-        companyContactPersons: true,
-        contactFirstName: true,
-        contactLastName: true,
+        userPkId: true,
+        firstName: true,
+        lastName: true,
+        companyId: true,
       },
     });
 
-    const now = new Date();
+    if (!me?.companyId) {
+      return NextResponse.json(
+        { error: "User has no company" },
+        { status: 400 },
+      );
+    }
+
+    const company = await prisma.company.findUnique({
+      where: { companyPkId: me.companyId },
+      select: {
+        members: {
+          select: { firstName: true, lastName: true },
+        },
+      },
+    });
 
     const offers = await prisma.offer.findMany({
       where: {
-        providerId: BigInt(session.userId),
+        providerCompanyId: me.companyId,
         request: {
-          requestState: {
-            in: ["PENDING", "ON HOLD"],
-          },
-          //dateExpired: { gt: now },
+          requestState: { in: ["PENDING", "ON HOLD"] },
         },
       },
       orderBy: { createdAt: "desc" },
@@ -41,11 +58,13 @@ export async function GET() {
         createdAt: true,
         offerLawyer: true,
         requestId: true,
+        createdByUser: {
+          select: { firstName: true, lastName: true },
+        },
         request: {
           select: {
             title: true,
             dateExpired: true,
-            clientId: true,
             scopeOfWork: true,
             description: true,
             currency: true,
@@ -57,61 +76,37 @@ export async function GET() {
             supplierCodeOfConductFiles: true,
             primaryContactPerson: true,
             details: true,
+            clientCompany: {
+              select: {
+                companyName: true,
+                businessId: true,
+                companyCountry: true,
+              },
+            },
           },
         },
       },
     });
 
-    // Load client company details (✅ include Business ID & Country)
-    const clientIds = Array.from(
-      new Set(offers.map((o) => o.request?.clientId).filter(Boolean))
-    );
-    const clients = clientIds.length
-      ? await prisma.appUser.findMany({
-          where: { userId: { in: clientIds } },
-          select: {
-            userId: true,
-            companyName: true,
-            companyId: true, // ✅ added
-            companyCountry: true, // ✅ added
-          },
-        })
-      : [];
-
-    // Map userId -> object with name/id/country
-    const clientById = new Map(
-      clients.map((c) => [
-        String(c.userId),
-        {
-          companyName: c.companyName || "—",
-          companyId: c.companyId || "—",
-          companyCountry: c.companyCountry || "—",
-        },
-      ])
-    );
-
-    const defaultName = [me?.contactFirstName, me?.contactLastName]
-      .filter(Boolean)
-      .join(" ");
-
     const shaped = offers.map((o) => {
       const req = o.request || {};
-      const client = clientById.get(String(req.clientId)) || {
-        companyName: "—",
-        companyId: "—",
-        companyCountry: "—",
-      };
+      const clientCo = req.clientCompany || null;
+
+      const submittedBy =
+        fullName(o.createdByUser) || o.offerLawyer || fullName(me) || "—";
 
       return {
         offerId: safeNumber(o.offerId),
         requestId: safeNumber(o.requestId),
         title: o.offerTitle || req.title || "—",
-        clientName: client.companyName,
-        confidential: req.details?.confidential || null,
-        offerSubmittedBy: o.offerLawyer || defaultName || "—",
+        clientName: clientCo?.companyName || "—",
+        confidential: req.details?.confidential ?? null,
+        offerSubmittedBy: submittedBy,
         offerSubmissionDate: o.createdAt || null,
         offeredPrice: toNum(o.offerPrice),
         dateExpired: req.dateExpired,
+
+        // keep parity with your preview modal expectations
         preview: {
           scopeOfWork: req.scopeOfWork || "—",
           currency: req.currency || "—",
@@ -124,33 +119,30 @@ export async function GET() {
           supplierCodeOfConductFiles: req.supplierCodeOfConductFiles || [],
           primaryContactPerson: req.primaryContactPerson || "—",
 
-          // ✅ provide these to the modal preview
-          clientName: client.companyName,
-          clientBusinessId: client.companyId,
-          clientCountry: client.companyCountry,
+          clientName: clientCo?.companyName || "—",
+          clientBusinessId: clientCo?.businessId || "—",
+          clientCountry: clientCo?.companyCountry || "—",
         },
       };
     });
 
-    const contactList = Array.isArray(me?.companyContactPersons)
-      ? me.companyContactPersons
-          .map((p) =>
-            [p?.firstName, p?.lastName].filter(Boolean).join(" ").trim()
-          )
-          .filter(Boolean)
+    const contactsFromMembers = Array.isArray(company?.members)
+      ? company.members.map(fullName).filter(Boolean)
       : [];
-    const mainName = defaultName?.trim();
-    if (mainName && !contactList.includes(mainName)) contactList.push(mainName);
+    const meName = fullName(me);
+    const contacts = Array.from(
+      new Set(["All", ...contactsFromMembers, meName].filter(Boolean)),
+    );
 
     return NextResponse.json({
-      contacts: contactList,
+      contacts: contacts.filter((c) => c !== "All"), // page adds "All" itself
       offers: shaped,
     });
   } catch (e) {
     console.error("GET /api/me/offers/pending failed:", e);
     return NextResponse.json(
       { error: "Server error loading offers" },
-      { status: 500 }
+      { status: 500 },
     );
   }
 }
