@@ -314,7 +314,13 @@ export async function POST(req) {
               },
             ],
           },
-          select: { companyPkId: true },
+          select: { companyPkId: true, companyName: true },
+        });
+      } else {
+        // existingCompany only selected { companyPkId, role } earlier, so we need the name
+        company = await tx.company.findUnique({
+          where: { companyPkId: company.companyPkId },
+          select: { companyPkId: true, companyName: true },
         });
       }
 
@@ -339,14 +345,18 @@ export async function POST(req) {
         select: { userPkId: true, companyId: true },
       });
 
-      return { companyPkId: company.companyPkId, userPkId: user.userPkId };
+      return {
+        companyPkId: company.companyPkId,
+        companyName: company.companyName,
+        userPkId: user.userPkId,
+      };
     });
 
     // Support notification (don’t fail registration if email fails)
     try {
       await notifySupportNewRegistration({
         role: data.role, // "provider" | "purchaser"
-        companyName: data.companyName,
+        companyName: result.companyName,
       });
     } catch (e) {
       console.error("New registration support email failed:", e);
