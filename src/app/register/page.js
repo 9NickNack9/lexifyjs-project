@@ -136,10 +136,10 @@ export default function Register() {
                 Select
               </option>
               <option value="new_company">
-                New User To an Unregistered Company
+                New User for an Unregistered Company
               </option>
               <option value="existing_company">
-                New User To a Previously Registered Company
+                New User for a Previously Registered Company
               </option>
             </select>
           </div>
