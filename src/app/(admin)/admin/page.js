@@ -732,7 +732,7 @@ export default function AdminPage() {
           {userTables.ADMIN.hasMore && !userTables.ADMIN.loading && (
             <button
               onClick={() => fetchUsersByRole("ADMIN", false)}
-              className="w-full bg-gray-100 p-2 mt-2 rounded"
+              className="w-full bg-gray-100 p-2 mt-2 rounded text-black"
             >
               Load more
             </button>
@@ -814,7 +814,7 @@ export default function AdminPage() {
           {userTables.PURCHASER.hasMore && !userTables.PURCHASER.loading && (
             <button
               onClick={() => fetchUsersByRole("PURCHASER", false)}
-              className="w-full bg-gray-100 p-2 mt-2 rounded"
+              className="w-full bg-gray-100 p-2 mt-2 rounded text-black"
             >
               Load more
             </button>
@@ -946,7 +946,7 @@ export default function AdminPage() {
           {userTables.PROVIDER.hasMore && !userTables.PROVIDER.loading && (
             <button
               onClick={() => fetchUsersByRole("PROVIDER", false)}
-              className="w-full bg-gray-100 p-2 mt-2 rounded"
+              className="w-full bg-gray-100 p-2 mt-2 rounded text-black"
             >
               Load more
             </button>
@@ -1069,7 +1069,7 @@ export default function AdminPage() {
             !companyTables.PURCHASER.loading && (
               <button
                 onClick={() => fetchCompaniesByRole("PURCHASER", false)}
-                className="w-full bg-gray-100 p-2 mt-2 rounded"
+                className="w-full bg-gray-100 p-2 mt-2 rounded text-black"
               >
                 Load more
               </button>
@@ -1169,7 +1169,7 @@ export default function AdminPage() {
             !companyTables.PROVIDER.loading && (
               <button
                 onClick={() => fetchCompaniesByRole("PROVIDER", false)}
-                className="w-full bg-gray-100 p-2 mt-2 rounded"
+                className="w-full bg-gray-100 p-2 mt-2 rounded text-black"
               >
                 Load more
               </button>
@@ -1285,7 +1285,7 @@ export default function AdminPage() {
           {accountTables.ADMIN.hasMore && !accountTables.ADMIN.loading && (
             <button
               onClick={() => fetchAccountsByRole("ADMIN", false)}
-              className="w-full bg-gray-100 p-2 mt-2 rounded"
+              className="w-full bg-gray-100 p-2 mt-2 rounded text-black"
             >
               Load more
             </button>
@@ -1374,7 +1374,7 @@ export default function AdminPage() {
             !accountTables.PURCHASER.loading && (
               <button
                 onClick={() => fetchAccountsByRole("PURCHASER", false)}
-                className="w-full bg-gray-100 p-2 mt-2 rounded"
+                className="w-full bg-gray-100 p-2 mt-2 rounded text-black"
               >
                 Load more
               </button>
@@ -1463,7 +1463,7 @@ export default function AdminPage() {
             !accountTables.PROVIDER.loading && (
               <button
                 onClick={() => fetchAccountsByRole("PROVIDER", false)}
-                className="w-full bg-gray-100 p-2 mt-2 rounded"
+                className="w-full bg-gray-100 p-2 mt-2 rounded text-black"
               >
                 Load more
               </button>
@@ -1854,7 +1854,7 @@ export default function AdminPage() {
                 <td colSpan={8} className="p-2">
                   <button
                     onClick={() => fetchRequests(false)}
-                    className="w-full bg-gray-100 p-2"
+                    className="w-full bg-gray-100 p-2 text-black"
                   >
                     Load more
                   </button>
@@ -2018,7 +2018,7 @@ export default function AdminPage() {
                 <td colSpan={7} className="p-2">
                   <button
                     onClick={() => fetchOffers(false)}
-                    className="w-full bg-gray-100 p-2"
+                    className="w-full bg-gray-100 p-2 text-black"
                   >
                     Load more
                   </button>
@@ -2133,7 +2133,7 @@ export default function AdminPage() {
                 <td colSpan={6} className="p-2">
                   <button
                     onClick={() => fetchContracts(false)}
-                    className="w-full bg-gray-100 p-2"
+                    className="w-full bg-gray-100 p-2 text-black"
                   >
                     Load more
                   </button>
