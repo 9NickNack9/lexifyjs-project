@@ -13,6 +13,86 @@ enum Role {
   ADMIN
 }
 
+enum CompanyRole {
+  PURCHASER
+  PROVIDER
+}
+
+model Company {
+  companyPkId    BigInt      @id @default(autoincrement()) @db.BigInt
+  role           CompanyRole
+  registerStatus String      @default("pending")
+
+  companyName          String  @unique
+  businessId           String  @unique
+  companyAddress       String
+  companyPostalCode    String
+  companyCity          String
+  companyCountry       String
+  companyWebsite       String
+  companyProfessionals Int?
+  companyFoundingYear  Int?
+  companyAge           Int?    @default(0)
+  providerType         String? @default("")
+
+  // provider company ratings
+  providerTotalRating         Decimal? @default("5") @db.Decimal
+  providerQualityRating       Decimal? @default("5") @db.Decimal
+  providerCommunicationRating Decimal? @default("5") @db.Decimal
+  providerBillingRating       Decimal? @default("5") @db.Decimal
+  providerIndividualRating    Json     @default("[]")
+  providerPracticalRatings    Json     @default("[]")
+
+  invoiceFee                   Decimal @default("0") @db.Decimal
+  companyInvoiceContactPersons Json
+
+  members UserAccount[]
+
+  requests        Request[]  @relation("CompanyRequests")
+  offers          Offer[]    @relation("CompanyOffers")
+  contractsClient Contract[] @relation("ClientCompanyContracts")
+  contractsProv   Contract[] @relation("ProviderCompanyContracts")
+}
+
+model UserAccount {
+  userPkId       BigInt @id @default(autoincrement()) @db.BigInt
+  companyId      BigInt
+  registerStatus String @default("pending")
+
+  // person-level identity
+  role         Role // PURCHASER / PROVIDER / ADMIN
+  username     String @unique
+  email        String @unique
+  passwordHash String
+
+  firstName                        String
+  lastName                         String
+  telephone                        String?
+  position                         String?
+  isCompanyAdmin                   Boolean @default(false)
+  notificationPreferences          Json    @default("[\"no_offers\", \"over_max_price\", \"pending_offer_selection\", \"no-winning-offer\", \"winner-conflict-check\", \"request-cancelled\", \"new-available-request\"]")
+  practicalNotificationPreferences Json    @default("[\"contracts\", \"day_to_day\", \"employment\", \"dispute_resolution\", \"m_and_a\", \"corporate_advisory\", \"data_protection\", \"compliance\", \"legal_training\", \"banking_and_finance\"]")
+  blockedServiceProviders          Json    @default("[]")
+  preferredLegalServiceProviders   Json    @default("[]")
+  legalPanelServiceProviders       Json    @default("[]")
+  winningOfferSelection            String  @default("manual")
+  twoFactorRecoveryCodes           Json? // stores hashed codes + used flag
+
+  // 2FA fields
+  twoFactorEnabled Boolean @default(false)
+  twoFactorSecret  String?
+
+  passwordResetTokens PasswordResetTokenUser[]
+
+  // audit relations
+  company         Company         @relation(fields: [companyId], references: [companyPkId], onDelete: Cascade)
+  createdRequests Request[]       @relation("RequestsCreatedBy")
+  createdOffers   Offer[]         @relation("OffersCreatedBy")
+  trustedDevices  TrustedDevice[]
+
+  @@index([companyId])
+}
+
 model AppUser {
   userId                         BigInt   @id @default(autoincrement()) @db.BigInt
   role                           Role
@@ -50,101 +130,121 @@ model AppUser {
   invoiceFee                     Decimal  @default("0") @db.Decimal
   companyInvoiceContactPersons   Json
 
-  requests        Request[]  @relation("UserRequests")
-  offers          Offer[]    @relation("ProviderOffers")
-  contractsClient Contract[] @relation("ClientContracts")
-  contractsProv   Contract[] @relation("ProviderContracts")
+  requests            Request[]            @relation("UserRequests")
+  offers              Offer[]              @relation("ProviderOffers")
+  contractsClient     Contract[]           @relation("ClientContracts")
+  contractsProv       Contract[]           @relation("ProviderContracts")
   passwordResetTokens PasswordResetToken[] @relation("PasswordResetTokens")
 }
 
 model Request {
-  requestId                          BigInt       @id @default(autoincrement())  // ← present in every request
-  clientId                           BigInt                                      // ← session.userId
-  requestState                       String                                      // e.g. "PENDING", "EXPIRED", "ON HOLD", "CONFLICT CHECK"
-  selectedOfferId                    BigInt?                                    // offer picked, awaiting conflict decision
-  acceptDeadlinePausedRemainingMs    Int?                                       // how much time was left when we paused
-  acceptDeadlinePausedAt             DateTime?                                  // auditing only
-  disqualifiedOfferIds               Json?                                      // [offerId, offerId, ...] (BigInt serialized as strings ok)
-  requestCategory                    String
-  requestSubcategory                 String?                                 // not relevant to all
-  assignmentType                     String?                                 // not relevant to all
-  clientCompanyName                  String?
-  primaryContactPerson               String
-  scopeOfWork                        String                                  // what was requested
-  description                        String                                  // your “company line of business”
-  additionalBackgroundInfo           String     @default("")                 // present but can be empty
-  backgroundInfoFiles                Json       @default("[]")              // present but can be empty
-  supplierCodeOfConductFiles         Json       @default("[]")              // present but can be empty
-  providerReferences                 String     @default("")
+  requestId                       BigInt    @id @default(autoincrement()) // ← present in every request
+  clientId                        BigInt // ← session.userId
+  requestState                    String // e.g. "PENDING", "EXPIRED", "ON HOLD", "CONFLICT CHECK"
+  selectedOfferId                 BigInt? // offer picked, awaiting conflict decision
+  acceptDeadlinePausedRemainingMs Int? // how much time was left when we paused
+  acceptDeadlinePausedAt          DateTime? // auditing only
+  disqualifiedOfferIds            Json? // [offerId, offerId, ...] (BigInt serialized as strings ok)
+  requestCategory                 String
+  requestSubcategory              String? // not relevant to all
+  assignmentType                  String? // not relevant to all
+  clientCompanyName               String?
+  primaryContactPerson            String
+  scopeOfWork                     String // what was requested
+  description                     String
+  additionalBackgroundInfo        String    @default("") // present but can be empty
+  backgroundInfoFiles             Json      @default("[]") // present but can be empty
+  supplierCodeOfConductFiles      Json      @default("[]") // present but can be empty
+  providerReferences              String    @default("")
+  clientCompanyId                 BigInt?   @db.BigInt
+  createdByUserId                 BigInt?   @db.BigInt
 
-  serviceProviderType          String
-  domesticOffers               String
-  providerSize                 String
-  providerCompanyAge           String
-  providerMinimumRating        String
-  currency                     String
-  paymentRate                  String
-  advanceRetainerFee           String
-  invoiceType                  String
-  language                     String
-  offersDeadline               DateTime
-  title                        String
+  serviceProviderType   String
+  domesticOffers        String
+  providerSize          String
+  providerCompanyAge    String
+  providerMinimumRating String
+  currency              String
+  paymentRate           String
+  advanceRetainerFee    String
+  invoiceType           String
+  language              String
+  offersDeadline        DateTime
+  title                 String
 
-  dateCreated                  DateTime  @default(now())
-  dateExpired                  DateTime
-  acceptDeadline               DateTime?
+  dateCreated    DateTime  @default(now())
+  dateExpired    DateTime
+  acceptDeadline DateTime?
 
-  contractResult               String?                                 // initially null
-  contractPrice                Decimal?  @db.Decimal // initially null
+  contractResult String? // initially null
+  contractPrice  Decimal? @db.Decimal // initially null
 
   // Flexible bucket for request-specific fields
-  details                      Json      @default("{}")
+  details Json @default("{}")
 
-  client   AppUser    @relation("UserRequests", fields: [clientId], references: [userId], onDelete: Cascade)
-  offers   Offer[]
-  contract Contract[]
+  clientCompany Company?     @relation("CompanyRequests", fields: [clientCompanyId], references: [companyPkId], onDelete: Cascade)
+  createdByUser UserAccount? @relation("RequestsCreatedBy", fields: [createdByUserId], references: [userPkId], onDelete: Restrict)
+  client        AppUser      @relation("UserRequests", fields: [clientId], references: [userId], onDelete: Cascade)
+  offers        Offer[]
+  contract      Contract[]
+
+  @@index([clientCompanyId])
+  @@index([createdByUserId])
 }
 
 model Offer {
-  offerId                            BigInt     @id @default(autoincrement()) @db.BigInt
-  requestId                          BigInt
-  providerId                         BigInt
-  offerLawyer                        String
-  offerPrice                         Decimal    @db.Decimal
-  offerExpectedPrice                 Decimal?   @db.Decimal
-  createdAt                          DateTime   @default(now())
-  offerTitle                         String
-  offerStatus                        String     @default("Pending")
-  providerReferenceFiles             Json       @default("[]")
-  providerAdditionalInfo             String     @default("")
+  offerId                BigInt   @id @default(autoincrement()) @db.BigInt
+  requestId              BigInt
+  providerId             BigInt
+  offerLawyer            String
+  offerPrice             Decimal  @db.Decimal
+  offerExpectedPrice     Decimal? @db.Decimal
+  createdAt              DateTime @default(now())
+  offerTitle             String
+  offerStatus            String   @default("Pending")
+  providerReferenceFiles Json     @default("[]")
+  providerAdditionalInfo String   @default("")
+  providerCompanyId      BigInt?  @db.BigInt
+  createdByUserId        BigInt?  @db.BigInt
 
-  request  Request @relation(fields: [requestId], references: [requestId], onDelete: Cascade)
-  provider AppUser @relation("ProviderOffers", fields: [providerId], references: [userId], onDelete: Cascade)
+  providerCompany Company?     @relation("CompanyOffers", fields: [providerCompanyId], references: [companyPkId], onDelete: Cascade)
+  createdByUser   UserAccount? @relation("OffersCreatedBy", fields: [createdByUserId], references: [userPkId], onDelete: Restrict)
+  request         Request      @relation(fields: [requestId], references: [requestId], onDelete: Cascade)
+  provider        AppUser      @relation("ProviderOffers", fields: [providerId], references: [userId], onDelete: Cascade)
 
   @@unique([requestId, providerId])
+  @@index([providerCompanyId])
+  @@index([createdByUserId])
 }
 
 model Contract {
-  contractId              BigInt     @id @default(autoincrement()) @db.BigInt
-  requestId               BigInt     @unique
-  clientId                BigInt
-  providerId              BigInt
-  contractDate            DateTime   @default(now())
-  contractPrice           Decimal    @db.Decimal
-  contractPdfFile         Json       @default("[]")
+  contractId        BigInt   @id @default(autoincrement()) @db.BigInt
+  requestId         BigInt   @unique
+  clientId          BigInt
+  providerId        BigInt
+  contractDate      DateTime @default(now())
+  contractPrice     Decimal  @db.Decimal
+  contractPdfFile   Json     @default("[]")
+  clientCompanyId   BigInt?  @db.BigInt
+  providerCompanyId BigInt?  @db.BigInt
 
-  request  Request @relation(fields: [requestId], references: [requestId], onDelete: Cascade)
-  client   AppUser @relation("ClientContracts", fields: [clientId], references: [userId], onDelete: Cascade)
-  provider AppUser @relation("ProviderContracts", fields: [providerId], references: [userId], onDelete: Cascade)
+  clientCompany   Company? @relation("ClientCompanyContracts", fields: [clientCompanyId], references: [companyPkId], onDelete: Cascade)
+  providerCompany Company? @relation("ProviderCompanyContracts", fields: [providerCompanyId], references: [companyPkId], onDelete: Cascade)
+  request         Request  @relation(fields: [requestId], references: [requestId], onDelete: Cascade)
+  client          AppUser  @relation("ClientContracts", fields: [clientId], references: [userId], onDelete: Cascade)
+  provider        AppUser  @relation("ProviderContracts", fields: [providerId], references: [userId], onDelete: Cascade)
+
+  @@index([clientCompanyId])
+  @@index([providerCompanyId])
 }
 
 model PasswordResetToken {
-  id        String   @id @default(cuid())
+  id        String    @id @default(cuid())
   userId    BigInt
-  token     String   @unique
+  token     String    @unique
   expiresAt DateTime
   usedAt    DateTime?
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
   user AppUser @relation("PasswordResetTokens", fields: [userId], references: [userId], onDelete: Cascade)
 
@@ -152,3 +252,45 @@ model PasswordResetToken {
   @@index([expiresAt])
 }
 
+model PasswordResetTokenUser {
+  id        String    @id @default(cuid())
+  userId    BigInt
+  token     String    @unique
+  expiresAt DateTime
+  usedAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  user UserAccount @relation(fields: [userId], references: [userPkId], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
+
+model TrustedDevice {
+  id         BigInt   @id @default(autoincrement())
+  userPkId   BigInt
+  tokenHash  String   @unique
+  label      String? // optional display name
+  userAgent  String?
+  ip         String?
+  createdAt  DateTime @default(now())
+  lastUsedAt DateTime @default(now())
+  expiresAt  DateTime
+
+  user UserAccount @relation(fields: [userPkId], references: [userPkId], onDelete: Cascade)
+
+  @@index([userPkId])
+  @@index([expiresAt])
+}
+
+model AuthAttempt {
+  id        BigInt   @id @default(autoincrement())
+  username  String
+  ip        String?
+  kind      String // "PASSWORD" | "MFA"
+  success   Boolean
+  createdAt DateTime @default(now())
+
+  @@index([username, createdAt])
+  @@index([ip, createdAt])
+}

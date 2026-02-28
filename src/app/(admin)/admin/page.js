@@ -8,7 +8,7 @@ import { useMemo } from "react";
 export default function AdminPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
-
+  // --- USERS state ---
   const [users, setUsers] = useState([]);
   const [searchInput, setSearchInput] = useState(""); // typing here
   const [search, setSearch] = useState(""); // committed query
@@ -26,6 +26,113 @@ export default function AdminPage() {
   const [reqHasMore, setReqHasMore] = useState(true);
   const reqBoxId = "admin-requests-scroll-box";
   const scrollRef = useRef(null);
+
+  // --- COMPANIES state ---
+  const [companies, setCompanies] = useState([]);
+  const [companySearchInput, setCompanySearchInput] = useState("");
+  const [companySearch, setCompanySearch] = useState("");
+  const [companySkip, setCompanySkip] = useState(0);
+  const companyTake = 10;
+  const [companyHasMore, setCompanyHasMore] = useState(true);
+  const [companyLoading, setCompanyLoading] = useState(false);
+
+  // --- USERACCOUNTS state ---
+  const [accounts, setAccounts] = useState([]);
+  const [accountSearchInput, setAccountSearchInput] = useState("");
+  const [accountSearch, setAccountSearch] = useState("");
+  const [accountSkip, setAccountSkip] = useState(0);
+  const accountTake = 10;
+  const [accountHasMore, setAccountHasMore] = useState(true);
+  const [accountLoading, setAccountLoading] = useState(false);
+
+  // --- COMPANY details modal ---
+  const [selectedCompany, setSelectedCompany] = useState(null);
+
+  const showCompanyDetails = async (id) => {
+    const res = await fetch(`/api/admin/companies/${id}`, {
+      cache: "no-store",
+    });
+    if (res.ok) setSelectedCompany(await res.json());
+  };
+
+  // --- USERACCOUNT details modal ---
+  const [selectedAccount, setSelectedAccount] = useState(null);
+
+  const showAccountDetails = async (id) => {
+    const res = await fetch(`/api/admin/useraccounts/${id}`, {
+      cache: "no-store",
+    });
+    if (res.ok) setSelectedAccount(await res.json());
+  };
+
+  const fetchCompanies = async (reset = false) => {
+    if (companyLoading) return;
+    setCompanyLoading(true);
+    const nextSkip = reset ? 0 : companySkip;
+
+    try {
+      const res = await fetch(
+        `/api/admin/companies?search=${encodeURIComponent(companySearch)}&skip=${nextSkip}&take=${companyTake}`,
+        { cache: "no-store" },
+      );
+      if (!res.ok) throw new Error("Failed to load companies");
+      const data = await res.json();
+
+      const nextList = reset
+        ? data.companies
+        : [...companies, ...data.companies];
+      setCompanies(nextList);
+      setCompanySkip(nextSkip + data.companies.length);
+      setCompanyHasMore(data.hasMore);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setCompanyLoading(false);
+    }
+  };
+
+  const fetchAccounts = async (reset = false) => {
+    if (accountLoading) return;
+    setAccountLoading(true);
+    const nextSkip = reset ? 0 : accountSkip;
+
+    try {
+      const res = await fetch(
+        `/api/admin/useraccounts?search=${encodeURIComponent(accountSearch)}&skip=${nextSkip}&take=${accountTake}`,
+        { cache: "no-store" },
+      );
+      if (!res.ok) throw new Error("Failed to load user accounts");
+      const data = await res.json();
+
+      const nextList = reset ? data.accounts : [...accounts, ...data.accounts];
+      setAccounts(nextList);
+      setAccountSkip(nextSkip + data.accounts.length);
+      setAccountHasMore(data.hasMore);
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setAccountLoading(false);
+    }
+  };
+
+  const runBackfill = async () => {
+    const ok = confirm("Run data backfill now? This may take a while.");
+    if (!ok) return;
+
+    const res = await fetch("/api/admin/backfill", { method: "POST" });
+    const data = await res.json().catch(() => ({}));
+
+    if (!res.ok) {
+      alert(`Backfill failed: ${data?.error || "Unknown error"}`);
+      return;
+    }
+
+    alert("Backfill completed.");
+    // Optional: refresh the new tables
+    fetchCompanies(true);
+    fetchAccounts(true);
+  };
+
   // --- OFFERS state ---
   const [offers, setOffers] = useState([]);
   const [offerSearchInput, setOfferSearchInput] = useState("");
@@ -43,9 +150,9 @@ export default function AdminPage() {
     try {
       const res = await fetch(
         `/api/admin/offers?search=${encodeURIComponent(
-          offerSearch
+          offerSearch,
         )}&skip=${nextSkip}&take=${offerTake}`,
-        { cache: "no-store" }
+        { cache: "no-store" },
       );
       if (!res.ok) throw new Error("Failed to load offers");
       const data = await res.json();
@@ -91,17 +198,40 @@ export default function AdminPage() {
 
   const adminUsers = useMemo(
     () => users.filter((u) => u.role === "ADMIN"),
-    [users]
+    [users],
   );
 
   const purchaserUsers = useMemo(
     () => users.filter((u) => u.role === "PURCHASER"),
-    [users]
+    [users],
   );
 
   const providerUsers = useMemo(
     () => users.filter((u) => u.role === "PROVIDER"),
-    [users]
+    [users],
+  );
+
+  const purchaserCompanies = useMemo(
+    () => companies.filter((c) => c.role === "PURCHASER"),
+    [companies],
+  );
+
+  const providerCompanies = useMemo(
+    () => companies.filter((c) => c.role === "PROVIDER"),
+    [companies],
+  );
+
+  const adminAccounts = useMemo(
+    () => accounts.filter((a) => a.role === "ADMIN"),
+    [accounts],
+  );
+  const purchaserAccounts = useMemo(
+    () => accounts.filter((a) => a.role === "PURCHASER"),
+    [accounts],
+  );
+  const providerAccounts = useMemo(
+    () => accounts.filter((a) => a.role === "PROVIDER"),
+    [accounts],
   );
 
   const fetchContracts = async (reset = false) => {
@@ -111,9 +241,9 @@ export default function AdminPage() {
     try {
       const res = await fetch(
         `/api/admin/contracts?search=${encodeURIComponent(
-          contractSearch
+          contractSearch,
         )}&skip=${nextSkip}&take=${contractTake}`,
-        { cache: "no-store" }
+        { cache: "no-store" },
       );
       if (!res.ok) throw new Error("Failed to load contracts");
       const data = await res.json();
@@ -158,7 +288,7 @@ export default function AdminPage() {
       `/api/admin/users?search=${encodeURIComponent(search)}&skip=${
         reset ? 0 : skip
       }&take=10`,
-      { cache: "no-store" }
+      { cache: "no-store" },
     );
 
     if (!res.ok) {
@@ -193,9 +323,9 @@ export default function AdminPage() {
     try {
       const res = await fetch(
         `/api/admin/requests?search=${encodeURIComponent(
-          reqSearch
+          reqSearch,
         )}&skip=${nextSkip}&take=${reqTake}`,
-        { cache: "no-store" }
+        { cache: "no-store" },
       );
       if (!res.ok) throw new Error("Failed to load requests");
       const data = await res.json();
@@ -236,6 +366,16 @@ export default function AdminPage() {
     setContractHasMore(true);
     fetchContracts(true);
 
+    setCompanySkip(0);
+    setCompanies([]);
+    setCompanyHasMore(true);
+    fetchCompanies(true);
+
+    setAccountSkip(0);
+    setAccounts([]);
+    setAccountHasMore(true);
+    fetchAccounts(true);
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, session, status]);
 
@@ -259,6 +399,18 @@ export default function AdminPage() {
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contractSearch]);
+
+  useEffect(() => {
+    const t = setTimeout(() => fetchCompanies(true), 300);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [companySearch]);
+
+  useEffect(() => {
+    const t = setTimeout(() => fetchAccounts(true), 300);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [accountSearch]);
 
   function formatTimeUntil(iso) {
     if (!iso) return "Expired";
@@ -333,6 +485,24 @@ export default function AdminPage() {
     fetchUsers(true);
   };
 
+  const updateCompanyRegisterStatus = async (companyPkId, newStatus) => {
+    await fetch(`/api/admin/companies/${companyPkId}/status`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ registerStatus: newStatus }),
+    });
+    fetchCompanies(true);
+  };
+
+  const updateAccountRegisterStatus = async (userPkId, newStatus) => {
+    await fetch(`/api/admin/useraccounts/${userPkId}/status`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ registerStatus: newStatus }),
+    });
+    fetchAccounts(true);
+  };
+
   const updateInvoiceFee = async (id, newFee) => {
     await fetch(`/api/admin/users/${id}/invoiceFee`, {
       method: "PUT",
@@ -364,6 +534,41 @@ export default function AdminPage() {
     if (!confirm("Are you sure you want to delete this user?")) return;
     await fetch(`/api/admin/users/${id}`, { method: "DELETE" });
     fetchUsers(true);
+  };
+
+  const deleteCompany = async (companyPkId) => {
+    const ok = confirm(
+      "Are you sure you want to delete this company? This will also delete related user accounts due to cascade rules.",
+    );
+    if (!ok) return;
+
+    const res = await fetch(`/api/admin/companies/${companyPkId}`, {
+      method: "DELETE",
+    });
+
+    if (!res.ok) {
+      alert("Failed to delete company.");
+      return;
+    }
+
+    // refresh both lists because deleting company cascades user accounts
+    fetchCompanies(true);
+    fetchAccounts(true);
+  };
+
+  const deleteAccount = async (userPkId) => {
+    if (!confirm("Are you sure you want to delete this user account?")) return;
+
+    const res = await fetch(`/api/admin/useraccounts/${userPkId}`, {
+      method: "DELETE",
+    });
+
+    if (!res.ok) {
+      alert("Failed to delete user account.");
+      return;
+    }
+
+    fetchAccounts(true);
   };
 
   const showUserDetails = async (id) => {
@@ -400,6 +605,13 @@ export default function AdminPage() {
   return (
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-6">LEXIFY Admin Control</h1>
+      <br />
+      <button
+        onClick={runBackfill}
+        className="bg-[#11999e] text-white px-4 py-2 rounded border cursor-pointer mb-4"
+      >
+        Run Data Backfill (AppUser → Company + UserAccount)
+      </button>
       <br />
       <h2 className="text-xl font-bold mb-6">Registered Users</h2>
 
@@ -599,7 +811,7 @@ export default function AdminPage() {
                 <td className="border p-2">{u.companyName}</td>
                 <td className="border p-2">
                   {u.role === "PROVIDER"
-                    ? u.providerTotalRating ?? "N/A"
+                    ? (u.providerTotalRating ?? "N/A")
                     : "N/A"}
                 </td>
                 <td className="border p-2">
@@ -652,6 +864,417 @@ export default function AdminPage() {
               <tr>
                 <td colSpan={11} className="text-center p-4 text-gray-500">
                   No providers found.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+
+        <br />
+        <h2 className="text-xl font-bold mb-2 text-white">Companies</h2>
+
+        <div className="mb-3 flex items-center gap-2">
+          <input
+            type="text"
+            value={companySearchInput}
+            onChange={(e) => {
+              const val = e.target.value;
+              setCompanySearchInput(val);
+              setCompanySearch(val.trim());
+            }}
+            placeholder="Search companies by name…"
+            className="border rounded p-2 w-full max-w-md"
+          />
+          <button
+            className="bg-[#11999e] text-white px-3 py-2 rounded border cursor-pointer"
+            onClick={() => setCompanySearch(companySearchInput.trim())}
+          >
+            Search
+          </button>
+          <button
+            className="bg-red-500 text-white px-3 py-2 rounded cursor-pointer"
+            onClick={() => {
+              setCompanySearchInput("");
+              setCompanySearch("");
+              setCompanySkip(0);
+              setCompanies([]);
+              setCompanyHasMore(true);
+              fetchCompanies(true);
+            }}
+          >
+            Clear
+          </button>
+        </div>
+
+        <h3 className="text-lg font-semibold mt-2 mb-2 text-white">
+          Purchaser Companies
+        </h3>
+        <table className="w-full border-collapse mb-6 bg-white">
+          <thead className="bg-gray-200">
+            <tr>
+              <th className="border p-2">Company ID</th>
+              <th className="border p-2">Role</th>
+              <th className="border p-2">Register Status</th>
+              <th className="border p-2">Company</th>
+              <th className="border p-2">Members</th>
+              <th className="border p-2">Requests</th>
+              <th className="border p-2">Contracts</th>
+              <th className="border p-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {!companyLoading && purchaserCompanies.length === 0 && (
+              <tr>
+                <td colSpan={8} className="text-center p-4 text-gray-500">
+                  No purchaser companies found.
+                </td>
+              </tr>
+            )}
+            {purchaserCompanies.map((c) => (
+              <tr key={c.companyPkId} className="text-center">
+                <td
+                  className="border p-2 text-blue-600 cursor-pointer underline"
+                  onClick={() => showCompanyDetails(c.companyPkId)}
+                >
+                  {c.companyPkId}
+                </td>
+                <td className="border p-2">{c.role}</td>
+                <td className="border p-2">
+                  <select
+                    className="border rounded"
+                    value={c.registerStatus}
+                    onChange={(e) =>
+                      updateCompanyRegisterStatus(c.companyPkId, e.target.value)
+                    }
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="confirmed">Confirmed</option>
+                  </select>
+                </td>
+                <td className="border p-2">{c.companyName}</td>
+                <td className="border p-2">{c.membersCount ?? 0}</td>
+                <td className="border p-2">{c.requestsCount ?? 0}</td>
+                <td className="border p-2">{c.contractsCount ?? 0}</td>
+                <td className="border p-2">
+                  <button
+                    onClick={() => deleteCompany(c.companyPkId)}
+                    className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+            {companyHasMore && !companyLoading && companies.length > 0 && (
+              <tr>
+                <td colSpan={8} className="p-2">
+                  <button
+                    onClick={() => fetchCompanies(false)}
+                    className="w-full bg-gray-100 p-2"
+                  >
+                    Load more
+                  </button>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+
+        <h3 className="text-lg font-semibold mt-2 mb-2 text-white">
+          Provider Companies
+        </h3>
+        <table className="w-full border-collapse mb-6 bg-white">
+          <thead className="bg-gray-200">
+            <tr>
+              <th className="border p-2">Company ID</th>
+              <th className="border p-2">Role</th>
+              <th className="border p-2">Register Status</th>
+              <th className="border p-2">Company</th>
+              <th className="border p-2">Invoice Fee</th>
+              <th className="border p-2">Company Age</th>
+              <th className="border p-2">Provider Type</th>
+              <th className="border p-2">Members</th>
+              <th className="border p-2">Offers</th>
+              <th className="border p-2">Rating</th>
+              <th className="border p-2">Invoice Fee</th>
+              <th className="border p-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {!companyLoading && providerCompanies.length === 0 && (
+              <tr>
+                <td colSpan={12} className="text-center p-4 text-gray-500">
+                  No provider companies found.
+                </td>
+              </tr>
+            )}
+            {providerCompanies.map((c) => (
+              <tr key={c.companyPkId} className="text-center">
+                <td
+                  className="border p-2 text-blue-600 cursor-pointer underline"
+                  onClick={() => showCompanyDetails(c.companyPkId)}
+                >
+                  {c.companyPkId}
+                </td>
+                <td className="border p-2">{c.role}</td>
+                <td className="border p-2">
+                  <select
+                    className="border rounded"
+                    value={c.registerStatus}
+                    onChange={(e) =>
+                      updateCompanyRegisterStatus(c.companyPkId, e.target.value)
+                    }
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="confirmed">Confirmed</option>
+                  </select>
+                </td>
+                <td className="border p-2">{c.companyName}</td>
+                <td className="border p-2">{c.invoiceFee}</td>
+                <td className="border p-2">{c.companyAge}</td>
+                <td className="border p-2">{c.providerType}</td>
+                <td className="border p-2">{c.membersCount ?? 0}</td>
+                <td className="border p-2">{c.offersCount ?? 0}</td>
+                <td className="border p-2">{c.providerTotalRating ?? "—"}</td>
+                <td className="border p-2">{c.invoiceFee ?? "—"}</td>
+                <td className="border p-2">
+                  <button
+                    onClick={() => deleteCompany(c.companyPkId)}
+                    className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        <br />
+        <h2 className="text-xl font-bold mb-2 text-white">User Accounts</h2>
+
+        <div className="mb-3 flex items-center gap-2">
+          <input
+            type="text"
+            value={accountSearchInput}
+            onChange={(e) => {
+              const val = e.target.value;
+              setAccountSearchInput(val);
+              setAccountSearch(val.trim());
+            }}
+            placeholder="Search by last name, email, or company…"
+            className="border rounded p-2 w-full max-w-md"
+          />
+          <button
+            className="bg-[#11999e] text-white px-3 py-2 rounded border cursor-pointer"
+            onClick={() => setAccountSearch(accountSearchInput.trim())}
+          >
+            Search
+          </button>
+          <button
+            className="bg-red-500 text-white px-3 py-2 rounded cursor-pointer"
+            onClick={() => {
+              setAccountSearchInput("");
+              setAccountSearch("");
+              setAccountSkip(0);
+              setAccounts([]);
+              setAccountHasMore(true);
+              fetchAccounts(true);
+            }}
+          >
+            Clear
+          </button>
+        </div>
+
+        {/* Admin UserAccounts */}
+        <h3 className="text-lg font-semibold mt-2 mb-2 text-white">
+          Admin User Accounts
+        </h3>
+        <table className="w-full border-collapse mb-6 bg-white">
+          <thead className="bg-gray-200">
+            <tr>
+              <th className="border p-2">User ID</th>
+              <th className="border p-2">Role</th>
+              <th className="border p-2">Register Status</th>
+              <th className="border p-2">Company</th>
+              <th className="border p-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {!accountLoading && adminAccounts.length === 0 && (
+              <tr>
+                <td colSpan={5} className="text-center p-4 text-gray-500">
+                  No admin user accounts found.
+                </td>
+              </tr>
+            )}
+            {adminAccounts.map((a) => (
+              <tr key={a.userPkId} className="text-center">
+                <td
+                  className="border p-2 text-blue-600 cursor-pointer underline"
+                  onClick={() => showAccountDetails(a.userPkId)}
+                >
+                  {a.userPkId}
+                </td>
+                <td className="border p-2">{a.role}</td>
+                <td className="border p-2">
+                  <select
+                    className="border rounded"
+                    value={a.registerStatus}
+                    onChange={(e) =>
+                      updateAccountRegisterStatus(a.userPkId, e.target.value)
+                    }
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="confirmed">Confirmed</option>
+                  </select>
+                </td>
+                <td className="border p-2">{a.companyName}</td>
+                <td className="border p-2">
+                  <button
+                    onClick={() => deleteAccount(a.userPkId)}
+                    className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* Purchaser UserAccounts */}
+        <h3 className="text-lg font-semibold mt-2 mb-2 text-white">
+          Purchaser User Accounts
+        </h3>
+        <table className="w-full border-collapse mb-6 bg-white">
+          <thead className="bg-gray-200">
+            <tr>
+              <th className="border p-2">User ID</th>
+              <th className="border p-2">User's Name</th>
+              <th className="border p-2">Role</th>
+              <th className="border p-2">Register Status</th>
+              <th className="border p-2">Company</th>
+              <th className="border p-2">Requests</th>
+              <th className="border p-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {!accountLoading && purchaserAccounts.length === 0 && (
+              <tr>
+                <td colSpan={7} className="text-center p-4 text-gray-500">
+                  No purchaser user accounts found.
+                </td>
+              </tr>
+            )}
+            {purchaserAccounts.map((a) => (
+              <tr key={a.userPkId} className="text-center">
+                <td
+                  className="border p-2 text-blue-600 cursor-pointer underline"
+                  onClick={() => showAccountDetails(a.userPkId)}
+                >
+                  {a.userPkId}
+                </td>
+                <td className="border p-2">
+                  {a.firstName} {a.lastName}
+                </td>
+                <td className="border p-2">{a.role}</td>
+                <td className="border p-2">
+                  <select
+                    className="border rounded"
+                    value={a.registerStatus}
+                    onChange={(e) =>
+                      updateAccountRegisterStatus(a.userPkId, e.target.value)
+                    }
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="confirmed">Confirmed</option>
+                  </select>
+                </td>
+                <td className="border p-2">{a.companyName}</td>
+                <td className="border p-2">{a.requestsCount ?? 0}</td>
+                <td className="border p-2">
+                  <button
+                    onClick={() => deleteAccount(a.userPkId)}
+                    className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+
+        {/* Provider UserAccounts */}
+        <h3 className="text-lg font-semibold mt-2 mb-2 text-white">
+          Provider User Accounts
+        </h3>
+        <table className="w-full border-collapse mb-6 bg-white">
+          <thead className="bg-gray-200">
+            <tr>
+              <th className="border p-2">User ID</th>
+              <th className="border p-2">User's Name</th>
+              <th className="border p-2">Role</th>
+              <th className="border p-2">Register Status</th>
+              <th className="border p-2">Company</th>
+              <th className="border p-2">Offers</th>
+              <th className="border p-2">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {!accountLoading && providerAccounts.length === 0 && (
+              <tr>
+                <td colSpan={7} className="text-center p-4 text-gray-500">
+                  No provider user accounts found.
+                </td>
+              </tr>
+            )}
+            {providerAccounts.map((a) => (
+              <tr key={a.userPkId} className="text-center">
+                <td
+                  className="border p-2 text-blue-600 cursor-pointer underline"
+                  onClick={() => showAccountDetails(a.userPkId)}
+                >
+                  {a.userPkId}
+                </td>
+                <td className="border p-2">
+                  {a.firstName} {a.lastName}
+                </td>
+                <td className="border p-2">{a.role}</td>
+                <td className="border p-2">
+                  <select
+                    className="border rounded"
+                    value={a.registerStatus}
+                    onChange={(e) =>
+                      updateAccountRegisterStatus(a.userPkId, e.target.value)
+                    }
+                  >
+                    <option value="pending">Pending</option>
+                    <option value="confirmed">Confirmed</option>
+                  </select>
+                </td>
+                <td className="border p-2">{a.companyName}</td>
+                <td className="border p-2">{a.offersCount ?? 0}</td>
+                <td className="border p-2">
+                  <button
+                    onClick={() => deleteAccount(a.userPkId)}
+                    className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+            {accountHasMore && !accountLoading && accounts.length > 0 && (
+              <tr>
+                <td colSpan={7} className="p-2">
+                  <button
+                    onClick={() => fetchAccounts(false)}
+                    className="w-full bg-gray-100 p-2"
+                  >
+                    Load more
+                  </button>
                 </td>
               </tr>
             )}
@@ -722,6 +1345,128 @@ export default function AdminPage() {
             <button
               className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
               onClick={() => setSelectedUser(null)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+      {selectedCompany && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded max-w-3xl max-h-[80vh] overflow-y-auto text-black">
+            <h2 className="text-xl font-bold mb-4">Company Details</h2>
+            <div className="space-y-2">
+              <p>
+                <strong>Company ID:</strong> {selectedCompany.companyPkId}
+              </p>
+              <p>
+                <strong>Role:</strong> {selectedCompany.role}
+              </p>
+              <p>
+                <strong>Status:</strong> {selectedCompany.registerStatus}
+              </p>
+              <p>
+                <strong>Company:</strong> {selectedCompany.companyName}
+              </p>
+              <p>
+                <strong>Company Age:</strong> {selectedCompany.companyAge ?? 0}
+              </p>
+              <p>
+                <strong>Founding Year:</strong>{" "}
+                {selectedCompany.companyFoundingYear ?? "—"}
+              </p>
+              <p>
+                <strong>Provider Type:</strong>{" "}
+                {selectedCompany.providerType &&
+                selectedCompany.providerType.trim()
+                  ? selectedCompany.providerType
+                  : "N/A"}
+              </p>
+              {selectedCompany.role === "PROVIDER" && (
+                <p>
+                  <strong>Total Rating:</strong>{" "}
+                  {selectedCompany.providerTotalRating ?? "N/A"}
+                </p>
+              )}
+              <p>
+                <strong>Invoice Fee:</strong> {selectedCompany.invoiceFee}
+              </p>
+            </div>
+
+            <details className="mt-2">
+              <summary className="cursor-pointer text-blue-600">
+                Show full JSON
+              </summary>
+              <pre className="text-xs bg-gray-100 p-4 rounded overflow-x-auto">
+                {JSON.stringify(selectedCompany, null, 2)}
+              </pre>
+            </details>
+
+            <button
+              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
+              onClick={() => setSelectedCompany(null)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+      {selectedAccount && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded max-w-3xl max-h-[80vh] overflow-y-auto text-black">
+            <h2 className="text-xl font-bold mb-4">User Account Details</h2>
+            <div className="space-y-2">
+              <p>
+                <strong>User ID:</strong> {selectedAccount.userPkId}
+              </p>
+              <p>
+                <strong>Role:</strong> {selectedAccount.role}
+              </p>
+              <p>
+                <strong>Status:</strong> {selectedAccount.registerStatus}
+              </p>
+              <p>
+                <strong>Company:</strong> {selectedAccount.company.companyName}
+              </p>
+              <p>
+                <strong>Company Age:</strong>{" "}
+                {selectedAccount.company.companyAge ?? 0}
+              </p>
+              <p>
+                <strong>Founding Year:</strong>{" "}
+                {selectedAccount.company.companyFoundingYear ?? "—"}
+              </p>
+              <p>
+                <strong>Provider Type:</strong>{" "}
+                {selectedAccount.company.providerType &&
+                selectedAccount.company.providerType.trim()
+                  ? selectedAccount.company.providerType
+                  : "N/A"}
+              </p>
+              {selectedAccount.role === "PROVIDER" && (
+                <p>
+                  <strong>Total Rating:</strong>{" "}
+                  {selectedAccount.company.providerTotalRating ?? "N/A"}
+                </p>
+              )}
+              <p>
+                <strong>Invoice Fee:</strong>{" "}
+                {selectedAccount.company.invoiceFee}
+              </p>
+            </div>
+
+            <details className="mt-2">
+              <summary className="cursor-pointer text-blue-600">
+                Show full JSON
+              </summary>
+              <pre className="text-xs bg-gray-100 p-4 rounded overflow-x-auto">
+                {JSON.stringify(selectedAccount, null, 2)}
+              </pre>
+            </details>
+
+            <button
+              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
+              onClick={() => setSelectedAccount(null)}
             >
               Close
             </button>
@@ -855,7 +1600,7 @@ export default function AdminPage() {
                               className="bg-green-600 text-white px-2 py-1 rounded cursor-pointer"
                               onClick={async () => {
                                 const ok = confirm(
-                                  "Are you sure you want to APPROVE this conflict check?"
+                                  "Are you sure you want to APPROVE this conflict check?",
                                 );
                                 if (!ok) return;
 
@@ -869,7 +1614,7 @@ export default function AdminPage() {
                                     body: JSON.stringify({
                                       decision: "accept",
                                     }),
-                                  }
+                                  },
                                 );
 
                                 window.location.reload();
@@ -882,7 +1627,7 @@ export default function AdminPage() {
                               className="bg-red-600 text-white px-2 py-1 rounded cursor-pointer"
                               onClick={async () => {
                                 const ok = confirm(
-                                  "Are you sure you want to DENY this offer and replace it?"
+                                  "Are you sure you want to DENY this offer and replace it?",
                                 );
                                 if (!ok) return;
 
@@ -894,7 +1639,7 @@ export default function AdminPage() {
                                       "Content-Type": "application/json",
                                     },
                                     body: JSON.stringify({ decision: "deny" }),
-                                  }
+                                  },
                                 );
 
                                 window.location.reload();
