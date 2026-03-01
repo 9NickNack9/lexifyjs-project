@@ -623,7 +623,7 @@ export default function ProviderAccount() {
             onClick={openMembersModal}
             className="bg-[#11999e] text-white px-4 py-2 rounded cursor-pointer"
           >
-            Show a List of All Company LEXIFY Members
+            Show List of All Company Users
           </button>
         </div>
 
@@ -794,8 +794,8 @@ export default function ProviderAccount() {
                       className="border p-2 bg-white w-64 h-64"
                     />
                     <div className="text-xs text-gray-600 mt-2">
-                      If you can’t scan, your authenticator can also accept an
-                      otpauth URI.
+                      If you can&apos;t scan, your authenticator can also accept
+                      an otpauth URI.
                     </div>
                     <div className="text-xs break-all text-gray-600">
                       {mfaOtpAuth}
@@ -856,8 +856,8 @@ export default function ProviderAccount() {
                 Recovery codes (save these now)
               </div>
               <div className="text-sm text-gray-700 mb-2">
-                Each code can be used once if you can’t access your
-                authenticator app. They won’t be shown again.
+                Each code can be used once if you can&apos;t access your
+                authenticator app. They won&apos;t be shown again.
               </div>
               <pre className="text-sm whitespace-pre-wrap">
                 {recoveryCodes.join("\n")}
@@ -912,7 +912,8 @@ export default function ProviderAccount() {
               />
             </div>
             <span className="ms-3 text-sm text-black dark:text-black">
-              Receive Notifications for All Company Members
+              Company-wide notifications{" "}
+              <NarrowTooltip tooltipText="When enabled, you will receive automatic notifications for all pending LEXIFY Offers across your company, including those of other users and your own." />
             </span>
           </label>
           {/* 1) no-winning-offer */}
@@ -1039,9 +1040,9 @@ export default function ProviderAccount() {
           {/* Categories dropdown: only visible when "new-available-request" is ON */}
           {hasPref("new-available-request") && (
             <div className="mt-4" ref={categoryDropdownRef}>
-              <div className="text-sm font-semibold mb-2">
-                Select which categories of new requests you would like to
-                receive notifications for:
+              <div className="text-md mb-2">
+                Select the areas of law for which you wish to receive
+                notifications when new LEXIFY Requests are posted:
               </div>
 
               <button

@@ -743,7 +743,7 @@ export default function Account() {
               onClick={openMembersModal}
               className="bg-[#11999e] text-white px-4 py-2 rounded cursor-pointer"
             >
-              Show a List of All Company LEXIFY Members
+              Show List of All Company Users
             </button>
           </div>
 
@@ -980,8 +980,8 @@ export default function Account() {
                   Recovery codes (save these now)
                 </div>
                 <div className="text-sm text-gray-700 mb-2">
-                  Each code can be used once if you can’t access your
-                  authenticator app. They won’t be shown again.
+                  Each code can be used once if you can&apos;t access your
+                  authenticator app. They won&apos;t be shown again.
                 </div>
                 <pre className="text-sm whitespace-pre-wrap">
                   {recoveryCodes.join("\n")}
@@ -1040,7 +1040,8 @@ export default function Account() {
               />
             </div>
             <span className="ms-3 text-sm text-black dark:text-black">
-              Receive Notifications for All Company Members
+              Company-wide notifications{" "}
+              <NarrowTooltip tooltipText="When enabled, you will receive automatic notifications for all pending LEXIFY Requests across your company, including those of other users and your own." />
             </span>
           </label>
           {/* 1) No qualifying offers */}
@@ -1097,7 +1098,7 @@ export default function Account() {
               My LEXIFY Request expires and qualifying offers have been
               received, but the best offer exceeds the maximum price in my
               LEXIFY Request{" "}
-              <NarrowTooltip tooltipText="Whenever your LEXIFY Request expires and you receive at least one qualifying offer but the offer exceeds the maximum price you have set in the LEXIFY Request, you will still have 72 hours from the expiration of your LEXIFY Request to accept this best offer if you wish to do so. If not accepted within 72 hours, the best offer exceeding your maximum price will automatically be rejected." />
+              <NarrowTooltip tooltipText="Whenever your LEXIFY Request expires and you receive at least one qualifying offer but the offer exceeds the maximum price you have set in the LEXIFY Request, you will still have 7 days from the expiration of your LEXIFY Request to accept this best offer if you wish to do so. If not accepted within 7 days, the best offer exceeding your maximum price will automatically be rejected." />
             </span>
           </label>
           {/* 3) Pending offer selection (manual) */}

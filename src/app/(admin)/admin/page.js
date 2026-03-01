@@ -666,9 +666,6 @@ export default function AdminPage() {
                   <th className="border p-2">Role</th>
                   <th className="border p-2">Status</th>
                   <th className="border p-2">Company</th>
-                  <th className="border p-2">Requests</th>
-                  <th className="border p-2">Offers</th>
-                  <th className="border p-2">Contracts</th>
                   <th className="border p-2">Actions</th>
                 </tr>
               </thead>
@@ -695,9 +692,6 @@ export default function AdminPage() {
                       </select>
                     </td>
                     <td className="border p-2">{u.companyName}</td>
-                    <td className="border p-2">{u.requestsCount}</td>
-                    <td className="border p-2">{u.offersCount}</td>
-                    <td className="border p-2">{u.contractsCount}</td>
                     <td className="border p-2">
                       <button
                         onClick={() => deleteUser(u.userId, u.role)}
@@ -712,7 +706,7 @@ export default function AdminPage() {
                 {!userTables.ADMIN.loading &&
                   userTables.ADMIN.items.length === 0 && (
                     <tr>
-                      <td colSpan={8} className="text-center p-4 text-gray-500">
+                      <td colSpan={5} className="text-center p-4 text-gray-500">
                         No admin users found.
                       </td>
                     </tr>
@@ -720,7 +714,7 @@ export default function AdminPage() {
 
                 {userTables.ADMIN.loading && (
                   <tr>
-                    <td colSpan={8} className="text-center p-4">
+                    <td colSpan={5} className="text-center p-4">
                       Loading…
                     </td>
                   </tr>

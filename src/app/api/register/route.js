@@ -126,7 +126,10 @@ const RegisterSchema = BaseSchema.transform((raw) => {
   let companyFoundingYear = null;
   let companyAge = null;
 
-  if (role === "provider") {
+  const isProvider = role === "provider";
+  const isNewCompany = companyJoinType === "new_company";
+
+  if (isProvider && isNewCompany) {
     if (companyProfessionals === null || companyProfessionals < 0) {
       throw new z.ZodError([
         {
@@ -163,9 +166,15 @@ const RegisterSchema = BaseSchema.transform((raw) => {
         },
       ]);
     }
+
     companyAge = calcCompanyAge(companyFoundingYear);
   } else {
+    // provider joining an existing company OR purchaser:
+    // do not require/validate provider-only inputs here
     companyProfessionals = null;
+    providerType = "";
+    companyFoundingYear = null;
+    companyAge = null;
   }
 
   return {
