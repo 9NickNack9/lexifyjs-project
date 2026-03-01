@@ -1045,7 +1045,6 @@ export default function AdminPage() {
                       </select>
                     </td>
                     <td className="border p-2">{c.companyName}</td>
-                    <td className="border p-2">{c.companyName}</td>
 
                     <td className="border p-2">
                       <input
@@ -1061,8 +1060,6 @@ export default function AdminPage() {
                         className="w-48 border p-1 text-center"
                       />
                     </td>
-
-                    <td className="border p-2">{c.membersCount ?? 0}</td>
                     <td className="border p-2">{c.membersCount ?? 0}</td>
                     <td className="border p-2">{c.requestsCount ?? 0}</td>
                     <td className="border p-2">{c.contractsCount ?? 0}</td>
@@ -1156,8 +1153,6 @@ export default function AdminPage() {
                       </select>
                     </td>
                     <td className="border p-2">{c.companyName}</td>
-                    <td className="border p-2">{c.companyName}</td>
-
                     <td className="border p-2">
                       <input
                         type="text"
@@ -1172,8 +1167,6 @@ export default function AdminPage() {
                         className="w-48 border p-1 text-center"
                       />
                     </td>
-
-                    <td className="border p-2">{c.invoiceFee ?? "—"}</td>
                     <td className="border p-2">{c.invoiceFee ?? "—"}</td>
                     <td className="border p-2">{c.companyAge ?? "—"}</td>
                     <td className="border p-2">{c.providerType ?? "—"}</td>
