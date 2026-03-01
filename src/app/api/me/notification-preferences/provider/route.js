@@ -33,6 +33,7 @@ const ALLOWED = new Set([
   "winner-conflict-check",
   "request-cancelled",
   "new-available-request",
+  "all-notifications",
 ]);
 
 export async function GET() {

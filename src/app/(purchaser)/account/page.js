@@ -74,6 +74,90 @@ export default function Account() {
   ];
   const [selectedAreas, setSelectedAreas] = useState([]);
 
+  // Company members modal
+  const [membersOpen, setMembersOpen] = useState(false);
+  const [companyMembers, setCompanyMembers] = useState([]);
+  const [membersLoading, setMembersLoading] = useState(false);
+  const [membersErr, setMembersErr] = useState("");
+
+  const openMembersModal = async () => {
+    setMembersOpen(true);
+    setMembersErr("");
+    setMembersLoading(true);
+    try {
+      const res = await fetch("/api/me/company-members", { cache: "no-store" });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || "Failed to load members.");
+      setCompanyMembers(Array.isArray(json.members) ? json.members : []);
+    } catch (e) {
+      setMembersErr(e.message || "Failed to load members.");
+      setCompanyMembers([]);
+    } finally {
+      setMembersLoading(false);
+    }
+  };
+
+  const closeMembersModal = () => setMembersOpen(false);
+
+  // Edit UserAccount (my contact info)
+  const [uaEditing, setUaEditing] = useState(false);
+  const [uaBusy, setUaBusy] = useState(false);
+  const [uaDraft, setUaDraft] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    telephone: "",
+  });
+
+  const startEditUa = () => {
+    const ua = me?.userAccount || {};
+    setUaDraft({
+      firstName: ua.firstName || "",
+      lastName: ua.lastName || "",
+      email: ua.email || "",
+      telephone: ua.telephone || "",
+    });
+    setUaEditing(true);
+  };
+
+  const cancelEditUa = () => {
+    const ua = me?.userAccount || {};
+    setUaDraft({
+      firstName: ua.firstName || "",
+      lastName: ua.lastName || "",
+      email: ua.email || "",
+      telephone: ua.telephone || "",
+    });
+    setUaEditing(false);
+  };
+
+  const saveUa = async () => {
+    setUaBusy(true);
+    try {
+      const res = await fetch("/api/me/useraccount", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(uaDraft),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok)
+        throw new Error(json?.error || "Failed to save information.");
+
+      setMe((prev) => ({
+        ...(prev || {}),
+        userAccount: {
+          ...(prev?.userAccount || {}),
+          ...(json.userAccount || {}),
+        },
+      }));
+      setUaEditing(false);
+    } catch (e) {
+      alert(e.message || "Failed to save information.");
+    } finally {
+      setUaBusy(false);
+    }
+  };
+
   // Notification helpers
   const hasPref = (key) => notificationPrefs.includes(key);
 
@@ -630,7 +714,7 @@ export default function Account() {
             </h4>
 
             <div className="w-full text-sm border p-2">
-              Name: {me?.company?.companyName || me?.companyName || "-"}
+              Company Name: {me?.company?.companyName || me?.companyName || "-"}
             </div>
             <div className="w-full text-sm border p-2">
               Business ID (in country of domicile):{" "}
@@ -653,6 +737,16 @@ export default function Account() {
             </div>
           </div>
 
+          <div className="mt-4">
+            <button
+              type="button"
+              onClick={openMembersModal}
+              className="bg-[#11999e] text-white px-4 py-2 rounded cursor-pointer"
+            >
+              Show a List of All Company LEXIFY Members
+            </button>
+          </div>
+
           <br />
 
           {/* UserAccount information */}
@@ -661,23 +755,95 @@ export default function Account() {
               My Account Information
             </h4>
 
-            <div className="w-full text-sm border p-2">
-              Username: {me?.userAccount?.username || me?.username || "-"}
+            <div className="w-full text-sm border p-2 flex items-center gap-2">
+              <span className="whitespace-nowrap">First Name:</span>
+              {uaEditing ? (
+                <input
+                  className="border p-1 flex-1"
+                  value={uaDraft.firstName}
+                  onChange={(e) =>
+                    setUaDraft((d) => ({ ...d, firstName: e.target.value }))
+                  }
+                />
+              ) : (
+                <span>{me?.userAccount?.firstName || "-"}</span>
+              )}
             </div>
-            <div className="w-full text-sm border p-2">
-              Role: {me?.userAccount?.role || me?.role || "-"}
+
+            <div className="w-full text-sm border p-2 flex items-center gap-2">
+              <span className="whitespace-nowrap">Last Name:</span>
+              {uaEditing ? (
+                <input
+                  className="border p-1 flex-1"
+                  value={uaDraft.lastName}
+                  onChange={(e) =>
+                    setUaDraft((d) => ({ ...d, lastName: e.target.value }))
+                  }
+                />
+              ) : (
+                <span>{me?.userAccount?.lastName || "-"}</span>
+              )}
             </div>
-            <div className="w-full text-sm border p-2">
-              First Name: {me?.userAccount?.firstName || "-"}
+
+            <div className="w-full text-sm border p-2 flex items-center gap-2">
+              <span className="whitespace-nowrap">E-mail:</span>
+              {uaEditing ? (
+                <input
+                  className="border p-1 flex-1"
+                  value={uaDraft.email}
+                  onChange={(e) =>
+                    setUaDraft((d) => ({ ...d, email: e.target.value }))
+                  }
+                />
+              ) : (
+                <span>{me?.userAccount?.email || "-"}</span>
+              )}
             </div>
-            <div className="w-full text-sm border p-2">
-              Last Name: {me?.userAccount?.lastName || "-"}
+
+            <div className="w-full text-sm border p-2 flex items-center gap-2">
+              <span className="whitespace-nowrap">Telephone:</span>
+              {uaEditing ? (
+                <input
+                  className="border p-1 flex-1"
+                  value={uaDraft.telephone}
+                  onChange={(e) =>
+                    setUaDraft((d) => ({ ...d, telephone: e.target.value }))
+                  }
+                />
+              ) : (
+                <span>{me?.userAccount?.telephone || "-"}</span>
+              )}
             </div>
-            <div className="w-full text-sm border p-2">
-              E-mail: {me?.userAccount?.email || "-"}
-            </div>
-            <div className="w-full text-sm border p-2">
-              Telephone: {me?.userAccount?.telephone || "-"}
+
+            <div className="mt-4">
+              {!uaEditing ? (
+                <button
+                  type="button"
+                  onClick={startEditUa}
+                  className="bg-[#11999e] text-white px-4 py-2 rounded cursor-pointer"
+                >
+                  Edit My Account Information
+                </button>
+              ) : (
+                <div className="flex gap-3">
+                  <button
+                    type="button"
+                    disabled={uaBusy}
+                    onClick={saveUa}
+                    className="bg-green-600 text-white px-4 py-2 rounded cursor-pointer disabled:opacity-50"
+                  >
+                    Save Account Information
+                  </button>
+                  <button
+                    type="button"
+                    disabled={uaBusy}
+                    onClick={cancelEditUa}
+                    className="bg-gray-500 text-white px-4 py-2 rounded cursor-pointer disabled:opacity-50"
+                  >
+                    Cancel Without Saving
+                  </button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -693,7 +859,7 @@ export default function Account() {
 
             <div className="col-span-2">
               <div className="w-1/3 text-sm border p-2">
-                Username: {me?.userAccount?.username || username || "-"}
+                Username: {me?.userAccount?.username || me?.username || "-"}
               </div>
               <button
                 onClick={() => router.push("/change-password")}
@@ -849,97 +1015,124 @@ export default function Account() {
           want to receive:
         </h4>
         <br />
-        {/* 1) No qualifying offers */}
-        <label
-          htmlFor="pref-no_offers"
-          className="inline-flex items-center cursor-pointer"
-        >
-          <input
-            id="pref-no_offers"
-            // IMPORTANT: keep it a checkbox and avoid shared "name"
-            type="checkbox"
-            className="sr-only"
-            checked={hasPref("no_offers")}
-            onChange={(e) => setPref("no_offers", e.target.checked)}
-          />
-          <div
-            className={`relative w-11 h-6 rounded-full transition-colors ${
-              hasPref("no_offers") ? "bg-green-600" : "bg-gray-700"
-            }`}
+        <div className="flex flex-col gap-4">
+          {/* 0) all-notifications */}
+          <label
+            htmlFor="pref-all-notifications"
+            className="inline-flex items-center cursor-pointer"
           >
-            <div
-              className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
-                hasPref("no_offers") ? "translate-x-full" : ""
-              }`}
+            <input
+              id="pref-all-notifications"
+              type="checkbox"
+              className="sr-only"
+              checked={hasPref("all-notifications")}
+              onChange={(e) => setPref("all-notifications", e.target.checked)}
             />
-          </div>
-          <span className="ms-3 text-sm text-black dark:text-black">
-            My LEXIFY Request expires and I have received no qualifying offers
-          </span>
-        </label>
-        <br />
-        {/* 2) Best offer over max price */}
-        <label
-          htmlFor="pref-over_max_price"
-          className="inline-flex items-center cursor-pointer pt-2"
-        >
-          <input
-            id="pref-over_max_price"
-            type="checkbox"
-            className="sr-only"
-            checked={hasPref("over_max_price")}
-            onChange={(e) => setPref("over_max_price", e.target.checked)}
-          />
-          <div
-            className={`relative w-11 h-6 rounded-full transition-colors ${
-              hasPref("over_max_price") ? "bg-green-600" : "bg-gray-700"
-            }`}
+            <div
+              className={`relative w-11 h-6 rounded-full transition-colors ${
+                hasPref("all-notifications") ? "bg-green-600" : "bg-gray-700"
+              }`}
+            >
+              <div
+                className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
+                  hasPref("all-notifications") ? "translate-x-full" : ""
+                }`}
+              />
+            </div>
+            <span className="ms-3 text-sm text-black dark:text-black">
+              Receive Notifications for All Company Members
+            </span>
+          </label>
+          {/* 1) No qualifying offers */}
+          <label
+            htmlFor="pref-no_offers"
+            className="inline-flex items-center cursor-pointer"
           >
-            <div
-              className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
-                hasPref("over_max_price") ? "translate-x-full" : ""
-              }`}
+            <input
+              id="pref-no_offers"
+              type="checkbox"
+              className="sr-only"
+              checked={hasPref("no_offers")}
+              onChange={(e) => setPref("no_offers", e.target.checked)}
             />
-          </div>
-          <span className="ms-3 text-sm text-black dark:text-black">
-            My LEXIFY Request expires and qualifying offers have been received,
-            but the best offer exceeds the maximum price in my LEXIFY Request{" "}
-            <NarrowTooltip tooltipText="Whenever your LEXIFY Request expires and you receive at least one qualifying offer but the offer exceeds the maximum price you have set in the LEXIFY Request, you will still have 72 hours from the expiration of your LEXIFY Request to accept this best offer if you wish to do so. If not accepted within 72 hours, the best offer exceeding your maximum price will automatically be rejected." />
-          </span>
-        </label>
-        <br />
-        {/* 3) Pending offer selection (manual) */}
-        <label
-          htmlFor="pref-pending_offer_selection"
-          className="inline-flex items-center cursor-pointer pt-2"
-        >
-          <input
-            id="pref-pending_offer_selection"
-            type="checkbox"
-            className="sr-only"
-            checked={hasPref("pending_offer_selection")}
-            onChange={(e) =>
-              setPref("pending_offer_selection", e.target.checked)
-            }
-          />
-          <div
-            className={`relative w-11 h-6 rounded-full transition-colors ${
-              hasPref("pending_offer_selection")
-                ? "bg-green-600"
-                : "bg-gray-700"
-            }`}
+            <div
+              className={`relative w-11 h-6 rounded-full transition-colors ${
+                hasPref("no_offers") ? "bg-green-600" : "bg-gray-700"
+              }`}
+            >
+              <div
+                className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
+                  hasPref("no_offers") ? "translate-x-full" : ""
+                }`}
+              />
+            </div>
+            <span className="ms-3 text-sm text-black dark:text-black">
+              My LEXIFY Request expires and I have received no qualifying offers
+            </span>
+          </label>
+          {/* 2) Best offer over max price */}
+          <label
+            htmlFor="pref-over_max_price"
+            className="inline-flex items-center cursor-pointer"
           >
-            <div
-              className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
-                hasPref("pending_offer_selection") ? "translate-x-full" : ""
-              }`}
+            <input
+              id="pref-over_max_price"
+              type="checkbox"
+              className="sr-only"
+              checked={hasPref("over_max_price")}
+              onChange={(e) => setPref("over_max_price", e.target.checked)}
             />
-          </div>
-          <span className="ms-3 text-sm text-black dark:text-black">
-            My LEXIFY Request expires, qualifying offers have been received and
-            I need to select the winning service provider{" "}
-          </span>
-        </label>
+            <div
+              className={`relative w-11 h-6 rounded-full transition-colors ${
+                hasPref("over_max_price") ? "bg-green-600" : "bg-gray-700"
+              }`}
+            >
+              <div
+                className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
+                  hasPref("over_max_price") ? "translate-x-full" : ""
+                }`}
+              />
+            </div>
+            <span className="ms-3 text-sm text-black dark:text-black">
+              My LEXIFY Request expires and qualifying offers have been
+              received, but the best offer exceeds the maximum price in my
+              LEXIFY Request{" "}
+              <NarrowTooltip tooltipText="Whenever your LEXIFY Request expires and you receive at least one qualifying offer but the offer exceeds the maximum price you have set in the LEXIFY Request, you will still have 72 hours from the expiration of your LEXIFY Request to accept this best offer if you wish to do so. If not accepted within 72 hours, the best offer exceeding your maximum price will automatically be rejected." />
+            </span>
+          </label>
+          {/* 3) Pending offer selection (manual) */}
+          <label
+            htmlFor="pref-pending_offer_selection"
+            className="inline-flex items-center cursor-pointer"
+          >
+            <input
+              id="pref-pending_offer_selection"
+              type="checkbox"
+              className="sr-only"
+              checked={hasPref("pending_offer_selection")}
+              onChange={(e) =>
+                setPref("pending_offer_selection", e.target.checked)
+              }
+            />
+            <div
+              className={`relative w-11 h-6 rounded-full transition-colors ${
+                hasPref("pending_offer_selection")
+                  ? "bg-green-600"
+                  : "bg-gray-700"
+              }`}
+            >
+              <div
+                className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
+                  hasPref("pending_offer_selection") ? "translate-x-full" : ""
+                }`}
+              />
+            </div>
+            <span className="ms-3 text-sm text-black dark:text-black">
+              My LEXIFY Request expires, qualifying offers have been received
+              and I need to select the winning service provider{" "}
+            </span>
+          </label>
+        </div>
       </div>
       <br />
       {/* Blocked Lexify Service Providers */}
@@ -1373,6 +1566,64 @@ export default function Account() {
           change is not acceptable to you.
         </h4>
       </div>
+      {membersOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onMouseDown={(e) => {
+            // close if backdrop clicked
+            if (e.target === e.currentTarget) closeMembersModal();
+          }}
+        >
+          <div className="w-full max-w-3xl rounded bg-white text-black shadow-2xl">
+            <div className="flex items-center justify-between border-b p-4">
+              <h3 className="text-lg font-semibold">Company LEXIFY Members</h3>
+              <button
+                type="button"
+                onClick={closeMembersModal}
+                className="px-3 py-1 rounded border cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="p-4">
+              {membersLoading ? (
+                <div className="text-sm">Loading members…</div>
+              ) : membersErr ? (
+                <div className="text-sm text-red-700">{membersErr}</div>
+              ) : companyMembers.length === 0 ? (
+                <div className="text-sm text-gray-600">
+                  No members found for your company.
+                </div>
+              ) : (
+                <table className="w-full border border-gray-300 text-sm">
+                  <thead className="bg-gray-200">
+                    <tr className="bg-[#3a3a3c] text-white">
+                      <th className="border p-2 text-left">Name</th>
+                      <th className="border p-2 text-left">Position</th>
+                      <th className="border p-2 text-left">Telephone</th>
+                      <th className="border p-2 text-left">Email</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {companyMembers.map((m) => (
+                      <tr key={String(m.userPkId)}>
+                        <td className="border p-2">
+                          {`${m.firstName || ""} ${m.lastName || ""}`.trim() ||
+                            "-"}
+                        </td>
+                        <td className="border p-2">{m.position || "-"}</td>
+                        <td className="border p-2">{m.telephone || "-"}</td>
+                        <td className="border p-2">{m.email || "-"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

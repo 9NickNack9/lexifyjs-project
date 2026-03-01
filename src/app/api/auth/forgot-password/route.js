@@ -4,13 +4,14 @@ import crypto from "crypto";
 import { notifyUserPasswordReset } from "@/lib/mailer";
 import { headers } from "next/headers";
 
-// Build absolute URL helper
-function absoluteUrl(req, path) {
-  const h = headers();
+// Build absolute URL helper (Next dynamic APIs must be awaited)
+async function absoluteUrl(req, path) {
+  const h = await headers();
   const proto =
     h.get("x-forwarded-proto") ?? new URL(req.url).protocol.replace(":", "");
   const host =
     h.get("x-forwarded-host") ?? h.get("host") ?? new URL(req.url).host;
+
   const runtimeBase = `${proto}://${host}`;
   const base = process.env.APP_ORIGIN || runtimeBase;
   return `${base}${path}`;
@@ -27,48 +28,39 @@ export async function POST(req) {
   const raw = (body?.emailOrUsername || "").trim();
   if (!raw) return NextResponse.json({ ok: true }); // don't reveal user existence
 
-  // Find user by username OR contactEmail (AppUser has no `email` field)
-  const user = await prisma.appUser.findFirst({
-    where: { OR: [{ username: raw }, { contactEmail: raw }] },
-    select: {
-      userId: true,
-      contactEmail: true,
-      companyContactPersons: true, // [{ firstName,lastName,email,telephone,position, ... }]
-    },
+  // Find UserAccount by username OR email
+  const user = await prisma.userAccount.findFirst({
+    where: { OR: [{ username: raw }, { email: raw }] },
+    select: { userPkId: true, email: true },
   });
 
   // Always respond 200 for privacy; only proceed if user exists
-  if (user?.userId != null) {
-    const token = crypto.randomUUID(); // or randomBytes(32).toString("hex")
+  if (user?.userPkId != null) {
+    const token = crypto.randomUUID();
     const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
 
-    await prisma.passwordResetToken.create({
+    await prisma.passwordResetTokenUser.create({
       data: {
-        userId: BigInt(user.userId),
+        userId: BigInt(user.userPkId),
         token,
         expiresAt,
       },
     });
 
-    const resetUrl = absoluteUrl(
+    const resetUrl = await absoluteUrl(
       req,
-      `/reset-password/${encodeURIComponent(token)}`
+      `/reset-password/${encodeURIComponent(token)}`,
     );
 
-    // Pick recipient: prefer contactEmail; else first valid contact person email; else defer to mailer fallback
+    // Send to user email if valid; otherwise silently do nothing (still returns ok:true)
     const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const primary =
-      (user.contactEmail &&
-        EMAIL_RE.test(user.contactEmail) &&
-        user.contactEmail) ||
-      (Array.isArray(user.companyContactPersons)
-        ? user.companyContactPersons.find((c) =>
-            EMAIL_RE.test((c?.email || "").trim())
-          )?.email || null
-        : null) ||
-      raw; // may be an email; mailer validates & falls back to support if invalid
+    const to =
+      (user.email && EMAIL_RE.test(user.email) && user.email) ||
+      (EMAIL_RE.test(raw) ? raw : null);
 
-    await notifyUserPasswordReset({ to: primary, resetUrl });
+    if (to) {
+      await notifyUserPasswordReset({ to, resetUrl });
+    }
   }
 
   return NextResponse.json({ ok: true });

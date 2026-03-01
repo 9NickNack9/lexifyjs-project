@@ -16,18 +16,22 @@ export async function POST(req) {
   if (!token || !newPassword) {
     return NextResponse.json(
       { error: "Missing token or password" },
-      { status: 400 }
+      { status: 400 },
     );
   }
   if (newPassword.length < 8) {
     return NextResponse.json({ error: "Password too short" }, { status: 400 });
   }
 
-  const prt = await prisma.passwordResetToken.findUnique({ where: { token } });
+  const prt = await prisma.passwordResetTokenUser.findUnique({
+    where: { token },
+    select: { token: true, userId: true, expiresAt: true, usedAt: true },
+  });
+
   if (!prt || prt.usedAt || prt.expiresAt < new Date()) {
     return NextResponse.json(
       { error: "Invalid or expired token" },
-      { status: 400 }
+      { status: 400 },
     );
   }
 
@@ -35,11 +39,11 @@ export async function POST(req) {
 
   // Update password + mark token used (transaction)
   await prisma.$transaction([
-    prisma.appUser.update({
-      where: { userId: BigInt(prt.userId) },
+    prisma.userAccount.update({
+      where: { userPkId: BigInt(prt.userId) },
       data: { passwordHash: hash },
     }),
-    prisma.passwordResetToken.update({
+    prisma.passwordResetTokenUser.update({
       where: { token },
       data: { usedAt: new Date() },
     }),

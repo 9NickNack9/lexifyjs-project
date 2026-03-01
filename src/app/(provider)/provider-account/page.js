@@ -47,6 +47,90 @@ export default function ProviderAccount() {
     { key: "banking_and_finance", label: "Banking & Finance" },
   ];
 
+  // Company members modal
+  const [membersOpen, setMembersOpen] = useState(false);
+  const [companyMembers, setCompanyMembers] = useState([]);
+  const [membersLoading, setMembersLoading] = useState(false);
+  const [membersErr, setMembersErr] = useState("");
+
+  const openMembersModal = async () => {
+    setMembersOpen(true);
+    setMembersErr("");
+    setMembersLoading(true);
+    try {
+      const res = await fetch("/api/me/company-members", { cache: "no-store" });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(json?.error || "Failed to load members.");
+      setCompanyMembers(Array.isArray(json.members) ? json.members : []);
+    } catch (e) {
+      setMembersErr(e.message || "Failed to load members.");
+      setCompanyMembers([]);
+    } finally {
+      setMembersLoading(false);
+    }
+  };
+
+  const closeMembersModal = () => setMembersOpen(false);
+
+  // Edit UserAccount (my contact info)
+  const [uaEditing, setUaEditing] = useState(false);
+  const [uaBusy, setUaBusy] = useState(false);
+  const [uaDraft, setUaDraft] = useState({
+    firstName: "",
+    lastName: "",
+    email: "",
+    telephone: "",
+  });
+
+  const startEditUa = () => {
+    const ua = me?.userAccount || {};
+    setUaDraft({
+      firstName: ua.firstName || "",
+      lastName: ua.lastName || "",
+      email: ua.email || "",
+      telephone: ua.telephone || "",
+    });
+    setUaEditing(true);
+  };
+
+  const cancelEditUa = () => {
+    const ua = me?.userAccount || {};
+    setUaDraft({
+      firstName: ua.firstName || "",
+      lastName: ua.lastName || "",
+      email: ua.email || "",
+      telephone: ua.telephone || "",
+    });
+    setUaEditing(false);
+  };
+
+  const saveUa = async () => {
+    setUaBusy(true);
+    try {
+      const res = await fetch("/api/me/useraccount", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(uaDraft),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok)
+        throw new Error(json?.error || "Failed to save information.");
+
+      setMe((prev) => ({
+        ...(prev || {}),
+        userAccount: {
+          ...(prev?.userAccount || {}),
+          ...(json.userAccount || {}),
+        },
+      }));
+      setUaEditing(false);
+    } catch (e) {
+      alert(e.message || "Failed to save information.");
+    } finally {
+      setUaBusy(false);
+    }
+  };
+
   const [categoryPrefs, setCategoryPrefs] = useState([]);
   const categoryHas = (k) => categoryPrefs.includes(k);
 
@@ -510,7 +594,7 @@ export default function ProviderAccount() {
           <h4 className="text-md font-semibold col-span-2">My Company</h4>
 
           <div className="w-full text-sm border p-2">
-            Name: {me?.company?.companyName || me?.companyName || "-"}
+            Company Name: {me?.company?.companyName || me?.companyName || "-"}
           </div>
           <div className="w-full text-sm border p-2">
             Business ID (in country of domicile):{" "}
@@ -533,30 +617,113 @@ export default function ProviderAccount() {
           </div>
         </div>
 
+        <div className="mt-4">
+          <button
+            type="button"
+            onClick={openMembersModal}
+            className="bg-[#11999e] text-white px-4 py-2 rounded cursor-pointer"
+          >
+            Show a List of All Company LEXIFY Members
+          </button>
+        </div>
+
         <br />
 
         {/* UserAccount information */}
         <div className="grid grid-cols-2 gap-4">
-          <h4 className="text-md font-semibold col-span-2">My User Account</h4>
+          <h4 className="text-md font-semibold col-span-2">
+            My Account Information
+          </h4>
 
-          <div className="w-full text-sm border p-2">
-            Username:{" "}
-            {me?.userAccount?.username || me?.username || username || "-"}
+          <div className="w-full text-sm border p-2 flex items-center gap-2">
+            <span className="whitespace-nowrap">First Name:</span>
+            {uaEditing ? (
+              <input
+                className="border p-1 flex-1"
+                value={uaDraft.firstName}
+                onChange={(e) =>
+                  setUaDraft((d) => ({ ...d, firstName: e.target.value }))
+                }
+              />
+            ) : (
+              <span>{me?.userAccount?.firstName || "-"}</span>
+            )}
           </div>
-          <div className="w-full text-sm border p-2">
-            Role: {me?.userAccount?.role || me?.role || "-"}
+
+          <div className="w-full text-sm border p-2 flex items-center gap-2">
+            <span className="whitespace-nowrap">Last Name:</span>
+            {uaEditing ? (
+              <input
+                className="border p-1 flex-1"
+                value={uaDraft.lastName}
+                onChange={(e) =>
+                  setUaDraft((d) => ({ ...d, lastName: e.target.value }))
+                }
+              />
+            ) : (
+              <span>{me?.userAccount?.lastName || "-"}</span>
+            )}
           </div>
-          <div className="w-full text-sm border p-2">
-            First Name: {me?.userAccount?.firstName || "-"}
+
+          <div className="w-full text-sm border p-2 flex items-center gap-2">
+            <span className="whitespace-nowrap">E-mail:</span>
+            {uaEditing ? (
+              <input
+                className="border p-1 flex-1"
+                value={uaDraft.email}
+                onChange={(e) =>
+                  setUaDraft((d) => ({ ...d, email: e.target.value }))
+                }
+              />
+            ) : (
+              <span>{me?.userAccount?.email || "-"}</span>
+            )}
           </div>
-          <div className="w-full text-sm border p-2">
-            Last Name: {me?.userAccount?.lastName || "-"}
+
+          <div className="w-full text-sm border p-2 flex items-center gap-2">
+            <span className="whitespace-nowrap">Telephone:</span>
+            {uaEditing ? (
+              <input
+                className="border p-1 flex-1"
+                value={uaDraft.telephone}
+                onChange={(e) =>
+                  setUaDraft((d) => ({ ...d, telephone: e.target.value }))
+                }
+              />
+            ) : (
+              <span>{me?.userAccount?.telephone || "-"}</span>
+            )}
           </div>
-          <div className="w-full text-sm border p-2">
-            E-mail: {me?.userAccount?.email || "-"}
-          </div>
-          <div className="w-full text-sm border p-2">
-            Telephone: {me?.userAccount?.telephone || "-"}
+
+          <div className="mt-4">
+            {!uaEditing ? (
+              <button
+                type="button"
+                onClick={startEditUa}
+                className="bg-[#11999e] text-white px-4 py-2 rounded cursor-pointer"
+              >
+                Edit My Account Information
+              </button>
+            ) : (
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  disabled={uaBusy}
+                  onClick={saveUa}
+                  className="bg-green-600 text-white px-4 py-2 rounded cursor-pointer disabled:opacity-50"
+                >
+                  Save Account Information
+                </button>
+                <button
+                  type="button"
+                  disabled={uaBusy}
+                  onClick={cancelEditUa}
+                  className="bg-gray-500 text-white px-4 py-2 rounded cursor-pointer disabled:opacity-50"
+                >
+                  Cancel Without Saving
+                </button>
+              </div>
+            )}
           </div>
         </div>
 
@@ -720,157 +887,193 @@ export default function ProviderAccount() {
           Requests. Please select the notifications you want to receive:
         </h4>
         <br />
-        {/* 1) no-winning-offer */}
-        <label
-          htmlFor="prov-no-winning-offer"
-          className="inline-flex items-center cursor-pointer"
-        >
-          <input
-            id="prov-no-winning-offer"
-            type="checkbox"
-            className="sr-only"
-            checked={hasPref("no-winning-offer")}
-            onChange={(e) => setPref("no-winning-offer", e.target.checked)}
-          />
-          <div
-            className={`relative w-11 h-6 rounded-full transition-colors ${
-              hasPref("no-winning-offer") ? "bg-green-600" : "bg-gray-700"
-            }`}
+        <div className="flex flex-col gap-4">
+          {/* 0) all-notifications */}
+          <label
+            htmlFor="prov-all-notifications"
+            className="inline-flex items-center cursor-pointer"
           >
-            <div
-              className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
-                hasPref("no-winning-offer") ? "translate-x-full" : ""
-              }`}
+            <input
+              id="prov-all-notifications"
+              type="checkbox"
+              className="sr-only"
+              checked={hasPref("all-notifications")}
+              onChange={(e) => setPref("all-notifications", e.target.checked)}
             />
-          </div>
-          <span className="ms-3 text-sm text-black dark:text-black">
-            A pending LEXIFY Request expires and the offer I have submitted is
-            not the winning offer
-          </span>
-        </label>
-        <br />
-        {/* 2) winner-conflict-check */}
-        <label
-          htmlFor="prov-winner-conflict-check"
-          className="inline-flex items-center cursor-pointer pt-2"
-        >
-          <input
-            id="prov-winner-conflict-check"
-            type="checkbox"
-            className="sr-only"
-            checked={hasPref("winner-conflict-check")}
-            onChange={(e) => setPref("winner-conflict-check", e.target.checked)}
-          />
-          <div
-            className={`relative w-11 h-6 rounded-full transition-colors ${
-              hasPref("winner-conflict-check") ? "bg-green-600" : "bg-gray-700"
-            }`}
-          >
             <div
-              className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
-                hasPref("winner-conflict-check") ? "translate-x-full" : ""
+              className={`relative w-11 h-6 rounded-full transition-colors ${
+                hasPref("all-notifications") ? "bg-green-600" : "bg-gray-700"
               }`}
-            />
-          </div>
-          <span className="ms-3 text-sm text-black dark:text-black">
-            A pending LEXIFY Request expires and the offer I have submitted is
-            the winning offer subject to clearance of remaining conflict checks{" "}
-            <NarrowTooltip tooltipText="If the LEXIFY Request does not disclose the identities of all relevant parties in the matter, the corresponding remaining conflict checks will be performed only with the legal service provider submitting the winning offer. If an existing conflict is then notified by the legal service provider to LEXIFY, the winning offer will automatically be disqualified and the second-best offer (if any) will replace it as the winning offer." />
-          </span>
-        </label>
-        <br />
-        {/* 3) request-cancelled */}
-        <label
-          htmlFor="prov-request-cancelled"
-          className="inline-flex items-center cursor-pointer pt-2"
-        >
-          <input
-            id="prov-request-cancelled"
-            type="checkbox"
-            className="sr-only"
-            checked={hasPref("request-cancelled")}
-            onChange={(e) => setPref("request-cancelled", e.target.checked)}
-          />
-          <div
-            className={`relative w-11 h-6 rounded-full transition-colors ${
-              hasPref("request-cancelled") ? "bg-green-600" : "bg-gray-700"
-            }`}
-          >
-            <div
-              className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
-                hasPref("request-cancelled") ? "translate-x-full" : ""
-              }`}
-            />
-          </div>
-          <span className="ms-3 text-sm text-black dark:text-black">
-            A pending LEXIFY Request is cancelled by the client after I have
-            submitted an offer
-          </span>
-        </label>
-        {/* 4) new-available-request */}
-        <label
-          htmlFor="prov-new-available-request"
-          className="inline-flex items-center cursor-pointer pt-2"
-        >
-          <input
-            id="prov-new-available-request"
-            type="checkbox"
-            className="sr-only"
-            checked={hasPref("new-available-request")}
-            onChange={(e) => setPref("new-available-request", e.target.checked)}
-          />
-          <div
-            className={`relative w-11 h-6 rounded-full transition-colors ${
-              hasPref("new-available-request") ? "bg-green-600" : "bg-gray-700"
-            }`}
-          >
-            <div
-              className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
-                hasPref("new-available-request") ? "translate-x-full" : ""
-              }`}
-            />
-          </div>
-          <span className="ms-3 text-sm text-black dark:text-black">
-            A new LEXIFY Request has been published and is awaiting offers
-          </span>
-        </label>
-        {/* Categories dropdown: only visible when "new-available-request" is ON */}
-        {hasPref("new-available-request") && (
-          <div className="mt-4" ref={categoryDropdownRef}>
-            <div className="text-sm font-semibold mb-2">
-              Select which categories of new requests you would like to receive
-              notifications for:
-            </div>
-
-            <button
-              type="button"
-              onClick={() => setCategoryDropdownOpen((v) => !v)}
-              className="w-full border rounded px-3 py-2 text-sm text-left bg-white"
             >
-              {categoryPrefs.length === 0
-                ? "No categories selected"
-                : `${categoryPrefs.length} Categories Selected`}
-            </button>
-
-            {categoryDropdownOpen && (
-              <div className="mt-2 border rounded bg-white max-h-64 overflow-auto">
-                {CATEGORY_OPTIONS.map(({ key, label }) => (
-                  <label
-                    key={key}
-                    className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={categoryHas(key)}
-                      onChange={(e) => setCategoryPref(key, e.target.checked)}
-                    />
-                    <span>{label}</span>
-                  </label>
-                ))}
+              <div
+                className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
+                  hasPref("all-notifications") ? "translate-x-full" : ""
+                }`}
+              />
+            </div>
+            <span className="ms-3 text-sm text-black dark:text-black">
+              Receive Notifications for All Company Members
+            </span>
+          </label>
+          {/* 1) no-winning-offer */}
+          <label
+            htmlFor="prov-no-winning-offer"
+            className="inline-flex items-center cursor-pointer"
+          >
+            <input
+              id="prov-no-winning-offer"
+              type="checkbox"
+              className="sr-only"
+              checked={hasPref("no-winning-offer")}
+              onChange={(e) => setPref("no-winning-offer", e.target.checked)}
+            />
+            <div
+              className={`relative w-11 h-6 rounded-full transition-colors ${
+                hasPref("no-winning-offer") ? "bg-green-600" : "bg-gray-700"
+              }`}
+            >
+              <div
+                className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
+                  hasPref("no-winning-offer") ? "translate-x-full" : ""
+                }`}
+              />
+            </div>
+            <span className="ms-3 text-sm text-black dark:text-black">
+              A pending LEXIFY Request expires and the offer I have submitted is
+              not the winning offer
+            </span>
+          </label>
+          {/* 2) winner-conflict-check */}
+          <label
+            htmlFor="prov-winner-conflict-check"
+            className="inline-flex items-center cursor-pointer"
+          >
+            <input
+              id="prov-winner-conflict-check"
+              type="checkbox"
+              className="sr-only"
+              checked={hasPref("winner-conflict-check")}
+              onChange={(e) =>
+                setPref("winner-conflict-check", e.target.checked)
+              }
+            />
+            <div
+              className={`relative w-11 h-6 rounded-full transition-colors ${
+                hasPref("winner-conflict-check")
+                  ? "bg-green-600"
+                  : "bg-gray-700"
+              }`}
+            >
+              <div
+                className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
+                  hasPref("winner-conflict-check") ? "translate-x-full" : ""
+                }`}
+              />
+            </div>
+            <span className="ms-3 text-sm text-black dark:text-black">
+              A pending LEXIFY Request expires and the offer I have submitted is
+              the winning offer subject to clearance of remaining conflict
+              checks{" "}
+              <NarrowTooltip tooltipText="If the LEXIFY Request does not disclose the identities of all relevant parties in the matter, the corresponding remaining conflict checks will be performed only with the legal service provider submitting the winning offer. If an existing conflict is then notified by the legal service provider to LEXIFY, the winning offer will automatically be disqualified and the second-best offer (if any) will replace it as the winning offer." />
+            </span>
+          </label>
+          {/* 3) request-cancelled */}
+          <label
+            htmlFor="prov-request-cancelled"
+            className="inline-flex items-center cursor-pointer"
+          >
+            <input
+              id="prov-request-cancelled"
+              type="checkbox"
+              className="sr-only"
+              checked={hasPref("request-cancelled")}
+              onChange={(e) => setPref("request-cancelled", e.target.checked)}
+            />
+            <div
+              className={`relative w-11 h-6 rounded-full transition-colors ${
+                hasPref("request-cancelled") ? "bg-green-600" : "bg-gray-700"
+              }`}
+            >
+              <div
+                className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
+                  hasPref("request-cancelled") ? "translate-x-full" : ""
+                }`}
+              />
+            </div>
+            <span className="ms-3 text-sm text-black dark:text-black">
+              A pending LEXIFY Request is cancelled by the client after I have
+              submitted an offer
+            </span>
+          </label>
+          {/* 4) new-available-request */}
+          <label
+            htmlFor="prov-new-available-request"
+            className="inline-flex items-center cursor-pointer"
+          >
+            <input
+              id="prov-new-available-request"
+              type="checkbox"
+              className="sr-only"
+              checked={hasPref("new-available-request")}
+              onChange={(e) =>
+                setPref("new-available-request", e.target.checked)
+              }
+            />
+            <div
+              className={`relative w-11 h-6 rounded-full transition-colors ${
+                hasPref("new-available-request")
+                  ? "bg-green-600"
+                  : "bg-gray-700"
+              }`}
+            >
+              <div
+                className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
+                  hasPref("new-available-request") ? "translate-x-full" : ""
+                }`}
+              />
+            </div>
+            <span className="ms-3 text-sm text-black dark:text-black">
+              A new LEXIFY Request has been published and is awaiting offers
+            </span>
+          </label>
+          {/* Categories dropdown: only visible when "new-available-request" is ON */}
+          {hasPref("new-available-request") && (
+            <div className="mt-4" ref={categoryDropdownRef}>
+              <div className="text-sm font-semibold mb-2">
+                Select which categories of new requests you would like to
+                receive notifications for:
               </div>
-            )}
-          </div>
-        )}
+
+              <button
+                type="button"
+                onClick={() => setCategoryDropdownOpen((v) => !v)}
+                className="w-full border rounded px-3 py-2 text-sm text-left bg-white"
+              >
+                {categoryPrefs.length === 0
+                  ? "No categories selected"
+                  : `${categoryPrefs.length} Categories Selected`}
+              </button>
+
+              {categoryDropdownOpen && (
+                <div className="mt-2 border rounded bg-white max-h-64 overflow-auto">
+                  {CATEGORY_OPTIONS.map(({ key, label }) => (
+                    <label
+                      key={key}
+                      className="flex items-center gap-2 px-3 py-2 text-sm hover:bg-gray-50 cursor-pointer"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={categoryHas(key)}
+                        onChange={(e) => setCategoryPref(key, e.target.checked)}
+                      />
+                      <span>{label}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+        </div>
       </div>
       <br />
       {/* Invoicing and Payment Methods */}
@@ -1080,6 +1283,64 @@ export default function ProviderAccount() {
           change is not acceptable to you.
         </h4>
       </div>
+      {membersOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          onMouseDown={(e) => {
+            // close if backdrop clicked
+            if (e.target === e.currentTarget) closeMembersModal();
+          }}
+        >
+          <div className="w-full max-w-3xl rounded bg-white text-black shadow-2xl">
+            <div className="flex items-center justify-between border-b p-4">
+              <h3 className="text-lg font-semibold">Company LEXIFY Members</h3>
+              <button
+                type="button"
+                onClick={closeMembersModal}
+                className="px-3 py-1 rounded border cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="p-4">
+              {membersLoading ? (
+                <div className="text-sm">Loading members…</div>
+              ) : membersErr ? (
+                <div className="text-sm text-red-700">{membersErr}</div>
+              ) : companyMembers.length === 0 ? (
+                <div className="text-sm text-gray-600">
+                  No members found for your company.
+                </div>
+              ) : (
+                <table className="w-full border border-gray-300 text-sm">
+                  <thead className="bg-gray-200">
+                    <tr className="bg-[#3a3a3c] text-white">
+                      <th className="border p-2 text-left">Name</th>
+                      <th className="border p-2 text-left">Position</th>
+                      <th className="border p-2 text-left">Telephone</th>
+                      <th className="border p-2 text-left">Email</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {companyMembers.map((m) => (
+                      <tr key={String(m.userPkId)}>
+                        <td className="border p-2">
+                          {`${m.firstName || ""} ${m.lastName || ""}`.trim() ||
+                            "-"}
+                        </td>
+                        <td className="border p-2">{m.position || "-"}</td>
+                        <td className="border p-2">{m.telephone || "-"}</td>
+                        <td className="border p-2">{m.email || "-"}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

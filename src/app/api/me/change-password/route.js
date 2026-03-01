@@ -26,20 +26,24 @@ export async function POST(req) {
     if (!currentPassword || !newPassword) {
       return NextResponse.json(
         { error: "Both passwords are required" },
-        { status: 400 }
+        { status: 400 },
       );
     }
     if (newPassword.length < MIN_LEN) {
       return NextResponse.json(
         { error: `New password must be at least ${MIN_LEN} characters` },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    const me = await prisma.appUser.findUnique({
-      where: { userId: BigInt(session.userId) },
+    const userPkId = BigInt(session.userId);
+
+    // read from UserAccount
+    const me = await prisma.userAccount.findUnique({
+      where: { userPkId },
       select: { passwordHash: true },
     });
+
     if (!me) {
       return NextResponse.json({ error: "User not found" }, { status: 404 });
     }
@@ -48,23 +52,24 @@ export async function POST(req) {
     if (!ok) {
       return NextResponse.json(
         { error: "Current password is incorrect" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
-    // Optional: block reusing the same password
+    // block reusing the same password
     const sameAsOld = await bcrypt.compare(newPassword, me.passwordHash || "");
     if (sameAsOld) {
       return NextResponse.json(
         { error: "New password must be different from the current password" },
-        { status: 400 }
+        { status: 400 },
       );
     }
 
     const hashed = await bcrypt.hash(newPassword, 10);
 
-    await prisma.appUser.update({
-      where: { userId: BigInt(session.userId) },
+    // update UserAccount.passwordHash
+    await prisma.userAccount.update({
+      where: { userPkId },
       data: { passwordHash: hashed },
     });
 

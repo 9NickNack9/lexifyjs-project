@@ -51,11 +51,14 @@ export async function PATCH(req) {
   }
 
   const { key, enabled } = body || {};
+
   const allowed = new Set([
     "no_offers",
     "over_max_price",
     "pending_offer_selection",
+    "all-notifications",
   ]);
+
   if (!allowed.has(key) || typeof enabled !== "boolean") {
     return NextResponse.json({ error: "Invalid payload." }, { status: 400 });
   }
