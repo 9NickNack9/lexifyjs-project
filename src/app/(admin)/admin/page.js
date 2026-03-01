@@ -154,6 +154,25 @@ export default function AdminPage() {
     }
   }
 
+  const updateCompanyBusinessId = async (companyPkId, newBusinessId, role) => {
+    const res = await fetch(`/api/admin/companies/${companyPkId}/businessId`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ businessId: newBusinessId }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert(data?.error || "Failed to update Business ID.");
+      // reload table state so the input doesn't lie
+      fetchCompaniesByRole(role, true);
+      return;
+    }
+
+    // refresh the table so you see the persisted value
+    fetchCompaniesByRole(role, true);
+  };
+
   async function fetchAccountsByRole(role, reset = false) {
     setAccountTables((prev) => {
       if (prev[role].loading) return prev;
@@ -992,6 +1011,7 @@ export default function AdminPage() {
                   <th className="border p-2">Role</th>
                   <th className="border p-2">Register Status</th>
                   <th className="border p-2">Company</th>
+                  <th className="border p-2">Business Id</th>
                   <th className="border p-2">Members</th>
                   <th className="border p-2">Requests</th>
                   <th className="border p-2">Contracts</th>
@@ -1025,6 +1045,24 @@ export default function AdminPage() {
                       </select>
                     </td>
                     <td className="border p-2">{c.companyName}</td>
+                    <td className="border p-2">{c.companyName}</td>
+
+                    <td className="border p-2">
+                      <input
+                        type="text"
+                        defaultValue={c.businessId || ""}
+                        onBlur={(e) =>
+                          updateCompanyBusinessId(
+                            c.companyPkId,
+                            e.target.value,
+                            c.role,
+                          )
+                        }
+                        className="w-48 border p-1 text-center"
+                      />
+                    </td>
+
+                    <td className="border p-2">{c.membersCount ?? 0}</td>
                     <td className="border p-2">{c.membersCount ?? 0}</td>
                     <td className="border p-2">{c.requestsCount ?? 0}</td>
                     <td className="border p-2">{c.contractsCount ?? 0}</td>
@@ -1042,7 +1080,7 @@ export default function AdminPage() {
                 {!companyTables.PURCHASER.loading &&
                   companyTables.PURCHASER.items.length === 0 && (
                     <tr>
-                      <td colSpan={8} className="text-center p-4 text-gray-500">
+                      <td colSpan={9} className="text-center p-4 text-gray-500">
                         No purchaser companies found.
                       </td>
                     </tr>
@@ -1050,7 +1088,7 @@ export default function AdminPage() {
 
                 {companyTables.PURCHASER.loading && (
                   <tr>
-                    <td colSpan={8} className="text-center p-4">
+                    <td colSpan={9} className="text-center p-4">
                       Loading…
                     </td>
                   </tr>
@@ -1081,6 +1119,7 @@ export default function AdminPage() {
                   <th className="border p-2">Role</th>
                   <th className="border p-2">Register Status</th>
                   <th className="border p-2">Company</th>
+                  <th className="border p-2">Business Id</th>
                   <th className="border p-2">Invoice Fee</th>
                   <th className="border p-2">Company Age</th>
                   <th className="border p-2">Provider Type</th>
@@ -1117,6 +1156,24 @@ export default function AdminPage() {
                       </select>
                     </td>
                     <td className="border p-2">{c.companyName}</td>
+                    <td className="border p-2">{c.companyName}</td>
+
+                    <td className="border p-2">
+                      <input
+                        type="text"
+                        defaultValue={c.businessId || ""}
+                        onBlur={(e) =>
+                          updateCompanyBusinessId(
+                            c.companyPkId,
+                            e.target.value,
+                            c.role,
+                          )
+                        }
+                        className="w-48 border p-1 text-center"
+                      />
+                    </td>
+
+                    <td className="border p-2">{c.invoiceFee ?? "—"}</td>
                     <td className="border p-2">{c.invoiceFee ?? "—"}</td>
                     <td className="border p-2">{c.companyAge ?? "—"}</td>
                     <td className="border p-2">{c.providerType ?? "—"}</td>
@@ -1140,7 +1197,7 @@ export default function AdminPage() {
                   companyTables.PROVIDER.items.length === 0 && (
                     <tr>
                       <td
-                        colSpan={11}
+                        colSpan={12}
                         className="text-center p-4 text-gray-500"
                       >
                         No provider companies found.
@@ -1150,7 +1207,7 @@ export default function AdminPage() {
 
                 {companyTables.PROVIDER.loading && (
                   <tr>
-                    <td colSpan={11} className="text-center p-4">
+                    <td colSpan={12} className="text-center p-4">
                       Loading…
                     </td>
                   </tr>

@@ -32,6 +32,7 @@ export async function GET(req) {
       registerStatus: true,
       companyName: true,
       companyAge: true,
+      businessId: true,
       companyFoundingYear: true,
       providerType: true,
       providerTotalRating: true,
