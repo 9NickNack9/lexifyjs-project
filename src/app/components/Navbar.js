@@ -9,9 +9,11 @@ export default function Navbar() {
   const isLoading = status === "loading";
 
   // NextAuth still provides session.user?.name by default; we also support fallbacks.
-  const username = isLoading
+  const displayName = isLoading
     ? "…"
-    : session?.user?.name || session?.user?.email || "Guest";
+    : [session?.firstName, session?.lastName].filter(Boolean).join(" ") ||
+      session?.user?.email ||
+      "Guest";
 
   const role = session?.role ?? null; // "ADMIN" | "PROVIDER" | "PURCHASER"
   const registerStatus = session?.registerStatus ?? null; // e.g. "pending" | "approved"
@@ -41,11 +43,11 @@ export default function Navbar() {
       <div className="absolute right-4 flex items-center gap-4">
         <div className="text-right leading-tight">
           <div>
-            Logged in as, <span className="font-semibold">{username}</span>
+            Logged in as, <span className="font-semibold">{displayName}</span>
           </div>
 
           {/* Role + Company line (only when authenticated) */}
-          {!isLoading && role && username !== "Guest" && (
+          {!isLoading && role && displayName !== "Guest" && (
             <div className="text-xs opacity-90">
               {companyName ? ` ${companyName}` : ""}
               {registerStatus === "pending" ? " • Pending approval" : ""}

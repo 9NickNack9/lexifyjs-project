@@ -366,6 +366,7 @@ export async function POST(req) {
       await notifySupportNewRegistration({
         role: data.role, // "provider" | "purchaser"
         companyName: result.companyName,
+        accountName: `${data.firstName} ${data.lastName}`.trim(),
       });
     } catch (e) {
       console.error("New registration support email failed:", e);

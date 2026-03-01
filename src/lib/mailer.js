@@ -68,12 +68,16 @@ export async function sendDynamicTemplateEmail({
  * Convenience helper for “New Registration” notification to Support
  * Expects env var: SENDGRID_TEMPLATE_NEW_REGISTRATION (dynamic template ID)
  */
-export async function notifySupportNewRegistration({ role, companyName }) {
+export async function notifySupportNewRegistration({
+  role,
+  companyName,
+  accountName,
+}) {
   const templateId = "d-2f4f2e996bdc44059aabd7f7d1e1cdb7";
   await sendDynamicTemplateEmail({
     to: "support@lexify.online",
     templateId,
-    dynamicTemplateData: { role, companyName },
+    dynamicTemplateData: { role, companyName, accountName },
   });
 }
 
@@ -93,8 +97,8 @@ export async function notifyProvidersNewAvailableRequest({
   const list = Array.isArray(to)
     ? Array.from(new Set(to.filter(isEmail).map((e) => e.trim())))
     : isEmail(to)
-    ? [to.trim()]
-    : [];
+      ? [to.trim()]
+      : [];
 
   // If nobody valid, still notify Support so the event is tracked
   if (list.length === 0) {
@@ -112,7 +116,7 @@ export async function notifyProvidersNewAvailableRequest({
       to: email,
       templateId,
       dynamicTemplateData: { requestCategory },
-    })
+    }),
   );
   await Promise.allSettled(sends);
 }
@@ -125,8 +129,8 @@ export async function notifyProvidersRequestCancelled({ to }) {
   const list = Array.isArray(to)
     ? Array.from(new Set(to.filter(isEmail)))
     : isEmail(to)
-    ? [to]
-    : [];
+      ? [to]
+      : [];
 
   if (list.length === 0) {
     await sendDynamicTemplateEmail({
@@ -263,8 +267,8 @@ export async function notifyUserPasswordReset({ to, resetUrl }) {
         templateId,
         // Your template should include a button/link placeholder for resetUrl
         dynamicTemplateData: { resetUrl },
-      })
-    )
+      }),
+    ),
   );
 }
 
@@ -319,8 +323,8 @@ export async function notifyProvidersAdditionalQuestionAnswered({
   const list = Array.isArray(to)
     ? Array.from(new Set(to.filter(isEmail).map((e) => e.trim())))
     : isEmail(to)
-    ? [to.trim()]
-    : [];
+      ? [to.trim()]
+      : [];
 
   // If nobody valid, still send to Support so the event is tracked
   if (list.length === 0) {

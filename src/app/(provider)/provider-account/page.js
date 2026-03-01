@@ -1294,7 +1294,7 @@ export default function ProviderAccount() {
         >
           <div className="w-full max-w-3xl rounded bg-white text-black shadow-2xl">
             <div className="flex items-center justify-between border-b p-4">
-              <h3 className="text-lg font-semibold">Company LEXIFY Members</h3>
+              <h3 className="text-lg font-semibold">Company LEXIFY Users</h3>
               <button
                 type="button"
                 onClick={closeMembersModal}

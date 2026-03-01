@@ -174,7 +174,7 @@ export default function Register() {
           <input
             type="text"
             name="companyID"
-            placeholder="Company Business ID"
+            placeholder="Company Business ID Number"
             className="p-2 border"
             onChange={handleChange}
             required

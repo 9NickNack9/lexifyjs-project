@@ -91,6 +91,8 @@ export const authOptions = {
           select: {
             userPkId: true,
             username: true,
+            firstName: true,
+            lastName: true,
             passwordHash: true,
             role: true, // "ADMIN" | "PROVIDER" | "PURCHASER"
             companyId: true,
@@ -206,6 +208,8 @@ export const authOptions = {
         return {
           id: String(user.userPkId), // NextAuth expects string
           name: user.username,
+          firstName: user.firstName ?? null,
+          lastName: user.lastName ?? null,
           role: user.role,
           registerStatus,
           companyId: String(user.companyId),
@@ -223,6 +227,8 @@ export const authOptions = {
         token.registerStatus = user.registerStatus;
         token.companyId = user.companyId ?? null;
         token.companyName = user.companyName ?? null;
+        token.firstName = user.firstName ?? null;
+        token.lastName = user.lastName ?? null;
       }
 
       // Optional: keep token fresh if company registerStatus can change server-side
@@ -235,6 +241,8 @@ export const authOptions = {
               select: {
                 role: true,
                 registerStatus: true,
+                firstName: true,
+                lastName: true,
                 company: {
                   select: { companyName: true },
                 },
@@ -251,6 +259,8 @@ export const authOptions = {
                 ? String(row.companyId)
                 : token.companyId;
               token.companyName = row.company?.companyName ?? token.companyName;
+              token.firstName = row.firstName ?? token.firstName;
+              token.lastName = row.lastName ?? token.lastName;
             }
           }
         } catch (error) {
@@ -267,6 +277,8 @@ export const authOptions = {
       session.registerStatus = token.registerStatus;
       session.companyId = token.companyId ?? null;
       session.companyName = token.companyName ?? null;
+      session.firstName = token.firstName ?? null;
+      session.lastName = token.lastName ?? null;
       return session;
     },
 

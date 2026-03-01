@@ -44,8 +44,6 @@ function toStringArray(val) {
 function normalizePracticalRatings(pr) {
   if (!pr) return {};
   if (Array.isArray(pr)) {
-    // Some older writes store as array; try to convert to map if possible
-    // If it’s already [{ key, ... }], we’ll do a best-effort conversion.
     const out = {};
     for (const row of pr) {
       const k = row?.categoryKey || row?.key || row?.category;
@@ -220,20 +218,47 @@ export async function GET(req) {
     const myCompanyId = ua?.companyId ?? null;
     const myCompanyName = (ua?.company?.companyName || "").trim();
 
-    // If not provider, just return the un-gated list (admin debugging etc.)
-    // (Your UI probably won’t call this for purchasers anyway.)
     const isProvider = myRole === "PROVIDER" && myCompanyId && myCompanyName;
 
-    // Providers: exclude requests that already have an offer from this provider company
+    // -------------------------------------------------------------------
+    // Providers: exclude requests that already have an offer from:
+    //   (a) this provider company (providerCompanyId), OR
+    //   (b) ANY userAccount that belongs to this provider company
+    // -------------------------------------------------------------------
     let alreadyOfferedRequestIds = [];
     if (isProvider) {
+      const companyIdBigInt = BigInt(myCompanyId);
+
+      // 1) Find all user accounts in the provider's company
+      const companyMembers = await prisma.userAccount.findMany({
+        where: { companyId: companyIdBigInt },
+        select: { userPkId: true },
+      });
+
+      const memberUserIds = companyMembers
+        .map((m) => m.userPkId)
+        .filter((id) => id != null);
+
+      // 2) Find offers either by providerCompanyId OR by any member's user id
+      //    (handles legacy data where providerCompanyId may be null)
+      const offerWhereOr = [
+        { providerCompanyId: companyIdBigInt },
+        ...(memberUserIds.length > 0
+          ? [{ providerUserId: { in: memberUserIds } }]
+          : []),
+      ];
+
       const myOffers = await prisma.offer.findMany({
-        where: { providerCompanyId: BigInt(myCompanyId) },
+        where: { OR: offerWhereOr },
         select: { requestId: true },
       });
-      alreadyOfferedRequestIds = myOffers
-        .map((o) => o.requestId)
-        .filter((id) => id != null);
+
+      // 3) Unique requestIds
+      const uniq = new Set();
+      for (const o of myOffers) {
+        if (o?.requestId != null) uniq.add(o.requestId);
+      }
+      alreadyOfferedRequestIds = Array.from(uniq);
     }
 
     const baseWhere = {
@@ -332,7 +357,6 @@ export async function GET(req) {
       if (blocked.includes(myCompanyName)) return false;
 
       // 2) Legal panel: if purchaser uses panel and I'm not in it -> hide
-      // (Only enforce if they actually have a panel list populated)
       const panel = toStringArray(maker.legalPanelServiceProviders);
       if (panel.length > 0 && !panel.includes(myCompanyName)) return false;
 
@@ -352,10 +376,7 @@ export async function GET(req) {
       if (!preferredForArea) {
         const reqSize = (r.providerSize || "").toString().trim().toLowerCase();
         if (reqSize) {
-          // This is intentionally “soft” because providerSize labels can vary.
-          // If request says "Any", allow.
           if (!reqSize.includes("any")) {
-            // If request expects e.g. "≥10", parse numeric and compare to companyProfessionals.
             const n = parseMinFromLabel(reqSize);
             if (typeof n === "number" && myPros < n) return false;
           }
@@ -382,7 +403,6 @@ export async function GET(req) {
       // 7) Provider type gating (unless preferred)
       if (!preferredForArea) {
         const reqTypeNorm = normalizeProviderType(r.serviceProviderType);
-        // request type empty/all => allow
         if (reqTypeNorm && reqTypeNorm !== "all") {
           if (
             myTypeNorm &&

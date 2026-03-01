@@ -28,17 +28,65 @@ export async function GET() {
       );
     }
 
+    // NOTE: also select companyName so we can match legacy providerCompanyId saved as companyName
     const company = await prisma.company.findUnique({
       where: { companyPkId: me.companyId },
       select: {
+        companyName: true,
         members: { select: { firstName: true, lastName: true } },
       },
     });
 
+    const companyName = (company?.companyName || "").trim();
+
+    // 1) Get offer IDs for:
+    //    - correct rows: providerCompanyId == me.companyId
+    //    - legacy rows: CAST(providerCompanyId AS TEXT) == companyName
+    //
+    // This avoids Prisma type mismatch (BigInt column vs string companyName).
+    const offerIdRows =
+      companyName.length > 0
+        ? await prisma.$queryRaw`
+            SELECT "offerId"
+            FROM "Offer"
+            WHERE
+              (
+                "providerCompanyId" = ${me.companyId}
+                OR CAST("providerCompanyId" AS TEXT) = ${companyName}
+              )
+              AND "offerStatus" IN ('WON', 'LOST')
+            ORDER BY "createdAt" DESC
+          `
+        : await prisma.$queryRaw`
+            SELECT "offerId"
+            FROM "Offer"
+            WHERE
+              "providerCompanyId" = ${me.companyId}
+              AND "offerStatus" IN ('WON', 'LOST')
+            ORDER BY "createdAt" DESC
+          `;
+
+    const offerIds = Array.isArray(offerIdRows)
+      ? offerIdRows.map((r) => r?.offerId).filter((x) => x != null)
+      : [];
+
+    // Short-circuit if none
+    if (offerIds.length === 0) {
+      const contactsFromMembers = Array.isArray(company?.members)
+        ? company.members.map(fullName).filter(Boolean)
+        : [];
+      const meName = fullName(me);
+      const contacts = Array.from(
+        new Set([...contactsFromMembers, meName].filter(Boolean)),
+      );
+
+      return NextResponse.json({ contacts, offers: [] });
+    }
+
+    // 2) Fetch full offer objects as before
     const offers = await prisma.offer.findMany({
       where: {
-        providerCompanyId: me.companyId,
-        offerStatus: { in: ["WON", "LOST"] },
+        offerId: { in: offerIds },
       },
       orderBy: { createdAt: "desc" },
       select: {
@@ -54,11 +102,7 @@ export async function GET() {
           select: {
             title: true,
             details: true,
-            clientCompany: {
-              select: {
-                companyName: true,
-              },
-            },
+            clientCompany: { select: { companyName: true } },
           },
         },
       },

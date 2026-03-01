@@ -1,4 +1,3 @@
-// src/app/api/requests/[id]/additional-question/route.js
 import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
@@ -42,20 +41,22 @@ export async function POST(req, ctx) {
     }
 
     const { id } = (await ctx.params) || {};
-    if (!id)
+    if (!id) {
       return NextResponse.json(
         { error: "Missing request id" },
         { status: 400 },
       );
+    }
 
     const body = await req.json().catch(() => null);
     const questionRaw = body?.question;
     const question = typeof questionRaw === "string" ? questionRaw.trim() : "";
-    if (!question)
+    if (!question) {
       return NextResponse.json(
         { error: "Question is required" },
         { status: 400 },
       );
+    }
 
     const existing = await prisma.request.findUnique({
       where: { requestId: BigInt(String(id)) },
@@ -64,16 +65,22 @@ export async function POST(req, ctx) {
         title: true,
         primaryContactPerson: true,
         details: true,
-        clientCompanyId: true, // NEW
-        // legacy fallback (if still present)
-        clientId: true,
+        clientCompanyId: true,
       },
     });
 
-    if (!existing)
+    if (!existing) {
       return NextResponse.json({ error: "Request not found" }, { status: 404 });
+    }
 
-    // Update details.additionalQuestions
+    if (!existing.clientCompanyId) {
+      return NextResponse.json(
+        { error: "Request has no clientCompanyId" },
+        { status: 400 },
+      );
+    }
+
+    // Update details.additionalQuestions (idempotent add)
     const currentDetails = existing.details || {};
     let additionalQuestions = currentDetails.additionalQuestions;
 
@@ -98,101 +105,86 @@ export async function POST(req, ctx) {
       },
     });
 
-    // Email purchaser contacts (best-effort; do not fail API)
+    // Email purchaser contacts
     try {
-      // Prefer new system
-      if (existing.clientCompanyId) {
-        const company = await prisma.company.findUnique({
-          where: { companyPkId: existing.clientCompanyId },
-          select: {
-            members: {
-              select: {
-                firstName: true,
-                lastName: true,
-                email: true,
-                notificationPreferences: true,
-              },
+      const company = await prisma.company.findUnique({
+        where: { companyPkId: existing.clientCompanyId },
+        select: {
+          members: {
+            select: {
+              firstName: true,
+              lastName: true,
+              email: true,
+              notificationPreferences: true,
             },
           },
-        });
+        },
+      });
 
-        const members = Array.isArray(company?.members) ? company.members : [];
-        const primaryName = norm(
-          existing.primaryContactPerson ||
-            existing.details?.primaryContactPerson ||
-            "",
-        );
+      const members = Array.isArray(company?.members) ? company.members : [];
+      const primaryName = norm(
+        existing.primaryContactPerson ||
+          existing.details?.primaryContactPerson ||
+          "",
+      );
 
-        const recipientsSet = new Set();
+      const recipientsSet = new Set();
 
-        // Primary contact by name match
-        if (primaryName) {
-          for (const m of members) {
-            const mName = norm(fullName(m));
-            const em = (m?.email || "").trim();
-            if (mName && mName === primaryName && isEmail(em))
-              recipientsSet.add(em);
-          }
-        }
-
-        // Also notify anyone opted into purchaser additional-question notifications
+      // 1) Primary contact by name match
+      if (primaryName) {
         for (const m of members) {
           const em = (m?.email || "").trim();
           if (!isEmail(em)) continue;
-          const prefs = toStringArray(m?.notificationPreferences);
-          if (prefs.includes("additional-question")) recipientsSet.add(em);
+          const mName = norm(fullName(m));
+          if (mName && mName === primaryName) recipientsSet.add(em);
         }
+      }
 
-        const recipients = Array.from(recipientsSet);
-        if (recipients.length) {
+      // 2) Anyone opted into purchaser additional-question notifications
+      // 3) anyone with all-notifications
+      for (const m of members) {
+        const em = (m?.email || "").trim();
+        if (!isEmail(em)) continue;
+        const prefs = toStringArray(m?.notificationPreferences);
+
+        if (prefs.includes("additional-question")) recipientsSet.add(em);
+        if (prefs.includes("all-notifications")) recipientsSet.add(em);
+      }
+
+      const recipients = Array.from(recipientsSet);
+
+      // Send real recipients WITHOUT support BCC
+      for (const email of recipients) {
+        try {
           await notifyPurchaserAdditionalQuestion({
-            to: recipients,
+            to: [email],
             requestTitle:
               existing.title ||
               existing.details?.requestTitle ||
               "LEXIFY Request",
+            bcc: [], // override default support BCC
           });
-        }
-      } else if (existing.clientId) {
-        // Legacy fallback (kept so mixed data continues working)
-        const client = await prisma.appUser.findUnique({
-          where: { userId: existing.clientId },
-          select: { companyContactPersons: true },
-        });
-
-        const contacts = Array.isArray(client?.companyContactPersons)
-          ? client.companyContactPersons
-          : [];
-
-        const primaryName = norm(
-          existing.primaryContactPerson ||
-            existing.details?.primaryContactPerson ||
-            "",
-        );
-
-        const recipientsSet = new Set();
-        for (const person of contacts) {
-          const personName = norm(
-            [person?.firstName, person?.lastName].filter(Boolean).join(" "),
+        } catch (e) {
+          console.error(
+            "Purchaser additional-question email failed for",
+            email,
+            e,
           );
-          const email = (person?.email || "").trim();
-          if (!isEmail(email)) continue;
-
-          if (primaryName && personName === primaryName)
-            recipientsSet.add(email);
-          if (person?.allNotifications === true) recipientsSet.add(email);
         }
+      }
 
-        const recipients = Array.from(recipientsSet);
-        if (recipients.length) {
-          await notifyPurchaserAdditionalQuestion({
-            to: recipients,
-            requestTitle:
-              existing.title ||
-              existing.details?.requestTitle ||
-              "LEXIFY Request",
-          });
-        }
+      // Send ONE support email
+      try {
+        await notifyPurchaserAdditionalQuestion({
+          to: "support@lexify.online",
+          requestTitle:
+            existing.title ||
+            existing.details?.requestTitle ||
+            "LEXIFY Request",
+          bcc: [], // prevent recursive support BCC
+        });
+      } catch (e) {
+        console.error("Support additional-question notification failed:", e);
       }
     } catch (mailErr) {
       console.error(

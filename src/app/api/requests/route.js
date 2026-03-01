@@ -36,6 +36,30 @@ function mapRequestToCategory(requestCategory, requestSubcategory) {
   return sub || cat || "Other";
 }
 
+function requestCategoryToPracticalPrefKey(requestCategory) {
+  const cat = (requestCategory || "").trim();
+
+  if (cat === "Help with Contracts") return "contracts";
+  if (cat === "Day-to-day Legal Advice") return "day_to_day";
+  if (cat === "Help with Employment related Documents") return "employment";
+  if (cat === "Help with Dispute Resolution or Debt Collection")
+    return "dispute_resolution";
+  if (cat === "Help with Mergers & Acquisitions") return "m_and_a";
+  if (cat === "Help with Corporate Governance") return "corporate_advisory";
+  if (cat === "Help with Personal Data Protection") return "data_protection";
+  if (
+    cat ===
+    "Help with KYC (Know Your Customer) or Compliance related Questionnaire"
+  )
+    return "compliance";
+  if (cat === "Legal Training for Management and/or Personnel")
+    return "legal_training";
+  if (cat === "Help with Banking & Finance Matters")
+    return "banking_and_finance";
+
+  return null;
+}
+
 // providerPracticalRatings can be either array or object — handle both
 function normalizePracticalRatings(pr) {
   const map = {};
@@ -326,7 +350,12 @@ export async function POST(req) {
 
   const created = await prisma.request.create({
     data: {
-      clientId: BigInt(session.userId),
+      // LEGACY column must be null for new-system users
+      clientId: null,
+
+      // NEW column points to UserAccount
+      clientUserId: me.userPkId,
+
       requestState: body.requestState,
       requestCategory: body.requestCategory,
       requestSubcategory,
@@ -414,79 +443,105 @@ export async function POST(req) {
     return [];
   }
 
-  const providers = await prisma.appUser.findMany({
-    where: { role: "PROVIDER" },
-    select: {
-      companyContactPersons: true, // [{ firstName,lastName,email,telephone,position, allNotifications? }]
-      notificationPreferences: true,
-      companyAge: true,
-      companyProfessionals: true,
-      providerType: true,
-      providerTotalRating: true,
-      providerPracticalRatings: true,
-    },
-  });
+  // ---- provider emailing uses UserAccount + Company ----
 
-  // Build unique email list across all qualified providers, then send separately to each
-  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  const isEmail = (s) => typeof s === "string" && EMAIL_RE.test(s.trim());
-  const allRecipients = new Set();
+  // Which practical notification key does this request category correspond to?
+  const practicalPrefKey = requestCategoryToPracticalPrefKey(
+    body.requestCategory,
+  );
 
-  for (const p of providers) {
-    // notifications preference gate
-    const prefs = toStringArray(p?.notificationPreferences);
-    if (!prefs.includes("new-available-request")) continue;
-
-    // capability gates against request minimums
-    const pAge = Number.isFinite(Number(p?.companyAge))
-      ? Number(p.companyAge)
-      : 0;
-    const pPros = Number.isFinite(Number(p?.companyProfessionals))
-      ? Number(p.companyProfessionals)
-      : 0;
-    const pRating = getPracticalCategoryTotal(
-      p?.providerPracticalRatings,
-      reqPracticalCategoryKey,
+  // If category is unknown, we should not email anyone (safer default).
+  if (!practicalPrefKey) {
+    console.warn(
+      "Unknown requestCategory for practical notifications:",
+      body.requestCategory,
     );
+  } else {
+    // Fetch provider user accounts with their company fields needed for gating
+    const providerUsers = await prisma.userAccount.findMany({
+      where: {
+        role: "PROVIDER",
 
-    const pTypeNorm = normalizeProviderType(p?.providerType);
+        // Must have "new-available-request" in notificationPreferences (JSON array)
+        notificationPreferences: {
+          array_contains: ["new-available-request"],
+        },
 
-    // providerType match: if request says "all" or empty → allow any; else must equal
-    const typePass =
-      reqTypeNorm === "all" || reqTypeNorm === "" || reqTypeNorm === pTypeNorm;
-    if (
-      !(
-        pAge >= reqMinAge &&
-        pPros >= reqMinPros &&
-        pRating >= reqMinRating &&
-        typePass
-      )
-    ) {
-      continue;
-    }
+        // Must have category key in practicalNotificationPreferences (JSON array)
+        practicalNotificationPreferences: {
+          array_contains: [practicalPrefKey],
+        },
+      },
+      select: {
+        email: true,
+        company: {
+          select: {
+            companyAge: true,
+            companyProfessionals: true,
+            providerType: true,
+            providerPracticalRatings: true,
+          },
+        },
+      },
+    });
 
-    // collect every contact person's email for this provider
-    const contacts = Array.isArray(p?.companyContactPersons)
-      ? p.companyContactPersons
-      : [];
-    for (const c of contacts) {
-      const em = (c?.email || "").trim();
-      if (isEmail(em)) allRecipients.add(em);
+    const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const isEmail = (s) => typeof s === "string" && EMAIL_RE.test(s.trim());
+
+    // Build the request-side minimums and type for capability gates (you already computed these above)
+    // reqMinPros, reqMinRating, reqMinAge, reqTypeNorm, reqPracticalCategoryKey
+
+    for (const u of providerUsers) {
+      const co = u.company;
+      if (!co) continue;
+
+      // capability gates are now company-level
+      const pAge = Number.isFinite(Number(co.companyAge))
+        ? Number(co.companyAge)
+        : 0;
+      const pPros = Number.isFinite(Number(co.companyProfessionals))
+        ? Number(co.companyProfessionals)
+        : 0;
+
+      // rating gate: keep the same logic as before, but ratings now live under company
+      const pRating = getPracticalCategoryTotal(
+        co.providerPracticalRatings,
+        reqPracticalCategoryKey,
+      );
+
+      const pTypeNorm = normalizeProviderType(co.providerType);
+
+      const typePass =
+        reqTypeNorm === "all" ||
+        reqTypeNorm === "" ||
+        reqTypeNorm === pTypeNorm;
+
+      if (
+        !(
+          pAge >= reqMinAge &&
+          pPros >= reqMinPros &&
+          pRating >= reqMinRating &&
+          typePass
+        )
+      ) {
+        continue;
+      }
+
+      if (!isEmail(u.email)) continue;
+
+      // Separate email per recipient (like before)
+      try {
+        await notifyProvidersNewAvailableRequest({
+          to: [u.email],
+          requestCategory: requestCategoryJoined,
+        });
+      } catch (e) {
+        console.error("New-available-request email failed for", u.email, e);
+      }
     }
   }
 
-  for (const email of allRecipients) {
-    try {
-      await notifyProvidersNewAvailableRequest({
-        to: [email], // separate email to each recipient
-        requestCategory: requestCategoryJoined,
-      });
-    } catch (e) {
-      console.error("New-available-request email failed for", email, e);
-    }
-  }
-
-  // Also notify Lexify support (single email)
+  // Support email (keep as-is)
   try {
     await notifyProvidersNewAvailableRequest({
       to: ["support@lexify.online"],

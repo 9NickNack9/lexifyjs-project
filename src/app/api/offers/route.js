@@ -241,9 +241,12 @@ export async function POST(req) {
       data: {
         request: { connect: { requestId: requestIdBigInt } },
 
-        // links
+        // identity links (UserAccount/Company)
         providerCompany: { connect: { companyPkId: providerCompanyId } },
         createdByUser: { connect: { userPkId: createdByUserId } },
+
+        // provider identity for the new schema
+        providerUser: { connect: { userPkId: createdByUserId } },
 
         offerLawyer,
         offerPrice: String(offerPrice),
@@ -264,6 +267,20 @@ export async function POST(req) {
     console.error("POST /api/offers failed:", err);
 
     if (err?.code === "P2002") {
+      return NextResponse.json(
+        { error: "You already submitted an offer for this request." },
+        { status: 409 },
+      );
+    }
+    const existing = await prisma.offer.findFirst({
+      where: {
+        requestId: requestIdBigInt,
+        providerUserId: createdByUserId,
+      },
+      select: { offerId: true },
+    });
+
+    if (existing) {
       return NextResponse.json(
         { error: "You already submitted an offer for this request." },
         { status: 409 },

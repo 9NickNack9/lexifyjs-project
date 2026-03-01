@@ -48,8 +48,51 @@ export async function GET() {
       },
     });
 
+    const companyName = (myCompany?.companyName || "").trim();
+
+    // ------------------------------------------------------------------
+    // Legacy-safe contract selection:
+    //   - normal: providerCompanyId == me.companyId
+    //   - legacy: CAST(providerCompanyId AS TEXT) == companyName
+    // ------------------------------------------------------------------
+    const contractIdRows =
+      companyName.length > 0
+        ? await prisma.$queryRaw`
+            SELECT "contractId"
+            FROM "Contract"
+            WHERE
+              ("providerCompanyId" = ${me.companyId}
+               OR CAST("providerCompanyId" AS TEXT) = ${companyName})
+            ORDER BY "contractDate" DESC
+          `
+        : await prisma.$queryRaw`
+            SELECT "contractId"
+            FROM "Contract"
+            WHERE "providerCompanyId" = ${me.companyId}
+            ORDER BY "contractDate" DESC
+          `;
+
+    const contractIds = Array.isArray(contractIdRows)
+      ? contractIdRows.map((r) => r?.contractId).filter((x) => x != null)
+      : [];
+
+    if (contractIds.length === 0) {
+      const contactsFromMembers = Array.isArray(myCompany?.members)
+        ? myCompany.members.map(fullName).filter(Boolean)
+        : [];
+      const meName = fullName(me);
+
+      return NextResponse.json({
+        contacts: Array.from(
+          new Set([...contactsFromMembers, meName].filter(Boolean)),
+        ),
+        contracts: [],
+      });
+    }
+
+    // Fetch full contract rows via Prisma
     const rows = await prisma.contract.findMany({
-      where: { providerCompanyId: me.companyId },
+      where: { contractId: { in: contractIds } },
       orderBy: { contractDate: "desc" },
       select: {
         contractId: true,
@@ -109,14 +152,42 @@ export async function GET() {
       new Set(rows.map((c) => c.requestId).filter(Boolean)),
     );
 
-    // Resolve "contractOwner" from WON offer (prefer createdByUser full name)
-    const wonOffers = requestIds.length
+    // ------------------------------------------------------------------
+    // Legacy-safe WON offer selection for contractOwner + offerTitle:
+    //   - normal: providerCompanyId == me.companyId
+    //   - legacy: CAST(providerCompanyId AS TEXT) == companyName
+    // ------------------------------------------------------------------
+    const wonOfferIdRows =
+      requestIds.length && companyName.length > 0
+        ? await prisma.$queryRaw`
+            SELECT "offerId"
+            FROM "Offer"
+            WHERE
+              "offerStatus" = 'WON'
+              AND "requestId" = ANY(${requestIds})
+              AND (
+                "providerCompanyId" = ${me.companyId}
+                OR CAST("providerCompanyId" AS TEXT) = ${companyName}
+              )
+          `
+        : requestIds.length
+          ? await prisma.$queryRaw`
+              SELECT "offerId"
+              FROM "Offer"
+              WHERE
+                "offerStatus" = 'WON'
+                AND "requestId" = ANY(${requestIds})
+                AND "providerCompanyId" = ${me.companyId}
+            `
+          : [];
+
+    const wonOfferIds = Array.isArray(wonOfferIdRows)
+      ? wonOfferIdRows.map((r) => r?.offerId).filter((x) => x != null)
+      : [];
+
+    const wonOffers = wonOfferIds.length
       ? await prisma.offer.findMany({
-          where: {
-            requestId: { in: requestIds },
-            providerCompanyId: me.companyId,
-            offerStatus: "WON",
-          },
+          where: { offerId: { in: wonOfferIds } },
           select: {
             requestId: true,
             offerLawyer: true,

@@ -85,10 +85,14 @@ model UserAccount {
   passwordResetTokens PasswordResetTokenUser[]
 
   // audit relations
-  company         Company         @relation(fields: [companyId], references: [companyPkId], onDelete: Cascade)
-  createdRequests Request[]       @relation("RequestsCreatedBy")
-  createdOffers   Offer[]         @relation("OffersCreatedBy")
-  trustedDevices  TrustedDevice[]
+  company           Company         @relation(fields: [companyId], references: [companyPkId], onDelete: Cascade)
+  createdRequests   Request[]       @relation("RequestsCreatedBy")
+  requests          Request[]       @relation("UserAccountRequests")
+  createdOffers     Offer[]         @relation("OffersCreatedBy")
+  offers            Offer[]         @relation("UserAccountOffers")
+  clientContracts   Contract[]      @relation("UserAccountClientContracts")
+  providerContracts Contract[]      @relation("UserAccountProviderContracts")
+  trustedDevices    TrustedDevice[]
 
   @@index([companyId])
 }
@@ -139,7 +143,8 @@ model AppUser {
 
 model Request {
   requestId                       BigInt    @id @default(autoincrement()) // ← present in every request
-  clientId                        BigInt // ← session.userId
+  clientId                        BigInt?
+  clientUserId                    BigInt?   @db.BigInt
   requestState                    String // e.g. "PENDING", "EXPIRED", "ON HOLD", "CONFLICT CHECK"
   selectedOfferId                 BigInt? // offer picked, awaiting conflict decision
   acceptDeadlinePausedRemainingMs Int? // how much time was left when we paused
@@ -183,19 +188,22 @@ model Request {
   details Json @default("{}")
 
   clientCompany Company?     @relation("CompanyRequests", fields: [clientCompanyId], references: [companyPkId], onDelete: Cascade)
+  clientUser    UserAccount? @relation("UserAccountRequests", fields: [clientUserId], references: [userPkId], onDelete: Restrict)
   createdByUser UserAccount? @relation("RequestsCreatedBy", fields: [createdByUserId], references: [userPkId], onDelete: Restrict)
-  client        AppUser      @relation("UserRequests", fields: [clientId], references: [userId], onDelete: Cascade)
+  client        AppUser?     @relation("UserRequests", fields: [clientId], references: [userId], onDelete: Cascade)
   offers        Offer[]
   contract      Contract[]
 
   @@index([clientCompanyId])
   @@index([createdByUserId])
+  @@index([clientUserId])
 }
 
 model Offer {
   offerId                BigInt   @id @default(autoincrement()) @db.BigInt
   requestId              BigInt
-  providerId             BigInt
+  providerId             BigInt?
+  providerUserId         BigInt?  @db.BigInt
   offerLawyer            String
   offerPrice             Decimal  @db.Decimal
   offerExpectedPrice     Decimal? @db.Decimal
@@ -208,34 +216,45 @@ model Offer {
   createdByUserId        BigInt?  @db.BigInt
 
   providerCompany Company?     @relation("CompanyOffers", fields: [providerCompanyId], references: [companyPkId], onDelete: Cascade)
+  providerUser    UserAccount? @relation("UserAccountOffers", fields: [providerUserId], references: [userPkId], onDelete: Restrict)
   createdByUser   UserAccount? @relation("OffersCreatedBy", fields: [createdByUserId], references: [userPkId], onDelete: Restrict)
   request         Request      @relation(fields: [requestId], references: [requestId], onDelete: Cascade)
-  provider        AppUser      @relation("ProviderOffers", fields: [providerId], references: [userId], onDelete: Cascade)
+  provider        AppUser?     @relation("ProviderOffers", fields: [providerId], references: [userId], onDelete: Cascade)
 
-  @@unique([requestId, providerId])
+  @@unique([requestId, providerUserId])
   @@index([providerCompanyId])
   @@index([createdByUserId])
+  @@index([providerUserId])
 }
 
 model Contract {
-  contractId        BigInt   @id @default(autoincrement()) @db.BigInt
-  requestId         BigInt   @unique
-  clientId          BigInt
-  providerId        BigInt
+  contractId BigInt @id @default(autoincrement()) @db.BigInt
+  requestId  BigInt @unique
+
+  clientId   BigInt?
+  providerId BigInt?
+
+  clientUserId   BigInt? @db.BigInt
+  providerUserId BigInt? @db.BigInt
+
   contractDate      DateTime @default(now())
   contractPrice     Decimal  @db.Decimal
   contractPdfFile   Json     @default("[]")
   clientCompanyId   BigInt?  @db.BigInt
   providerCompanyId BigInt?  @db.BigInt
 
-  clientCompany   Company? @relation("ClientCompanyContracts", fields: [clientCompanyId], references: [companyPkId], onDelete: Cascade)
-  providerCompany Company? @relation("ProviderCompanyContracts", fields: [providerCompanyId], references: [companyPkId], onDelete: Cascade)
-  request         Request  @relation(fields: [requestId], references: [requestId], onDelete: Cascade)
-  client          AppUser  @relation("ClientContracts", fields: [clientId], references: [userId], onDelete: Cascade)
-  provider        AppUser  @relation("ProviderContracts", fields: [providerId], references: [userId], onDelete: Cascade)
+  clientCompany   Company?     @relation("ClientCompanyContracts", fields: [clientCompanyId], references: [companyPkId], onDelete: Cascade)
+  providerCompany Company?     @relation("ProviderCompanyContracts", fields: [providerCompanyId], references: [companyPkId], onDelete: Cascade)
+  request         Request      @relation(fields: [requestId], references: [requestId], onDelete: Cascade)
+  clientUser      UserAccount? @relation("UserAccountClientContracts", fields: [clientUserId], references: [userPkId], onDelete: Restrict)
+  providerUser    UserAccount? @relation("UserAccountProviderContracts", fields: [providerUserId], references: [userPkId], onDelete: Restrict)
+  client          AppUser?     @relation("ClientContracts", fields: [clientId], references: [userId], onDelete: Cascade)
+  provider        AppUser?     @relation("ProviderContracts", fields: [providerId], references: [userId], onDelete: Cascade)
 
   @@index([clientCompanyId])
   @@index([providerCompanyId])
+  @@index([clientUserId])
+  @@index([providerUserId])
 }
 
 model PasswordResetToken {
