@@ -106,9 +106,9 @@ function toDecimalString(v) {
 // ---- helpers for capability gates ----
 function normalizeProviderType(s) {
   const t = (s || "").toString().trim().toLowerCase();
-  if (!t || t === "all") return "all";
-  if (t.startsWith("law")) return "lawfirm"; // e.g., "Law firm(s)"
-  if (t.includes("attorney")) return "attorneys"; // "Attorneys-at-law"
+  if (!t || t === "all" || t === "all providers") return "all";
+  if (t.startsWith("law")) return "lawfirm";
+  if (t.includes("attorney")) return "attorneys";
   return t;
 }
 
@@ -116,17 +116,16 @@ function parseMinFromLabel(label) {
   if (label == null) return 0;
   const raw = String(label).trim();
   if (!raw) return 0;
-  if (/^any\b/i.test(raw)) return 0;
+  if (/^any(\s+\w+)?$/i.test(raw)) return 0;
   const m = raw.match(/(\d+(\.\d+)?)/);
   return m ? Number(m[1]) : Number(raw) || 0;
 }
 
 function parseMinAge(val) {
-  // Accept "Any Age", "≥5", "5", number-like
   if (val == null) return 0;
   const raw = String(val).trim();
   if (!raw) return 0;
-  if (/^any(\s+age)?$/i.test(raw)) return 0;
+  if (/^any(\s+\w+)?$/i.test(raw)) return 0;
   const m = raw.match(/(\d+(\.\d+)?)/);
   return m ? Number(m[1]) : Number(raw) || 0;
 }
@@ -495,15 +494,14 @@ export async function POST(req) {
       const co = u.company;
       if (!co) continue;
 
-      // capability gates are now company-level
       const pAge = Number.isFinite(Number(co.companyAge))
         ? Number(co.companyAge)
         : 0;
+
       const pPros = Number.isFinite(Number(co.companyProfessionals))
         ? Number(co.companyProfessionals)
         : 0;
 
-      // rating gate: keep the same logic as before, but ratings now live under company
       const pRating = getPracticalCategoryTotal(
         co.providerPracticalRatings,
         reqPracticalCategoryKey,
@@ -511,25 +509,39 @@ export async function POST(req) {
 
       const pTypeNorm = normalizeProviderType(co.providerType);
 
-      const typePass =
-        reqTypeNorm === "all" ||
-        reqTypeNorm === "" ||
-        reqTypeNorm === pTypeNorm;
+      // Explicit request-side auto-pass values
+      const typeAutoPass =
+        String(body.serviceProviderType || "")
+          .trim()
+          .toLowerCase() === "all";
 
-      if (
-        !(
-          pAge >= reqMinAge &&
-          pPros >= reqMinPros &&
-          pRating >= reqMinRating &&
-          typePass
-        )
-      ) {
+      const sizeAutoPass =
+        String(body.providerSize || "")
+          .trim()
+          .toLowerCase() === "any size";
+
+      const ageAutoPass =
+        String(body.providerCompanyAge || "")
+          .trim()
+          .toLowerCase() === "any age";
+
+      const ratingAutoPass =
+        String(body.providerMinimumRating || "")
+          .trim()
+          .toLowerCase() === "any rating";
+
+      const typePass =
+        typeAutoPass || !reqTypeNorm || reqTypeNorm === pTypeNorm;
+      const sizePass = sizeAutoPass || pPros >= reqMinPros;
+      const agePass = ageAutoPass || pAge >= reqMinAge;
+      const ratingPass = ratingAutoPass || pRating >= reqMinRating;
+
+      if (!(typePass && sizePass && agePass && ratingPass)) {
         continue;
       }
 
       if (!isEmail(u.email)) continue;
 
-      // Separate email per recipient (like before)
       try {
         await notifyProvidersNewAvailableRequest({
           to: [u.email],
