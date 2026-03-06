@@ -193,7 +193,7 @@ export default function Login() {
       <div className="flex flex-col items-center justify-center min-h-screen p-4">
         <img src="/lexify_wide.png" alt="LEXIFY" className="mb-4 w-96" />
         <div className="w-full max-w-md p-3 rounded shadow-2xl bg-white text-black">
-          <p className="text-center">Preparing secure login…</p>
+          <p className="text-center">Preparing secure login session…</p>
         </div>
       </div>
     );
