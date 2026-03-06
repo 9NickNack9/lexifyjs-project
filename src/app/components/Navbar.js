@@ -2,24 +2,24 @@
 
 import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
+import { useEffect, useRef } from "react";
 
 export default function Navbar() {
   const { data: session, status } = useSession();
+  const checkedRef = useRef(false);
 
   const isLoading = status === "loading";
 
-  // NextAuth still provides session.user?.name by default; we also support fallbacks.
   const displayName = isLoading
     ? "…"
     : [session?.firstName, session?.lastName].filter(Boolean).join(" ") ||
       session?.user?.email ||
       "Guest";
 
-  const role = session?.role ?? null; // "ADMIN" | "PROVIDER" | "PURCHASER"
-  const registerStatus = session?.registerStatus ?? null; // e.g. "pending" | "approved"
+  const role = session?.role ?? null;
+  const registerStatus = session?.registerStatus ?? null;
   const companyName = session?.companyName ?? null;
 
-  // Choose home route by role (adjust if your routes differ)
   let logoHref = "/main";
   if (role === "PROVIDER") logoHref = "/provider";
   if (role === "ADMIN") logoHref = "/admin";
@@ -27,6 +27,80 @@ export default function Navbar() {
   const handleLogout = () => {
     signOut({ callbackUrl: "/login" });
   };
+
+  useEffect(() => {
+    if (status !== "authenticated") {
+      checkedRef.current = false;
+      return;
+    }
+
+    if (checkedRef.current) return;
+    checkedRef.current = true;
+
+    let cancelled = false;
+
+    const run = async () => {
+      try {
+        const res = await fetch(`/api/me?_ts=${Date.now()}`, {
+          cache: "no-store",
+          credentials: "include",
+        });
+
+        if (cancelled) return;
+
+        if (res.status === 401) {
+          signOut({ callbackUrl: "/login?reason=session-expired" });
+          return;
+        }
+
+        if (!res.ok) {
+          signOut({ callbackUrl: "/login?reason=session-check-failed" });
+          return;
+        }
+
+        const data = await res.json();
+
+        const sUserId = session?.userId ? String(session.userId) : null;
+        const sCompanyId = session?.companyId
+          ? String(session.companyId)
+          : null;
+        const sRole = session?.role ?? null;
+
+        const dUserId =
+          data?.auth?.dbUserId ??
+          (data?.userAccount?.userPkId != null
+            ? String(data.userAccount.userPkId)
+            : null);
+
+        const dCompanyId =
+          data?.auth?.dbCompanyId ??
+          (data?.userAccount?.companyId != null
+            ? String(data.userAccount.companyId)
+            : null);
+
+        const dRole = data?.auth?.dbRole ?? data?.userAccount?.role ?? null;
+
+        const mismatch =
+          !sUserId ||
+          !dUserId ||
+          sUserId !== dUserId ||
+          (sCompanyId && dCompanyId && sCompanyId !== dCompanyId) ||
+          (sRole && dRole && sRole !== dRole);
+
+        if (mismatch) {
+          signOut({ callbackUrl: "/login?reason=session-mismatch" });
+        }
+      } catch {
+        signOut({ callbackUrl: "/login?reason=session-check-failed" });
+      }
+    };
+
+    run();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [status, session?.userId, session?.companyId, session?.role]);
 
   return (
     <nav className="flex justify-between items-center p-4 bg-[#11999e] text-white relative">
@@ -46,11 +120,12 @@ export default function Navbar() {
             Logged in as, <span className="font-semibold">{displayName}</span>
           </div>
 
-          {/* Role + Company line (only when authenticated) */}
           {!isLoading && role && displayName !== "Guest" && (
             <div className="text-xs opacity-90">
               {companyName ? ` ${companyName}` : ""}
-              {registerStatus === "pending" ? " • Pending approval" : ""}
+              {String(registerStatus || "").toUpperCase() === "PENDING"
+                ? " • Pending approval"
+                : ""}
             </div>
           )}
         </div>

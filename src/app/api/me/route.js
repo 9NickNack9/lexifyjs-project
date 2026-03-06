@@ -4,26 +4,28 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 
-// Helper: JSON.stringify with BigInt → string + no-store cache
+// Helper: JSON.stringify with BigInt -> string + strong no-cache headers
 const safeJson = (data, status = 200) =>
   new NextResponse(
     JSON.stringify(data, (_, v) => (typeof v === "bigint" ? v.toString() : v)),
     {
       status,
       headers: {
-        "content-type": "application/json",
-        "cache-control": "no-store",
+        "content-type": "application/json; charset=utf-8",
+        "cache-control":
+          "private, no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
+        pragma: "no-cache",
+        expires: "0",
+        vary: "Cookie",
       },
     },
   );
 
 // --- HELPERS to support multi-provider-per-area storage ---
-/** Normalize any DB value into: { [area]: string[] } with unique providers */
 function normalizePreferredToAreaMap(value) {
   const out = {};
   if (!value) return out;
 
-  // Legacy: [{ companyName, areasOfLaw: [] }]
   if (Array.isArray(value)) {
     for (const row of value) {
       const company = row?.companyName;
@@ -36,7 +38,6 @@ function normalizePreferredToAreaMap(value) {
     return out;
   }
 
-  // Object: { [area]: string | string[] }
   if (typeof value === "object") {
     for (const [area, v] of Object.entries(value)) {
       if (!area) continue;
@@ -55,9 +56,8 @@ function normalizePreferredToAreaMap(value) {
   return out;
 }
 
-/** Convert areaMap → array grouped by provider: [{ companyName, areasOfLaw[] }] */
 function groupPreferredByProvider(areaMap) {
-  const byCompany = new Map(); // company -> Set<area>
+  const byCompany = new Map();
   for (const [area, companies] of Object.entries(areaMap || {})) {
     for (const company of companies || []) {
       if (!company) continue;
@@ -75,14 +75,11 @@ export async function GET() {
   const session = await getServerSession(authOptions);
   if (!session?.userId) return safeJson({ error: "Unauthorized" }, 401);
 
-  // session.userId is userPkId (string) from NextAuth session callback
   const userPkId = BigInt(session.userId);
 
-  // New system: userAccount + related company
   const row = await prisma.userAccount.findUnique({
     where: { userPkId },
     select: {
-      // UserAccount fields
       userPkId: true,
       username: true,
       role: true,
@@ -92,19 +89,17 @@ export async function GET() {
       telephone: true,
       twoFactorEnabled: true,
 
-      // purchaser prefs (these used to be on appUser)
       winningOfferSelection: true,
       blockedServiceProviders: true,
       preferredLegalServiceProviders: true,
       legalPanelServiceProviders: true,
 
-      // Relationship
       companyId: true,
       company: {
         select: {
           companyPkId: true,
           companyName: true,
-          businessId: true, // business id
+          businessId: true,
           companyAddress: true,
           companyPostalCode: true,
           companyCity: true,
@@ -118,18 +113,22 @@ export async function GET() {
 
   if (!row) return safeJson({ error: "Not found" }, 404);
 
-  // Preferred providers: normalize to area→string[]
   const prefAreaMap = normalizePreferredToAreaMap(
     row?.preferredLegalServiceProviders,
   );
-
-  // Return grouped array (UI format) for the preferred table only
   const preferredArray = groupPreferredByProvider(prefAreaMap);
 
-  // Build a payload that:
-  // 1) Adds explicit company + userAccount objects
-  // 2) Keeps existing flat keys for backwards compatibility (your page currently expects them)
   const payload = {
+    auth: {
+      sessionUserId: String(session.userId),
+      sessionCompanyId: session.companyId ? String(session.companyId) : null,
+      sessionRole: session.role ?? null,
+
+      dbUserId: String(row.userPkId),
+      dbCompanyId: row.companyId ? String(row.companyId) : null,
+      dbRole: row.role ?? null,
+    },
+
     userAccount: {
       userPkId: row.userPkId,
       username: row.username,
@@ -152,7 +151,6 @@ export async function GET() {
 
     company: row.company ?? null,
 
-    // --- Backwards-compatible aliases (existing UI uses these today) ---
     username: row.username,
     role: row.role,
     winningOfferSelection: row.winningOfferSelection,
@@ -181,7 +179,19 @@ export async function GET() {
 export async function PATCH(req) {
   const session = await getServerSession(authOptions);
   if (!session?.userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json(
+      { error: "Unauthorized" },
+      {
+        status: 401,
+        headers: {
+          "cache-control":
+            "private, no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
+          pragma: "no-cache",
+          expires: "0",
+          vary: "Cookie",
+        },
+      },
+    );
   }
 
   let body;
@@ -204,5 +214,16 @@ export async function PATCH(req) {
     data: { winningOfferSelection },
   });
 
-  return NextResponse.json({ ok: true, winningOfferSelection });
+  return NextResponse.json(
+    { ok: true, winningOfferSelection },
+    {
+      headers: {
+        "cache-control":
+          "private, no-store, no-cache, must-revalidate, proxy-revalidate, max-age=0",
+        pragma: "no-cache",
+        expires: "0",
+        vary: "Cookie",
+      },
+    },
+  );
 }

@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { signOut, useSession } from "next-auth/react";
 import { Pencil, Save, CheckCircle } from "lucide-react";
 import NarrowTooltip from "../../components/NarrowTooltip";
 import Link from "next/link";
@@ -59,6 +60,38 @@ export default function Account() {
   const [mfaMsg, setMfaMsg] = useState("");
   const [mfaErr, setMfaErr] = useState("");
   const [recoveryCodes, setRecoveryCodes] = useState([]);
+
+  const { data: session, status } = useSession();
+
+  const forceLogout = () =>
+    signOut({ callbackUrl: "/login?reason=session-mismatch" });
+
+  const isAuthMismatch = (session, data) => {
+    const sUserId = session?.userId ? String(session.userId) : null;
+    const sCompanyId = session?.companyId ? String(session.companyId) : null;
+    const sRole = session?.role ?? null;
+
+    const dUserId =
+      data?.auth?.dbUserId ??
+      (data?.userAccount?.userPkId != null
+        ? String(data.userAccount.userPkId)
+        : null);
+
+    const dCompanyId =
+      data?.auth?.dbCompanyId ??
+      (data?.userAccount?.companyId != null
+        ? String(data.userAccount.companyId)
+        : null);
+
+    const dRole = data?.auth?.dbRole ?? data?.userAccount?.role ?? null;
+
+    if (!sUserId || !dUserId) return false;
+    if (sUserId !== dUserId) return true;
+    if (sCompanyId && dCompanyId && sCompanyId !== dCompanyId) return true;
+    if (sRole && dRole && sRole !== dRole) return true;
+
+    return false;
+  };
 
   // tickbox selection
   const AREAS_OF_LAW = [
@@ -204,11 +237,38 @@ export default function Account() {
   }, []);
 
   useEffect(() => {
+    if (status === "loading") return;
+
+    if (status === "unauthenticated") {
+      forceLogout();
+      return;
+    }
+
+    let cancelled = false;
+
     (async () => {
       try {
-        const res = await fetch("/api/me", { cache: "no-store" });
+        const res = await fetch(`/api/me?_ts=${Date.now()}`, {
+          cache: "no-store",
+          credentials: "include",
+        });
+
+        if (res.status === 401) {
+          forceLogout();
+          return;
+        }
+
         if (!res.ok) throw new Error("Failed to load profile");
+
         const data = await res.json();
+
+        if (isAuthMismatch(session, data)) {
+          forceLogout();
+          return;
+        }
+
+        if (cancelled) return;
+
         setMe(data);
         setMfaEnabled(
           !!(data?.userAccount?.twoFactorEnabled ?? data?.twoFactorEnabled),
@@ -232,27 +292,43 @@ export default function Account() {
             : [],
         );
 
-        // fetch notification preferences
         try {
-          const pr = await fetch("/api/me/notification-preferences/purchaser", {
-            cache: "no-store",
-          });
-          const pj = await pr.json();
-          setNotificationPrefs(
-            Array.isArray(pj.notificationPreferences)
-              ? pj.notificationPreferences
-              : [],
+          const pr = await fetch(
+            `/api/me/notification-preferences/purchaser?_ts=${Date.now()}`,
+            {
+              cache: "no-store",
+              credentials: "include",
+            },
           );
+
+          if (pr.status === 401) {
+            forceLogout();
+            return;
+          }
+
+          const pj = await pr.json().catch(() => ({}));
+          if (!cancelled) {
+            setNotificationPrefs(
+              Array.isArray(pj.notificationPreferences)
+                ? pj.notificationPreferences
+                : [],
+            );
+          }
         } catch {
-          setNotificationPrefs([]);
+          if (!cancelled) setNotificationPrefs([]);
         }
       } catch (e) {
         console.error(e);
+        forceLogout();
       } finally {
-        setLoading(false);
+        if (!cancelled) setLoading(false);
       }
     })();
-  }, []);
+
+    return () => {
+      cancelled = true;
+    };
+  }, [status, session?.userId, session?.companyId, session?.role]);
 
   // --- helpers (replace your current helpers with these) ---
 
@@ -902,7 +978,7 @@ export default function Account() {
                   onClick={startMfaSetup}
                   className="bg-[#11999e] text-white px-4 py-2 rounded cursor-pointer disabled:opacity-50"
                 >
-                  Set up MFA (Authenticator App)
+                  Set up MFA (Authenticator App Required)
                 </button>
 
                 {mfaQr && (

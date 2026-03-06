@@ -1,24 +1,96 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { signIn, getSession } from "next-auth/react";
+import { signIn, getSession, signOut } from "next-auth/react";
 
 export default function Login() {
   const router = useRouter();
+  const bootstrappedRef = useRef(false);
+
   const [showPassword, setShowPassword] = useState(false);
   const [credentials, setCredentials] = useState({
     username: "",
     password: "",
   });
   const [loading, setLoading] = useState(false);
+  const [pageReady, setPageReady] = useState(false);
   const [err, setErr] = useState("");
   const [mfaStep, setMfaStep] = useState(false);
   const [otp, setOtp] = useState("");
   const [rememberDevice, setRememberDevice] = useState(true);
 
+  useEffect(() => {
+    if (bootstrappedRef.current) return;
+    bootstrappedRef.current = true;
+
+    let cancelled = false;
+
+    (async () => {
+      try {
+        // Kill any stale session when user lands on /login
+        await signOut({ redirect: false });
+      } catch {
+        // ignore
+      } finally {
+        if (!cancelled) setPageReady(true);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const handleChange = (e) => {
     setCredentials((s) => ({ ...s, [e.target.name]: e.target.value }));
+  };
+
+  const verifyFreshSession = async () => {
+    const session = await getSession();
+    if (!session?.userId) return { ok: false, reason: "NO_SESSION" };
+
+    const res = await fetch(`/api/me?_ts=${Date.now()}`, {
+      cache: "no-store",
+      credentials: "include",
+    });
+
+    if (!res.ok) {
+      return { ok: false, reason: `API_ME_${res.status}` };
+    }
+
+    const data = await res.json();
+
+    const sUserId = session?.userId ? String(session.userId) : null;
+    const sCompanyId = session?.companyId ? String(session.companyId) : null;
+    const sRole = session?.role ?? null;
+
+    const dUserId =
+      data?.auth?.dbUserId ??
+      (data?.userAccount?.userPkId != null
+        ? String(data.userAccount.userPkId)
+        : null);
+
+    const dCompanyId =
+      data?.auth?.dbCompanyId ??
+      (data?.userAccount?.companyId != null
+        ? String(data.userAccount.companyId)
+        : null);
+
+    const dRole = data?.auth?.dbRole ?? data?.userAccount?.role ?? null;
+
+    const mismatch =
+      !sUserId ||
+      !dUserId ||
+      sUserId !== dUserId ||
+      (sCompanyId && dCompanyId && sCompanyId !== dCompanyId) ||
+      (sRole && dRole && sRole !== dRole);
+
+    if (mismatch) {
+      return { ok: false, reason: "SESSION_MISMATCH" };
+    }
+
+    return { ok: true, session };
   };
 
   const handleSubmit = async (e) => {
@@ -26,74 +98,106 @@ export default function Login() {
     setErr("");
     setLoading(true);
 
-    // 1) Try to sign in (no auto redirect)
-    const payload = {
-      username: credentials.username,
-      password: credentials.password,
-      redirect: false,
-    };
+    try {
+      // Kill any stale session again immediately before a new login attempt
+      await signOut({ redirect: false });
 
-    if (mfaStep) {
-      payload.otp = otp.replace(/\D/g, "").slice(0, 6);
-    }
+      const payload = {
+        username: credentials.username.trim(),
+        password: credentials.password,
+        redirect: false,
+      };
 
-    const res = await signIn("credentials", payload);
+      if (mfaStep) {
+        payload.otp = otp.replace(/\D/g, "").slice(0, 6);
+      }
 
-    if (res?.error === "MFA_REQUIRED") {
+      const res = await signIn("credentials", payload);
+
+      if (res?.error === "MFA_REQUIRED") {
+        setLoading(false);
+        setMfaStep(true);
+        setOtp("");
+        setErr("");
+        return;
+      }
+
+      if (res?.error === "MFA_INVALID") {
+        setLoading(false);
+        setErr("Invalid authentication code");
+        return;
+      }
+
+      if (res?.error === "REGISTER_PENDING") {
+        router.replace("/register-screening");
+        return;
+      }
+
+      if (res?.error === "RATE_LIMIT") {
+        setLoading(false);
+        setErr("Too many attempts. Try again in a few minutes.");
+        return;
+      }
+
+      if (!res || !res.ok) {
+        setLoading(false);
+        setErr(res?.error || "Invalid credentials");
+        return;
+      }
+
+      if (res?.ok && mfaStep && rememberDevice) {
+        fetch("/api/me/trusted-device", {
+          method: "POST",
+          cache: "no-store",
+        }).catch(() => {});
+      }
+
+      const verified = await verifyFreshSession();
+
+      if (!verified.ok) {
+        await signOut({ redirect: false });
+        setLoading(false);
+        setErr("Your browser had a stale session. Please log in again.");
+        setMfaStep(false);
+        setOtp("");
+        return;
+      }
+
+      const session = verified.session;
+      const role = session?.role;
+      const status = session?.registerStatus;
+
+      if (role === "ADMIN") {
+        router.replace("/main");
+      } else if (String(status || "").toUpperCase() === "PENDING") {
+        router.replace("/register-screening");
+      } else if (role === "PROVIDER") {
+        router.replace("/provider");
+      } else {
+        router.replace("/main");
+      }
+
+      router.refresh();
+    } catch (error) {
+      console.error("Login error:", error);
+      try {
+        await signOut({ redirect: false });
+      } catch {}
+      setErr("Login failed. Please try again.");
       setLoading(false);
-      setMfaStep(true);
-      setOtp("");
-      setErr("");
-      return;
     }
-
-    if (res?.error === "MFA_INVALID") {
-      setLoading(false);
-      setErr("Invalid authentication code");
-      return;
-    }
-
-    if (res?.error === "REGISTER_PENDING") {
-      // Not logged in; send them to the screening page
-      router.replace("/register-screening");
-      return;
-    }
-
-    if (res?.error === "RATE_LIMIT") {
-      setLoading(false);
-      setErr("Too many attempts. Try again in a few minutes.");
-      return;
-    }
-
-    if (!res || !res.ok) {
-      setLoading(false);
-      setErr(res?.error || "Invalid credentials");
-      return;
-    }
-
-    if (res?.ok && mfaStep && rememberDevice) {
-      // best-effort; don’t block login if it fails
-      fetch("/api/me/trusted-device", { method: "POST" }).catch(() => {});
-    }
-
-    // 2) Session now exists; read it and route by role
-    const session = await getSession();
-    const role = session?.role;
-    const status = session?.registerStatus;
-
-    if (role === "ADMIN") {
-      router.replace("/main");
-    } else if (String(status || "").toUpperCase() === "PENDING") {
-      router.replace("/register-screening");
-    } else if (role === "PROVIDER") {
-      router.replace("/provider");
-    } else {
-      router.replace("/main");
-    }
-
-    // Optional: refresh to hydrate Navbar instantly
-    router.refresh();
   };
+
+  if (!pageReady) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-screen p-4">
+        <img src="/lexify_wide.png" alt="LEXIFY" className="mb-4 w-96" />
+        <div className="w-full max-w-md p-3 rounded shadow-2xl bg-white text-black">
+          <p className="text-center">Preparing secure login…</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-4">
@@ -109,8 +213,10 @@ export default function Login() {
             placeholder="Username"
             className="p-2 border"
             onChange={handleChange}
+            value={credentials.username}
             required
           />
+
           <div className="relative">
             <input
               type={showPassword ? "text" : "password"}
@@ -118,6 +224,7 @@ export default function Login() {
               placeholder="Password"
               className="p-2 border w-full"
               onChange={handleChange}
+              value={credentials.password}
               required
             />
             <button
@@ -142,6 +249,7 @@ export default function Login() {
               required
             />
           )}
+
           {mfaStep && (
             <label className="flex items-center gap-2 text-sm">
               <input
