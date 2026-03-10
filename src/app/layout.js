@@ -35,6 +35,23 @@ export default function RootLayout({ children }) {
           src="https://cdn-cookieyes.com/client_data/1ef10650c8505320b7959abd/script.js"
           strategy="beforeInteractive"
         />
+
+        <Script
+          async
+          src="https://plausible.io/js/pa-_m3r8liTzHC9bWKOcrX3T.js"
+          strategy="afterInteractive"
+        />
+        <Script id="plausible-init" strategy="afterInteractive">
+          {`
+            window.plausible = window.plausible || function(){
+              (plausible.q = plausible.q || []).push(arguments)
+            };
+            plausible.init = plausible.init || function(i){
+              plausible.o = i || {}
+            };
+            plausible.init();
+          `}
+        </Script>
       </head>
       <body className={poppins.className}>
         <Providers>{children}</Providers>
