@@ -680,10 +680,10 @@ export default function ProviderAccount() {
 
         {/* Company information */}
         <div className="grid grid-cols-2 gap-4">
-          <h4 className="text-md font-semibold col-span-2">My Company</h4>
+          <h4 className="text-md font-semibold col-span-2">My Law Firm</h4>
 
           <div className="w-full text-sm border p-2">
-            Company Name: {me?.company?.companyName || me?.companyName || "-"}
+            Law Firm Name: {me?.company?.companyName || me?.companyName || "-"}
           </div>
           <div className="w-full text-sm border p-2">
             Business ID (in country of domicile):{" "}
@@ -712,7 +712,7 @@ export default function ProviderAccount() {
             onClick={openMembersModal}
             className="bg-[#11999e] text-white px-4 py-2 rounded cursor-pointer"
           >
-            Show List of All Company Users
+            View All Users
           </button>
         </div>
 
@@ -1001,8 +1001,8 @@ export default function ProviderAccount() {
               />
             </div>
             <span className="ms-3 text-sm text-black dark:text-black">
-              Company-wide notifications{" "}
-              <NarrowTooltip tooltipText="When enabled, you will receive automatic notifications for all pending LEXIFY Offers across your company, including those of other users and your own." />
+              Firm-wide notifications{" "}
+              <NarrowTooltip tooltipText="When enabled, you will receive automatic notifications for all pending offers across your firm, including those of other users and your own." />
             </span>
           </label>
           {/* 1) no-winning-offer */}
@@ -1064,7 +1064,7 @@ export default function ProviderAccount() {
               A pending LEXIFY Request expires and the offer I have submitted is
               the winning offer subject to clearance of remaining conflict
               checks{" "}
-              <NarrowTooltip tooltipText="If the LEXIFY Request does not disclose the identities of all relevant parties in the matter, the corresponding remaining conflict checks will be performed only with the legal service provider submitting the winning offer. If an existing conflict is then notified by the legal service provider to LEXIFY, the winning offer will automatically be disqualified and the second-best offer (if any) will replace it as the winning offer." />
+              <NarrowTooltip tooltipText="If the LEXIFY Request does not disclose the identities of all relevant parties in the matter, the remaining conflict checks will be performed only with the legal service provider submitting the winning offer. If the legal service provider notifies LEXIFY of an existing conflict, the provider's offer will automatically be disqualified and the client company may select another provider's offer as the winning offer." />
             </span>
           </label>
           {/* 3) request-cancelled */}
@@ -1171,11 +1171,10 @@ export default function ProviderAccount() {
         <h2 className="text-2xl font-semibold mb-4">Fees and Invoicing</h2>
         <h4 className="text-md">
           LEXIFY charges a monthly service fee for the use of the LEXIFY
-          platform. The amount of the service fee is zero percent (0%) of the
-          total legal service sales (VAT 0%) by your company on the LEXIFY
-          platform during a calendar month. The service fee for an individual
-          calendar month is invoiced by LEXIFY during the following calendar
-          month.
+          platform. The amount of the service fee is 0% of the total legal
+          service sales (VAT 0%) by your company on the LEXIFY platform during a
+          calendar month. The service fee for an individual calendar month is
+          invoiced by LEXIFY during the following calendar month.
         </h4>
         <br />
         <div className="grid grid-cols-2 gap-4">
