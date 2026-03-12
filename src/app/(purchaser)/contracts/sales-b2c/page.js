@@ -697,7 +697,6 @@ export default function SalesB2C() {
               name="paymentTerms"
               className="w-full border p-2"
               onChange={handleChange}
-              value={formData.paymentTerms}
             >
               <option value="">Select</option>
               <option value="On a monthly basis, invoice sent at end of each calendar month">

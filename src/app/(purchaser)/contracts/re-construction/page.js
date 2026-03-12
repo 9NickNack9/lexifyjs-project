@@ -720,15 +720,16 @@ export default function ReConstruction() {
               name="paymentTerms"
               className="w-full border p-2"
               onChange={handleChange}
+              value={formData.paymentTerms}
             >
               <option value="">Select</option>
-              <option value="Monthly invoice">
+              <option value="On a monthly basis, invoice sent at end of each calendar month">
                 On a monthly basis, invoice sent at end of each calendar month
               </option>
-              <option value="Quarter year invoice">
+              <option value="On a quarterly basis, invoice sent at end of each quarter">
                 On a quarterly basis, invoice sent at end of each quarter
               </option>
-              <option value="One time invoice">
+              <option value="One time invoice upon completion of the assignment">
                 One time invoice upon completion of the assignment
               </option>
             </select>
