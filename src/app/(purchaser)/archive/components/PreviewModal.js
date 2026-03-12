@@ -202,29 +202,30 @@ function isYesString(v) {
   return typeof v === "string" ? v.trim().toLowerCase() === "yes" : v === true;
 }
 
-function buildClientLine(row, companyName) {
+function buildClientLine(row) {
   const name =
-    companyName ||
-    row.companyName ||
-    row.clientName ||
+    row?.clientCompany?.companyName ||
+    row?.clientCompanyName ||
+    row?.client?.companyName || // legacy AppUser fallback
+    row?.companyName ||
+    row?.clientName ||
     row?.purchaser?.companyName ||
-    row?.client?.companyName ||
     null;
 
   const id =
-    row.companyId ||
-    row.businessId ||
-    row?.purchaser?.businessId ||
-    row?.client?.businessId ||
+    row?.clientCompany?.businessId ||
+    row?.client?.companyId || // legacy AppUser fallback
+    row?.companyId ||
+    row?.businessId ||
     row?.purchaser?.companyId ||
-    row?.client?.companyId ||
     null;
 
   const country =
-    row.companyCountry ||
-    row.country ||
+    row?.clientCompany?.companyCountry ||
+    row?.client?.companyCountry || // legacy AppUser fallback
+    row?.companyCountry ||
+    row?.country ||
     row?.purchaser?.companyCountry ||
-    row?.client?.companyCountry ||
     null;
 
   const parts = [name, id, country].filter(Boolean);

@@ -155,6 +155,54 @@ export default function AdminPage() {
     }
   }
 
+  const updateCompanyInvoiceFee = async (companyPkId, newFee, role) => {
+    const res = await fetch(`/api/admin/companies/${companyPkId}/invoiceFee`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ invoiceFee: Number(newFee) }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert(data?.error || "Failed to update invoice fee.");
+    }
+
+    fetchCompaniesByRole(role, true);
+  };
+
+  const updateCompanyProviderType = async (companyPkId, value, role) => {
+    const res = await fetch(
+      `/api/admin/companies/${companyPkId}/providerType`,
+      {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ providerType: value }),
+      },
+    );
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert(data?.error || "Failed to update provider type.");
+    }
+
+    fetchCompaniesByRole(role, true);
+  };
+
+  const updateCompanyCompanyAge = async (companyPkId, value, role) => {
+    const res = await fetch(`/api/admin/companies/${companyPkId}/companyAge`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ companyAge: Number(value) }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      alert(data?.error || "Failed to update company age.");
+    }
+
+    fetchCompaniesByRole(role, true);
+  };
+
   const updateCompanyBusinessId = async (companyPkId, newBusinessId, role) => {
     const res = await fetch(`/api/admin/companies/${companyPkId}/businessId`, {
       method: "PUT",
@@ -842,9 +890,61 @@ export default function AdminPage() {
                         className="w-48 border p-1 text-center"
                       />
                     </td>
-                    <td className="border p-2">{c.invoiceFee ?? "—"}</td>
-                    <td className="border p-2">{c.companyAge ?? "—"}</td>
-                    <td className="border p-2">{c.providerType ?? "—"}</td>
+                    <td className="border p-2">
+                      <input
+                        type="number"
+                        min={0}
+                        defaultValue={c.invoiceFee ?? 0}
+                        onBlur={(e) =>
+                          updateCompanyInvoiceFee(
+                            c.companyPkId,
+                            e.target.value,
+                            c.role,
+                          )
+                        }
+                        className="w-20 border p-1 text-center"
+                      />
+                    </td>
+
+                    <td className="border p-2">
+                      <input
+                        type="number"
+                        min={0}
+                        defaultValue={c.companyAge ?? 0}
+                        onBlur={(e) =>
+                          updateCompanyCompanyAge(
+                            c.companyPkId,
+                            e.target.value,
+                            c.role,
+                          )
+                        }
+                        className="w-24 border p-1 text-center"
+                      />
+                    </td>
+
+                    <td className="border p-2">
+                      <select
+                        className="border rounded text-center"
+                        value={
+                          c.providerType && c.providerType.trim()
+                            ? c.providerType
+                            : "N/A"
+                        }
+                        onChange={(e) =>
+                          updateCompanyProviderType(
+                            c.companyPkId,
+                            e.target.value,
+                            c.role,
+                          )
+                        }
+                      >
+                        <option value="N/A">N/A</option>
+                        <option value="Attorneys-at-law">
+                          Attorneys-at-law
+                        </option>
+                        <option value="Law Firm">Law Firm</option>
+                      </select>
+                    </td>
                     <td className="border p-2">{c.membersCount ?? 0}</td>
                     <td className="border p-2">{c.offersCount ?? 0}</td>
                     <td className="border p-2">

@@ -64,27 +64,30 @@ function isYesString(v) {
   return typeof v === "string" ? v.trim().toLowerCase() === "yes" : v === true;
 }
 
-function buildClientLine(row, companyName) {
+function buildClientLine(row) {
   const name =
-    companyName ||
-    row.companyName ||
-    row.clientName ||
+    row?.clientCompany?.companyName ||
+    row?.clientCompanyName ||
+    row?.client?.companyName || // legacy AppUser fallback
+    row?.companyName ||
+    row?.clientName ||
     row?.purchaser?.companyName ||
-    row?.client?.companyName ||
     null;
 
   const id =
-    row.companyId ||
-    row.businessId ||
+    row?.clientCompany?.businessId ||
+    row?.client?.companyId || // legacy AppUser fallback
+    row?.companyId ||
+    row?.businessId ||
     row?.purchaser?.companyId ||
-    row?.client?.companyId ||
     null;
 
   const country =
-    row.companyCountry ||
-    row.country ||
+    row?.clientCompany?.companyCountry ||
+    row?.client?.companyCountry || // legacy AppUser fallback
+    row?.companyCountry ||
+    row?.country ||
     row?.purchaser?.companyCountry ||
-    row?.client?.companyCountry ||
     null;
 
   const parts = [name, id, country].filter(Boolean);
@@ -502,6 +505,12 @@ export default function ProviderArchive() {
   const [showContract, setShowContract] = useState(false);
   const [contractPreview, setContractPreview] = useState(null);
 
+  const PAGE_SIZE = 5;
+
+  const [pendingVisibleCount, setPendingVisibleCount] = useState(PAGE_SIZE);
+  const [expiredVisibleCount, setExpiredVisibleCount] = useState(PAGE_SIZE);
+  const [contractsVisibleCount, setContractsVisibleCount] = useState(PAGE_SIZE);
+
   useEffect(() => {
     (async () => {
       try {
@@ -546,7 +555,7 @@ export default function ProviderArchive() {
             ...(off.contacts || []),
             ...(con.contacts || []),
             ...(exp.contacts || []),
-          ])
+          ]),
         );
         setContactOptions(["All", ...list]);
       } catch (e) {
@@ -628,10 +637,41 @@ export default function ProviderArchive() {
       contactFilterExpired === "All"
         ? expiredOffers
         : expiredOffers.filter(
-            (o) => o.offerSubmittedBy === contactFilterExpired
+            (o) => o.offerSubmittedBy === contactFilterExpired,
           );
     return sortGeneric(f, expiredSort.key, expiredSort.dir);
   }, [expiredOffers, contactFilterExpired, expiredSort]);
+
+  useEffect(() => {
+    setPendingVisibleCount(PAGE_SIZE);
+  }, [filteredOffers.length]);
+
+  useEffect(() => {
+    setExpiredVisibleCount(PAGE_SIZE);
+  }, [filteredExpiredOffers.length]);
+
+  useEffect(() => {
+    setContractsVisibleCount(PAGE_SIZE);
+  }, [filteredContracts.length]);
+
+  const visiblePendingOffers = useMemo(
+    () => filteredOffers.slice(0, pendingVisibleCount),
+    [filteredOffers, pendingVisibleCount],
+  );
+
+  const visibleExpiredOffers = useMemo(
+    () => filteredExpiredOffers.slice(0, expiredVisibleCount),
+    [filteredExpiredOffers, expiredVisibleCount],
+  );
+
+  const visibleContracts = useMemo(
+    () => filteredContracts.slice(0, contractsVisibleCount),
+    [filteredContracts, contractsVisibleCount],
+  );
+
+  const canLoadMorePending = pendingVisibleCount < filteredOffers.length;
+  const canLoadMoreExpired = expiredVisibleCount < filteredExpiredOffers.length;
+  const canLoadMoreContracts = contractsVisibleCount < filteredContracts.length;
 
   const def = useMemo(() => {
     if (!defs || !reqPreview) return null;
@@ -641,15 +681,15 @@ export default function ProviderArchive() {
         (d) =>
           (d.category || "") === (reqPreview.requestCategory || "") &&
           (d.subcategory || null) === (reqPreview.requestSubcategory ?? null) &&
-          (d.assignmentType || null) === (reqPreview.assignmentType ?? null)
+          (d.assignmentType || null) === (reqPreview.assignmentType ?? null),
       ) ||
       list.find(
         (d) =>
           (d.category || "") === (reqPreview.requestCategory || "") &&
-          (d.subcategory || null) === (reqPreview.requestSubcategory ?? null)
+          (d.subcategory || null) === (reqPreview.requestSubcategory ?? null),
       ) ||
       list.find(
-        (d) => (d.category || "") === (reqPreview.requestCategory || "")
+        (d) => (d.category || "") === (reqPreview.requestCategory || ""),
       )
     );
   }, [defs, reqPreview]);
@@ -681,118 +721,128 @@ export default function ProviderArchive() {
             {filteredOffers.length === 0 ? (
               <EmptyBox>N/A</EmptyBox>
             ) : (
-              <table className="w-full border-collapse border border-gray-300 bg-white text-black">
-                <thead>
-                  <tr className="bg-[#3a3a3c] text-white">
-                    <th className="border p-2 text-center">Title</th>
-                    <th
-                      className="border p-2 text-center cursor-pointer"
-                      onClick={() =>
-                        setPendingSort((p) => ({
-                          key: "clientName",
-                          dir: p.dir === "asc" ? "desc" : "asc",
-                        }))
-                      }
-                    >
-                      Client Name{" "}
-                      {pendingSort.key === "clientName"
-                        ? pendingSort.dir === "asc"
-                          ? "↑"
-                          : "↓"
-                        : ""}
-                    </th>
-                    <th className="border p-2 text-center">
-                      Offer Submitted By
-                    </th>
-                    <th
-                      className="border p-2 text-center cursor-pointer"
-                      onClick={() =>
-                        setPendingSort((p) => ({
-                          key: "offerSubmissionDate",
-                          dir: p.dir === "asc" ? "desc" : "asc",
-                        }))
-                      }
-                    >
-                      Offer Submission Date{" "}
-                      {pendingSort.key === "offerSubmissionDate"
-                        ? pendingSort.dir === "asc"
-                          ? "↑"
-                          : "↓"
-                        : ""}
-                    </th>
-                    <th
-                      className="border p-2 text-center cursor-pointer"
-                      onClick={() =>
-                        setPendingSort((p) => ({
-                          key: "offeredPrice",
-                          dir: p.dir === "asc" ? "desc" : "asc",
-                        }))
-                      }
-                    >
-                      Offered Price (VAT 0%){" "}
-                      {pendingSort.key === "offeredPrice"
-                        ? pendingSort.dir === "asc"
-                          ? "↑"
-                          : "↓"
-                        : ""}
-                    </th>
-                    <th
-                      className="border p-2 text-center cursor-pointer"
-                      onClick={() =>
-                        setPendingSort((p) => ({
-                          key: "deadline",
-                          dir: p.dir === "asc" ? "desc" : "asc",
-                        }))
-                      }
-                    >
-                      Time until Deadline for Offers{" "}
-                      {pendingSort.key === "deadline"
-                        ? pendingSort.dir === "asc"
-                          ? "↑"
-                          : "↓"
-                        : ""}
-                    </th>
-                    <th className="border p-2 text-center">
-                      Offer Submitted in Response to
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredOffers.map((o) => (
-                    <tr key={o.offerId}>
-                      <td className="border p-2 text-center">{o.title}</td>
-                      <td className="border p-2 text-center">
-                        {(o.confidential ?? o.request?.details?.confidential)
-                          ?.toString()
-                          .trim()
-                          .toLowerCase() === "yes"
-                          ? "Disclosed to Winning Bidder Only"
-                          : o.clientName || "—"}
-                      </td>
-                      <td className="border p-2 text-center">
-                        {o.offerSubmittedBy}
-                      </td>
-                      <td className="border p-2 text-center">
-                        {new Date(o.offerSubmissionDate).toLocaleDateString()}
-                      </td>
-                      <td className="border p-2 text-center">
-                        {fmtMoney(o.offeredPrice)}
-                      </td>
-                      <td className="border p-2 text-center">
-                        {formatTimeUntil(o.dateExpired)}
-                      </td>
-                      <td className="border p-2 text-center">
-                        <button
-                          className="bg-[#11999e] text-white px-3 py-1 rounded cursor-pointer"
-                          onClick={() => handleViewRequest(o.requestId)}
-                        >
-                          View LEXIFY Request
-                        </button>
-                      </td>
+              <>
+                <table className="w-full border-collapse border border-gray-300 bg-white text-black">
+                  <thead>
+                    <tr className="bg-[#3a3a3c] text-white">
+                      <th className="border p-2 text-center">Title</th>
+                      <th
+                        className="border p-2 text-center cursor-pointer"
+                        onClick={() =>
+                          setPendingSort((p) => ({
+                            key: "clientName",
+                            dir: p.dir === "asc" ? "desc" : "asc",
+                          }))
+                        }
+                      >
+                        Client Name{" "}
+                        {pendingSort.key === "clientName"
+                          ? pendingSort.dir === "asc"
+                            ? "↑"
+                            : "↓"
+                          : ""}
+                      </th>
+                      <th
+                        className="border p-2 text-center cursor-pointer"
+                        onClick={() =>
+                          setPendingSort((p) => ({
+                            key: "offerSubmissionDate",
+                            dir: p.dir === "asc" ? "desc" : "asc",
+                          }))
+                        }
+                      >
+                        Offer Submission Date{" "}
+                        {pendingSort.key === "offerSubmissionDate"
+                          ? pendingSort.dir === "asc"
+                            ? "↑"
+                            : "↓"
+                          : ""}
+                      </th>
+                      <th
+                        className="border p-2 text-center cursor-pointer"
+                        onClick={() =>
+                          setPendingSort((p) => ({
+                            key: "offeredPrice",
+                            dir: p.dir === "asc" ? "desc" : "asc",
+                          }))
+                        }
+                      >
+                        Offered Price (VAT 0%){" "}
+                        {pendingSort.key === "offeredPrice"
+                          ? pendingSort.dir === "asc"
+                            ? "↑"
+                            : "↓"
+                          : ""}
+                      </th>
+                      <th
+                        className="border p-2 text-center cursor-pointer"
+                        onClick={() =>
+                          setPendingSort((p) => ({
+                            key: "deadline",
+                            dir: p.dir === "asc" ? "desc" : "asc",
+                          }))
+                        }
+                      >
+                        Time until Deadline for Offers{" "}
+                        {pendingSort.key === "deadline"
+                          ? pendingSort.dir === "asc"
+                            ? "↑"
+                            : "↓"
+                          : ""}
+                      </th>
+                      <th className="border p-2 text-center">
+                        Offer Submitted in Response to
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {visiblePendingOffers.map((o) => (
+                      <tr key={o.offerId}>
+                        <td className="border p-2 text-center">{o.title}</td>
+                        <td className="border p-2 text-center">
+                          {(o.confidential ?? o.request?.details?.confidential)
+                            ?.toString()
+                            .trim()
+                            .toLowerCase() === "yes"
+                            ? "Disclosed to Winning Bidder Only"
+                            : o.clientName || "—"}
+                        </td>
+                        <td className="border p-2 text-center">
+                          {new Date(o.offerSubmissionDate).toLocaleDateString()}
+                        </td>
+                        <td className="border p-2 text-center">
+                          {fmtMoney(o.offeredPrice)}
+                        </td>
+                        <td className="border p-2 text-center">
+                          {formatTimeUntil(o.dateExpired)}
+                        </td>
+                        <td className="border p-2 text-center">
+                          <button
+                            className="bg-[#11999e] text-white px-3 py-1 rounded cursor-pointer"
+                            onClick={() => handleViewRequest(o.requestId)}
+                          >
+                            View LEXIFY Request
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {canLoadMorePending && (
+                  <div className="mt-4 flex justify-center">
+                    <button
+                      className="bg-white text-black px-4 py-2 rounded cursor-pointer"
+                      onClick={() =>
+                        setPendingVisibleCount((n) =>
+                          Math.min(n + PAGE_SIZE, filteredOffers.length),
+                        )
+                      }
+                    >
+                      Load more
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
@@ -815,119 +865,129 @@ export default function ProviderArchive() {
             {filteredExpiredOffers.length === 0 ? (
               <EmptyBox>N/A</EmptyBox>
             ) : (
-              <table className="w-full border-collapse border border-gray-300 bg-white text-black">
-                <thead>
-                  <tr className="bg-[#3a3a3c] text-white">
-                    <th className="border p-2 text-center">Title</th>
-                    <th
-                      className="border p-2 text-center cursor-pointer"
-                      onClick={() =>
-                        setExpiredSort((p) => ({
-                          key: "clientName",
-                          dir: p.dir === "asc" ? "desc" : "asc",
-                        }))
-                      }
-                    >
-                      Client Name{" "}
-                      {expiredSort.key === "clientName"
-                        ? expiredSort.dir === "asc"
-                          ? "↑"
-                          : "↓"
-                        : ""}
-                    </th>
-                    <th className="border p-2 text-center">
-                      Offer Submitted By
-                    </th>
-                    <th
-                      className="border p-2 text-center cursor-pointer"
-                      onClick={() =>
-                        setExpiredSort((p) => ({
-                          key: "offerSubmissionDate",
-                          dir: p.dir === "asc" ? "desc" : "asc",
-                        }))
-                      }
-                    >
-                      Offer Submission Date{" "}
-                      {expiredSort.key === "offerSubmissionDate"
-                        ? expiredSort.dir === "asc"
-                          ? "↑"
-                          : "↓"
-                        : ""}
-                    </th>
-                    <th
-                      className="border p-2 text-center cursor-pointer"
-                      onClick={() =>
-                        setExpiredSort((p) => ({
-                          key: "offeredPrice",
-                          dir: p.dir === "asc" ? "desc" : "asc",
-                        }))
-                      }
-                    >
-                      Offered Price (VAT 0%){" "}
-                      {expiredSort.key === "offeredPrice"
-                        ? expiredSort.dir === "asc"
-                          ? "↑"
-                          : "↓"
-                        : ""}
-                    </th>
-                    <th className="border p-2 text-center">
-                      Offer Submitted in Response to
-                    </th>
-                    <th className="border p-2 text-center">
-                      Was Contract Won or Lost?
-                    </th>
-                    <th className="border p-2 text-center">
-                      Winner Selected Based on
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredExpiredOffers.map((o) => {
-                    const rawReason = o.selectReason || "";
-                    const reasonTrimmed = rawReason.trim();
-                    const winnerSelectedBasedOn =
-                      reasonTrimmed === "I'd rather not say"
-                        ? "Not Disclosed by Client"
-                        : reasonTrimmed || "—";
+              <>
+                <table className="w-full border-collapse border border-gray-300 bg-white text-black">
+                  <thead>
+                    <tr className="bg-[#3a3a3c] text-white">
+                      <th className="border p-2 text-center">Title</th>
+                      <th
+                        className="border p-2 text-center cursor-pointer"
+                        onClick={() =>
+                          setExpiredSort((p) => ({
+                            key: "clientName",
+                            dir: p.dir === "asc" ? "desc" : "asc",
+                          }))
+                        }
+                      >
+                        Client Name{" "}
+                        {expiredSort.key === "clientName"
+                          ? expiredSort.dir === "asc"
+                            ? "↑"
+                            : "↓"
+                          : ""}
+                      </th>
+                      <th
+                        className="border p-2 text-center cursor-pointer"
+                        onClick={() =>
+                          setExpiredSort((p) => ({
+                            key: "offerSubmissionDate",
+                            dir: p.dir === "asc" ? "desc" : "asc",
+                          }))
+                        }
+                      >
+                        Offer Submission Date{" "}
+                        {expiredSort.key === "offerSubmissionDate"
+                          ? expiredSort.dir === "asc"
+                            ? "↑"
+                            : "↓"
+                          : ""}
+                      </th>
+                      <th
+                        className="border p-2 text-center cursor-pointer"
+                        onClick={() =>
+                          setExpiredSort((p) => ({
+                            key: "offeredPrice",
+                            dir: p.dir === "asc" ? "desc" : "asc",
+                          }))
+                        }
+                      >
+                        Offered Price (VAT 0%){" "}
+                        {expiredSort.key === "offeredPrice"
+                          ? expiredSort.dir === "asc"
+                            ? "↑"
+                            : "↓"
+                          : ""}
+                      </th>
+                      <th className="border p-2 text-center">
+                        Offer Submitted in Response to
+                      </th>
+                      <th className="border p-2 text-center">
+                        Was Contract Won or Lost?
+                      </th>
+                      <th className="border p-2 text-center">
+                        Winner Selected Based on
+                      </th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {visibleExpiredOffers.map((o) => {
+                      const rawReason = o.selectReason || "";
+                      const reasonTrimmed = rawReason.trim();
+                      const winnerSelectedBasedOn =
+                        reasonTrimmed === "I'd rather not say"
+                          ? "Not Disclosed by Client"
+                          : reasonTrimmed || "—";
 
-                    return (
-                      <tr key={o.offerId}>
-                        <td className="border p-2 text-center">{o.title}</td>
-                        <td className="border p-2 text-center">
-                          {o.clientName || "—"}
-                        </td>
-                        <td className="border p-2 text-center">
-                          {o.offerSubmittedBy}
-                        </td>
-                        <td className="border p-2 text-center">
-                          {o.offerSubmissionDate
-                            ? new Date(
-                                o.offerSubmissionDate
-                              ).toLocaleDateString()
-                            : "—"}
-                        </td>
-                        <td className="border p-2 text-center">
-                          {fmtMoney(o.offeredPrice)}
-                        </td>
-                        <td className="border p-2 text-center">
-                          <button
-                            className="bg-[#11999e] text-white px-3 py-1 rounded cursor-pointer"
-                            onClick={() => handleViewRequest(o.requestId)}
-                          >
-                            View LEXIFY Request
-                          </button>
-                        </td>
-                        <td className="border p-2 text-center">
-                          {o.offerStatus || "—"}
-                        </td>
-                        <td className="border p-2 text-center">
-                          {winnerSelectedBasedOn}
-                        </td>
-                      </tr>
-                    );
-                  })}
-                </tbody>
-              </table>
+                      return (
+                        <tr key={o.offerId}>
+                          <td className="border p-2 text-center">{o.title}</td>
+                          <td className="border p-2 text-center">
+                            {o.clientName || "—"}
+                          </td>
+                          <td className="border p-2 text-center">
+                            {o.offerSubmissionDate
+                              ? new Date(
+                                  o.offerSubmissionDate,
+                                ).toLocaleDateString()
+                              : "—"}
+                          </td>
+                          <td className="border p-2 text-center">
+                            {fmtMoney(o.offeredPrice)}
+                          </td>
+                          <td className="border p-2 text-center">
+                            <button
+                              className="bg-[#11999e] text-white px-3 py-1 rounded cursor-pointer"
+                              onClick={() => handleViewRequest(o.requestId)}
+                            >
+                              View LEXIFY Request
+                            </button>
+                          </td>
+                          <td className="border p-2 text-center">
+                            {o.offerStatus || "—"}
+                          </td>
+                          <td className="border p-2 text-center">
+                            {winnerSelectedBasedOn}
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+                {canLoadMoreExpired && (
+                  <div className="mt-4 flex justify-center">
+                    <button
+                      className="bg-white text-black px-4 py-2 rounded cursor-pointer"
+                      onClick={() =>
+                        setExpiredVisibleCount((n) =>
+                          Math.min(n + PAGE_SIZE, filteredExpiredOffers.length),
+                        )
+                      }
+                    >
+                      Load more
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
@@ -950,93 +1010,107 @@ export default function ProviderArchive() {
             {filteredContracts.length === 0 ? (
               <EmptyBox>N/A</EmptyBox>
             ) : (
-              <table className="w-full border-collapse border border-gray-300 bg-white text-black">
-                <thead>
-                  <tr className="bg-[#3a3a3c] text-white">
-                    <th className="border p-2 text-center">Title</th>
-                    <th
-                      className="border p-2 text-center cursor-pointer"
-                      onClick={() =>
-                        setContractSort((p) => ({
-                          key: "clientName",
-                          dir: p.dir === "asc" ? "desc" : "asc",
-                        }))
-                      }
-                    >
-                      Client Name{" "}
-                      {contractSort.key === "clientName"
-                        ? contractSort.dir === "asc"
-                          ? "↑"
-                          : "↓"
-                        : ""}
-                    </th>
-                    <th className="border p-2 text-center">Contract Owner</th>
-                    <th
-                      className="border p-2 text-center cursor-pointer"
-                      onClick={() =>
-                        setContractSort((p) => ({
-                          key: "contractDate",
-                          dir: p.dir === "asc" ? "desc" : "asc",
-                        }))
-                      }
-                    >
-                      Contract Date{" "}
-                      {contractSort.key === "contractDate"
-                        ? contractSort.dir === "asc"
-                          ? "↑"
-                          : "↓"
-                        : ""}
-                    </th>
-                    <th
-                      className="border p-2 text-center cursor-pointer"
-                      onClick={() =>
-                        setContractSort((p) => ({
-                          key: "contractPrice",
-                          dir: p.dir === "asc" ? "desc" : "asc",
-                        }))
-                      }
-                    >
-                      Contract Price (VAT 0%){" "}
-                      {contractSort.key === "contractPrice"
-                        ? contractSort.dir === "asc"
-                          ? "↑"
-                          : "↓"
-                        : ""}
-                    </th>
-                    <th className="border p-2 text-center">
-                      View LEXIFY Contract
-                    </th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredContracts.map((c) => (
-                    <tr key={c.contractId}>
-                      <td className="border p-2 text-center">{c.title}</td>
-                      <td className="border p-2 text-center">{c.clientName}</td>
-                      <td className="border p-2 text-center">
-                        {c.contractOwner}
-                      </td>
-                      <td className="border p-2 text-center">
-                        {new Date(c.contractDate).toLocaleDateString()}
-                      </td>
-                      <td className="border p-2 text-center">
-                        {fmtMoney(c.contractPrice)}
-                      </td>
-                      <td className="border p-2 text-center">
-                        <button
-                          className="bg-[#11999e] text-white px-3 py-1 rounded cursor-pointer"
-                          onClick={() => {
-                            setContractPreview(c.contract);
-                            setShowContract(true);
-                          }}
-                        >
-                          View
-                        </button>
-                      </td>
+              <>
+                <table className="w-full border-collapse border border-gray-300 bg-white text-black">
+                  <thead>
+                    <tr className="bg-[#3a3a3c] text-white">
+                      <th className="border p-2 text-center">Title</th>
+                      <th
+                        className="border p-2 text-center cursor-pointer"
+                        onClick={() =>
+                          setContractSort((p) => ({
+                            key: "clientName",
+                            dir: p.dir === "asc" ? "desc" : "asc",
+                          }))
+                        }
+                      >
+                        Client Name{" "}
+                        {contractSort.key === "clientName"
+                          ? contractSort.dir === "asc"
+                            ? "↑"
+                            : "↓"
+                          : ""}
+                      </th>
+                      <th
+                        className="border p-2 text-center cursor-pointer"
+                        onClick={() =>
+                          setContractSort((p) => ({
+                            key: "contractDate",
+                            dir: p.dir === "asc" ? "desc" : "asc",
+                          }))
+                        }
+                      >
+                        Contract Date{" "}
+                        {contractSort.key === "contractDate"
+                          ? contractSort.dir === "asc"
+                            ? "↑"
+                            : "↓"
+                          : ""}
+                      </th>
+                      <th
+                        className="border p-2 text-center cursor-pointer"
+                        onClick={() =>
+                          setContractSort((p) => ({
+                            key: "contractPrice",
+                            dir: p.dir === "asc" ? "desc" : "asc",
+                          }))
+                        }
+                      >
+                        Contract Price (VAT 0%){" "}
+                        {contractSort.key === "contractPrice"
+                          ? contractSort.dir === "asc"
+                            ? "↑"
+                            : "↓"
+                          : ""}
+                      </th>
+                      <th className="border p-2 text-center">
+                        View LEXIFY Contract
+                      </th>
                     </tr>
-                  ))}
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {visibleContracts.map((c) => (
+                      <tr key={c.contractId}>
+                        <td className="border p-2 text-center">{c.title}</td>
+                        <td className="border p-2 text-center">
+                          {c.clientName}
+                        </td>
+                        <td className="border p-2 text-center">
+                          {new Date(c.contractDate).toLocaleDateString()}
+                        </td>
+                        <td className="border p-2 text-center">
+                          {fmtMoney(c.contractPrice)}
+                        </td>
+                        <td className="border p-2 text-center">
+                          <button
+                            className="bg-[#11999e] text-white px-3 py-1 rounded cursor-pointer"
+                            onClick={() => {
+                              setContractPreview(c.contract);
+                              setShowContract(true);
+                            }}
+                          >
+                            View
+                          </button>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+                {canLoadMoreContracts && (
+                  <div className="mt-4 flex justify-center">
+                    <button
+                      className="bg-white text-black px-4 py-2 rounded cursor-pointer"
+                      onClick={() =>
+                        setContractsVisibleCount((n) =>
+                          Math.min(n + PAGE_SIZE, filteredContracts.length),
+                        )
+                      }
+                    >
+                      Load more
+                    </button>
+                  </div>
+                )}
+              </>
             )}
           </div>
 
@@ -1080,13 +1154,13 @@ export default function ProviderArchive() {
                       <div className="space-y-6">
                         {(def.preview?.sections || [])
                           .filter(
-                            (section) => !looksLikeProviderReqSection(section)
+                            (section) => !looksLikeProviderReqSection(section),
                           )
                           .map((section, si) => {
                             // If this is a fields-table section, strip hidden fields.
                             const fields = Array.isArray(section.fields)
                               ? section.fields.filter(
-                                  (f) => !shouldHideField(f)
+                                  (f) => !shouldHideField(f),
                                 )
                               : null;
 
@@ -1111,7 +1185,7 @@ export default function ProviderArchive() {
                                         // 1) primary: resolve by path
                                         let raw = resolvePath(
                                           reqPreview,
-                                          f.path
+                                          f.path,
                                         );
                                         let display = renderValue(raw, f.path);
 
@@ -1119,7 +1193,7 @@ export default function ProviderArchive() {
                                         if (display === "—") {
                                           const byLabel = resolveByLabel(
                                             reqPreview,
-                                            label
+                                            label,
                                           );
                                           if (byLabel !== undefined) {
                                             raw = byLabel;
@@ -1144,7 +1218,7 @@ export default function ProviderArchive() {
                                   <div className="p-3">
                                     {renderNamedBlock(
                                       section.value,
-                                      reqPreview
+                                      reqPreview,
                                     )}
                                   </div>
                                 ) : (
