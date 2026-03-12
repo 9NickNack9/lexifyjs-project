@@ -86,15 +86,14 @@ function normalizePracticalRatings(pr) {
   return map;
 }
 
-function getPracticalCategoryTotal(providerPracticalRatings, categoryKey) {
-  const practicalMap = normalizePracticalRatings(providerPracticalRatings);
-  const entry = practicalMap?.[categoryKey];
+function getPracticalCategoryTotal(provider, category) {
+  const entry = provider.categoryRatings?.[category];
 
-  const total =
-    entry?.total ?? entry?.providerTotalRating ?? entry?.totalRating ?? null;
+  if (!entry || entry.numberOfRatings === 0) {
+    return null; // no ratings yet
+  }
 
-  const n = Number(total);
-  return Number.isFinite(n) ? n : 0;
+  return entry.totalRating ?? 0;
 }
 
 function toDecimalString(v) {
@@ -534,7 +533,12 @@ export async function POST(req) {
         typeAutoPass || !reqTypeNorm || reqTypeNorm === pTypeNorm;
       const sizePass = sizeAutoPass || pPros >= reqMinPros;
       const agePass = ageAutoPass || pAge >= reqMinAge;
-      const ratingPass = ratingAutoPass || pRating >= reqMinRating;
+      const hasNoRatings = pRating === null;
+
+      const ratingPass =
+        ratingAutoPass ||
+        hasNoRatings || // allow providers with no ratings
+        pRating >= reqMinRating;
 
       if (!(typePass && sizePass && agePass && ratingPass)) {
         continue;

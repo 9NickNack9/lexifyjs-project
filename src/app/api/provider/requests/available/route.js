@@ -66,6 +66,15 @@ function normalizePracticalRatings(pr) {
 function getPracticalCategoryTotal(providerPracticalRatings, categoryKey) {
   const practicalMap = normalizePracticalRatings(providerPracticalRatings);
   const entry = practicalMap?.[categoryKey];
+
+  if (!entry) return null;
+
+  const count = Number(
+    entry?.count ?? entry?.numberOfRatings ?? entry?.ratingsCount ?? 0,
+  );
+
+  if (!Number.isFinite(count) || count <= 0) return null;
+
   const total =
     entry?.total ?? entry?.providerTotalRating ?? entry?.totalRating ?? null;
 
@@ -374,11 +383,13 @@ export async function GET(req) {
 
       // 4) Provider size gating (unless preferred)
       if (!preferredForArea) {
-        const reqSize = (r.providerSize || "").toString().trim().toLowerCase();
-        if (reqSize) {
-          if (!reqSize.includes("any")) {
-            const n = parseMinFromLabel(reqSize);
-            if (typeof n === "number" && myPros < n) return false;
+        const minRating = parseMinFromLabel(r.providerMinimumRating);
+        if (typeof minRating === "number" && minRating > 0) {
+          const myRating = getMyRatingForRequest(r);
+          const hasNoRatings = myRating == null;
+
+          if (!hasNoRatings && Number(myRating) < Number(minRating)) {
+            return false;
           }
         }
       }
