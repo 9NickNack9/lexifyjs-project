@@ -92,23 +92,30 @@ function parseIfDateLike(value, pathHint) {
 
 function buildClientLine(row) {
   const name =
-    row?.client?.companyName ||
-    row.companyName ||
-    row.clientName ||
+    row?.clientCompany?.companyName ||
+    row?.clientCompanyName ||
+    row?.client?.companyName || // legacy AppUser fallback
+    row?.companyName ||
+    row?.clientName ||
     row?.purchaser?.companyName ||
     null;
+
   const id =
-    row?.client?.companyId ||
-    row.companyId ||
-    row.businessId ||
+    row?.clientCompany?.businessId ||
+    row?.client?.companyId || // legacy AppUser fallback
+    row?.companyId ||
+    row?.businessId ||
     row?.purchaser?.companyId ||
     null;
+
   const country =
-    row?.client?.companyCountry ||
-    row.companyCountry ||
-    row.country ||
+    row?.clientCompany?.companyCountry ||
+    row?.client?.companyCountry || // legacy AppUser fallback
+    row?.companyCountry ||
+    row?.country ||
     row?.purchaser?.companyCountry ||
     null;
+
   const parts = [name, id, country].filter(Boolean);
   return parts.length ? parts.join(", ") : "—";
 }
