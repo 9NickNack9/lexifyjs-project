@@ -58,7 +58,7 @@ export async function GET() {
     // filter by purchaser Company PK
     const requests = await prisma.request.findMany({
       where: {
-        clientId: ua.companyId,
+        clientCompanyId: ua.companyId,
         requestState: { in: ["PENDING", "ON HOLD"] },
       },
       orderBy: { dateCreated: "desc" },

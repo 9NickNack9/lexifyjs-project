@@ -95,6 +95,7 @@ async function sendContractPackageEmail(prisma, requestId) {
       providerId: true,
       request: {
         select: {
+          clientCompanyId: true,
           requestId: true,
           clientId: true,
           requestCategory: true,
@@ -619,7 +620,7 @@ export async function POST(req) {
     const requestRow = await prisma.request.findUnique({
       where: { requestId: reqIdBig },
       select: {
-        clientId: true,
+        clientCompanyId: true,
         requestState: true,
         acceptDeadline: true,
         details: true,
@@ -629,7 +630,7 @@ export async function POST(req) {
     // ownership check uses purchaser company PK now
     if (
       !requestRow ||
-      String(requestRow.clientId) !== String(purchaserCompanyIdBig)
+      String(requestRow.clientCompanyId) !== String(purchaserCompanyIdBig)
     ) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }

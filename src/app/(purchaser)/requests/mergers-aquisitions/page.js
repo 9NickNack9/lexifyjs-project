@@ -742,9 +742,9 @@ export default function MergerAquisitions() {
           <div>
             {[
               "Comprehensive legal support throughout the transaction process, including but not limited to a legal due diligence inspection of the target with a written report of findings (as required by Client), drafting/commenting of a sale and purchase agreement and related legal documents, required negotiations with the counterparty and support with completion of signing/closing related legal items.",
-              "A sale and purchase agreement (including revisions based on client feedback)",
-              "A letter of intent (including revisions based on client feedback)",
-              "A legal due diligence inspection of the target with a written report of findings",
+              "A sale and purchase agreement. The work includes the preparation of the first version of the document(s) and necessary revisions on the basis of the Client's feedback to the Legal Service Provider. Additional work (for example, legal review of comments from the Client's counterparty) is not included.",
+              "A letter of intent. The work includes the preparation of the first version of the document(s) and necessary revisions on the basis of the Client's feedback to the Legal Service Provider. Additional work (for example, legal review of comments from the Client's counterparty) is not included.",
+              "A legal due diligence inspection of the target with a written report of findings.",
             ].includes(formData.supportType) && (
               <div>
                 <h4 className="text-md font-medium mb-1 font-semibold">

@@ -59,7 +59,7 @@ export async function GET() {
 
     const reqs = await prisma.request.findMany({
       where: {
-        clientId: ua.companyId,
+        clientCompanyId: ua.companyId,
         OR: [
           { requestState: "ON HOLD", acceptDeadline: { gt: now } },
           { requestState: "CONFLICT_CHECK" },
@@ -87,7 +87,8 @@ export async function GET() {
             offerExpectedPrice: true,
             offerLawyer: true,
             providerAdditionalInfo: true,
-            provider: {
+            providerCompanyId: true,
+            providerCompany: {
               select: {
                 companyName: true,
                 providerTotalRating: true,
@@ -99,7 +100,6 @@ export async function GET() {
                 providerPracticalRatings: true,
               },
             },
-            providerId: true,
             offerStatus: true,
             providerReferenceFiles: true,
           },
@@ -122,33 +122,34 @@ export async function GET() {
               ? o.offerId.toString()
               : String(o.offerId),
           providerId:
-            typeof o.providerId === "bigint"
-              ? o.providerId.toString()
-              : String(o.providerId),
+            typeof o.providerCompanyId === "bigint"
+              ? o.providerCompanyId.toString()
+              : String(o.providerCompanyId),
 
           offeredPrice: toNum(o.offerPrice),
           offerExpectedPrice: toNum(o.offerExpectedPrice),
           offerLawyer: o.offerLawyer || "—",
           providerAdditionalInfo: o.providerAdditionalInfo || "",
-          providerCompanyName: o.provider?.companyName || "—",
-          providerTotalRating: toNum(o.provider?.providerTotalRating) ?? null,
+          providerCompanyName: o.providerCompany?.companyName || "—",
+          providerTotalRating:
+            toNum(o.providerCompany?.providerTotalRating) ?? null,
           providerQualityRating:
-            toNum(o.provider?.providerQualityRating) ?? null,
+            toNum(o.providerCompany?.providerQualityRating) ?? null,
           providerCommunicationRating:
-            toNum(o.provider?.providerCommunicationRating) ?? null,
+            toNum(o.providerCompany?.providerCommunicationRating) ?? null,
           providerBillingRating:
-            toNum(o.provider?.providerBillingRating) ?? null,
+            toNum(o.providerCompany?.providerBillingRating) ?? null,
           providerHasRatings:
-            Array.isArray(o.provider?.providerIndividualRating) &&
-            o.provider.providerIndividualRating.length > 0,
+            Array.isArray(o.providerCompany?.providerIndividualRating) &&
+            o.providerCompany.providerIndividualRating.length > 0,
           providerRatingCount: Array.isArray(
-            o.provider?.providerIndividualRating,
+            o.providerCompany?.providerIndividualRating,
           )
-            ? o.provider.providerIndividualRating.length
+            ? o.providerCompany.providerIndividualRating.length
             : 0,
+          providerWebsite: o.providerCompany?.companyWebsite || "",
           providerPracticalRatings:
-            o.provider?.providerPracticalRatings ?? null,
-          providerCompanyWebsite: o.provider?.companyWebsite || null,
+            o.providerCompany?.providerPracticalRatings ?? [],
           providerReferenceFiles: Array.isArray(o.providerReferenceFiles)
             ? o.providerReferenceFiles
             : [],
@@ -216,14 +217,14 @@ export async function POST(req) {
     const r = await prisma.request.findUnique({
       where: { requestId },
       select: {
-        clientId: true,
+        clientCompanyId: true,
         requestState: true,
         acceptDeadline: true,
         details: true,
       },
     });
 
-    if (!r || String(r.clientId) !== String(ua.companyId)) {
+    if (!r || String(r.clientCompanyId) !== String(ua.companyId)) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
 

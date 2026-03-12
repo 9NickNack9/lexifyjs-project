@@ -361,11 +361,14 @@ export default function AwaitingSelectionTable({
                         return (
                           <ul className="space-y-2">
                             {offers.map((o) => (
-                              <li key={o.offerId} className="text-sm">
+                              <li
+                                key={o.offerId}
+                                className="text-sm flex items-center gap-3 whitespace-nowrap overflow-x-auto"
+                              >
                                 <div className="flex items-center gap-2">
                                   {/* Select button */}
                                   <button
-                                    className={`px-3 py-1 rounded cursor-pointer ${
+                                    className={`px-3 py-1 rounded shrink-0 cursor-pointer ${
                                       r.requestState === "CONFLICT_CHECK"
                                         ? "bg-gray-300 text-gray-600 cursor-not-allowed"
                                         : "bg-[#11999e] text-white"
@@ -381,17 +384,15 @@ export default function AwaitingSelectionTable({
                                   {/* Summary line: price + company + rating */}
                                   <div className="flex-1">
                                     <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                      <span className="text-md">
+                                      <span className="text-md shrink-0">
                                         {fmtMoney(o.offeredPrice, r.currency)}
                                       </span>
-
-                                      <span>(</span>
                                       {o.providerCompanyWebsite ? (
                                         <a
                                           href={o.providerCompanyWebsite}
                                           target="_blank"
                                           rel="noopener noreferrer"
-                                          className="text-blue-600 hover:underline cursor-pointer"
+                                          className="text-blue-600 hover:underline cursor-pointer shrink-0"
                                         >
                                           {o.providerCompanyName}
                                         </a>
@@ -429,13 +430,10 @@ export default function AwaitingSelectionTable({
                                           </span>
                                         );
                                       })()}
-
-                                      <span>)</span>
-
                                       {/* Full offer details button */}
                                       <button
                                         type="button"
-                                        className="ml-2 px-3 py-1 rounded bg-[#11999e] text-white cursor-pointer"
+                                        className="ml-2 px-3 py-1 rounded bg-[#11999e] text-white shrink-0 whitespace-nowrap cursor-pointer"
                                         onClick={() => {
                                           const categoryKey =
                                             mapRequestToCategory(
