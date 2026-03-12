@@ -16,6 +16,7 @@ export default function AdminPage() {
   const [reqLoading, setReqLoading] = useState(false);
   const [reqError, setReqError] = useState("");
   const [reqSelected, setReqSelected] = useState(null); // details modal
+  const [reqSearchInput, setReqSearchInput] = useState("");
   const [reqSearch, setReqSearch] = useState("");
   const [reqSkip, setReqSkip] = useState(0);
   const reqTake = 10;
@@ -639,9 +640,1264 @@ export default function AdminPage() {
     <div className="p-6">
       <h1 className="text-2xl font-bold mb-6">LEXIFY Admin Control</h1>
       <br />
-      {/* === USERS / COMPANIES / USERACCOUNTS (VISIBLE IMMEDIATELY) === */}
+      {/* === USERS / COMPANIES / USERACCOUNTS === */}
       <div className="flex flex-col gap-6">
-        {/* ===================== USERS ===================== */}
+        {/* ===================== COMPANIES ===================== */}
+        <section className="rounded bg-black/20 p-4">
+          <h2 className="text-xl font-bold mb-3 text-white">Companies</h2>
+
+          <div className="mb-3 flex items-center gap-2">
+            <input
+              type="text"
+              value={companySearchInput}
+              onChange={(e) => {
+                const val = e.target.value;
+                setCompanySearchInput(val);
+              }}
+              placeholder="Search companies by name…"
+              className="border rounded p-2 w-full"
+            />
+            <button
+              className="bg-[#11999e] text-white px-3 py-2 rounded border cursor-pointer"
+              onClick={() => setCompanySearch(companySearchInput.trim())}
+            >
+              Search
+            </button>
+            <button
+              className="bg-red-500 text-white px-3 py-2 rounded cursor-pointer"
+              onClick={() => {
+                setCompanySearchInput("");
+                setCompanySearch(""); // triggers reset+fetch via useEffect
+              }}
+            >
+              Clear
+            </button>
+          </div>
+
+          {/* Purchaser Companies */}
+          <h3 className="text-lg font-semibold mt-2 mb-2 text-white">
+            Purchaser Companies
+          </h3>
+          <div className="max-h-[40vh] overflow-y-auto border rounded bg-white text-black">
+            <table className="w-full border-collapse">
+              <thead className="bg-gray-200 sticky top-0">
+                <tr>
+                  <th className="border p-2">Company ID</th>
+                  <th className="border p-2">Role</th>
+                  <th className="border p-2">Register Status</th>
+                  <th className="border p-2">Company</th>
+                  <th className="border p-2">Business Id</th>
+                  <th className="border p-2">Members</th>
+                  <th className="border p-2">Requests</th>
+                  <th className="border p-2">Contracts</th>
+                  <th className="border p-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {companyTables.PURCHASER.items.map((c) => (
+                  <tr key={c.companyPkId} className="text-center">
+                    <td
+                      className="border p-2 text-blue-600 cursor-pointer underline"
+                      onClick={() => showCompanyDetails(c.companyPkId)}
+                    >
+                      {c.companyPkId}
+                    </td>
+                    <td className="border p-2">{c.role}</td>
+                    <td className="border p-2">
+                      <select
+                        className="border rounded"
+                        value={c.registerStatus}
+                        onChange={(e) =>
+                          updateCompanyRegisterStatus(
+                            c.companyPkId,
+                            e.target.value,
+                            c.role,
+                          )
+                        }
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="confirmed">Confirmed</option>
+                      </select>
+                    </td>
+                    <td className="border p-2">{c.companyName}</td>
+
+                    <td className="border p-2">
+                      <input
+                        type="text"
+                        defaultValue={c.businessId || ""}
+                        onBlur={(e) =>
+                          updateCompanyBusinessId(
+                            c.companyPkId,
+                            e.target.value,
+                            c.role,
+                          )
+                        }
+                        className="w-48 border p-1 text-center"
+                      />
+                    </td>
+                    <td className="border p-2">{c.membersCount ?? 0}</td>
+                    <td className="border p-2">{c.requestsCount ?? 0}</td>
+                    <td className="border p-2">{c.contractsCount ?? 0}</td>
+                    <td className="border p-2">
+                      <button
+                        onClick={() => deleteCompany(c.companyPkId, c.role)}
+                        className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+
+                {!companyTables.PURCHASER.loading &&
+                  companyTables.PURCHASER.items.length === 0 && (
+                    <tr>
+                      <td colSpan={9} className="text-center p-4 text-gray-500">
+                        No purchaser companies found.
+                      </td>
+                    </tr>
+                  )}
+
+                {companyTables.PURCHASER.loading && (
+                  <tr>
+                    <td colSpan={9} className="text-center p-4">
+                      Loading…
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {companyTables.PURCHASER.hasMore &&
+            !companyTables.PURCHASER.loading && (
+              <button
+                onClick={() => fetchCompaniesByRole("PURCHASER", false)}
+                className="w-full bg-gray-100 p-2 mt-2 rounded text-black"
+              >
+                Load more
+              </button>
+            )}
+
+          {/* Provider Companies */}
+          <h3 className="text-lg font-semibold mt-6 mb-2 text-white">
+            Provider Companies
+          </h3>
+          <div className="max-h-[40vh] overflow-y-auto border rounded bg-white text-black">
+            <table className="w-full border-collapse">
+              <thead className="bg-gray-200 sticky top-0">
+                <tr>
+                  <th className="border p-2">Company ID</th>
+                  <th className="border p-2">Role</th>
+                  <th className="border p-2">Register Status</th>
+                  <th className="border p-2">Company</th>
+                  <th className="border p-2">Business Id</th>
+                  <th className="border p-2">Invoice Fee</th>
+                  <th className="border p-2">Company Age</th>
+                  <th className="border p-2">Provider Type</th>
+                  <th className="border p-2">Members</th>
+                  <th className="border p-2">Offers</th>
+                  <th className="border p-2">Rating</th>
+                  <th className="border p-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {companyTables.PROVIDER.items.map((c) => (
+                  <tr key={c.companyPkId} className="text-center">
+                    <td
+                      className="border p-2 text-blue-600 cursor-pointer underline"
+                      onClick={() => showCompanyDetails(c.companyPkId)}
+                    >
+                      {c.companyPkId}
+                    </td>
+                    <td className="border p-2">{c.role}</td>
+                    <td className="border p-2">
+                      <select
+                        className="border rounded"
+                        value={c.registerStatus}
+                        onChange={(e) =>
+                          updateCompanyRegisterStatus(
+                            c.companyPkId,
+                            e.target.value,
+                            c.role,
+                          )
+                        }
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="confirmed">Confirmed</option>
+                      </select>
+                    </td>
+                    <td className="border p-2">{c.companyName}</td>
+                    <td className="border p-2">
+                      <input
+                        type="text"
+                        defaultValue={c.businessId || ""}
+                        onBlur={(e) =>
+                          updateCompanyBusinessId(
+                            c.companyPkId,
+                            e.target.value,
+                            c.role,
+                          )
+                        }
+                        className="w-48 border p-1 text-center"
+                      />
+                    </td>
+                    <td className="border p-2">{c.invoiceFee ?? "—"}</td>
+                    <td className="border p-2">{c.companyAge ?? "—"}</td>
+                    <td className="border p-2">{c.providerType ?? "—"}</td>
+                    <td className="border p-2">{c.membersCount ?? 0}</td>
+                    <td className="border p-2">{c.offersCount ?? 0}</td>
+                    <td className="border p-2">
+                      {c.providerTotalRating ?? "—"}
+                    </td>
+                    <td className="border p-2">
+                      <button
+                        onClick={() => deleteCompany(c.companyPkId)}
+                        className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+
+                {!companyTables.PROVIDER.loading &&
+                  companyTables.PROVIDER.items.length === 0 && (
+                    <tr>
+                      <td
+                        colSpan={12}
+                        className="text-center p-4 text-gray-500"
+                      >
+                        No provider companies found.
+                      </td>
+                    </tr>
+                  )}
+
+                {companyTables.PROVIDER.loading && (
+                  <tr>
+                    <td colSpan={12} className="text-center p-4">
+                      Loading…
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {companyTables.PROVIDER.hasMore &&
+            !companyTables.PROVIDER.loading && (
+              <button
+                onClick={() => fetchCompaniesByRole("PROVIDER", false)}
+                className="w-full bg-gray-100 p-2 mt-2 rounded text-black"
+              >
+                Load more
+              </button>
+            )}
+        </section>
+
+        {/* ===================== USER ACCOUNTS ===================== */}
+        <section className="rounded bg-black/20 p-4">
+          <h2 className="text-xl font-bold mb-3 text-white">User Accounts</h2>
+
+          <div className="mb-3 flex items-center gap-2">
+            <input
+              type="text"
+              value={accountSearchInput}
+              onChange={(e) => {
+                const val = e.target.value;
+                setAccountSearchInput(val);
+              }}
+              placeholder="Search by last name, email, or company…"
+              className="border rounded p-2 w-full"
+            />
+            <button
+              className="bg-[#11999e] text-white px-3 py-2 rounded border cursor-pointer"
+              onClick={() => setAccountSearch(accountSearchInput.trim())}
+            >
+              Search
+            </button>
+            <button
+              className="bg-red-500 text-white px-3 py-2 rounded cursor-pointer"
+              onClick={() => {
+                setAccountSearchInput("");
+                setAccountSearch(""); // triggers reset+fetch via useEffect
+              }}
+            >
+              Clear
+            </button>
+          </div>
+
+          {/* Admin User Accounts */}
+          <h3 className="text-lg font-semibold mt-2 mb-2 text-white">
+            Admin User Accounts
+          </h3>
+          <div className="max-h-[24vh] overflow-y-auto border rounded bg-white text-black">
+            <table className="w-full border-collapse">
+              <thead className="bg-gray-200 sticky top-0">
+                <tr>
+                  <th className="border p-2">User ID</th>
+                  <th className="border p-2">Role</th>
+                  <th className="border p-2">Register Status</th>
+                  <th className="border p-2">Company</th>
+                  <th className="border p-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {accountTables.ADMIN.items.map((a) => (
+                  <tr key={a.userPkId} className="text-center">
+                    <td
+                      className="border p-2 text-blue-600 cursor-pointer underline"
+                      onClick={() => showAccountDetails(a.userPkId)}
+                    >
+                      {a.userPkId}
+                    </td>
+                    <td className="border p-2">{a.role}</td>
+                    <td className="border p-2">
+                      <select
+                        className="border rounded"
+                        value={a.registerStatus}
+                        onChange={(e) =>
+                          updateAccountRegisterStatus(
+                            a.userPkId,
+                            e.target.value,
+                            a.role,
+                          )
+                        }
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="confirmed">Confirmed</option>
+                      </select>
+                    </td>
+                    <td className="border p-2">{a.companyName}</td>
+                    <td className="border p-2">
+                      <button
+                        onClick={() => deleteAccount(a.userPkId, a.role)}
+                        className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+
+                {!accountTables.ADMIN.loading &&
+                  accountTables.ADMIN.items.length === 0 && (
+                    <tr>
+                      <td colSpan={5} className="text-center p-4 text-gray-500">
+                        No admin user accounts found.
+                      </td>
+                    </tr>
+                  )}
+
+                {accountTables.ADMIN.loading && (
+                  <tr>
+                    <td colSpan={5} className="text-center p-4">
+                      Loading…
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {accountTables.ADMIN.hasMore && !accountTables.ADMIN.loading && (
+            <button
+              onClick={() => fetchAccountsByRole("ADMIN", false)}
+              className="w-full bg-gray-100 p-2 mt-2 rounded text-black"
+            >
+              Load more
+            </button>
+          )}
+
+          {/* Purchaser User Accounts */}
+          <h3 className="text-lg font-semibold mt-6 mb-2 text-white">
+            Purchaser User Accounts
+          </h3>
+          <div className="max-h-[24vh] overflow-y-auto border rounded bg-white text-black">
+            <table className="w-full border-collapse">
+              <thead className="bg-gray-200 sticky top-0">
+                <tr>
+                  <th className="border p-2">User ID</th>
+                  <th className="border p-2">User's Name</th>
+                  <th className="border p-2">Role</th>
+                  <th className="border p-2">Register Status</th>
+                  <th className="border p-2">Company</th>
+                  <th className="border p-2">Requests</th>
+                  <th className="border p-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {accountTables.PURCHASER.items.map((a) => (
+                  <tr key={a.userPkId} className="text-center">
+                    <td
+                      className="border p-2 text-blue-600 cursor-pointer underline"
+                      onClick={() => showAccountDetails(a.userPkId)}
+                    >
+                      {a.userPkId}
+                    </td>
+                    <td className="border p-2">
+                      {a.firstName} {a.lastName}
+                    </td>
+                    <td className="border p-2">{a.role}</td>
+                    <td className="border p-2">
+                      <select
+                        className="border rounded"
+                        value={a.registerStatus}
+                        onChange={(e) =>
+                          updateAccountRegisterStatus(
+                            a.userPkId,
+                            e.target.value,
+                            a.role,
+                          )
+                        }
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="confirmed">Confirmed</option>
+                      </select>
+                    </td>
+                    <td className="border p-2">{a.companyName}</td>
+                    <td className="border p-2">{a.requestsCount ?? 0}</td>
+                    <td className="border p-2">
+                      <button
+                        onClick={() => deleteAccount(a.userPkId)}
+                        className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+
+                {!accountTables.PURCHASER.loading &&
+                  accountTables.PURCHASER.items.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="text-center p-4 text-gray-500">
+                        No purchaser user accounts found.
+                      </td>
+                    </tr>
+                  )}
+
+                {accountTables.PURCHASER.loading && (
+                  <tr>
+                    <td colSpan={7} className="text-center p-4">
+                      Loading…
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {accountTables.PURCHASER.hasMore &&
+            !accountTables.PURCHASER.loading && (
+              <button
+                onClick={() => fetchAccountsByRole("PURCHASER", false)}
+                className="w-full bg-gray-100 p-2 mt-2 rounded text-black"
+              >
+                Load more
+              </button>
+            )}
+
+          {/* Provider User Accounts */}
+          <h3 className="text-lg font-semibold mt-6 mb-2 text-white">
+            Provider User Accounts
+          </h3>
+          <div className="max-h-[24vh] overflow-y-auto border rounded bg-white text-black">
+            <table className="w-full border-collapse">
+              <thead className="bg-gray-200 sticky top-0">
+                <tr>
+                  <th className="border p-2">User ID</th>
+                  <th className="border p-2">User's Name</th>
+                  <th className="border p-2">Role</th>
+                  <th className="border p-2">Register Status</th>
+                  <th className="border p-2">Company</th>
+                  <th className="border p-2">Offers</th>
+                  <th className="border p-2">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {accountTables.PROVIDER.items.map((a) => (
+                  <tr key={a.userPkId} className="text-center">
+                    <td
+                      className="border p-2 text-blue-600 cursor-pointer underline"
+                      onClick={() => showAccountDetails(a.userPkId)}
+                    >
+                      {a.userPkId}
+                    </td>
+                    <td className="border p-2">
+                      {a.firstName} {a.lastName}
+                    </td>
+                    <td className="border p-2">{a.role}</td>
+                    <td className="border p-2">
+                      <select
+                        className="border rounded"
+                        value={a.registerStatus}
+                        onChange={(e) =>
+                          updateAccountRegisterStatus(
+                            a.userPkId,
+                            e.target.value,
+                            a.role,
+                          )
+                        }
+                      >
+                        <option value="pending">Pending</option>
+                        <option value="confirmed">Confirmed</option>
+                      </select>
+                    </td>
+                    <td className="border p-2">{a.companyName}</td>
+                    <td className="border p-2">{a.offersCount ?? 0}</td>
+                    <td className="border p-2">
+                      <button
+                        onClick={() => deleteAccount(a.userPkId)}
+                        className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
+                      >
+                        Delete
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+
+                {!accountTables.PROVIDER.loading &&
+                  accountTables.PROVIDER.items.length === 0 && (
+                    <tr>
+                      <td colSpan={7} className="text-center p-4 text-gray-500">
+                        No provider user accounts found.
+                      </td>
+                    </tr>
+                  )}
+
+                {accountTables.PROVIDER.loading && (
+                  <tr>
+                    <td colSpan={7} className="text-center p-4">
+                      Loading…
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+
+          {accountTables.PROVIDER.hasMore &&
+            !accountTables.PROVIDER.loading && (
+              <button
+                onClick={() => fetchAccountsByRole("PROVIDER", false)}
+                className="w-full bg-gray-100 p-2 mt-2 rounded text-black"
+              >
+                Load more
+              </button>
+            )}
+        </section>
+      </div>
+
+      {/* User details modal */}
+      {selectedUser && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded max-w-2xl max-h-[80vh] overflow-y-auto text-black">
+            <h2 className="text-xl font-bold mb-4">User Details</h2>
+            <div className="space-y-2">
+              <p>
+                <strong>User ID:</strong> {selectedUser.userId}
+              </p>
+              <p>
+                <strong>Role:</strong> {selectedUser.role}
+              </p>
+              <p>
+                <strong>Status:</strong> {selectedUser.registerStatus}
+              </p>
+              <p>
+                <strong>Company:</strong> {selectedUser.companyName}
+              </p>
+              +
+              <p>
+                <strong>Company Age:</strong> {selectedUser.companyAge ?? 0}
+              </p>
+              <p>
+                <strong>Founding Year:</strong>{" "}
+                {selectedUser.companyFoundingYear ?? "—"}
+              </p>
+              <p>
+                <strong>Provider Type:</strong>{" "}
+                {selectedUser.providerType && selectedUser.providerType.trim()
+                  ? selectedUser.providerType
+                  : "N/A"}
+              </p>
+              {selectedUser.role === "PROVIDER" && (
+                <p>
+                  <strong>Total Rating:</strong>{" "}
+                  {selectedUser.providerTotalRating ?? "N/A"}
+                </p>
+              )}
+              <p>
+                <strong>Invoice Fee:</strong> {selectedUser.invoiceFee}
+              </p>
+            </div>
+            <details className="mt-4">
+              <summary className="cursor-pointer text-blue-600">
+                Show full JSON
+              </summary>
+              <pre className="text-xs bg-gray-100 p-4 rounded overflow-x-auto">
+                {JSON.stringify(selectedUser, null, 2)}
+              </pre>
+            </details>
+            <button
+              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
+              onClick={() => setSelectedUser(null)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+      {selectedCompany && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded max-w-3xl max-h-[80vh] overflow-y-auto text-black">
+            <h2 className="text-xl font-bold mb-4">Company Details</h2>
+            <div className="space-y-2">
+              <p>
+                <strong>Company ID:</strong> {selectedCompany.companyPkId}
+              </p>
+              <p>
+                <strong>Role:</strong> {selectedCompany.role}
+              </p>
+              <p>
+                <strong>Status:</strong> {selectedCompany.registerStatus}
+              </p>
+              <p>
+                <strong>Company:</strong> {selectedCompany.companyName}
+              </p>
+              <p>
+                <strong>Company Age:</strong> {selectedCompany.companyAge ?? 0}
+              </p>
+              <p>
+                <strong>Founding Year:</strong>{" "}
+                {selectedCompany.companyFoundingYear ?? "—"}
+              </p>
+              <p>
+                <strong>Provider Type:</strong>{" "}
+                {selectedCompany.providerType &&
+                selectedCompany.providerType.trim()
+                  ? selectedCompany.providerType
+                  : "N/A"}
+              </p>
+              {selectedCompany.role === "PROVIDER" && (
+                <p>
+                  <strong>Total Rating:</strong>{" "}
+                  {selectedCompany.providerTotalRating ?? "N/A"}
+                </p>
+              )}
+              <p>
+                <strong>Invoice Fee:</strong> {selectedCompany.invoiceFee}
+              </p>
+            </div>
+
+            <details className="mt-2">
+              <summary className="cursor-pointer text-blue-600">
+                Show full JSON
+              </summary>
+              <pre className="text-xs bg-gray-100 p-4 rounded overflow-x-auto">
+                {JSON.stringify(selectedCompany, null, 2)}
+              </pre>
+            </details>
+
+            <button
+              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
+              onClick={() => setSelectedCompany(null)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+      {selectedAccount && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded max-w-3xl max-h-[80vh] overflow-y-auto text-black">
+            <h2 className="text-xl font-bold mb-4">User Account Details</h2>
+            <div className="space-y-2">
+              <p>
+                <strong>User ID:</strong> {selectedAccount.userPkId}
+              </p>
+              <p>
+                <strong>Role:</strong> {selectedAccount.role}
+              </p>
+              <p>
+                <strong>Status:</strong> {selectedAccount.registerStatus}
+              </p>
+              <p>
+                <strong>Company:</strong> {selectedAccount.company.companyName}
+              </p>
+              <p>
+                <strong>Company Age:</strong>{" "}
+                {selectedAccount.company.companyAge ?? 0}
+              </p>
+              <p>
+                <strong>Founding Year:</strong>{" "}
+                {selectedAccount.company.companyFoundingYear ?? "—"}
+              </p>
+              <p>
+                <strong>Provider Type:</strong>{" "}
+                {selectedAccount.company.providerType &&
+                selectedAccount.company.providerType.trim()
+                  ? selectedAccount.company.providerType
+                  : "N/A"}
+              </p>
+              {selectedAccount.role === "PROVIDER" && (
+                <p>
+                  <strong>Total Rating:</strong>{" "}
+                  {selectedAccount.company.providerTotalRating ?? "N/A"}
+                </p>
+              )}
+              <p>
+                <strong>Invoice Fee:</strong>{" "}
+                {selectedAccount.company.invoiceFee}
+              </p>
+            </div>
+
+            <details className="mt-2">
+              <summary className="cursor-pointer text-blue-600">
+                Show full JSON
+              </summary>
+              <pre className="text-xs bg-gray-100 p-4 rounded overflow-x-auto">
+                {JSON.stringify(selectedAccount, null, 2)}
+              </pre>
+            </details>
+
+            <button
+              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
+              onClick={() => setSelectedAccount(null)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+      <br />
+      <section className="rounded bg-black/20 p-4">
+        <h2 className="text-xl font-bold mb-6">All Purchaser Requests</h2>
+        <div className="mb-3 flex items-center gap-2">
+          <input
+            type="text"
+            value={reqSearchInput}
+            onChange={(e) => {
+              const val = e.target.value;
+              setReqSearchInput(val);
+            }}
+            placeholder="Search by company name or request title…"
+            className="border rounded p-2 w-full"
+          />
+          <button
+            className="bg-[#11999e] text-white px-3 py-2 rounded border cursor-pointer"
+            onClick={() => setReqSearch(reqSearchInput.trim())}
+          >
+            Search
+          </button>
+          <button
+            className="bg-red-500 text-white px-3 py-2 rounded cursor-pointer"
+            onClick={() => {
+              setReqSearchInput("");
+              fetchRequests(true);
+            }}
+          >
+            Clear
+          </button>
+        </div>
+        <div
+          id={reqBoxId}
+          className="overflow-y-auto max-h-[70vh] border rounded bg-white text-black"
+        >
+          <table className="w-full border-collapse">
+            <thead className="bg-gray-200">
+              <tr>
+                <th className="border p-2">Request ID</th>
+                <th className="border p-2">Company</th>
+                <th className="border p-2">Title</th>
+                <th className="border p-2">Request State</th>
+                <th className="border p-2">Offers</th>
+                <th className="border p-2">Time Until Expiration</th>
+                <th className="border p-2">
+                  Time Until Rejection of All Offers
+                </th>
+                <th className="border p-2">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {reqLoading && (
+                <tr>
+                  <td colSpan={8} className="text-center p-4">
+                    Loading…
+                  </td>
+                </tr>
+              )}
+              {!reqLoading && reqError && (
+                <tr>
+                  <td colSpan={8} className="text-center p-4 text-red-600">
+                    {reqError}
+                  </td>
+                </tr>
+              )}
+              {!reqLoading && !reqError && reqs.length === 0 && (
+                <>
+                  <tr>
+                    <td colSpan={8} className="text-center p-4 text-gray-500">
+                      There are no requests made yet.
+                    </td>
+                  </tr>
+                </>
+              )}
+              {!reqLoading &&
+                !reqError &&
+                reqs.map((r) => {
+                  const timeLabel =
+                    r.requestState === "EXPIRED"
+                      ? "Expired"
+                      : formatTimeUntil(r.offersDeadline);
+                  let rejectLabel;
+                  if (!r.acceptDeadline) {
+                    rejectLabel = "N/A"; // no deadline set
+                  } else {
+                    const end = new Date(r.acceptDeadline).getTime();
+                    if (Number.isNaN(end) || end <= Date.now()) {
+                      rejectLabel = "Expired";
+                    } else {
+                      rejectLabel = formatTimeUntil(r.acceptDeadline);
+                    }
+                  }
+                  return (
+                    <tr key={r.requestId} className="text-center">
+                      <td
+                        className="border p-2 text-blue-600 cursor-pointer underline"
+                        onClick={() => showRequestDetails(r.requestId)}
+                      >
+                        {r.requestId}
+                      </td>
+                      <td className="border p-2">
+                        {r.clientCompanyName || "—"}
+                      </td>
+                      <td className="border p-2">{r.title || "—"}</td>
+                      <td className="border p-2">
+                        <select
+                          className="border rounded"
+                          value={r.requestState}
+                          onChange={(e) =>
+                            updateRequestState(r.requestId, e.target.value)
+                          }
+                        >
+                          {ADMIN_REQUEST_STATES.map((s) => (
+                            <option key={s.value} value={s.value}>
+                              {s.label}
+                            </option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="border p-2">{r.offersCount ?? 0}</td>
+                      <td className="border p-2">{timeLabel}</td>
+                      <td className="border p-2">{rejectLabel}</td>
+                      <td className="border p-2">
+                        {r.requestState === "CONFLICT_CHECK" ? (
+                          <div className="flex flex-col items-center gap-2">
+                            <div className="text-sm text-left">
+                              <div>
+                                <strong>Selected Provider:</strong>{" "}
+                                {r.selectedOfferCompanyName || "—"}
+                              </div>
+                              <div>
+                                <strong>Offer Lawyer:</strong>{" "}
+                                {r.selectedOfferLawyer || "—"}
+                              </div>
+                            </div>
+                            <div className="flex gap-2 justify-center">
+                              <button
+                                className="bg-green-600 text-white px-2 py-1 rounded cursor-pointer"
+                                onClick={async () => {
+                                  const ok = confirm(
+                                    "Are you sure you want to APPROVE this conflict check?",
+                                  );
+                                  if (!ok) return;
+
+                                  await fetch(
+                                    `/api/admin/requests/${r.requestId}/conflict`,
+                                    {
+                                      method: "PUT",
+                                      headers: {
+                                        "Content-Type": "application/json",
+                                      },
+                                      body: JSON.stringify({
+                                        decision: "accept",
+                                      }),
+                                    },
+                                  );
+
+                                  window.location.reload();
+                                }}
+                              >
+                                Approve Conflict Check
+                              </button>
+
+                              <button
+                                className="bg-red-600 text-white px-2 py-1 rounded cursor-pointer"
+                                onClick={async () => {
+                                  const ok = confirm(
+                                    "Are you sure you want to DENY this offer and replace it?",
+                                  );
+                                  if (!ok) return;
+
+                                  await fetch(
+                                    `/api/admin/requests/${r.requestId}/conflict`,
+                                    {
+                                      method: "PUT",
+                                      headers: {
+                                        "Content-Type": "application/json",
+                                      },
+                                      body: JSON.stringify({
+                                        decision: "deny",
+                                      }),
+                                    },
+                                  );
+
+                                  window.location.reload();
+                                }}
+                              >
+                                Deny & Replace Offer
+                              </button>
+                            </div>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => deleteRequest(r.requestId)}
+                            className="bg-red-500 text-white px-2 py-1 rounded"
+                          >
+                            Delete
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
+              {!reqLoading &&
+                !reqError &&
+                reqs.map((r) => {
+                  // ...row rendering stays exactly the same...
+                })}
+
+              {/* Load more button, like in the other tables */}
+              {reqHasMore && !reqLoading && reqs.length > 0 && (
+                <tr>
+                  <td colSpan={8} className="p-2">
+                    <button
+                      onClick={() => fetchRequests(false)}
+                      className="w-full bg-gray-100 p-2 text-black"
+                    >
+                      Load more
+                    </button>
+                  </td>
+                </tr>
+              )}
+
+              {reqLoading && reqHasMore && (
+                <tr>
+                  <td colSpan={8} className="text-center p-3 text-gray-500">
+                    Loading more…
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {/* Request details modal */}
+      {reqSelected && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded max-w-3xl max-h-[80vh] overflow-y-auto text-black">
+            <h2 className="text-xl font-bold mb-4">Request Details</h2>
+            <div className="space-y-2">
+              <p>
+                <strong>Request ID:</strong> {reqSelected.requestId}
+              </p>
+              <p>
+                <strong>Company:</strong> {reqSelected.clientCompanyName}
+              </p>
+              <p>
+                <strong>State:</strong> {reqSelected.requestState}
+              </p>
+              <p>
+                <strong>Title:</strong> {reqSelected.title || "—"}
+              </p>
+              <p>
+                <strong>Primary Contact:</strong>{" "}
+                {reqSelected.primaryContactPerson || "—"}
+              </p>
+              <p>
+                <strong>Offers Deadline:</strong>{" "}
+                {reqSelected.offersDeadline
+                  ? new Date(reqSelected.offersDeadline).toLocaleString()
+                  : "—"}
+              </p>
+              <p>
+                <strong>Accept Deadline:</strong>{" "}
+                {reqSelected.acceptDeadline
+                  ? new Date(reqSelected.acceptDeadline).toLocaleString()
+                  : "—"}
+              </p>
+              <p>
+                <strong>Offers Count:</strong> {reqSelected.offersCount ?? 0}
+              </p>
+            </div>
+            <details className="mt-4">
+              <summary className="cursor-pointer text-blue-600">
+                Show full JSON
+              </summary>
+              <pre className="text-xs bg-gray-100 p-4 rounded overflow-x-auto">
+                {JSON.stringify(reqSelected, null, 2)}
+              </pre>
+            </details>
+            <button
+              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
+              onClick={() => setReqSelected(null)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* --- All Offers --- */}
+      <br />
+      <section className="rounded bg-black/20 p-4">
+        <h2 className="text-xl font-bold mb-2">All Offers</h2>
+        <div className="mb-3 flex items-center gap-2">
+          <input
+            type="text"
+            value={offerSearchInput}
+            onChange={(e) => {
+              const val = e.target.value;
+              setOfferSearchInput(val);
+            }}
+            placeholder="Search by provider company, offer title or request title…"
+            className="border rounded p-2 w-full"
+          />
+          <button
+            className="bg-[#11999e] text-white px-3 py-2 rounded border cursor-pointer"
+            onClick={() => setOfferSearch(offerSearchInput.trim())}
+          >
+            Search
+          </button>
+          <button
+            className="bg-red-500 text-white px-3 py-2 rounded cursor-pointer"
+            onClick={() => {
+              setOfferSearchInput("");
+              setOfferSearch("");
+            }}
+          >
+            Clear
+          </button>
+        </div>
+
+        <div className="overflow-y-auto max-h-[60vh] border rounded bg-white text-black">
+          <table className="w-full border-collapse">
+            <thead className="bg-gray-200">
+              <tr>
+                <th className="border p-2">Offer Id</th>
+                <th className="border p-2">Company</th>
+                <th className="border p-2">Offer Title</th>
+                <th className="border p-2">Request Title</th>
+                <th className="border p-2">Offer Status</th>
+                <th className="border p-2">Offer Price</th>
+                <th className="border p-2">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {!offerLoading && offers.length === 0 && (
+                <tr>
+                  <td colSpan={7} className="text-center p-4 text-gray-500">
+                    No offers found.
+                  </td>
+                </tr>
+              )}
+              {offers.map((o) => (
+                <tr key={o.offerId} className="text-center">
+                  <td
+                    className="border p-2 text-blue-600 cursor-pointer underline"
+                    onClick={() => showOfferDetails(o.offerId)}
+                  >
+                    {o.offerId}
+                  </td>
+                  <td className="border p-2">{o.companyName || "—"}</td>
+                  <td className="border p-2">{o.offerTitle || "—"}</td>
+                  <td className="border p-2">{o.requestTitle || "—"}</td>
+                  <td className="border p-2">{o.offerStatus || "—"}</td>
+                  <td className="border p-2">{o.offerPrice ?? "—"}</td>
+                  <td className="border p-2">
+                    <button
+                      onClick={() => deleteOffer(o.offerId)}
+                      className="bg-red-500 text-white px-2 py-1 rounded"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+
+              {offerLoading && (
+                <tr>
+                  <td colSpan={7} className="text-center p-4">
+                    Loading…
+                  </td>
+                </tr>
+              )}
+              {offerHasMore && !offerLoading && offers.length > 0 && (
+                <tr>
+                  <td colSpan={7} className="p-2">
+                    <button
+                      onClick={() => fetchOffers(false)}
+                      className="w-full bg-gray-100 p-2 text-black"
+                    >
+                      Load more
+                    </button>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {/* Offer details modal */}
+      {offerSelected && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded max-w-3xl max-h-[80vh] overflow-y-auto text-black">
+            <h2 className="text-xl font-bold mb-4">Offer Details</h2>
+            <pre className="text-xs bg-gray-100 p-4 rounded overflow-x-auto">
+              {JSON.stringify(offerSelected, null, 2)}
+            </pre>
+            <button
+              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
+              onClick={() => setOfferSelected(null)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* --- All Contracts --- */}
+      <br />
+      <section className="rounded bg-black/20 p-4">
+        <h2 className="text-xl font-bold mb-2">All Contracts</h2>
+        <div className="mb-3 flex items-center gap-2">
+          <input
+            type="text"
+            value={contractSearchInput}
+            onChange={(e) => setContractSearchInput(e.target.value)}
+            placeholder="Search by client or provider company…"
+            className="border rounded p-2 w-full"
+          />
+          <button
+            className="bg-[#11999e] text-white px-3 py-2 rounded border cursor-pointer"
+            onClick={() => setContractSearch(contractSearchInput.trim())}
+          >
+            Search
+          </button>
+          <button
+            className="bg-red-500 text-white px-3 py-2 rounded cursor-pointer"
+            onClick={() => {
+              setContractSearchInput("");
+              setContractSearch("");
+            }}
+          >
+            Clear
+          </button>
+        </div>
+
+        <div className="overflow-y-auto max-h-[60vh] border rounded bg-white text-black">
+          <table className="w-full border-collapse">
+            <thead className="bg-gray-200">
+              <tr>
+                <th className="border p-2">Contract Id</th>
+                <th className="border p-2">Client Company</th>
+                <th className="border p-2">Provider Company</th>
+                <th className="border p-2">Contract Date</th>
+                <th className="border p-2">Contract Price</th>
+                <th className="border p-2">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {!contractLoading && contracts.length === 0 && (
+                <tr>
+                  <td colSpan={6} className="text-center p-4 text-gray-500">
+                    No contracts found.
+                  </td>
+                </tr>
+              )}
+              {contracts.map((c) => (
+                <tr key={c.contractId} className="text-center">
+                  <td
+                    className="border p-2 text-blue-600 cursor-pointer underline"
+                    onClick={() => showContractDetails(c.contractId)}
+                  >
+                    {c.contractId}
+                  </td>
+                  <td className="border p-2">{c.clientCompanyName || "—"}</td>
+                  <td className="border p-2">{c.providerCompanyName || "—"}</td>
+                  <td className="border p-2">
+                    {c.contractDate
+                      ? new Date(c.contractDate).toLocaleDateString()
+                      : "—"}
+                  </td>
+                  <td className="border p-2">{c.contractPrice ?? "—"}</td>
+                  <td className="border p-2">
+                    <button
+                      onClick={() => deleteContract(c.contractId)}
+                      className="bg-red-500 text-white px-2 py-1 rounded"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+              {contractLoading && (
+                <tr>
+                  <td colSpan={6} className="text-center p-4">
+                    Loading…
+                  </td>
+                </tr>
+              )}
+              {contractHasMore && !contractLoading && contracts.length > 0 && (
+                <tr>
+                  <td colSpan={6} className="p-2">
+                    <button
+                      onClick={() => fetchContracts(false)}
+                      className="w-full bg-gray-100 p-2 text-black"
+                    >
+                      Load more
+                    </button>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      {/* Contract details modal */}
+      {contractSelected && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
+          <div className="bg-white p-6 rounded max-w-3xl max-h-[80vh] overflow-y-auto text-black">
+            <h2 className="text-xl font-bold mb-4">Contract Details</h2>
+            <pre className="text-xs bg-gray-100 p-4 rounded overflow-x-auto">
+              {JSON.stringify(contractSelected, null, 2)}
+            </pre>
+            <button
+              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
+              onClick={() => setContractSelected(null)}
+            >
+              Close
+            </button>
+          </div>
+        </div>
+      )}
+      <br />
+      <br />
+      <div className="flex flex-col gap-6">
         <section className="rounded bg-black/20 p-4">
           <h2 className="text-xl font-bold mb-3 text-white">
             Registered Users
@@ -965,1246 +2221,7 @@ export default function AdminPage() {
             </button>
           )}
         </section>
-
-        {/* ===================== COMPANIES ===================== */}
-        <section className="rounded bg-black/20 p-4">
-          <h2 className="text-xl font-bold mb-3 text-white">Companies</h2>
-
-          <div className="mb-3 flex items-center gap-2">
-            <input
-              type="text"
-              value={companySearchInput}
-              onChange={(e) => {
-                const val = e.target.value;
-                setCompanySearchInput(val);
-                setCompanySearch(val.trim());
-              }}
-              placeholder="Search companies by name…"
-              className="border rounded p-2 w-full"
-            />
-            <button
-              className="bg-[#11999e] text-white px-3 py-2 rounded border cursor-pointer"
-              onClick={() => setCompanySearch(companySearchInput.trim())}
-            >
-              Search
-            </button>
-            <button
-              className="bg-red-500 text-white px-3 py-2 rounded cursor-pointer"
-              onClick={() => {
-                setCompanySearchInput("");
-                setCompanySearch(""); // triggers reset+fetch via useEffect
-              }}
-            >
-              Clear
-            </button>
-          </div>
-
-          {/* Purchaser Companies */}
-          <h3 className="text-lg font-semibold mt-2 mb-2 text-white">
-            Purchaser Companies
-          </h3>
-          <div className="max-h-[40vh] overflow-y-auto border rounded bg-white text-black">
-            <table className="w-full border-collapse">
-              <thead className="bg-gray-200 sticky top-0">
-                <tr>
-                  <th className="border p-2">Company ID</th>
-                  <th className="border p-2">Role</th>
-                  <th className="border p-2">Register Status</th>
-                  <th className="border p-2">Company</th>
-                  <th className="border p-2">Business Id</th>
-                  <th className="border p-2">Members</th>
-                  <th className="border p-2">Requests</th>
-                  <th className="border p-2">Contracts</th>
-                  <th className="border p-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {companyTables.PURCHASER.items.map((c) => (
-                  <tr key={c.companyPkId} className="text-center">
-                    <td
-                      className="border p-2 text-blue-600 cursor-pointer underline"
-                      onClick={() => showCompanyDetails(c.companyPkId)}
-                    >
-                      {c.companyPkId}
-                    </td>
-                    <td className="border p-2">{c.role}</td>
-                    <td className="border p-2">
-                      <select
-                        className="border rounded"
-                        value={c.registerStatus}
-                        onChange={(e) =>
-                          updateCompanyRegisterStatus(
-                            c.companyPkId,
-                            e.target.value,
-                            c.role,
-                          )
-                        }
-                      >
-                        <option value="pending">Pending</option>
-                        <option value="confirmed">Confirmed</option>
-                      </select>
-                    </td>
-                    <td className="border p-2">{c.companyName}</td>
-
-                    <td className="border p-2">
-                      <input
-                        type="text"
-                        defaultValue={c.businessId || ""}
-                        onBlur={(e) =>
-                          updateCompanyBusinessId(
-                            c.companyPkId,
-                            e.target.value,
-                            c.role,
-                          )
-                        }
-                        className="w-48 border p-1 text-center"
-                      />
-                    </td>
-                    <td className="border p-2">{c.membersCount ?? 0}</td>
-                    <td className="border p-2">{c.requestsCount ?? 0}</td>
-                    <td className="border p-2">{c.contractsCount ?? 0}</td>
-                    <td className="border p-2">
-                      <button
-                        onClick={() => deleteCompany(c.companyPkId, c.role)}
-                        className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-
-                {!companyTables.PURCHASER.loading &&
-                  companyTables.PURCHASER.items.length === 0 && (
-                    <tr>
-                      <td colSpan={9} className="text-center p-4 text-gray-500">
-                        No purchaser companies found.
-                      </td>
-                    </tr>
-                  )}
-
-                {companyTables.PURCHASER.loading && (
-                  <tr>
-                    <td colSpan={9} className="text-center p-4">
-                      Loading…
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {companyTables.PURCHASER.hasMore &&
-            !companyTables.PURCHASER.loading && (
-              <button
-                onClick={() => fetchCompaniesByRole("PURCHASER", false)}
-                className="w-full bg-gray-100 p-2 mt-2 rounded text-black"
-              >
-                Load more
-              </button>
-            )}
-
-          {/* Provider Companies */}
-          <h3 className="text-lg font-semibold mt-6 mb-2 text-white">
-            Provider Companies
-          </h3>
-          <div className="max-h-[40vh] overflow-y-auto border rounded bg-white text-black">
-            <table className="w-full border-collapse">
-              <thead className="bg-gray-200 sticky top-0">
-                <tr>
-                  <th className="border p-2">Company ID</th>
-                  <th className="border p-2">Role</th>
-                  <th className="border p-2">Register Status</th>
-                  <th className="border p-2">Company</th>
-                  <th className="border p-2">Business Id</th>
-                  <th className="border p-2">Invoice Fee</th>
-                  <th className="border p-2">Company Age</th>
-                  <th className="border p-2">Provider Type</th>
-                  <th className="border p-2">Members</th>
-                  <th className="border p-2">Offers</th>
-                  <th className="border p-2">Rating</th>
-                  <th className="border p-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {companyTables.PROVIDER.items.map((c) => (
-                  <tr key={c.companyPkId} className="text-center">
-                    <td
-                      className="border p-2 text-blue-600 cursor-pointer underline"
-                      onClick={() => showCompanyDetails(c.companyPkId)}
-                    >
-                      {c.companyPkId}
-                    </td>
-                    <td className="border p-2">{c.role}</td>
-                    <td className="border p-2">
-                      <select
-                        className="border rounded"
-                        value={c.registerStatus}
-                        onChange={(e) =>
-                          updateCompanyRegisterStatus(
-                            c.companyPkId,
-                            e.target.value,
-                            c.role,
-                          )
-                        }
-                      >
-                        <option value="pending">Pending</option>
-                        <option value="confirmed">Confirmed</option>
-                      </select>
-                    </td>
-                    <td className="border p-2">{c.companyName}</td>
-                    <td className="border p-2">
-                      <input
-                        type="text"
-                        defaultValue={c.businessId || ""}
-                        onBlur={(e) =>
-                          updateCompanyBusinessId(
-                            c.companyPkId,
-                            e.target.value,
-                            c.role,
-                          )
-                        }
-                        className="w-48 border p-1 text-center"
-                      />
-                    </td>
-                    <td className="border p-2">{c.invoiceFee ?? "—"}</td>
-                    <td className="border p-2">{c.companyAge ?? "—"}</td>
-                    <td className="border p-2">{c.providerType ?? "—"}</td>
-                    <td className="border p-2">{c.membersCount ?? 0}</td>
-                    <td className="border p-2">{c.offersCount ?? 0}</td>
-                    <td className="border p-2">
-                      {c.providerTotalRating ?? "—"}
-                    </td>
-                    <td className="border p-2">
-                      <button
-                        onClick={() => deleteCompany(c.companyPkId)}
-                        className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-
-                {!companyTables.PROVIDER.loading &&
-                  companyTables.PROVIDER.items.length === 0 && (
-                    <tr>
-                      <td
-                        colSpan={12}
-                        className="text-center p-4 text-gray-500"
-                      >
-                        No provider companies found.
-                      </td>
-                    </tr>
-                  )}
-
-                {companyTables.PROVIDER.loading && (
-                  <tr>
-                    <td colSpan={12} className="text-center p-4">
-                      Loading…
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {companyTables.PROVIDER.hasMore &&
-            !companyTables.PROVIDER.loading && (
-              <button
-                onClick={() => fetchCompaniesByRole("PROVIDER", false)}
-                className="w-full bg-gray-100 p-2 mt-2 rounded text-black"
-              >
-                Load more
-              </button>
-            )}
-        </section>
-
-        {/* ===================== USER ACCOUNTS ===================== */}
-        <section className="rounded bg-black/20 p-4">
-          <h2 className="text-xl font-bold mb-3 text-white">User Accounts</h2>
-
-          <div className="mb-3 flex items-center gap-2">
-            <input
-              type="text"
-              value={accountSearchInput}
-              onChange={(e) => {
-                const val = e.target.value;
-                setAccountSearchInput(val);
-                setAccountSearch(val.trim());
-              }}
-              placeholder="Search by last name, email, or company…"
-              className="border rounded p-2 w-full"
-            />
-            <button
-              className="bg-[#11999e] text-white px-3 py-2 rounded border cursor-pointer"
-              onClick={() => setAccountSearch(accountSearchInput.trim())}
-            >
-              Search
-            </button>
-            <button
-              className="bg-red-500 text-white px-3 py-2 rounded cursor-pointer"
-              onClick={() => {
-                setAccountSearchInput("");
-                setAccountSearch(""); // triggers reset+fetch via useEffect
-              }}
-            >
-              Clear
-            </button>
-          </div>
-
-          {/* Admin User Accounts */}
-          <h3 className="text-lg font-semibold mt-2 mb-2 text-white">
-            Admin User Accounts
-          </h3>
-          <div className="max-h-[24vh] overflow-y-auto border rounded bg-white text-black">
-            <table className="w-full border-collapse">
-              <thead className="bg-gray-200 sticky top-0">
-                <tr>
-                  <th className="border p-2">User ID</th>
-                  <th className="border p-2">Role</th>
-                  <th className="border p-2">Register Status</th>
-                  <th className="border p-2">Company</th>
-                  <th className="border p-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {accountTables.ADMIN.items.map((a) => (
-                  <tr key={a.userPkId} className="text-center">
-                    <td
-                      className="border p-2 text-blue-600 cursor-pointer underline"
-                      onClick={() => showAccountDetails(a.userPkId)}
-                    >
-                      {a.userPkId}
-                    </td>
-                    <td className="border p-2">{a.role}</td>
-                    <td className="border p-2">
-                      <select
-                        className="border rounded"
-                        value={a.registerStatus}
-                        onChange={(e) =>
-                          updateAccountRegisterStatus(
-                            a.userPkId,
-                            e.target.value,
-                            a.role,
-                          )
-                        }
-                      >
-                        <option value="pending">Pending</option>
-                        <option value="confirmed">Confirmed</option>
-                      </select>
-                    </td>
-                    <td className="border p-2">{a.companyName}</td>
-                    <td className="border p-2">
-                      <button
-                        onClick={() => deleteAccount(a.userPkId, a.role)}
-                        className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-
-                {!accountTables.ADMIN.loading &&
-                  accountTables.ADMIN.items.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="text-center p-4 text-gray-500">
-                        No admin user accounts found.
-                      </td>
-                    </tr>
-                  )}
-
-                {accountTables.ADMIN.loading && (
-                  <tr>
-                    <td colSpan={5} className="text-center p-4">
-                      Loading…
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {accountTables.ADMIN.hasMore && !accountTables.ADMIN.loading && (
-            <button
-              onClick={() => fetchAccountsByRole("ADMIN", false)}
-              className="w-full bg-gray-100 p-2 mt-2 rounded text-black"
-            >
-              Load more
-            </button>
-          )}
-
-          {/* Purchaser User Accounts */}
-          <h3 className="text-lg font-semibold mt-6 mb-2 text-white">
-            Purchaser User Accounts
-          </h3>
-          <div className="max-h-[24vh] overflow-y-auto border rounded bg-white text-black">
-            <table className="w-full border-collapse">
-              <thead className="bg-gray-200 sticky top-0">
-                <tr>
-                  <th className="border p-2">User ID</th>
-                  <th className="border p-2">User's Name</th>
-                  <th className="border p-2">Role</th>
-                  <th className="border p-2">Register Status</th>
-                  <th className="border p-2">Company</th>
-                  <th className="border p-2">Requests</th>
-                  <th className="border p-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {accountTables.PURCHASER.items.map((a) => (
-                  <tr key={a.userPkId} className="text-center">
-                    <td
-                      className="border p-2 text-blue-600 cursor-pointer underline"
-                      onClick={() => showAccountDetails(a.userPkId)}
-                    >
-                      {a.userPkId}
-                    </td>
-                    <td className="border p-2">
-                      {a.firstName} {a.lastName}
-                    </td>
-                    <td className="border p-2">{a.role}</td>
-                    <td className="border p-2">
-                      <select
-                        className="border rounded"
-                        value={a.registerStatus}
-                        onChange={(e) =>
-                          updateAccountRegisterStatus(
-                            a.userPkId,
-                            e.target.value,
-                            a.role,
-                          )
-                        }
-                      >
-                        <option value="pending">Pending</option>
-                        <option value="confirmed">Confirmed</option>
-                      </select>
-                    </td>
-                    <td className="border p-2">{a.companyName}</td>
-                    <td className="border p-2">{a.requestsCount ?? 0}</td>
-                    <td className="border p-2">
-                      <button
-                        onClick={() => deleteAccount(a.userPkId)}
-                        className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-
-                {!accountTables.PURCHASER.loading &&
-                  accountTables.PURCHASER.items.length === 0 && (
-                    <tr>
-                      <td colSpan={7} className="text-center p-4 text-gray-500">
-                        No purchaser user accounts found.
-                      </td>
-                    </tr>
-                  )}
-
-                {accountTables.PURCHASER.loading && (
-                  <tr>
-                    <td colSpan={7} className="text-center p-4">
-                      Loading…
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {accountTables.PURCHASER.hasMore &&
-            !accountTables.PURCHASER.loading && (
-              <button
-                onClick={() => fetchAccountsByRole("PURCHASER", false)}
-                className="w-full bg-gray-100 p-2 mt-2 rounded text-black"
-              >
-                Load more
-              </button>
-            )}
-
-          {/* Provider User Accounts */}
-          <h3 className="text-lg font-semibold mt-6 mb-2 text-white">
-            Provider User Accounts
-          </h3>
-          <div className="max-h-[24vh] overflow-y-auto border rounded bg-white text-black">
-            <table className="w-full border-collapse">
-              <thead className="bg-gray-200 sticky top-0">
-                <tr>
-                  <th className="border p-2">User ID</th>
-                  <th className="border p-2">User's Name</th>
-                  <th className="border p-2">Role</th>
-                  <th className="border p-2">Register Status</th>
-                  <th className="border p-2">Company</th>
-                  <th className="border p-2">Offers</th>
-                  <th className="border p-2">Actions</th>
-                </tr>
-              </thead>
-              <tbody>
-                {accountTables.PROVIDER.items.map((a) => (
-                  <tr key={a.userPkId} className="text-center">
-                    <td
-                      className="border p-2 text-blue-600 cursor-pointer underline"
-                      onClick={() => showAccountDetails(a.userPkId)}
-                    >
-                      {a.userPkId}
-                    </td>
-                    <td className="border p-2">
-                      {a.firstName} {a.lastName}
-                    </td>
-                    <td className="border p-2">{a.role}</td>
-                    <td className="border p-2">
-                      <select
-                        className="border rounded"
-                        value={a.registerStatus}
-                        onChange={(e) =>
-                          updateAccountRegisterStatus(
-                            a.userPkId,
-                            e.target.value,
-                            a.role,
-                          )
-                        }
-                      >
-                        <option value="pending">Pending</option>
-                        <option value="confirmed">Confirmed</option>
-                      </select>
-                    </td>
-                    <td className="border p-2">{a.companyName}</td>
-                    <td className="border p-2">{a.offersCount ?? 0}</td>
-                    <td className="border p-2">
-                      <button
-                        onClick={() => deleteAccount(a.userPkId)}
-                        className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-
-                {!accountTables.PROVIDER.loading &&
-                  accountTables.PROVIDER.items.length === 0 && (
-                    <tr>
-                      <td colSpan={7} className="text-center p-4 text-gray-500">
-                        No provider user accounts found.
-                      </td>
-                    </tr>
-                  )}
-
-                {accountTables.PROVIDER.loading && (
-                  <tr>
-                    <td colSpan={7} className="text-center p-4">
-                      Loading…
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {accountTables.PROVIDER.hasMore &&
-            !accountTables.PROVIDER.loading && (
-              <button
-                onClick={() => fetchAccountsByRole("PROVIDER", false)}
-                className="w-full bg-gray-100 p-2 mt-2 rounded text-black"
-              >
-                Load more
-              </button>
-            )}
-        </section>
-
-        {/* === Requests search bar belongs OUTSIDE these 3 columns in your layout.
-      If you want it under this grid (full width), keep it AFTER this grid. === */}
       </div>
-
-      {/* User details modal */}
-      {selectedUser && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded max-w-2xl max-h-[80vh] overflow-y-auto text-black">
-            <h2 className="text-xl font-bold mb-4">User Details</h2>
-            <div className="space-y-2">
-              <p>
-                <strong>User ID:</strong> {selectedUser.userId}
-              </p>
-              <p>
-                <strong>Role:</strong> {selectedUser.role}
-              </p>
-              <p>
-                <strong>Status:</strong> {selectedUser.registerStatus}
-              </p>
-              <p>
-                <strong>Company:</strong> {selectedUser.companyName}
-              </p>
-              +
-              <p>
-                <strong>Company Age:</strong> {selectedUser.companyAge ?? 0}
-              </p>
-              <p>
-                <strong>Founding Year:</strong>{" "}
-                {selectedUser.companyFoundingYear ?? "—"}
-              </p>
-              <p>
-                <strong>Provider Type:</strong>{" "}
-                {selectedUser.providerType && selectedUser.providerType.trim()
-                  ? selectedUser.providerType
-                  : "N/A"}
-              </p>
-              {selectedUser.role === "PROVIDER" && (
-                <p>
-                  <strong>Total Rating:</strong>{" "}
-                  {selectedUser.providerTotalRating ?? "N/A"}
-                </p>
-              )}
-              <p>
-                <strong>Invoice Fee:</strong> {selectedUser.invoiceFee}
-              </p>
-            </div>
-            <details className="mt-4">
-              <summary className="cursor-pointer text-blue-600">
-                Show full JSON
-              </summary>
-              <pre className="text-xs bg-gray-100 p-4 rounded overflow-x-auto">
-                {JSON.stringify(selectedUser, null, 2)}
-              </pre>
-            </details>
-            <button
-              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
-              onClick={() => setSelectedUser(null)}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
-      {selectedCompany && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded max-w-3xl max-h-[80vh] overflow-y-auto text-black">
-            <h2 className="text-xl font-bold mb-4">Company Details</h2>
-            <div className="space-y-2">
-              <p>
-                <strong>Company ID:</strong> {selectedCompany.companyPkId}
-              </p>
-              <p>
-                <strong>Role:</strong> {selectedCompany.role}
-              </p>
-              <p>
-                <strong>Status:</strong> {selectedCompany.registerStatus}
-              </p>
-              <p>
-                <strong>Company:</strong> {selectedCompany.companyName}
-              </p>
-              <p>
-                <strong>Company Age:</strong> {selectedCompany.companyAge ?? 0}
-              </p>
-              <p>
-                <strong>Founding Year:</strong>{" "}
-                {selectedCompany.companyFoundingYear ?? "—"}
-              </p>
-              <p>
-                <strong>Provider Type:</strong>{" "}
-                {selectedCompany.providerType &&
-                selectedCompany.providerType.trim()
-                  ? selectedCompany.providerType
-                  : "N/A"}
-              </p>
-              {selectedCompany.role === "PROVIDER" && (
-                <p>
-                  <strong>Total Rating:</strong>{" "}
-                  {selectedCompany.providerTotalRating ?? "N/A"}
-                </p>
-              )}
-              <p>
-                <strong>Invoice Fee:</strong> {selectedCompany.invoiceFee}
-              </p>
-            </div>
-
-            <details className="mt-2">
-              <summary className="cursor-pointer text-blue-600">
-                Show full JSON
-              </summary>
-              <pre className="text-xs bg-gray-100 p-4 rounded overflow-x-auto">
-                {JSON.stringify(selectedCompany, null, 2)}
-              </pre>
-            </details>
-
-            <button
-              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
-              onClick={() => setSelectedCompany(null)}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
-      {selectedAccount && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded max-w-3xl max-h-[80vh] overflow-y-auto text-black">
-            <h2 className="text-xl font-bold mb-4">User Account Details</h2>
-            <div className="space-y-2">
-              <p>
-                <strong>User ID:</strong> {selectedAccount.userPkId}
-              </p>
-              <p>
-                <strong>Role:</strong> {selectedAccount.role}
-              </p>
-              <p>
-                <strong>Status:</strong> {selectedAccount.registerStatus}
-              </p>
-              <p>
-                <strong>Company:</strong> {selectedAccount.company.companyName}
-              </p>
-              <p>
-                <strong>Company Age:</strong>{" "}
-                {selectedAccount.company.companyAge ?? 0}
-              </p>
-              <p>
-                <strong>Founding Year:</strong>{" "}
-                {selectedAccount.company.companyFoundingYear ?? "—"}
-              </p>
-              <p>
-                <strong>Provider Type:</strong>{" "}
-                {selectedAccount.company.providerType &&
-                selectedAccount.company.providerType.trim()
-                  ? selectedAccount.company.providerType
-                  : "N/A"}
-              </p>
-              {selectedAccount.role === "PROVIDER" && (
-                <p>
-                  <strong>Total Rating:</strong>{" "}
-                  {selectedAccount.company.providerTotalRating ?? "N/A"}
-                </p>
-              )}
-              <p>
-                <strong>Invoice Fee:</strong>{" "}
-                {selectedAccount.company.invoiceFee}
-              </p>
-            </div>
-
-            <details className="mt-2">
-              <summary className="cursor-pointer text-blue-600">
-                Show full JSON
-              </summary>
-              <pre className="text-xs bg-gray-100 p-4 rounded overflow-x-auto">
-                {JSON.stringify(selectedAccount, null, 2)}
-              </pre>
-            </details>
-
-            <button
-              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
-              onClick={() => setSelectedAccount(null)}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
-      <br />
-      <div className="mb-3 flex items-center gap-2">
-        <input
-          type="text"
-          value={reqSearch}
-          onChange={(e) => setReqSearch(e.target.value)}
-          placeholder="Search by company name or request title…"
-          className="border rounded p-2 w-full max-w-md"
-        />
-        <button
-          className="px-3 py-2 rounded bg-gray-200 text-black"
-          onClick={() => {
-            setReqSearch("");
-            fetchRequests(true);
-          }}
-        >
-          Clear
-        </button>
-      </div>
-      <h2 className="text-xl font-bold mb-6">All Purchaser Requests</h2>
-
-      <div
-        id={reqBoxId}
-        className="overflow-y-auto max-h-[70vh] border rounded bg-white text-black"
-      >
-        <table className="w-full border-collapse">
-          <thead className="bg-gray-200">
-            <tr>
-              <th className="border p-2">Request ID</th>
-              <th className="border p-2">Company</th>
-              <th className="border p-2">Title</th>
-              <th className="border p-2">Request State</th>
-              <th className="border p-2">Offers</th>
-              <th className="border p-2">Time Until Expiration</th>
-              <th className="border p-2">Time Until Rejection of All Offers</th>
-              <th className="border p-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {reqLoading && (
-              <tr>
-                <td colSpan={8} className="text-center p-4">
-                  Loading…
-                </td>
-              </tr>
-            )}
-            {!reqLoading && reqError && (
-              <tr>
-                <td colSpan={8} className="text-center p-4 text-red-600">
-                  {reqError}
-                </td>
-              </tr>
-            )}
-            {!reqLoading && !reqError && reqs.length === 0 && (
-              <>
-                <tr>
-                  <td colSpan={8} className="text-center p-4 text-gray-500">
-                    There are no requests made yet.
-                  </td>
-                </tr>
-              </>
-            )}
-            {!reqLoading &&
-              !reqError &&
-              reqs.map((r) => {
-                const timeLabel =
-                  r.requestState === "EXPIRED"
-                    ? "Expired"
-                    : formatTimeUntil(r.offersDeadline);
-                let rejectLabel;
-                if (!r.acceptDeadline) {
-                  rejectLabel = "N/A"; // no deadline set
-                } else {
-                  const end = new Date(r.acceptDeadline).getTime();
-                  if (Number.isNaN(end) || end <= Date.now()) {
-                    rejectLabel = "Expired";
-                  } else {
-                    rejectLabel = formatTimeUntil(r.acceptDeadline);
-                  }
-                }
-                return (
-                  <tr key={r.requestId} className="text-center">
-                    <td
-                      className="border p-2 text-blue-600 cursor-pointer underline"
-                      onClick={() => showRequestDetails(r.requestId)}
-                    >
-                      {r.requestId}
-                    </td>
-                    <td className="border p-2">{r.clientCompanyName || "—"}</td>
-                    <td className="border p-2">{r.title || "—"}</td>
-                    <td className="border p-2">
-                      <select
-                        className="border rounded"
-                        value={r.requestState}
-                        onChange={(e) =>
-                          updateRequestState(r.requestId, e.target.value)
-                        }
-                      >
-                        {ADMIN_REQUEST_STATES.map((s) => (
-                          <option key={s.value} value={s.value}>
-                            {s.label}
-                          </option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="border p-2">{r.offersCount ?? 0}</td>
-                    <td className="border p-2">{timeLabel}</td>
-                    <td className="border p-2">{rejectLabel}</td>
-                    <td className="border p-2">
-                      {r.requestState === "CONFLICT_CHECK" ? (
-                        <div className="flex flex-col items-center gap-2">
-                          <div className="text-sm text-left">
-                            <div>
-                              <strong>Selected Provider:</strong>{" "}
-                              {r.selectedOfferCompanyName || "—"}
-                            </div>
-                            <div>
-                              <strong>Offer Lawyer:</strong>{" "}
-                              {r.selectedOfferLawyer || "—"}
-                            </div>
-                          </div>
-                          <div className="flex gap-2 justify-center">
-                            <button
-                              className="bg-green-600 text-white px-2 py-1 rounded cursor-pointer"
-                              onClick={async () => {
-                                const ok = confirm(
-                                  "Are you sure you want to APPROVE this conflict check?",
-                                );
-                                if (!ok) return;
-
-                                await fetch(
-                                  `/api/admin/requests/${r.requestId}/conflict`,
-                                  {
-                                    method: "PUT",
-                                    headers: {
-                                      "Content-Type": "application/json",
-                                    },
-                                    body: JSON.stringify({
-                                      decision: "accept",
-                                    }),
-                                  },
-                                );
-
-                                window.location.reload();
-                              }}
-                            >
-                              Approve Conflict Check
-                            </button>
-
-                            <button
-                              className="bg-red-600 text-white px-2 py-1 rounded cursor-pointer"
-                              onClick={async () => {
-                                const ok = confirm(
-                                  "Are you sure you want to DENY this offer and replace it?",
-                                );
-                                if (!ok) return;
-
-                                await fetch(
-                                  `/api/admin/requests/${r.requestId}/conflict`,
-                                  {
-                                    method: "PUT",
-                                    headers: {
-                                      "Content-Type": "application/json",
-                                    },
-                                    body: JSON.stringify({ decision: "deny" }),
-                                  },
-                                );
-
-                                window.location.reload();
-                              }}
-                            >
-                              Deny & Replace Offer
-                            </button>
-                          </div>
-                        </div>
-                      ) : (
-                        <button
-                          onClick={() => deleteRequest(r.requestId)}
-                          className="bg-red-500 text-white px-2 py-1 rounded"
-                        >
-                          Delete
-                        </button>
-                      )}
-                    </td>
-                  </tr>
-                );
-              })}
-            {!reqLoading &&
-              !reqError &&
-              reqs.map((r) => {
-                // ...row rendering stays exactly the same...
-              })}
-
-            {/* Load more button, like in the other tables */}
-            {reqHasMore && !reqLoading && reqs.length > 0 && (
-              <tr>
-                <td colSpan={8} className="p-2">
-                  <button
-                    onClick={() => fetchRequests(false)}
-                    className="w-full bg-gray-100 p-2 text-black"
-                  >
-                    Load more
-                  </button>
-                </td>
-              </tr>
-            )}
-
-            {reqLoading && reqHasMore && (
-              <tr>
-                <td colSpan={8} className="text-center p-3 text-gray-500">
-                  Loading more…
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Request details modal */}
-      {reqSelected && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded max-w-3xl max-h-[80vh] overflow-y-auto text-black">
-            <h2 className="text-xl font-bold mb-4">Request Details</h2>
-            <div className="space-y-2">
-              <p>
-                <strong>Request ID:</strong> {reqSelected.requestId}
-              </p>
-              <p>
-                <strong>Company:</strong> {reqSelected.clientCompanyName}
-              </p>
-              <p>
-                <strong>State:</strong> {reqSelected.requestState}
-              </p>
-              <p>
-                <strong>Title:</strong> {reqSelected.title || "—"}
-              </p>
-              <p>
-                <strong>Primary Contact:</strong>{" "}
-                {reqSelected.primaryContactPerson || "—"}
-              </p>
-              <p>
-                <strong>Offers Deadline:</strong>{" "}
-                {reqSelected.offersDeadline
-                  ? new Date(reqSelected.offersDeadline).toLocaleString()
-                  : "—"}
-              </p>
-              <p>
-                <strong>Accept Deadline:</strong>{" "}
-                {reqSelected.acceptDeadline
-                  ? new Date(reqSelected.acceptDeadline).toLocaleString()
-                  : "—"}
-              </p>
-              <p>
-                <strong>Offers Count:</strong> {reqSelected.offersCount ?? 0}
-              </p>
-            </div>
-            <details className="mt-4">
-              <summary className="cursor-pointer text-blue-600">
-                Show full JSON
-              </summary>
-              <pre className="text-xs bg-gray-100 p-4 rounded overflow-x-auto">
-                {JSON.stringify(reqSelected, null, 2)}
-              </pre>
-            </details>
-            <button
-              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
-              onClick={() => setReqSelected(null)}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* --- All Offers --- */}
-      <br />
-      <h2 className="text-xl font-bold mb-2">All Offers</h2>
-      <div className="mb-3 flex items-center gap-2">
-        <input
-          type="text"
-          value={offerSearchInput}
-          onChange={(e) => {
-            const val = e.target.value;
-            setOfferSearchInput(val);
-            setOfferSearch(val.trim()); // triggers debounced fetchOffers via useEffect
-          }}
-          placeholder="Search by provider company, offer title or request title…"
-          className="border rounded p-2 w-full max-w-md"
-        />
-        <button
-          className="bg-[#11999e] text-white px-3 py-2 rounded border cursor-pointer"
-          onClick={() => setOfferSearch(offerSearchInput.trim())}
-        >
-          Search
-        </button>
-        <button
-          className="bg-red-500 text-white px-3 py-2 rounded cursor-pointer"
-          onClick={() => {
-            setOfferSearchInput("");
-            setOfferSearch("");
-          }}
-        >
-          Clear
-        </button>
-      </div>
-
-      <div className="overflow-y-auto max-h-[60vh] border rounded bg-white text-black">
-        <table className="w-full border-collapse">
-          <thead className="bg-gray-200">
-            <tr>
-              <th className="border p-2">Offer Id</th>
-              <th className="border p-2">Company</th>
-              <th className="border p-2">Offer Title</th>
-              <th className="border p-2">Request Title</th>
-              <th className="border p-2">Offer Status</th>
-              <th className="border p-2">Offer Price</th>
-              <th className="border p-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {!offerLoading && offers.length === 0 && (
-              <tr>
-                <td colSpan={7} className="text-center p-4 text-gray-500">
-                  No offers found.
-                </td>
-              </tr>
-            )}
-            {offers.map((o) => (
-              <tr key={o.offerId} className="text-center">
-                <td
-                  className="border p-2 text-blue-600 cursor-pointer underline"
-                  onClick={() => showOfferDetails(o.offerId)}
-                >
-                  {o.offerId}
-                </td>
-                <td className="border p-2">{o.companyName || "—"}</td>
-                <td className="border p-2">{o.offerTitle || "—"}</td>
-                <td className="border p-2">{o.requestTitle || "—"}</td>
-                <td className="border p-2">{o.offerStatus || "—"}</td>
-                <td className="border p-2">{o.offerPrice ?? "—"}</td>
-                <td className="border p-2">
-                  <button
-                    onClick={() => deleteOffer(o.offerId)}
-                    className="bg-red-500 text-white px-2 py-1 rounded"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-
-            {offerLoading && (
-              <tr>
-                <td colSpan={7} className="text-center p-4">
-                  Loading…
-                </td>
-              </tr>
-            )}
-            {offerHasMore && !offerLoading && offers.length > 0 && (
-              <tr>
-                <td colSpan={7} className="p-2">
-                  <button
-                    onClick={() => fetchOffers(false)}
-                    className="w-full bg-gray-100 p-2 text-black"
-                  >
-                    Load more
-                  </button>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Offer details modal */}
-      {offerSelected && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded max-w-3xl max-h-[80vh] overflow-y-auto text-black">
-            <h2 className="text-xl font-bold mb-4">Offer Details</h2>
-            <pre className="text-xs bg-gray-100 p-4 rounded overflow-x-auto">
-              {JSON.stringify(offerSelected, null, 2)}
-            </pre>
-            <button
-              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
-              onClick={() => setOfferSelected(null)}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* --- All Contracts --- */}
-      <br />
-      <h2 className="text-xl font-bold mb-2">All Contracts</h2>
-      <div className="mb-3 flex items-center gap-2">
-        <input
-          type="text"
-          value={contractSearchInput}
-          onChange={(e) => setContractSearchInput(e.target.value)}
-          placeholder="Search by client or provider company…"
-          className="border rounded p-2 w-full max-w-md"
-        />
-        <button
-          className="bg-[#11999e] text-white px-3 py-2 rounded border cursor-pointer"
-          onClick={() => setContractSearch(contractSearchInput.trim())}
-        >
-          Search
-        </button>
-        <button
-          className="bg-red-500 text-white px-3 py-2 rounded cursor-pointer"
-          onClick={() => {
-            setContractSearchInput("");
-            setContractSearch("");
-          }}
-        >
-          Clear
-        </button>
-      </div>
-
-      <div className="overflow-y-auto max-h-[60vh] border rounded bg-white text-black">
-        <table className="w-full border-collapse">
-          <thead className="bg-gray-200">
-            <tr>
-              <th className="border p-2">Contract Id</th>
-              <th className="border p-2">Client Company</th>
-              <th className="border p-2">Provider Company</th>
-              <th className="border p-2">Contract Date</th>
-              <th className="border p-2">Contract Price</th>
-              <th className="border p-2">Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {!contractLoading && contracts.length === 0 && (
-              <tr>
-                <td colSpan={6} className="text-center p-4 text-gray-500">
-                  No contracts found.
-                </td>
-              </tr>
-            )}
-            {contracts.map((c) => (
-              <tr key={c.contractId} className="text-center">
-                <td
-                  className="border p-2 text-blue-600 cursor-pointer underline"
-                  onClick={() => showContractDetails(c.contractId)}
-                >
-                  {c.contractId}
-                </td>
-                <td className="border p-2">{c.clientCompanyName || "—"}</td>
-                <td className="border p-2">{c.providerCompanyName || "—"}</td>
-                <td className="border p-2">
-                  {c.contractDate
-                    ? new Date(c.contractDate).toLocaleDateString()
-                    : "—"}
-                </td>
-                <td className="border p-2">{c.contractPrice ?? "—"}</td>
-                <td className="border p-2">
-                  <button
-                    onClick={() => deleteContract(c.contractId)}
-                    className="bg-red-500 text-white px-2 py-1 rounded"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            ))}
-            {contractLoading && (
-              <tr>
-                <td colSpan={6} className="text-center p-4">
-                  Loading…
-                </td>
-              </tr>
-            )}
-            {contractHasMore && !contractLoading && contracts.length > 0 && (
-              <tr>
-                <td colSpan={6} className="p-2">
-                  <button
-                    onClick={() => fetchContracts(false)}
-                    className="w-full bg-gray-100 p-2 text-black"
-                  >
-                    Load more
-                  </button>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Contract details modal */}
-      {contractSelected && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center">
-          <div className="bg-white p-6 rounded max-w-3xl max-h-[80vh] overflow-y-auto text-black">
-            <h2 className="text-xl font-bold mb-4">Contract Details</h2>
-            <pre className="text-xs bg-gray-100 p-4 rounded overflow-x-auto">
-              {JSON.stringify(contractSelected, null, 2)}
-            </pre>
-            <button
-              className="mt-4 bg-blue-500 text-white px-4 py-2 rounded"
-              onClick={() => setContractSelected(null)}
-            >
-              Close
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

@@ -3,6 +3,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 
+function jsonSafe(value) {
+  return JSON.parse(
+    JSON.stringify(value, (_, v) => (typeof v === "bigint" ? Number(v) : v)),
+  );
+}
+
 export async function GET(_req, { params }) {
   const session = await getServerSession(authOptions);
   if (!session || session.role !== "ADMIN") {
@@ -16,6 +22,9 @@ export async function GET(_req, { params }) {
     where: { requestId: id },
     select: {
       requestId: true,
+      clientUserId: true,
+      clientCompanyId: true,
+      createdByUserId: true,
       clientCompanyName: true,
       requestState: true,
       title: true,
@@ -37,20 +46,29 @@ export async function GET(_req, { params }) {
       scopeOfWork: true,
       description: true,
       additionalBackgroundInfo: true,
+      backgroundInfoFiles: true,
+      supplierCodeOfConductFiles: true,
       requestCategory: true,
       requestSubcategory: true,
       assignmentType: true,
-      details: true, // include the full details blob
+      details: true,
       selectedOfferId: true,
       _count: { select: { offers: true } },
     },
   });
+
   if (!r) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
   const out = {
     ...r,
     requestId: Number(r.requestId),
-    selectedOfferId: r.selectedOfferId ? Number(r.selectedOfferId) : null,
+    clientUserId: r.clientUserId != null ? Number(r.clientUserId) : null,
+    clientCompanyId:
+      r.clientCompanyId != null ? Number(r.clientCompanyId) : null,
+    createdByUserId:
+      r.createdByUserId != null ? Number(r.createdByUserId) : null,
+    selectedOfferId:
+      r.selectedOfferId != null ? Number(r.selectedOfferId) : null,
     offersCount: r._count?.offers ?? 0,
     offersDeadline: r.offersDeadline
       ? new Date(r.offersDeadline).toISOString()
@@ -62,7 +80,7 @@ export async function GET(_req, { params }) {
     dateExpired: r.dateExpired ? new Date(r.dateExpired).toISOString() : null,
   };
 
-  return NextResponse.json(out);
+  return NextResponse.json(jsonSafe(out));
 }
 
 export async function DELETE(_req, { params }) {

@@ -19,7 +19,19 @@ export async function GET(req) {
             },
           },
           {
+            request: {
+              clientUser: {
+                companyName: { contains: search, mode: "insensitive" },
+              },
+            },
+          },
+          {
             provider: {
+              companyName: { contains: search, mode: "insensitive" },
+            },
+          },
+          {
+            providerUser: {
               companyName: { contains: search, mode: "insensitive" },
             },
           },
@@ -42,9 +54,27 @@ export async function GET(req) {
           select: {
             title: true,
             client: { select: { companyName: true } },
+            clientUser: {
+              select: {
+                company: {
+                  select: {
+                    companyName: true,
+                  },
+                },
+              },
+            },
           },
         },
         provider: { select: { companyName: true } }, // contract has providerId → provider user
+        providerUser: {
+          select: {
+            company: {
+              select: {
+                companyName: true,
+              },
+            },
+          },
+        },
       },
     }),
   ]);
@@ -53,8 +83,12 @@ export async function GET(req) {
     contractId: Number(c.contractId),
     contractDate: c.contractDate,
     contractPrice: c.contractPrice,
-    clientCompanyName: c.request?.client?.companyName || "—",
-    providerCompanyName: c.provider?.companyName || "—",
+    clientCompanyName:
+      c.request?.clientUser?.company?.companyName ||
+      c.request?.client?.companyName ||
+      "—",
+    providerCompanyName:
+      c.providerUser?.company?.companyName || c.provider?.companyName || "—",
     requestTitle: c.request?.title || "—",
   }));
 

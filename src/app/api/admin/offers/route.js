@@ -20,6 +20,14 @@ export async function GET(req) {
             },
           },
           {
+            providerCompany: {
+              companyName: {
+                contains: search,
+                mode: "insensitive",
+              },
+            },
+          },
+          {
             offerTitle: {
               contains: search,
               mode: "insensitive",
@@ -49,6 +57,7 @@ export async function GET(req) {
         offerStatus: true,
         offerPrice: true,
         offerTitle: true,
+        providerCompany: { select: { companyName: true } },
         provider: { select: { companyName: true } },
         request: { select: { title: true } },
       },
@@ -60,7 +69,8 @@ export async function GET(req) {
     offerStatus: o.offerStatus,
     offerPrice: o.offerPrice,
     offerTitle: o.offerTitle || null,
-    companyName: o.provider?.companyName || "—",
+    companyName:
+      o.providerCompany?.companyName || o.provider?.companyName || "—",
     requestTitle: o.request?.title || null,
   }));
 
