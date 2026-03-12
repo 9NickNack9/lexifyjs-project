@@ -125,6 +125,22 @@ function parseMinAge(val) {
   return parseMinFromLabel(String(val));
 }
 
+function parseMinSize(val) {
+  if (val == null) return null;
+
+  if (typeof val === "number") {
+    return Number.isFinite(val) ? val : null;
+  }
+
+  const s = String(val).trim();
+
+  if (!s) return null;
+  if (/^any(\s+size)?$/i.test(s)) return 0;
+
+  const m = s.match(/(\d+)/);
+  return m ? Number(m[1]) : null;
+}
+
 // Normalize provider type to a canonical token
 function normalizeProviderType(value) {
   const s = (value || "").toString().toLowerCase().trim();
@@ -361,15 +377,18 @@ export async function GET(req) {
     const visible = rows.filter((r) => {
       const maker = r.createdByUser || {};
 
-      // 1) Blocked: if purchaser blocked my company -> hide
+      // 1) Blocked always loses
       const blocked = toStringArray(maker.blockedServiceProviders);
       if (blocked.includes(myCompanyName)) return false;
 
-      // 2) Legal panel: if purchaser uses panel and I'm not in it -> hide
+      // 2) Panel handling
       const panel = toStringArray(maker.legalPanelServiceProviders);
-      if (panel.length > 0 && !panel.includes(myCompanyName)) return false;
+      const onPanel = panel.includes(myCompanyName);
 
-      // 3) Preferred: preferred providers can bypass some gating constraints
+      // If purchaser uses a panel, non-panel providers never see the request
+      if (panel.length > 0 && !onPanel) return false;
+
+      // 3) Preferred handling
       const prefMap = normalizePreferredToAreaMap(
         maker.preferredLegalServiceProviders,
       );
@@ -381,38 +400,28 @@ export async function GET(req) {
         ? prefMap[categoryKey].includes(myCompanyName)
         : false;
 
-      // 4) Provider size gating (unless preferred)
-      if (!preferredForArea) {
+      // 4) Panel OR preferred => bypass all gates
+      const bypassAllGates = onPanel || preferredForArea;
+
+      if (!bypassAllGates) {
+        const minSize = parseMinSize(r.providerSize);
+        if (typeof minSize === "number" && minSize > 0) {
+          if (Number(myPros) < Number(minSize)) return false;
+        }
+
         const minRating = parseMinFromLabel(r.providerMinimumRating);
         if (typeof minRating === "number" && minRating > 0) {
           const myRating = getMyRatingForRequest(r);
-          const hasNoRatings = myRating == null;
-
-          if (!hasNoRatings && Number(myRating) < Number(minRating)) {
+          if (myRating != null && Number(myRating) < Number(minRating)) {
             return false;
           }
         }
-      }
 
-      // 5) Minimum rating gating (unless preferred)
-      if (!preferredForArea) {
-        const minRating = parseMinFromLabel(r.providerMinimumRating);
-        if (typeof minRating === "number" && minRating > 0) {
-          const myRating = getMyRatingForRequest(r);
-          if (Number(myRating) < Number(minRating)) return false;
-        }
-      }
-
-      // 6) Company age gating (unless preferred)
-      if (!preferredForArea) {
         const minAge = parseMinAge(r.providerCompanyAge);
         if (typeof minAge === "number" && minAge > 0) {
           if (Number(myAge) < Number(minAge)) return false;
         }
-      }
 
-      // 7) Provider type gating (unless preferred)
-      if (!preferredForArea) {
         const reqTypeNorm = normalizeProviderType(r.serviceProviderType);
         if (reqTypeNorm && reqTypeNorm !== "all") {
           if (
