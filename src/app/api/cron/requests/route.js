@@ -7,7 +7,6 @@ import {
   notifyPurchaserOnHoldExpirySoon,
 } from "@/lib/mailer";
 
-// 🔐 Require a shared-secret header for cron calls
 function requireCronAuth(req) {
   const expected = process.env.CRON_SECRET;
   const got = req.headers.get("x-cron-secret");
@@ -18,39 +17,28 @@ function requireCronAuth(req) {
   }
 }
 
-// --- email helpers (place near other helpers) ---
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const isEmail = (s) => typeof s === "string" && EMAIL_RE.test(s.trim());
+const normalize = (s) => (s ?? "").toString().trim().toLowerCase();
+const fullName = (u) =>
+  [u?.firstName, u?.lastName].filter(Boolean).join(" ").trim();
 
-// Given a primary contact (or email) + the same user's contacts,
-// return [primaryEmail, ...all allNotifications=true emails (excluding primary)]
-function expandWithAllNotificationContacts(primary, contacts) {
-  const primaryEmail =
-    typeof primary === "string" ? primary : primary?.email || "";
-  const base = new Set();
-  if (isEmail(primaryEmail)) base.add(primaryEmail.trim());
-
-  (Array.isArray(contacts) ? contacts : [])
-    .filter((c) => c && c.allNotifications === true && isEmail(c.email))
-    .forEach((c) => base.add(c.email.trim()));
-
-  return Array.from(base);
-}
-
-// normalize Json / legacy {set:[]} / string → string[]
 function toStringArray(val) {
   if (Array.isArray(val)) return val.filter((v) => typeof v === "string");
   if (val && typeof val === "object") {
-    if (Array.isArray(val.set))
+    if (Array.isArray(val.set)) {
       return val.set.filter((v) => typeof v === "string");
-    if (Array.isArray(val.value))
+    }
+    if (Array.isArray(val.value)) {
       return val.value.filter((v) => typeof v === "string");
+    }
   }
   if (typeof val === "string") {
     try {
       const parsed = JSON.parse(val);
-      if (Array.isArray(parsed))
+      if (Array.isArray(parsed)) {
         return parsed.filter((v) => typeof v === "string");
+      }
       return val ? [val] : [];
     } catch {
       return val ? [val] : [];
@@ -59,7 +47,10 @@ function toStringArray(val) {
   return [];
 }
 
-// Convert Decimal|string|number|null → number|null (only for comparisons)
+function hasNotificationPreference(user, pref) {
+  return toStringArray(user?.notificationPreferences).includes(pref);
+}
+
 function toNumberOrNull(v) {
   if (v === null || v === undefined) return null;
   if (typeof v === "number") return Number.isFinite(v) ? v : null;
@@ -72,16 +63,14 @@ function toNumberOrNull(v) {
 }
 
 function getMaximumPrice(request) {
-  // May live in details.*; not a top-level column
   const raw =
-    request?.maximumPrice ?? // harmless if undefined
+    request?.maximumPrice ??
     request?.details?.maximumPrice ??
     request?.details?.maxPrice ??
     null;
   return toNumberOrNull(raw);
 }
 
-// Write "Yes"/"No" to contractResult (schema field)
 async function setContractResult(requestId, yesOrNo) {
   await prisma.request.update({
     where: { requestId },
@@ -89,10 +78,115 @@ async function setContractResult(requestId, yesOrNo) {
   });
 }
 
-// Read current Yes/No from contractResult
 function getContractResult(row) {
   return row?.contractResult ?? null;
 }
+
+function pickPrimaryPurchaserUser(request) {
+  const companyMembers = Array.isArray(request?.clientCompany?.members)
+    ? request.clientCompany.members
+    : [];
+
+  const primaryName = normalize(request?.primaryContactPerson);
+  if (primaryName) {
+    const exact = companyMembers.find(
+      (m) => normalize(fullName(m)) === primaryName,
+    );
+    if (exact) return exact;
+
+    const loose = companyMembers.find((m) => {
+      const first = normalize(m?.firstName);
+      const last = normalize(m?.lastName);
+      return (
+        Boolean(first || last) &&
+        primaryName.includes(`${first} ${last}`.trim())
+      );
+    });
+    if (loose) return loose;
+  }
+
+  return (
+    request?.createdByUser || request?.clientUser || companyMembers[0] || null
+  );
+}
+
+function buildPurchaserRecipientGroup(request, requiredPref) {
+  const recipients = new Set();
+  const companyMembers = Array.isArray(request?.clientCompany?.members)
+    ? request.clientCompany.members
+    : [];
+
+  const primaryUser = pickPrimaryPurchaserUser(request);
+  if (
+    primaryUser &&
+    isEmail(primaryUser.email) &&
+    hasNotificationPreference(primaryUser, requiredPref)
+  ) {
+    recipients.add(primaryUser.email.trim());
+  }
+
+  for (const member of companyMembers) {
+    if (!isEmail(member?.email)) continue;
+    if (!hasNotificationPreference(member, "all-notifications")) continue;
+    recipients.add(member.email.trim());
+  }
+
+  if (recipients.size === 0) {
+    const fallback =
+      [
+        primaryUser,
+        request?.createdByUser,
+        request?.clientUser,
+        ...companyMembers,
+      ].find(
+        (u) => isEmail(u?.email) && hasNotificationPreference(u, requiredPref),
+      ) || null;
+
+    if (fallback?.email) {
+      recipients.add(fallback.email.trim());
+    }
+  }
+
+  return Array.from(recipients);
+}
+
+const purchaserEmailSelect = {
+  primaryContactPerson: true,
+  clientUser: {
+    select: {
+      userPkId: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      notificationPreferences: true,
+      winningOfferSelection: true,
+    },
+  },
+  createdByUser: {
+    select: {
+      userPkId: true,
+      email: true,
+      firstName: true,
+      lastName: true,
+      notificationPreferences: true,
+      winningOfferSelection: true,
+    },
+  },
+  clientCompany: {
+    select: {
+      companyPkId: true,
+      members: {
+        select: {
+          userPkId: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          notificationPreferences: true,
+        },
+      },
+    },
+  },
+};
 
 export async function POST(req) {
   try {
@@ -100,7 +194,6 @@ export async function POST(req) {
 
     const now = new Date();
 
-    // Find all PENDING requests whose dateExpired <= now
     const pendingExpired = await prisma.request.findMany({
       where: {
         requestState: "PENDING",
@@ -112,17 +205,10 @@ export async function POST(req) {
         requestState: true,
         acceptDeadline: true,
         contractResult: true,
-        details: true, // to read details.maximumPrice
+        details: true,
         title: true,
-        primaryContactPerson: true,
-        client: {
-          select: {
-            userId: true,
-            winningOfferSelection: true, // "manual" | "automatic"
-            companyContactPersons: true,
-            notificationPreferences: true,
-          },
-        },
+        paymentRate: true,
+        ...purchaserEmailSelect,
         offers: {
           select: {
             offerId: true,
@@ -137,16 +223,17 @@ export async function POST(req) {
 
     let expiredNoOffers = 0;
     let onHoldManual = 0;
-    let autoAwarded = 0;
-    let onHoldAutoOverBudget = 0;
 
     for (const r of pendingExpired) {
       const requestId = r.requestId;
       const offers = Array.isArray(r.offers) ? r.offers : [];
       const hasOffers = offers.length > 0;
-      const winningMode = (r.client?.winningOfferSelection || "").toLowerCase();
+      const winningMode = (
+        r.createdByUser?.winningOfferSelection ||
+        r.clientUser?.winningOfferSelection ||
+        ""
+      ).toLowerCase();
 
-      // Resolve maximum price safely (may be absent)
       const maxPriceNum = getMaximumPrice(r);
 
       const offersWithNum = offers
@@ -157,13 +244,12 @@ export async function POST(req) {
         maxPriceNum == null
           ? offersWithNum.length > 0
           : offersWithNum.some((o) => o.priceNum <= maxPriceNum);
-      // If there's no max price (hourly rate), we should also notify
+
       const isHourly =
         typeof r.paymentRate === "string" &&
         r.paymentRate.trim().toLowerCase().startsWith("hourly rate");
 
       if (!hasOffers) {
-        // RULE 1: No offers → EXPIRED + contractResult = "No"
         await prisma.request.update({
           where: { requestId },
           data: { requestState: "EXPIRED" },
@@ -171,55 +257,9 @@ export async function POST(req) {
         await setContractResult(requestId, "No");
         expiredNoOffers++;
 
-        // --- NEW: email the purchaser's primary contact
         try {
-          const norm = (s) => (s ?? "").toString().trim().toLowerCase();
-          const full = (p) =>
-            [p?.firstName, p?.lastName].filter(Boolean).join(" ").trim();
-
-          // prefer r.primaryContactPerson (or details.primaryContactPerson if that’s your pattern)
-          const pc =
-            (r.primaryContactPerson &&
-              (r.primaryContactPerson.firstName ||
-                r.primaryContactPerson.lastName ||
-                r.primaryContactPerson.email ||
-                r.primaryContactPerson.telephone) &&
-              r.primaryContactPerson) ||
-            null;
-
-          const contacts = Array.isArray(r.client?.companyContactPersons)
-            ? r.client.companyContactPersons
-            : [];
-
-          let toEmail = "";
-
-          if (pc) {
-            const target = norm(full(pc));
-            // exact full-name match, else relaxed match on first/last
-            const match =
-              contacts.find((c) => norm(full(c)) === target) ||
-              contacts.find(
-                (c) =>
-                  norm(c?.firstName) === norm(pc.firstName) ||
-                  norm(c?.lastName) === norm(pc.lastName)
-              ) ||
-              null;
-            toEmail = (match?.email || pc.email || "").trim();
-          }
-
-          // final fallback: first contact (only if we still don’t have an email)
-          if (!toEmail && contacts.length > 0) {
-            toEmail = (contacts[0]?.email || "").trim();
-          }
-
-          const purchaserPrefs = toStringArray(
-            r.client?.notificationPreferences
-          );
-          if (toEmail && purchaserPrefs.includes("no_offers")) {
-            const toGroup = expandWithAllNotificationContacts(
-              { email: toEmail },
-              contacts // purchaser's companyContactPersons you already loaded
-            );
+          const toGroup = buildPurchaserRecipientGroup(r, "no_offers");
+          if (toGroup.length > 0) {
             await notifyPurchaserPendingExpiredNoOffers({
               to: toGroup,
               requestTitle: r.title || "",
@@ -232,8 +272,7 @@ export async function POST(req) {
         continue;
       }
 
-      if (winningMode === "manual") {
-        // Manual → ON HOLD + acceptDeadline = dateExpired + 7 days
+      if (winningMode === "manual" || !winningMode) {
         const accept = new Date(r.dateExpired ?? now);
         accept.setDate(accept.getDate() + 7);
         await prisma.request.update({
@@ -242,54 +281,13 @@ export async function POST(req) {
         });
         onHoldManual++;
 
-        // if there are offers and any are under (or equal to) max price, email purchaser primary contact
         if (anyUnderMax || isHourly) {
           try {
-            const norm = (s) => (s ?? "").toString().trim().toLowerCase();
-            const full = (p) =>
-              [p?.firstName, p?.lastName].filter(Boolean).join(" ").trim();
-
-            // prefer stored primaryContactPerson; fall back to first company contact if needed
-            const pc =
-              (r.primaryContactPerson &&
-                (r.primaryContactPerson.firstName ||
-                  r.primaryContactPerson.lastName ||
-                  r.primaryContactPerson.email ||
-                  r.primaryContactPerson.telephone) &&
-                r.primaryContactPerson) ||
-              null;
-
-            const contacts = Array.isArray(r.client?.companyContactPersons)
-              ? r.client.companyContactPersons
-              : [];
-
-            let toEmail = "";
-
-            if (pc) {
-              const target = norm(full(pc));
-              const match =
-                contacts.find((c) => norm(full(c)) === target) ||
-                contacts.find(
-                  (c) =>
-                    norm(c?.firstName) === norm(pc.firstName) ||
-                    norm(c?.lastName) === norm(pc.lastName)
-                ) ||
-                null;
-              toEmail = (match?.email || pc.email || "").trim();
-            }
-
-            if (!toEmail && contacts.length > 0) {
-              toEmail = (contacts[0]?.email || "").trim();
-            }
-
-            const purchaserPrefs = toStringArray(
-              r.client?.notificationPreferences
+            const toGroup = buildPurchaserRecipientGroup(
+              r,
+              "pending_offer_selection",
             );
-            if (toEmail && purchaserPrefs.includes("pending_offer_selection")) {
-              const toGroup = expandWithAllNotificationContacts(
-                { email: toEmail },
-                contacts // purchaser's companyContactPersons you already loaded
-              );
+            if (toGroup.length > 0) {
               await notifyPurchaserManualUnderMaxExpired({
                 to: toGroup,
                 requestTitle: r.title || "",
@@ -298,56 +296,13 @@ export async function POST(req) {
           } catch (e) {
             console.error(
               "Manual-under-max/hourly expiration email failed:",
-              e
+              e,
             );
           }
         } else {
-          // manual selection + ALL offers over max price → notify purchaser
           try {
-            const norm = (s) => (s ?? "").toString().trim().toLowerCase();
-            const full = (p) =>
-              [p?.firstName, p?.lastName].filter(Boolean).join(" ").trim();
-
-            const pc =
-              (r.primaryContactPerson &&
-                (r.primaryContactPerson.firstName ||
-                  r.primaryContactPerson.lastName ||
-                  r.primaryContactPerson.email ||
-                  r.primaryContactPerson.telephone) &&
-                r.primaryContactPerson) ||
-              null;
-
-            const contacts = Array.isArray(r.client?.companyContactPersons)
-              ? r.client.companyContactPersons
-              : [];
-
-            let toEmail = "";
-
-            if (pc) {
-              const target = norm(full(pc));
-              const match =
-                contacts.find((c) => norm(full(c)) === target) ||
-                contacts.find(
-                  (c) =>
-                    norm(c?.firstName) === norm(pc.firstName) ||
-                    norm(c?.lastName) === norm(pc.lastName)
-                ) ||
-                null;
-              toEmail = (match?.email || pc.email || "").trim();
-            }
-
-            if (!toEmail && contacts.length > 0) {
-              toEmail = (contacts[0]?.email || "").trim();
-            }
-
-            const purchaserPrefs = toStringArray(
-              r.client?.notificationPreferences
-            );
-            if (toEmail && purchaserPrefs.includes("over_max_price")) {
-              const toGroup = expandWithAllNotificationContacts(
-                { email: toEmail },
-                contacts // purchaser's companyContactPersons you already loaded
-              );
+            const toGroup = buildPurchaserRecipientGroup(r, "over_max_price");
+            if (toGroup.length > 0) {
               await notifyPurchaserManualAllOverMaxExpired({
                 to: toGroup,
                 requestTitle: r.title || "",
@@ -361,7 +316,6 @@ export async function POST(req) {
         continue;
       }
 
-      // Unknown/missing winningOfferSelection → ON HOLD + 7 days
       const accept = new Date(r.dateExpired ?? now);
       accept.setDate(accept.getDate() + 7);
       await prisma.request.update({
@@ -371,15 +325,14 @@ export async function POST(req) {
       onHoldManual++;
     }
 
-    //  ON HOLD requests whose acceptDeadline is within the next 48 hours
     const in48h = new Date(now.getTime() + 48 * 60 * 60 * 1000);
 
     const onHoldSoon = await prisma.request.findMany({
       where: {
         requestState: "ON HOLD",
         acceptDeadline: {
-          gt: now, // still in the future
-          lte: in48h, // within the next 48 hours
+          gt: now,
+          lte: in48h,
         },
       },
       select: {
@@ -387,67 +340,22 @@ export async function POST(req) {
         title: true,
         acceptDeadline: true,
         details: true,
-        primaryContactPerson: true,
-        client: {
-          select: {
-            companyContactPersons: true,
-            notificationPreferences: true,
-          },
-        },
+        ...purchaserEmailSelect,
       },
     });
 
     for (const r of onHoldSoon) {
       const details =
         r.details && typeof r.details === "object" ? r.details : {};
-      // If we've already notified for this request, skip (prevents email spam)
+
       if (details.expirationNotified === true) {
         continue;
       }
 
       try {
-        const norm = (s) => (s ?? "").toString().trim().toLowerCase();
-        const full = (p) =>
-          [p?.firstName, p?.lastName].filter(Boolean).join(" ").trim();
-
-        const contacts = Array.isArray(r.client?.companyContactPersons)
-          ? r.client.companyContactPersons
-          : [];
-
-        // Prefer stored primaryContactPerson; fall back to first contact if needed
-        const pc =
-          (r.primaryContactPerson &&
-            (r.primaryContactPerson.firstName ||
-              r.primaryContactPerson.lastName ||
-              r.primaryContactPerson.email ||
-              r.primaryContactPerson.telephone) &&
-            r.primaryContactPerson) ||
-          null;
-
-        let toEmail = "";
-
-        if (pc) {
-          const target = norm(full(pc));
-          const match =
-            contacts.find((c) => norm(full(c)) === target) ||
-            contacts.find(
-              (c) =>
-                norm(c?.firstName) === norm(pc.firstName) ||
-                norm(c?.lastName) === norm(pc.lastName)
-            ) ||
-            null;
-          toEmail = (match?.email || pc.email || "").trim();
-        }
-
-        // Final fallback: first contact's email if primary not available
-        if (!toEmail && contacts.length > 0) {
-          toEmail = (contacts[0]?.email || "").trim();
-        }
-
-        // Build [primary + all allNotifications=true contacts] list
-        const toGroup = expandWithAllNotificationContacts(
-          { email: toEmail },
-          contacts
+        const toGroup = buildPurchaserRecipientGroup(
+          r,
+          "pending_offer_selection",
         );
 
         if (toGroup.length > 0) {
@@ -456,27 +364,25 @@ export async function POST(req) {
             requestTitle: r.title || "",
           });
 
-          // Mark that we've notified for this upcoming expiration
-          const newDetails = {
-            ...details,
-            expirationNotified: true,
-          };
-
           await prisma.request.update({
             where: { requestId: r.requestId },
-            data: { details: newDetails },
+            data: {
+              details: {
+                ...details,
+                expirationNotified: true,
+              },
+            },
           });
         }
       } catch (err) {
         console.error(
           "Failed to send ON HOLD 48h expiration reminder for request",
           String(r.requestId),
-          err
+          err,
         );
       }
     }
 
-    // Any ON HOLD past acceptDeadline & not contracted → EXPIRED + contractResult="No"
     const onHoldPast = await prisma.request.findMany({
       where: { requestState: "ON HOLD", acceptDeadline: { lte: now } },
       select: { requestId: true, contractResult: true },
@@ -502,8 +408,6 @@ export async function POST(req) {
         pendingExpiredProcessed: pendingExpired.length,
         expiredNoOffers,
         onHoldManual,
-        autoAwardedContracts: autoAwarded,
-        onHoldAutoOverBudget,
         onHoldExpiredNoContract: onHoldExpired,
       },
     });
