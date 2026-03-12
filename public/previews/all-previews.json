@@ -359,6 +359,10 @@
               {
                 "label": "Object of Sale",
                 "path": "details.saleObject"
+              },
+              {
+                "label": "Range of Expected Purchase price (Cash and Debt Free)",
+                "path": "details.priceRange"
               }
             ]
           },
@@ -390,15 +394,6 @@
               {
                 "label": "Description",
                 "path": "description"
-              }
-            ]
-          },
-          {
-            "title": "Range of Expected Purchase price (Cash and Debt Free)",
-            "fields": [
-              {
-                "label": "Purchase Price Range",
-                "path": "details.priceRange"
               }
             ]
           },
@@ -567,14 +562,9 @@
               {
                 "label": "Other (specified)",
                 "path": "details.otherObject"
-              }
-            ]
-          },
-          {
-            "title": "Range of Expected Purchase price (Cash and Debt Free)",
-            "fields": [
+              },
               {
-                "label": "Purchase Price Range",
+                "label": "Range of Expected Purchase price (Cash and Debt Free)",
                 "path": "details.priceRange"
               }
             ]
@@ -783,10 +773,6 @@
               {
                 "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
                 "path": "advanceRetainerFee"
-              },
-              {
-                "label": "Expected Rent Range",
-                "path": "details.rentRange"
               }
             ]
           },
@@ -796,6 +782,10 @@
               {
                 "label": "Lease Agreement type",
                 "path": "details.agreementType"
+              },
+              {
+                "label": "Range of Expected Rent price (Cash and Debt Free)",
+                "path": "details.rentRange"
               }
             ]
           },
@@ -1271,6 +1261,10 @@
               {
                 "label": "Description",
                 "path": "description"
+              },
+              {
+                "label": "Range of Expected Purchase price (Cash and Debt Free)",
+                "path": "details.priceRange"
               }
             ]
           },
@@ -1292,10 +1286,6 @@
               {
                 "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
                 "path": "advanceRetainerFee"
-              },
-              {
-                "label": "Expected Price Range",
-                "path": "details.priceRange"
               }
             ]
           },
@@ -1318,27 +1308,6 @@
               {
                 "label": "Is Identity of Client and Counterparty Disclosed to the Winning Bidder Only?",
                 "path": "details.confidential"
-              }
-            ]
-          },
-          {
-            "title": "Contract Price & Invoicing",
-            "fields": [
-              {
-                "label": "Contract Price",
-                "path": "paymentRate"
-              },
-              {
-                "label": "Currency",
-                "path": "currency"
-              },
-              {
-                "label": "Invoicing",
-                "path": "invoiceType"
-              },
-              {
-                "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
-                "path": "advanceRetainerFee"
               }
             ]
           },
@@ -2098,10 +2067,6 @@
               {
                 "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
                 "path": "advanceRetainerFee"
-              },
-              {
-                "label": "Expected value of the agreement",
-                "path": "details.expectedValue"
               }
             ]
           },
@@ -2111,6 +2076,10 @@
               {
                 "label": "Description",
                 "path": "description"
+              },
+              {
+                "label": "Expected value of the agreement (Cash and Debt Free)",
+                "path": "details.expectedValue"
               }
             ]
           },
@@ -2256,6 +2225,10 @@
               {
                 "label": "Description",
                 "path": "description"
+              },
+              {
+                "label": "Expected value of the agreement (Cash and Debt Free)",
+                "path": "details.expectedValue"
               }
             ]
           },
@@ -2277,10 +2250,6 @@
               {
                 "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
                 "path": "advanceRetainerFee"
-              },
-              {
-                "label": "Expected value of the agreement",
-                "path": "details.expectedValue"
               }
             ]
           },
@@ -3671,10 +3640,6 @@
               {
                 "label": "Is an Advance Retainer Fee Paid to the Legal Service Provider?",
                 "path": "advanceRetainerFee"
-              },
-              {
-                "label": "Expected Price Range",
-                "path": "details.priceRange"
               }
             ]
           },
@@ -3685,6 +3650,10 @@
               {
                 "label": "Object",
                 "path": "details.objectOfSale"
+              },
+              {
+                "label": "Range of Expected Purchase price (Cash and Debt Free)",
+                "path": "details.priceRange"
               }
             ]
           },
