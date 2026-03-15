@@ -268,7 +268,7 @@ export default function Register() {
                   <input
                     type="text"
                     name="companyWebsite"
-                    placeholder={`${orgLabel} Website`}
+                    placeholder={`${orgLabel}'s Website`}
                     className="p-2 border"
                     onChange={handleChange}
                     required
@@ -326,7 +326,7 @@ export default function Register() {
                       Juris Doctor, Bachelor of Laws, or equivalent) from an
                       accredited university or corresponding institution and is
                       authorized to practice law within the jurisdiction of your
-                      company. When reporting the number of legal professionals
+                      firm. When reporting the number of legal professionals
                       employed by your firm, please count only those individuals
                       who i) meet the criteria above, ii) whose professional
                       profiles are displayed on your firm website and iii) who
