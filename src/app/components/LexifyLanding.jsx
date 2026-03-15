@@ -22,7 +22,7 @@ const LexifyLanding = () => {
   const availability = orgLabel === "Law Firm" ? "law firm's" : "companies";
 
   const trustedLogos = [
-    { name: "Olvi", src: "/logos/olvi-logo.png" },
+    { name: "Olvi", src: "/logos/Olvi-logo.png" },
     { name: "Sitowise", src: "/logos/sitowise-logo.png" },
     { name: "Technopolis", src: "/logos/technopolis-logo.png" },
   ];
