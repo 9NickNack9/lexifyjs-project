@@ -69,30 +69,35 @@ const LexifyLanding = () => {
 
   useEffect(() => {
     const sectionIds = ["how-it-works", "for-companies", "for-firms"];
-    const sections = sectionIds
-      .map((id) => document.getElementById(id))
-      .filter(Boolean);
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visibleSections = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio);
+    const updateActiveSection = () => {
+      const scrollY = window.scrollY;
+      const navOffset = window.innerWidth < 768 ? 170 : 140;
 
-        if (visibleSections.length > 0) {
-          setActiveSection(visibleSections[0].target.id);
+      let currentSection = sectionIds[0];
+
+      for (const id of sectionIds) {
+        const el = document.getElementById(id);
+        if (!el) continue;
+
+        const top = el.offsetTop - navOffset;
+        if (scrollY >= top) {
+          currentSection = id;
         }
-      },
-      {
-        root: null,
-        rootMargin: "-120px 0px -45% 0px",
-        threshold: [0.2, 0.35, 0.5, 0.65],
-      },
-    );
+      }
 
-    sections.forEach((section) => observer.observe(section));
+      setActiveSection(currentSection);
+    };
 
-    return () => observer.disconnect();
+    updateActiveSection();
+
+    window.addEventListener("scroll", updateActiveSection, { passive: true });
+    window.addEventListener("resize", updateActiveSection);
+
+    return () => {
+      window.removeEventListener("scroll", updateActiveSection);
+      window.removeEventListener("resize", updateActiveSection);
+    };
   }, []);
 
   return (
@@ -108,7 +113,7 @@ const LexifyLanding = () => {
         className="fixed top-0 left-0 right-0 z-50"
         style={{ backgroundColor: "#11999e" }}
       >
-        <div className="absolute top-3 right-6 flex items-center gap-4">
+        <div className="hidden md:flex absolute top-3 right-6 items-center gap-4">
           <button
             onClick={() => setDemoModalOpen(true)}
             className="font-semibold text-white border-2 border-white px-4 py-2 rounded-lg hover:bg-white hover:text-[#11999e] transition-colors text-sm whitespace-nowrap cursor-pointer"
@@ -128,9 +133,9 @@ const LexifyLanding = () => {
             Sign in
           </a>
         </div>
-        <div className="max-w-6xl mx-auto px-6 py-3">
+        <div className="max-w-6xl mx-auto px-4 md:px-6 py-3">
           <div className="flex justify-center mb-4">
-            <div className="h-28 flex items-center">
+            <div className="h-20 md:h-28 flex items-center">
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 300 140"
@@ -148,12 +153,12 @@ const LexifyLanding = () => {
             </div>
           </div>
           <div className="flex items-center justify-center">
-            <div className="hidden md:flex items-center gap-8">
+            <div className="flex items-center justify-center flex-wrap gap-x-4 gap-y-2 md:gap-8 text-sm md:text-base">
               <a
                 href="#how-it-works"
                 className={`font-medium transition-colors ${
                   activeSection === "how-it-works"
-                    ? "text-white underline underline-offset-8"
+                    ? "text-white underline underline-offset-4 md:underline-offset-8"
                     : "text-white/80 hover:text-white"
                 }`}
               >
@@ -163,7 +168,7 @@ const LexifyLanding = () => {
                 href="#for-companies"
                 className={`font-medium transition-colors ${
                   activeSection === "for-companies"
-                    ? "text-white underline underline-offset-8"
+                    ? "text-white underline underline-offset-4 md:underline-offset-8"
                     : "text-white/80 hover:text-white"
                 }`}
               >
@@ -173,7 +178,7 @@ const LexifyLanding = () => {
                 href="#for-firms"
                 className={`font-medium transition-colors ${
                   activeSection === "for-firms"
-                    ? "text-white underline underline-offset-8"
+                    ? "text-white underline underline-offset-4 md:underline-offset-8"
                     : "text-white/80 hover:text-white"
                 }`}
               >
@@ -185,7 +190,7 @@ const LexifyLanding = () => {
       </nav>
 
       {/* Hero */}
-      <section className="pt-52 pb-20 px-6">
+      <section className="pt-72 md:pt-52 pb-20 px-6">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-4xl md:text-5xl lg:text-5xl font-headline font-bold text-slate-900 leading-tight mb-6">
             The marketplace for legal services
@@ -237,16 +242,16 @@ const LexifyLanding = () => {
           </p>
 
           <div className="relative">
-            <div className="flex justify-center items-center gap-12 md:gap-16 flex-nowrap">
+            <div className="flex justify-center items-center gap-8 md:gap-16 flex-wrap md:flex-nowrap">
               {trustedLogos.map((logo) => (
                 <div
                   key={logo.name}
-                  className="h-10 flex items-center justify-center"
+                  className="h-10 flex items-center justify-center w-[120px] sm:w-[140px] md:w-auto"
                 >
                   <img
                     src={logo.src}
                     alt={logo.name}
-                    className="h-11 w-auto max-w-40 object-contain"
+                    className="h-8 sm:h-10 md:h-11 w-auto max-w-full md:max-w-40 object-contain"
                   />
                 </div>
               ))}
@@ -742,13 +747,13 @@ const LexifyLanding = () => {
       {/* Footer */}
       <footer className="py-16 px-6" style={{ backgroundColor: "#11999e" }}>
         <div className="max-w-5xl mx-auto">
-          <div className="grid grid-cols-3 gap-10 mb-12">
-            <div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-10 md:gap-10 mb-12 text-center md:text-left">
+            <div className="flex flex-col items-center md:items-start">
               <div className="mb-4">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   viewBox="0 0 300 140"
-                  className="h-16 w-auto"
+                  className="h-14 md:h-16 w-auto"
                 >
                   <g transform="scale(0.8) translate(10, 10)">
                     <g
@@ -764,13 +769,13 @@ const LexifyLanding = () => {
                 </svg>
               </div>
             </div>
-            <div>
+            <div className="mt-2 md:mt-0">
               <h4 className="text-white font-semibold mb-4">Product</h4>
-              <ul className="space-y-2 text-white/70 text-sm">
+              <ul className="space-y-3 md:space-y-2 text-white/70 text-sm">
                 <li>
                   <a
                     href="#how-it-works"
-                    className="hover:text-white transition-colors"
+                    className="hover:text-white transition-colors inline-block py-1"
                   >
                     How it works
                   </a>
@@ -778,7 +783,7 @@ const LexifyLanding = () => {
                 <li>
                   <a
                     href="#for-companies"
-                    className="hover:text-white transition-colors"
+                    className="hover:text-white transition-colors inline-block py-1"
                   >
                     For companies
                   </a>
@@ -786,20 +791,20 @@ const LexifyLanding = () => {
                 <li>
                   <a
                     href="#for-firms"
-                    className="hover:text-white transition-colors"
+                    className="hover:text-white transition-colors inline-block py-1"
                   >
                     For law firms
                   </a>
                 </li>
               </ul>
             </div>
-            <div>
+            <div className="mt-2 md:mt-0">
               <h4 className="text-white font-semibold mb-4">Legal</h4>
               <ul className="space-y-2 text-white/70 text-sm">
                 <li>
                   <a
                     href="/docs/lexify-general-privacy-statement.pdf"
-                    className="hover:text-white transition-colors"
+                    className="hover:text-white transition-colors inline-block py-1"
                   >
                     Privacy Policy
                   </a>
@@ -807,7 +812,7 @@ const LexifyLanding = () => {
                 <li>
                   <a
                     href="/docs/lexify-tos.pdf"
-                    className="hover:text-white transition-colors"
+                    className="hover:text-white transition-colors inline-block py-1"
                   >
                     Terms of Service
                   </a>
@@ -821,12 +826,12 @@ const LexifyLanding = () => {
             </p>
             <p className="text-white/60 text-sm">Helsinki, Finland</p>
           </div>
-          <div className="flex justify-center mt-6">
+          <div className="flex justify-center mt-8 md:mt-6">
             <a
               href="https://www.linkedin.com/company/lexify-online/"
               target="_blank"
               rel="noopener noreferrer"
-              className="text-white/60 hover:text-white transition-colors flex items-center gap-2"
+              className="text-white/70 hover:text-white transition-colors flex items-center gap-2 text-center"
             >
               <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z" />

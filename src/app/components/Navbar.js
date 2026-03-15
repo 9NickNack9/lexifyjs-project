@@ -103,39 +103,81 @@ export default function Navbar() {
   }, [status, session?.userId, session?.companyId, session?.role]);
 
   return (
-    <nav className="flex justify-between items-center p-4 bg-[#11999e] text-white relative">
-      <div className="flex justify-center w-full">
-        <Link href={logoHref}>
-          <img
-            src="/lexify_wide.png"
-            alt="Business Logo"
-            className="w-32 md:w-64 lg:w-96 cursor-pointer"
-          />
-        </Link>
-      </div>
+    <nav className="bg-[#11999e] text-white relative">
+      <div className="px-4 py-3 md:p-4">
+        {/* Mobile only */}
+        <div className="flex flex-col items-center md:hidden gap-3">
+          <Link href={logoHref}>
+            <img
+              src="/lexify_wide.png"
+              alt="Business Logo"
+              className="w-32 cursor-pointer"
+            />
+          </Link>
 
-      <div className="absolute right-4 flex items-center gap-4">
-        <div className="text-right leading-tight">
-          <div>
-            Logged in as, <span className="font-semibold">{displayName}</span>
-          </div>
+          <div className="flex items-center gap-3 max-w-full">
+            <div className="text-center leading-tight text-sm">
+              <div>
+                Logged in as,{" "}
+                <span className="font-semibold">{displayName}</span>
+              </div>
 
-          {!isLoading && role && displayName !== "Guest" && (
-            <div className="text-xs opacity-90">
-              {companyName ? ` ${companyName}` : ""}
-              {String(registerStatus || "").toUpperCase() === "PENDING"
-                ? " • Pending approval"
-                : ""}
+              {!isLoading && role && displayName !== "Guest" && (
+                <div className="text-xs opacity-90 break-words">
+                  {companyName ? companyName : ""}
+                  {String(registerStatus || "").toUpperCase() === "PENDING"
+                    ? " • Pending approval"
+                    : ""}
+                </div>
+              )}
             </div>
-          )}
+
+            <button
+              onClick={handleLogout}
+              className="bg-[#3a3a3c] px-3 py-1 rounded cursor-pointer text-sm whitespace-nowrap"
+            >
+              Log Out
+            </button>
+          </div>
         </div>
 
-        <button
-          onClick={handleLogout}
-          className="bg-[#3a3a3c] px-3 py-1 rounded cursor-pointer"
-        >
-          Log Out
-        </button>
+        {/* Desktop only - unchanged layout */}
+        <div className="hidden md:flex justify-between items-center relative">
+          <div className="flex justify-center w-full">
+            <Link href={logoHref}>
+              <img
+                src="/lexify_wide.png"
+                alt="Business Logo"
+                className="w-32 md:w-64 lg:w-96 cursor-pointer"
+              />
+            </Link>
+          </div>
+
+          <div className="absolute right-4 flex items-center gap-4">
+            <div className="text-right leading-tight">
+              <div>
+                Logged in as,{" "}
+                <span className="font-semibold">{displayName}</span>
+              </div>
+
+              {!isLoading && role && displayName !== "Guest" && (
+                <div className="text-xs opacity-90">
+                  {companyName ? ` ${companyName}` : ""}
+                  {String(registerStatus || "").toUpperCase() === "PENDING"
+                    ? " • Pending approval"
+                    : ""}
+                </div>
+              )}
+            </div>
+
+            <button
+              onClick={handleLogout}
+              className="bg-[#3a3a3c] px-3 py-1 rounded cursor-pointer"
+            >
+              Log Out
+            </button>
+          </div>
+        </div>
       </div>
     </nav>
   );
