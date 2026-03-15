@@ -467,8 +467,8 @@ export default function Register() {
                 <strong>
                   By registering an account with LEXIFY, you confirm that you
                   have carefully reviewed the following documents and commit to
-                  comply with the the terms and conditions therein when using
-                  our services:
+                  complying with the terms and conditions therein when using our
+                  services:
                 </strong>
               </p>
               <div className="flex flex-col items-start space-y-2 mt-2 mb-4 text-sm text-left">
