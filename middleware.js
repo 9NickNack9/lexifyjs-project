@@ -3,6 +3,7 @@ import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 
 const PUBLIC_PATHS = new Set([
+  "/",
   "/login",
   "/about",
   "/contact",
@@ -19,13 +20,11 @@ export default withAuth(
 
     // 1) Root path "/": send to /login if not logged in; otherwise route by role
     if (pathname === "/") {
-      if (!token) {
-        return NextResponse.redirect(new URL("/login", req.url));
-      }
+      if (!token) return NextResponse.next();
+
       if (token.role === "PROVIDER") {
         return NextResponse.redirect(new URL("/provider", req.url));
       }
-      // Purchaser or Admin
       return NextResponse.redirect(new URL("/main", req.url));
     }
 

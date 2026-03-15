@@ -106,6 +106,7 @@ export async function GET() {
           companyCountry: true,
           companyInvoiceContactPersons: true,
           registerStatus: true,
+          invoiceFee: true,
         },
       },
     },
@@ -163,6 +164,7 @@ export async function GET() {
     companyCountry: row.company?.companyCountry ?? null,
     companyInvoiceContactPersons:
       row.company?.companyInvoiceContactPersons ?? [],
+    invoiceFee: row.company?.invoiceFee ?? null,
 
     blockedServiceProviders: Array.isArray(row.blockedServiceProviders)
       ? row.blockedServiceProviders

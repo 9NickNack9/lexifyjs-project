@@ -401,3 +401,32 @@ export async function notifyPurchaserOnHoldExpirySoon({ to, requestTitle }) {
     dynamicTemplateData: { requestTitle },
   });
 }
+
+// Notify support of new demo request
+export async function notifySupportDemoRequest({
+  name,
+  email,
+  company,
+  role,
+  phone,
+  companyType,
+  turnoverRange,
+  website,
+}) {
+  const templateId = "d-ec3034d2eec242faba81a1ff6c11218e";
+
+  await sendDynamicTemplateEmail({
+    to: "support@lexify.online",
+    templateId,
+    dynamicTemplateData: {
+      name,
+      email,
+      company,
+      role,
+      phone,
+      companyType,
+      turnoverRange,
+      website,
+    },
+  });
+}

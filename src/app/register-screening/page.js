@@ -13,24 +13,25 @@ export default function RegisterScreening() {
           Thank you for registering with LEXIFY!{" "}
         </h1>
         <h1 className="text-2xl font-bold mb-4">
-          Your registration is currently being reviewed by our team. We process
-          all applications as quickly as possible and will notify you once the
-          review is complete. Upon approval, you will receive immediate access
-          to the LEXIFY platform along with further instructions to help you get
+          Your registration is being reviewed by our team. We process
+          applications as quickly as possible and will notify you once the
+          review is complete. Upon approval, you'll receive immediate access to
+          the LEXIFY platform along with instructions to help you get
           started.{" "}
         </h1>
         <h1 className="text-2xl font-bold mb-4">
-          If you have any questions in the meantime, please don&apos;t hesitate
-          to contact our support team at{" "}
+          To ensure you receive our emails, please add support@lexify.online to
+          your contacts or ask your IT team to whitelist it.{" "}
+        </h1>
+        <h1 className="text-2xl font-bold mb-4">
+          If you have any questions in the meantime, please contact our support
+          team at{" "}
           <a href="mailto:support@lexify.online" className="underline">
             support@lexify.online
           </a>
           .{" "}
         </h1>
-        <h1 className="text-2xl font-bold mb-4">
-          We look forward to welcoming you aboard!{" "}
-        </h1>
-        <h1 className="text-2xl font-bold mb-4">Warm regards, </h1>
+        <h1 className="text-2xl font-bold mb-4 pt-5">Warm regards, </h1>
         <h1 className="text-2xl font-bold mb-4">The LEXIFY Team </h1>
       </div>
     </div>

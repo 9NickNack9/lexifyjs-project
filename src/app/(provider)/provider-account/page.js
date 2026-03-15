@@ -5,7 +5,6 @@ import { useEffect, useRef, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
 import { Pencil, Save } from "lucide-react";
 import NarrowTooltip from "../../components/NarrowTooltip";
-import Link from "next/link";
 
 export default function ProviderAccount() {
   const router = useRouter();
@@ -1171,15 +1170,16 @@ export default function ProviderAccount() {
         <h2 className="text-2xl font-semibold mb-4">Fees and Invoicing</h2>
         <h4 className="text-md">
           LEXIFY charges a monthly service fee for the use of the LEXIFY
-          platform. The amount of the service fee is 0% of the total legal
-          service sales (VAT 0%) by your company on the LEXIFY platform during a
-          calendar month. The service fee for an individual calendar month is
+          platform. The amount of the service fee is{" "}
+          {me?.company?.invoiceFee ?? me?.invoiceFee ?? 0}% of the total legal
+          service sales (VAT 0%) by your law firm via the LEXIFY platform during
+          a calendar month. The service fee for an individual calendar month is
           invoiced by LEXIFY during the following calendar month.
         </h4>
         <br />
         <div className="grid grid-cols-2 gap-4">
           <h4 className="text-md font-semibold col-span-2">
-            My Company&apos;s Contact Persons for Invoicing
+            My Law Firm&apos;s Contact Persons for Invoicing
           </h4>
           <div className="col-span-2">
             <table className="w-full border border-gray-300 text-sm">
@@ -1187,7 +1187,7 @@ export default function ProviderAccount() {
                 <tr className="bg-[#3a3a3c] text-white">
                   <th className="border p-2">First Name</th>
                   <th className="border p-2">Last Name</th>
-                  <th className="border p-2">Title/Position in Company</th>
+                  <th className="border p-2">Title/Position in Law Firm</th>
                   <th className="border p-2">Telephone (with country code)</th>
                   <th className="border p-2">Email</th>
                   <th className="border p-2">Edit/Save</th>
@@ -1318,60 +1318,6 @@ export default function ProviderAccount() {
         <br />
       </div>
       <br />
-      {/* LEXIFY Legal Terms and Conditions */}
-      <div className="w-full max-w-6xl p-6 rounded shadow-2xl bg-white text-black">
-        <h2 className="text-2xl font-semibold mb-4">
-          LEXIFY Legal Terms and Conditions
-        </h2>
-        <h4 className="text-md">
-          By using LEXIFY to sell legal services, you confirm you understand,
-          accept and comply with the following terms and conditions governing
-          the use of the LEXIFY platform and individual LEXIFY Contracts entered
-          into by legal service purchasers and legal service providers on the
-          LEXIFY platform, as applicable and as such terms and conditions may be
-          amended from time to time:
-        </h4>
-        <br />
-        <ul className="max-w-md space-y-1 text-black list-disc list-inside dark:text-black">
-          <li>
-            <Link
-              href="/docs/lexify-tos-2025.pdf"
-              target="_blank"
-              rel="noopener"
-              className="text-blue-600 dark:text-blue-500 hover:underline"
-            >
-              LEXIFY Terms of Service
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/docs/lexify-privacy-statement-2025.pdf"
-              target="_blank"
-              rel="noopener"
-              className="text-blue-600 dark:text-blue-500 hover:underline"
-            >
-              Privacy Statement for LEXIFY Platform
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/docs/lexify-gtcs-2025-v2.pdf"
-              target="_blank"
-              rel="noopener"
-              className="text-blue-600 dark:text-blue-500 hover:underline"
-            >
-              General Terms and Conditions for LEXIFY Contracts
-            </Link>
-          </li>
-        </ul>
-        <br />
-        <h4 className="text-md">
-          In the event LEXIFY implements any material change to the above legal
-          terms and conditions, you will be notified of the change in advance
-          and provided an option to end your use of all LEXIFY services if such
-          change is not acceptable to you.
-        </h4>
-      </div>
       {membersOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"

@@ -27,10 +27,6 @@ export default function About() {
           committed to making expert legal support more accessible, predictable,
           and value-driven for businesses.{" "}
         </h1>
-        <h1 className="text-2xl font-bold mb-4">
-          Join the LEXIFY community and experience a smarter, simpler approach
-          to legal services.
-        </h1>
       </div>
     </div>
   );

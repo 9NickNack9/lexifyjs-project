@@ -9,7 +9,7 @@ export default function Provider() {
     {
       title: "Review LEXIFY Requests",
       description:
-        "Browse pending requests for tender and submit offers in response.",
+        "Browse pending requests for proposal and submit offers in response.",
       link: "/provider-request",
     },
     {
@@ -21,8 +21,14 @@ export default function Provider() {
     {
       title: "My Account",
       description:
-        "Your account and contact details can be found and updated here.",
+        "Your account settings and contact details can be found and updated here.",
       link: "/provider-account",
+    },
+    {
+      title: "Help & Resources",
+      description:
+        "Here you can watch video tutorials on using the platform and find our support contact details.",
+      link: "/provider-help",
     },
     {
       title: "Give Feedback to LEXIFY",
@@ -35,7 +41,7 @@ export default function Provider() {
   return (
     <div>
       <div className="flex items-start justify-center items-center min-h-screen p-8">
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-10 max-w-7xl w-full">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10 max-w-6xl w-full">
           {cards.map((card, index) => (
             <div
               key={index}

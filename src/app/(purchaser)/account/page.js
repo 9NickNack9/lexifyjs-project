@@ -1589,60 +1589,6 @@ export default function Account() {
           )}
         </div>
       </div>
-      <br />
-      <div className="w-full max-w-6xl p-6 rounded shadow-2xl bg-white text-black">
-        <h2 className="text-2xl font-semibold mb-4">
-          LEXIFY Legal Terms and Conditions
-        </h2>
-        <h4 className="text-md">
-          By using LEXIFY to purchase legal services, you confirm you
-          understand, accept and comply with the following terms and conditions
-          governing the use of the LEXIFY platform and individual LEXIFY
-          Contracts entered into by legal service purchasers and legal service
-          providers on the LEXIFY platform, as applicable and as such terms and
-          conditions may be amended from time to time:
-        </h4>
-        <br />
-        <ul className="max-w-md space-y-1 text-black list-disc list-inside dark:text-black">
-          <li>
-            <Link
-              href="/docs/lexify-tos-2025.pdf"
-              target="_blank"
-              rel="noopener"
-              className="text-blue-600 dark:text-blue-500 hover:underline"
-            >
-              LEXIFY Terms of Service
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/docs/lexify-privacy-statement-2025.pdf"
-              target="_blank"
-              rel="noopener"
-              className="text-blue-600 dark:text-blue-500 hover:underline"
-            >
-              Privacy Statement for LEXIFY Platform
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/docs/lexify-gtcs-2025-v2.pdf"
-              target="_blank"
-              rel="noopener"
-              className="text-blue-600 dark:text-blue-500 hover:underline"
-            >
-              General Terms and Conditions for LEXIFY Contracts
-            </Link>
-          </li>
-        </ul>
-        <br />
-        <h4 className="text-md">
-          In the event LEXIFY implements any material change to the above legal
-          terms and conditions, you will be notified of the change in advance
-          and provided an option to end your use of all LEXIFY services if such
-          change is not acceptable to you.
-        </h4>
-      </div>
       {membersOpen && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"

@@ -9,7 +9,7 @@ export default function MainClient() {
   const cards = [
     {
       title: "Create a LEXIFY Request",
-      description: "Create a request for tender to buy legal services.",
+      description: "Create a request for proposal to buy legal services.",
       link: "/create-request",
     },
     {
@@ -27,8 +27,14 @@ export default function MainClient() {
     {
       title: "My Account",
       description:
-        "Your account and contact details can be found and updated here. Here you can also manage which legal service providers can view your LEXIFY Requests and make offers to you.",
+        "Your account settings and contact details can be found and updated here. Here you can also manage which legal service providers can view your LEXIFY Requests and make offers to you.",
       link: "/account",
+    },
+    {
+      title: "Help & Resources",
+      description:
+        "Here you can book a guided LEXIFY Request preparation session with a LEXIFY representative, watch video tutorials on using the platform, and find our support contact details.",
+      link: "/help",
     },
     {
       title: "Give Feedback to LEXIFY",

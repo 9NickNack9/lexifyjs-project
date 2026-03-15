@@ -361,7 +361,7 @@
                 "path": "details.saleObject"
               },
               {
-                "label": "Range of Expected Purchase price (Cash and Debt Free)",
+                "label": "Range of Expected Purchase Price",
                 "path": "details.priceRange"
               }
             ]
@@ -564,7 +564,7 @@
                 "path": "details.otherObject"
               },
               {
-                "label": "Range of Expected Purchase price (Cash and Debt Free)",
+                "label": "Range of Expected Purchase Price",
                 "path": "details.priceRange"
               }
             ]
@@ -784,7 +784,7 @@
                 "path": "details.agreementType"
               },
               {
-                "label": "Range of Expected Rent price (Cash and Debt Free)",
+                "label": "Range of Expected Agreement Value",
                 "path": "details.rentRange"
               }
             ]
@@ -1263,7 +1263,7 @@
                 "path": "description"
               },
               {
-                "label": "Range of Expected Purchase price (Cash and Debt Free)",
+                "label": "Range of Expected Contract Value",
                 "path": "details.priceRange"
               }
             ]
@@ -2078,7 +2078,7 @@
                 "path": "description"
               },
               {
-                "label": "Expected value of the agreement (Cash and Debt Free)",
+                "label": "Range of Expected Contract Value",
                 "path": "details.expectedValue"
               }
             ]
@@ -2227,7 +2227,7 @@
                 "path": "description"
               },
               {
-                "label": "Expected value of the agreement (Cash and Debt Free)",
+                "label": "Range of Expected Contract Value",
                 "path": "details.expectedValue"
               }
             ]
@@ -3652,7 +3652,7 @@
                 "path": "details.objectOfSale"
               },
               {
-                "label": "Range of Expected Purchase price (Cash and Debt Free)",
+                "label": "Range of Expected Purchase Price (Cash and Debt Free)",
                 "path": "details.priceRange"
               }
             ]

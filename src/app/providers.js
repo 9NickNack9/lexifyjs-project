@@ -16,15 +16,26 @@ export default function Providers({ children }) {
     "/contact",
     "/forgot-password",
     "/reset-password",
+    "/",
   ];
 
-  const hideNav = noNavPages.some((p) => pathname.startsWith(p));
+  const noBannerPages = ["/", "/login", "/register"];
+
+  const hideNav = noNavPages.some((p) => {
+    if (p === "/") return pathname === "/";
+    return pathname.startsWith(p);
+  });
+
+  const hideBanner = noBannerPages.some((p) => {
+    if (p === "/") return pathname === "/";
+    return pathname.startsWith(p);
+  });
 
   return (
     <SessionProvider>
       {!hideNav && <Navbar />}
       {children}
-      <FooterBanner />
+      {!hideBanner && <FooterBanner />}
     </SessionProvider>
   );
 }
