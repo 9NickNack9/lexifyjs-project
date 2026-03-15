@@ -324,13 +324,13 @@ export default function Register() {
                       A legal professional refers to an individual who has
                       obtained a formal law degree (such as a Master of Laws,
                       Juris Doctor, Bachelor of Laws, or equivalent) from an
-                      accredited university or corresponding institution and is
+                      accredited university or comparable institution and is
                       authorized to practice law within the jurisdiction of your
                       firm. When reporting the number of legal professionals
-                      employed by your firm, please count only those individuals
-                      who i) meet the criteria above, ii) whose professional
-                      profiles are displayed on your firm website and iii) who
-                      are providing client services (not including
+                      employed by your firm, please include only those
+                      individuals who (i) meet the criteria above, (ii) have
+                      professional profiles displayed on your firm's website,
+                      and (iii) provide client services (excluding
                       administrative or support roles).
                     </em>
                   </p>
