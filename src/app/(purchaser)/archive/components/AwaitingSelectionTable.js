@@ -359,104 +359,122 @@ export default function AwaitingSelectionTable({
                           return "—";
 
                         return (
-                          <ul className="space-y-2">
-                            {offers.map((o) => (
+                          <ul>
+                            {offers.map((o, idx) => (
                               <li
                                 key={o.offerId}
-                                className="text-sm flex items-center gap-3 whitespace-nowrap overflow-x-auto"
+                                className={`flex items-center justify-between gap-4 py-3 ${
+                                  idx !== offers.length - 1
+                                    ? "border-b border-gray-300"
+                                    : ""
+                                }`}
                               >
-                                <div className="flex items-center gap-2">
-                                  {/* Select button */}
-                                  <button
-                                    className={`px-3 py-1 rounded shrink-0 cursor-pointer ${
-                                      r.requestState === "CONFLICT_CHECK"
-                                        ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                                        : "bg-[#11999e] text-white"
-                                    }`}
-                                    disabled={
-                                      r.requestState === "CONFLICT_CHECK"
-                                    }
-                                    onClick={() => confirmAndSelect(r, o)}
-                                  >
-                                    Select
-                                  </button>
+                                {/* Select button */}
+                                <button
+                                  className={`px-3 py-1 rounded shrink-0 cursor-pointer ${
+                                    r.requestState === "CONFLICT_CHECK"
+                                      ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                                      : "bg-[#11999e] text-white"
+                                  }`}
+                                  disabled={r.requestState === "CONFLICT_CHECK"}
+                                  onClick={() => confirmAndSelect(r, o)}
+                                >
+                                  Select
+                                </button>
 
-                                  {/* Summary line: price + company + rating */}
-                                  <div className="flex-1">
-                                    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-                                      <span className="text-md shrink-0">
-                                        {fmtMoney(o.offeredPrice, r.currency)}
-                                      </span>
-                                      {o.providerCompanyWebsite ? (
-                                        <a
-                                          href={o.providerCompanyWebsite}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="text-blue-600 hover:underline cursor-pointer shrink-0"
-                                        >
-                                          {o.providerCompanyName}
-                                        </a>
-                                      ) : (
-                                        <span>{o.providerCompanyName}</span>
-                                      )}
+                                {/* Offer info */}
+                                <div className="flex flex-col flex-1 leading-tight text-sm gap-0.5">
+                                  <div>
+                                    <span className="font-semibold">
+                                      Offered Price:
+                                    </span>{" "}
+                                    {fmtMoney(o.offeredPrice, r.currency)}
+                                  </div>
 
-                                      <span>/</span>
-
-                                      {/* Category rating (NON-clickable) */}
-                                      {(() => {
-                                        const categoryKey =
-                                          mapRequestToCategory(
-                                            r.requestCategory,
-                                            r.requestSubcategory,
-                                          );
-
-                                        const practicalMap =
-                                          normalizePracticalRatings(
-                                            o.providerPracticalRatings,
-                                          );
-                                        const categoryEntry =
-                                          practicalMap?.[categoryKey];
-                                        const categoryTotal =
-                                          getCategoryTotal(categoryEntry);
-
-                                        const ratingText =
-                                          categoryTotal == null
-                                            ? "No Ratings Yet"
-                                            : `${Number(categoryTotal).toFixed(2)} / 5`;
-
-                                        return (
-                                          <span>
-                                            LEXIFY Rating: {ratingText}
-                                          </span>
-                                        );
-                                      })()}
-                                      {/* Full offer details button */}
-                                      <button
-                                        type="button"
-                                        className="ml-2 px-3 py-1 rounded bg-[#11999e] text-white shrink-0 whitespace-nowrap cursor-pointer"
-                                        onClick={() => {
-                                          const categoryKey =
-                                            mapRequestToCategory(
-                                              r.requestCategory,
-                                              r.requestSubcategory,
-                                            );
-                                          setFullOfferPopupData({
-                                            offer: o,
-                                            request: r,
-                                            categoryKey,
-                                          });
-                                          setFullOfferPopupOpen(true);
-
-                                          // Reset expanders (reuse the same expander state you already have for rating UI)
-                                          setPopupShowTotalBreakdown(false);
-                                          setPopupExpandedCategories({});
-                                        }}
+                                  <div>
+                                    <span className="font-semibold">
+                                      Law Firm:
+                                    </span>{" "}
+                                    {o.providerCompanyWebsite ? (
+                                      <a
+                                        href={o.providerCompanyWebsite}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="text-blue-600 hover:underline cursor-pointer"
                                       >
-                                        Show full offer details
-                                      </button>
-                                    </div>
+                                        {o.providerCompanyName}
+                                      </a>
+                                    ) : (
+                                      <span>{o.providerCompanyName}</span>
+                                    )}
+                                  </div>
+
+                                  {/* Overall provider rating */}
+                                  <div>
+                                    <span className="font-semibold">
+                                      Overall LEXIFY Rating:
+                                    </span>{" "}
+                                    {o.providerTotalRating == null
+                                      ? "No Ratings Yet"
+                                      : `${Number(o.providerTotalRating).toFixed(2)} / 5`}
+                                  </div>
+
+                                  {/* Category-specific (practical) rating */}
+
+                                  <div>
+                                    {(() => {
+                                      const categoryKey = mapRequestToCategory(
+                                        r.requestCategory,
+                                        r.requestSubcategory,
+                                      );
+
+                                      const practicalMap =
+                                        normalizePracticalRatings(
+                                          o.providerPracticalRatings,
+                                        );
+                                      const categoryEntry =
+                                        practicalMap?.[categoryKey];
+                                      const categoryTotal =
+                                        getCategoryTotal(categoryEntry);
+
+                                      const ratingText =
+                                        categoryTotal == null
+                                          ? "No Ratings Yet"
+                                          : `${Number(categoryTotal).toFixed(2)} / 5`;
+
+                                      return (
+                                        <>
+                                          <span className="font-semibold">
+                                            LEXIFY Rating in {categoryKey}:
+                                          </span>{" "}
+                                          {ratingText}
+                                        </>
+                                      );
+                                    })()}
                                   </div>
                                 </div>
+
+                                {/* Details button */}
+                                <button
+                                  type="button"
+                                  className="px-3 py-1 rounded bg-[#11999e] text-white shrink-0 whitespace-nowrap cursor-pointer"
+                                  onClick={() => {
+                                    const categoryKey = mapRequestToCategory(
+                                      r.requestCategory,
+                                      r.requestSubcategory,
+                                    );
+                                    setFullOfferPopupData({
+                                      offer: o,
+                                      request: r,
+                                      categoryKey,
+                                    });
+                                    setFullOfferPopupOpen(true);
+                                    setPopupShowTotalBreakdown(false);
+                                    setPopupExpandedCategories({});
+                                  }}
+                                >
+                                  Show full offer details
+                                </button>
                               </li>
                             ))}
                           </ul>
@@ -862,326 +880,331 @@ export default function AwaitingSelectionTable({
       )}
 
       {fullOfferPopupOpen && fullOfferPopupData?.offer && (
-        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-          <div className="bg-white text-black shadow-2xl max-w-3xl w-full max-h-[80vh] overflow-y-auto p-6 relative">
-            <button
-              type="button"
-              className="absolute top-4 right-4 text-white bg-[#3a3a3c] rounded-full w-8 h-8 flex items-center justify-center text-xl hover:bg-red-600 transition cursor-pointer"
-              onClick={() => {
-                setFullOfferPopupOpen(false);
-                setFullOfferPopupData(null);
-              }}
-            >
-              x
-            </button>
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white text-black shadow-2xl max-w-3xl w-full max-h-[80vh] relative overflow-visible">
+            <div className="max-h-[80vh] overflow-y-auto p-6">
+              <button
+                type="button"
+                className="absolute top-4 right-4 text-white bg-[#3a3a3c] rounded-full w-8 h-8 flex items-center justify-center text-xl hover:bg-red-600 transition cursor-pointer"
+                onClick={() => {
+                  setFullOfferPopupOpen(false);
+                  setFullOfferPopupData(null);
+                }}
+              >
+                x
+              </button>
 
-            <div className="text-xl font-semibold mb-1">
-              {fullOfferPopupData.offer.providerCompanyName}
-              &apos;s Offer
-            </div>
-
-            {/* Prices */}
-            <div className="space-y-2 mb-4 pt-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold">LEXIFY Request</span>
-                <span className="text-sm">
-                  {fullOfferPopupData.request.requestTitle}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold">
-                  Legal Service Provider
-                </span>
-                <span className="text-sm">
-                  {fullOfferPopupData.offer.providerCompanyName}
-                </span>
-              </div>
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold">
-                  {fullOfferPopupData.offer.offerExpectedPrice != null ? (
-                    <>
-                      Offered Capped Price{" "}
-                      <NarrowTooltip tooltipText="Capped price refers to your offered maximum price for the work, taking into account all possible unexpected developments in the dispute proceedings such as an unusually high number of rounds of written pleadings." />
-                    </>
-                  ) : (
-                    "Offered Price"
-                  )}
-                </span>
-                <span className="text-sm">
-                  {fmtMoney(
-                    fullOfferPopupData.offer.offeredPrice,
-                    fullOfferPopupData.request.currency,
-                  )}
-                </span>
+              <div className="text-xl font-semibold mb-1">
+                {fullOfferPopupData.offer.providerCompanyName}
+                &apos;s Offer
               </div>
 
-              {fullOfferPopupData.offer.offerExpectedPrice != null && (
+              {/* Prices */}
+              <div className="space-y-2 mb-4 pt-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold">LEXIFY Request</span>
+                  <span className="text-sm">
+                    {fullOfferPopupData.request.requestTitle}
+                  </span>
+                </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm font-semibold">
-                    Offer Expected Price{" "}
-                    <NarrowTooltip tooltipText="Expected price refers to your expected price for the work if the dispute proceedings do not involve any unexpected developments (such as an unusually high number of rounds of written pleadings)." />
+                    Legal Service Provider
+                  </span>
+                  <span className="text-sm">
+                    {fullOfferPopupData.offer.providerCompanyName}
+                  </span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold">
+                    {fullOfferPopupData.offer.offerExpectedPrice != null ? (
+                      <>
+                        Offered Capped Price{" "}
+                        <NarrowTooltip tooltipText="Capped price refers to the maximum price for the work, taking into account all possible unexpected developments in the dispute proceedings such as an unusually high number of rounds of written pleadings." />
+                      </>
+                    ) : (
+                      "Offered Price"
+                    )}
                   </span>
                   <span className="text-sm">
                     {fmtMoney(
-                      fullOfferPopupData.offer.offerExpectedPrice,
+                      fullOfferPopupData.offer.offeredPrice,
                       fullOfferPopupData.request.currency,
                     )}
                   </span>
                 </div>
-              )}
 
-              <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold">
-                  Responsible Partner/Lawyer
-                </span>
-                <span className="text-sm">
-                  {fullOfferPopupData.offer.offerLawyer || "—"}
-                </span>
-              </div>
-            </div>
-
-            {/* Provider additional message */}
-            <div className="border-t mt-6 pt-4">
-              <div className="text-sm font-semibold mb-2">
-                Cover Note from Legal Service Provider
-              </div>
-              <div className="text-sm text-gray-800 whitespace-pre-wrap">
-                {(
-                  fullOfferPopupData.offer.providerAdditionalInfo || ""
-                ).trim() || "—"}
-              </div>
-            </div>
-
-            {/* Written references */}
-            {Array.isArray(fullOfferPopupData.offer.providerReferenceFiles) &&
-              fullOfferPopupData.offer.providerReferenceFiles.length > 0 && (
-                <div className="border-t mt-6 pt-4">
-                  <div className="text-sm font-semibold mb-2">
-                    Written reference(s)
+                {fullOfferPopupData.offer.offerExpectedPrice != null && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-semibold">
+                      Expected Price{" "}
+                      <NarrowTooltip tooltipText="Expected price refers to the expected price for the work if the dispute proceedings do not involve any unexpected developments (such as an unusually high number of rounds of written pleadings)." />
+                    </span>
+                    <span className="text-sm">
+                      {fmtMoney(
+                        fullOfferPopupData.offer.offerExpectedPrice,
+                        fullOfferPopupData.request.currency,
+                      )}
+                    </span>
                   </div>
+                )}
 
-                  <div className="text-sm text-gray-800">
-                    {fullOfferPopupData.offer.providerReferenceFiles.map(
-                      (file, idx) => {
-                        const name = file?.name || `Reference ${idx + 1}`;
-                        const url = file?.url;
-
-                        if (!url) {
-                          return (
-                            <span key={idx}>
-                              {idx > 0 && ", "}
-                              {name}
-                            </span>
-                          );
-                        }
-
-                        return (
-                          <span key={url || idx}>
-                            {idx > 0 && ", "}
-                            <a
-                              href={url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 hover:underline cursor-pointer"
-                            >
-                              {name}
-                            </a>
-                          </span>
-                        );
-                      },
-                    )}
-                  </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm font-semibold">
+                    Responsible Partner/Lawyer
+                  </span>
+                  <span className="text-sm">
+                    {fullOfferPopupData.offer.offerLawyer || "—"}
+                  </span>
                 </div>
-              )}
+              </div>
 
-            {/* Rating breakdown (same structure as your existing rating popup) */}
-            {(() => {
-              const offer = fullOfferPopupData.offer;
+              {/* Provider additional message */}
+              <div className="border-t mt-6 pt-4">
+                <div className="text-sm font-semibold mb-2">
+                  Cover Note from Legal Service Provider
+                </div>
+                <div className="text-sm text-gray-800 whitespace-pre-wrap">
+                  {(
+                    fullOfferPopupData.offer.providerAdditionalInfo || ""
+                  ).trim() || "—"}
+                </div>
+              </div>
 
-              const practicalMap = normalizePracticalRatings(
-                offer.providerPracticalRatings,
-              );
-
-              const categoriesToShow = Array.from(
-                new Set([
-                  ...PRACTICAL_CATEGORIES,
-                  ...Object.keys(practicalMap || {}),
-                ]),
-              ).filter(Boolean);
-
-              const hasAnyTotalRatings = offer.providerHasRatings === true;
-
-              return (
-                <div className="space-y-4 border-t pt-4 mt-6">
-                  {/* TOTAL (expandable) */}
-                  <div className="space-y-2">
-                    {hasAnyTotalRatings ? (
-                      <>
-                        <span className="text-md font-semibold">
-                          {fullOfferPopupData.offer.providerCompanyName}
-                          &apos;s LEXIFY Rating
-                        </span>
-                        <div className="text-sm text-gray-700 mb-4">
-                          {fullOfferPopupData.offer.providerRatingCount} rating
-                          {fullOfferPopupData.offer.providerRatingCount === 1
-                            ? ""
-                            : "s"}{" "}
-                          received
-                        </div>
-                        <button
-                          type="button"
-                          className="w-full -mx-2 px-2 py-1 rounded flex items-center justify-between hover:bg-gray-50 cursor-pointer"
-                          onClick={() => setPopupShowTotalBreakdown((v) => !v)}
-                          aria-expanded={popupShowTotalBreakdown}
-                        >
-                          <div className="flex items-center gap-2">
-                            <span className="text-lg text-gray-600 select-none">
-                              {popupShowTotalBreakdown ? "▾" : "▸"}
-                            </span>
-                            <span className="text-sm font-semibold">
-                              Overall Rating
-                            </span>
-                          </div>
-                          <span className="font-semibold">
-                            {!isNaN(Number(offer.providerTotalRating))
-                              ? Number(offer.providerTotalRating).toFixed(2)
-                              : "0.00"}{" "}
-                            / 5
-                          </span>
-                        </button>
-
-                        {popupShowTotalBreakdown && (
-                          <div className="mt-1 space-y-1">
-                            <AggregateRow
-                              label="Overall Rating"
-                              value={offer.providerTotalRating ?? 0}
-                            />
-                            <AggregateRow
-                              label="Quality of Work"
-                              value={offer.providerQualityRating ?? 0}
-                              tooltipText="How satisfied were you in general with the quality of the legal advice and documentation provided by the legal service provider?"
-                            />
-                            <AggregateRow
-                              label="Responsiveness & Communication"
-                              value={offer.providerCommunicationRating ?? 0}
-                              tooltipText="Did you receive timely responses and communications from the legal service provider? Was the advice you received clear and actionable or ambiguous analysis without clear value-adding guidance?"
-                            />
-                            <AggregateRow
-                              label="Billing Practices"
-                              value={offer.providerBillingRating ?? 0}
-                              tooltipText="Did the legal service provider send invoices within agreed timeframes and with agreed specifications? In case of hourly rate assignments, did the legal service provider in your opinion invoice a reasonable amount of hours in relation to the legal support that was required?"
-                            />
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      <div className="flex items-center justify-between">
-                        <span className="text-sm font-semibold">
-                          Overall rating
-                        </span>
-                        <span className="font-semibold">No Ratings Yet</span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* CATEGORY-BASED RATINGS */}
-                  <div className="border-t pt-4">
+              {/* Written references */}
+              {Array.isArray(fullOfferPopupData.offer.providerReferenceFiles) &&
+                fullOfferPopupData.offer.providerReferenceFiles.length > 0 && (
+                  <div className="border-t mt-6 pt-4">
                     <div className="text-sm font-semibold mb-2">
-                      Ratings by Area of Expertise
+                      Written reference(s)
                     </div>
 
-                    {categoriesToShow.length === 0 ? (
-                      <div className="text-sm text-gray-600">
-                        No category ratings available yet.
-                      </div>
-                    ) : (
-                      <div className="space-y-2">
-                        {categoriesToShow.map((categoryKey) => {
-                          const entry = practicalMap?.[categoryKey];
-                          const expanded =
-                            popupExpandedCategories?.[categoryKey] ?? false;
-                          const hasRatings = categoryHasRatings(entry);
+                    <div className="text-sm text-gray-800">
+                      {fullOfferPopupData.offer.providerReferenceFiles.map(
+                        (file, idx) => {
+                          const name = file?.name || `Reference ${idx + 1}`;
+                          const url = file?.url;
 
-                          if (!hasRatings) {
+                          if (!url) {
                             return (
-                              <div
-                                key={categoryKey}
-                                className="flex items-center justify-between"
-                              >
-                                <span className="text-sm">{categoryKey}</span>
-                                <span className="font-semibold">
-                                  No Ratings Yet
-                                </span>
-                              </div>
+                              <span key={idx}>
+                                {idx > 0 && ", "}
+                                {name}
+                              </span>
                             );
                           }
 
-                          const { total, quality, responsiveness, billing } =
-                            getCategoryNumbers(entry);
-
                           return (
-                            <div key={categoryKey}>
-                              <button
-                                type="button"
-                                onClick={() =>
-                                  setPopupExpandedCategories((prev) => ({
-                                    ...prev,
-                                    [categoryKey]: !(
-                                      prev?.[categoryKey] ?? false
-                                    ),
-                                  }))
-                                }
-                                className="w-full -mx-2 px-2 py-1 rounded flex items-center justify-between hover:bg-gray-50 cursor-pointer"
-                                aria-expanded={expanded}
+                            <span key={url || idx}>
+                              {idx > 0 && ", "}
+                              <a
+                                href={url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-blue-600 hover:underline cursor-pointer"
                               >
-                                <div className="flex items-center gap-2">
-                                  <span className="text-lg text-gray-600 select-none">
-                                    {expanded ? "▾" : "▸"}
-                                  </span>
-                                  <span className="text-sm font-semibold">
-                                    {categoryKey}
-                                  </span>
-                                </div>
-                                <span className="font-semibold">
-                                  {!isNaN(Number(total))
-                                    ? Number(total).toFixed(2)
-                                    : "0.00"}{" "}
-                                  / 5
-                                </span>
-                              </button>
-
-                              {expanded && (
-                                <div className="mt-1 space-y-1">
-                                  <AggregateRow
-                                    label="Overall Rating"
-                                    value={total ?? 0}
-                                  />
-                                  <AggregateRow
-                                    label="Quality of Work"
-                                    value={quality ?? 0}
-                                    tooltipText="How satisfied were you in general with the quality of the legal advice and documentation provided by the legal service provider?"
-                                  />
-                                  <AggregateRow
-                                    label="Responsiveness & Communication"
-                                    value={responsiveness ?? 0}
-                                    tooltipText="Did you receive timely responses and communications from the legal service provider? Was the advice you received clear and actionable or ambiguous analysis without clear value-adding guidance?"
-                                  />
-                                  <AggregateRow
-                                    label="Billing Practices"
-                                    value={billing ?? 0}
-                                    tooltipText="Did the legal service provider send invoices within agreed timeframes and with agreed specifications? In case of hourly rate assignments, did the legal service provider in your opinion invoice a reasonable amount of hours in relation to the legal support that was required?"
-                                  />
-                                </div>
-                              )}
-                            </div>
+                                {name}
+                              </a>
+                            </span>
                           );
-                        })}
-                      </div>
-                    )}
+                        },
+                      )}
+                    </div>
                   </div>
-                </div>
-              );
-            })()}
+                )}
+
+              {/* Rating breakdown (same structure as your existing rating popup) */}
+              {(() => {
+                const offer = fullOfferPopupData.offer;
+
+                const practicalMap = normalizePracticalRatings(
+                  offer.providerPracticalRatings,
+                );
+
+                const categoriesToShow = Array.from(
+                  new Set([
+                    ...PRACTICAL_CATEGORIES,
+                    ...Object.keys(practicalMap || {}),
+                  ]),
+                ).filter(Boolean);
+
+                const hasAnyTotalRatings = offer.providerHasRatings === true;
+
+                return (
+                  <div className="space-y-4 border-t pt-4 mt-6">
+                    {/* TOTAL (expandable) */}
+                    <div className="space-y-2">
+                      {hasAnyTotalRatings ? (
+                        <>
+                          <span className="text-md font-semibold">
+                            {fullOfferPopupData.offer.providerCompanyName}
+                            &apos;s LEXIFY Rating
+                          </span>
+                          <div className="text-sm text-gray-700 mb-4">
+                            {fullOfferPopupData.offer.providerRatingCount}{" "}
+                            rating
+                            {fullOfferPopupData.offer.providerRatingCount === 1
+                              ? ""
+                              : "s"}{" "}
+                            received
+                          </div>
+                          <button
+                            type="button"
+                            className="w-full -mx-2 px-2 py-1 rounded flex items-center justify-between hover:bg-gray-50 cursor-pointer"
+                            onClick={() =>
+                              setPopupShowTotalBreakdown((v) => !v)
+                            }
+                            aria-expanded={popupShowTotalBreakdown}
+                          >
+                            <div className="flex items-center gap-2">
+                              <span className="text-lg text-gray-600 select-none">
+                                {popupShowTotalBreakdown ? "▾" : "▸"}
+                              </span>
+                              <span className="text-sm font-semibold">
+                                Overall Rating
+                              </span>
+                            </div>
+                            <span className="font-semibold">
+                              {!isNaN(Number(offer.providerTotalRating))
+                                ? Number(offer.providerTotalRating).toFixed(2)
+                                : "0.00"}{" "}
+                              / 5
+                            </span>
+                          </button>
+
+                          {popupShowTotalBreakdown && (
+                            <div className="mt-1 space-y-1">
+                              <AggregateRow
+                                label="Overall Rating"
+                                value={offer.providerTotalRating ?? 0}
+                              />
+                              <AggregateRow
+                                label="Quality of Work"
+                                value={offer.providerQualityRating ?? 0}
+                                tooltipText="How satisfied were you in general with the quality of the legal advice and documentation provided by the legal service provider?"
+                              />
+                              <AggregateRow
+                                label="Responsiveness & Communication"
+                                value={offer.providerCommunicationRating ?? 0}
+                                tooltipText="Did you receive timely responses and communications from the legal service provider? Was the advice you received clear and actionable or ambiguous analysis without clear value-adding guidance?"
+                              />
+                              <AggregateRow
+                                label="Billing Practices"
+                                value={offer.providerBillingRating ?? 0}
+                                tooltipText="Did the legal service provider send invoices within agreed timeframes and with agreed specifications? In case of hourly rate assignments, did the legal service provider in your opinion invoice a reasonable amount of hours in relation to the legal support that was required?"
+                              />
+                            </div>
+                          )}
+                        </>
+                      ) : (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-semibold">
+                            Overall rating
+                          </span>
+                          <span className="font-semibold">No Ratings Yet</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* CATEGORY-BASED RATINGS */}
+                    <div className="border-t pt-4">
+                      <div className="text-sm font-semibold mb-2">
+                        Ratings by Area of Expertise
+                      </div>
+
+                      {categoriesToShow.length === 0 ? (
+                        <div className="text-sm text-gray-600">
+                          No category ratings available yet.
+                        </div>
+                      ) : (
+                        <div className="space-y-2">
+                          {categoriesToShow.map((categoryKey) => {
+                            const entry = practicalMap?.[categoryKey];
+                            const expanded =
+                              popupExpandedCategories?.[categoryKey] ?? false;
+                            const hasRatings = categoryHasRatings(entry);
+
+                            if (!hasRatings) {
+                              return (
+                                <div
+                                  key={categoryKey}
+                                  className="flex items-center justify-between"
+                                >
+                                  <span className="text-sm">{categoryKey}</span>
+                                  <span className="font-semibold">
+                                    No Ratings Yet
+                                  </span>
+                                </div>
+                              );
+                            }
+
+                            const { total, quality, responsiveness, billing } =
+                              getCategoryNumbers(entry);
+
+                            return (
+                              <div key={categoryKey}>
+                                <button
+                                  type="button"
+                                  onClick={() =>
+                                    setPopupExpandedCategories((prev) => ({
+                                      ...prev,
+                                      [categoryKey]: !(
+                                        prev?.[categoryKey] ?? false
+                                      ),
+                                    }))
+                                  }
+                                  className="w-full -mx-2 px-2 py-1 rounded flex items-center justify-between hover:bg-gray-50 cursor-pointer"
+                                  aria-expanded={expanded}
+                                >
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-lg text-gray-600 select-none">
+                                      {expanded ? "▾" : "▸"}
+                                    </span>
+                                    <span className="text-sm font-semibold">
+                                      {categoryKey}
+                                    </span>
+                                  </div>
+                                  <span className="font-semibold">
+                                    {!isNaN(Number(total))
+                                      ? Number(total).toFixed(2)
+                                      : "0.00"}{" "}
+                                    / 5
+                                  </span>
+                                </button>
+
+                                {expanded && (
+                                  <div className="mt-1 space-y-1">
+                                    <AggregateRow
+                                      label="Overall Rating"
+                                      value={total ?? 0}
+                                    />
+                                    <AggregateRow
+                                      label="Quality of Work"
+                                      value={quality ?? 0}
+                                      tooltipText="How satisfied were you in general with the quality of the legal advice and documentation provided by the legal service provider?"
+                                    />
+                                    <AggregateRow
+                                      label="Responsiveness & Communication"
+                                      value={responsiveness ?? 0}
+                                      tooltipText="Did you receive timely responses and communications from the legal service provider? Was the advice you received clear and actionable or ambiguous analysis without clear value-adding guidance?"
+                                    />
+                                    <AggregateRow
+                                      label="Billing Practices"
+                                      value={billing ?? 0}
+                                      tooltipText="Did the legal service provider send invoices within agreed timeframes and with agreed specifications? In case of hourly rate assignments, did the legal service provider in your opinion invoice a reasonable amount of hours in relation to the legal support that was required?"
+                                    />
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
           </div>
         </div>
       )}

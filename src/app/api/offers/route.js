@@ -172,8 +172,10 @@ export async function POST(req) {
     if (!reqRow)
       return NextResponse.json({ error: "Request not found" }, { status: 404 });
 
-    const paymentRate = String(reqRow.paymentRate || "").toLowerCase();
-    const isCapped = paymentRate === "capped price";
+    const paymentRate = String(reqRow.paymentRate || "")
+      .trim()
+      .toLowerCase();
+    const isCapped = paymentRate.startsWith("capped price");
 
     if (isCapped) {
       if (

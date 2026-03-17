@@ -501,8 +501,8 @@ export default function EmploymentNegotiation() {
             >
               <option value="">Select</option>
               <option value="Any rating">No</option>
-              <option value="3">Yes, at least 3 stars</option>
-              <option value="4">Yes, at least 4 stars</option>
+              <option value="3">Yes, average rating of at least 3/5</option>
+              <option value="4">Yes, average rating of at least 4/5</option>
             </select>
           </div>
           <br />

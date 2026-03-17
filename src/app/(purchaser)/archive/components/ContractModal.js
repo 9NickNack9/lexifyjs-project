@@ -464,6 +464,8 @@ export default function ContractModal({
     return false;
   }
 
+  const expectedPrice = contract?.offer?.offerExpectedPrice;
+
   return (
     <div className="fixed inset-0 bg-[#11999e] bg-opacity-50 flex justify-center items-center z-50 transition-opacity duration-300">
       <div className="bg-white w-11/12 max-w-3xl shadow-lg overflow-y-auto max-h-[90vh] animate-fadeInScale relative border border-black">
@@ -573,6 +575,18 @@ export default function ContractModal({
                 ? String(contract.contractPrice)
                 : "—"}{" "}
             {contract.contractPriceCurrency || ""}
+            {expectedPrice !== null &&
+            expectedPrice !== undefined &&
+            expectedPrice !== "" ? (
+              <>
+                {" "}
+                (Expected Price:{" "}
+                {typeof expectedPrice === "number"
+                  ? expectedPrice.toLocaleString("fi-FI")
+                  : String(expectedPrice)}{" "}
+                {contract.contractPriceCurrency || ""})
+              </>
+            ) : null}
           </p>
           <p>
             <strong>Contract Price Currency:</strong>{" "}
@@ -582,6 +596,22 @@ export default function ContractModal({
             <strong>Contract Price Type:</strong>{" "}
             {contract.contractPriceType || "—"}
           </p>
+          {/* NOTE below price */}
+          {expectedPrice !== null &&
+            expectedPrice !== undefined &&
+            expectedPrice !== "" && (
+              <p className="text-sm mt-1">
+                <strong>NOTE:</strong>{" "}
+                <span className="italic">
+                  The capped price is the maximum total fee for the work,
+                  including any potential unexpected developments in the
+                  proceedings (for example, an unusually large number of rounds
+                  of written pleadings). The expected price refers to the
+                  anticipated total fee if the proceedings proceed as normal,
+                  without such unexpected developments.
+                </span>
+              </p>
+            )}
 
           <hr />
 
@@ -727,26 +757,30 @@ export default function ContractModal({
           <h3 className="text-lg">
             General Terms and Conditions for LEXIFY Contracts
           </h3>
-          <p>Last Updated: October 2025</p>
+          <p>Last Updated: February 2026</p>
           <hr className="text-[#11999e]" />
           <p>
-            These General Terms and Conditions for LEXIFY Contracts (the “LEXIFY
-            Contract GTCs”) are applied to all contracts regarding the provision
-            of legal services (each such contract “LEXIFY Contract”) entered
-            into between a legal service provider (“LSP”) and a legal service
-            user (“LSU”) on the LEXIFY platform. These LEXIFY Contract GTCs form
-            an integral part of all LEXIFY Contracts. Unless otherwise
-            specifically stated herein, the defined terms used in these LEXIFY
-            Contract GTCs have the same meaning as set forth in the LEXIFY Terms
-            of Service, as amended from time to time.
+            These General Terms and Conditions for LEXIFY Contracts (the "LEXIFY
+            Contract GTCs") are applied to all contracts regarding the provision
+            of legal services (each such contract "LEXIFY Contract") entered
+            into between a legal service provider ("LSP") and a legal service
+            user ("LSU") on the LEXIFY platform. These LEXIFY Contract GTCs form
+            an integral part of all LEXIFY Contracts.
+            <br />
+            Unless otherwise specifically stated herein, the defined terms used
+            in these LEXIFY Contract GTCs have the same meaning as set forth in
+            the LEXIFY Terms of Service, as amended from time to time.
           </p>
+
           <p>
             <strong>1. Scope of Services</strong>
           </p>
           <p>
             The legal services to be provided by the LSP to the LSU under the
             LEXIFY Contract are set out in the corresponding LEXIFY Request,
-            included as appendix to the LEXIFY Contract.
+            included as appendix to the LEXIFY Contract. Unless explicitly
+            stated in the LEXIFY Request, the scope of the engagement does not
+            include tax advisory services.
             <br />
             Any legal advice provided by the LSP under the LEXIFY Contract may
             not, unless otherwise indicated by the LSP, be relied on in any
@@ -768,6 +802,7 @@ export default function ContractModal({
             might restrict or limit its competence or capability to provide the
             legal services as described in the LEXIFY Contract.
           </p>
+
           <p>
             <strong>2. LSP CONTACT PERSON & TEAM</strong>
           </p>
@@ -780,41 +815,42 @@ export default function ContractModal({
             under the LEXIFY Contract. The LSP is entitled to make changes to
             the composition of the team during the assignment, if necessary. The
             LEXIFY Contract is entered into by the LSU with the LSP and not with
-            any individual associated with or employed by the LSP
+            any individual associated with or employed by the LSP.
           </p>
+
           <p>
             <strong>
               3. CLIENT IDENTIFICATION AND ANTI-MONEY LAUNDERING REQUIREMENTS
             </strong>
           </p>
           <p>
-            The LSP has carried out a customary conflict check in accordance
-            with applicable bar rules or other applicable professional rules (if
-            any) prior to submitting its Offer. By entering into the LEXIFY
+            The LSP has conducted a customary conflict check in accordance with
+            applicable bar rules or other professional regulations (if any)
+            before submitting its Offer, or, if the information necessary to
+            perform the conflict check was not available at that time, without
+            delay after receiving such information from LEXIFY and prior to
+            entering into the LEXIFY Contract. By entering into the LEXIFY
             Contract the LSP warrants that no conflict of interest preventing it
             from performing the work described in the LEXIFY Contract exists.
-            The LSP shall reimburse the LSU for any and all damage suffered by
-            the LSU as a result of the LSP submitting an Offer or entering into
-            a LEXIFY Contract in breach of a conflict of interest which the LSP
-            has identified, or should have identified, prior to making such
-            Offer or entering into such LEXIFY Contract.
+            Any breach of the conflict of interest warranty set out above shall
+            be subject to the liability provisions of Section 12 of these LEXIFY
+            Contract GTCs.
             <br />
             The LSP may be required by applicable law to verify the LSU and/or
-            its representatives’ identity and/or the LSU’s ownership structure,
-            as well as obtain information about the nature and purpose of the
-            legal services covered by the LEXIFY Contract. In some cases, the
-            LSP may also be required to verify the origin of the LSU’s funds or
-            other assets. The LSP may therefore request, if required by
-            applicable General Terms and Conditions for LEXIFY Contracts Last
-            Updated: October 2025 2 laws or regulations, evidence of the LSU and
-            its representatives’ identity, of the identity of any person
-            involved on the LSU’s behalf, and of persons who are the LSU’s
-            beneficial owners, as well as information and documentation
-            evidencing the origin of the LSU’s funds and other assets. The LSP
-            may also be under obligation to verify such information from
-            external sources. The LSU agrees to provide to the LSP any
-            information referred to above and requested by the LSP without undue
-            delay.
+            its representatives&apos; identity and/or the LSU&apos;s ownership
+            structure, as well as obtain information about the nature and
+            purpose of the legal services covered by the LEXIFY Contract. In
+            some cases, the LSP may also be required to verify the origin of the
+            LSU&apos;s funds or other assets. The LSP may therefore request, if
+            required by applicable laws or regulations, evidence of the LSU and
+            its representatives&apos; identity, of the identity of any person
+            involved on the LSU&apos;s behalf, and of persons who are the
+            LSU&apos;s beneficial owners, as well as information and
+            documentation evidencing the origin of the LSU&apos;s funds and
+            other assets. The LSP may also be under obligation to verify such
+            information from external sources. The LSU agrees to provide to the
+            LSP any information referred to above and requested by the LSP
+            without undue delay.
             <br />
             The LSP may be required by law to report suspicions of money
             laundering or financing of terrorism to the relevant government
@@ -823,10 +859,11 @@ export default function ContractModal({
             or will be, made.
             <br />
             Neither the LSP nor LEXIFY is liable for any loss or damage caused
-            to the LSU as a consequence of the LSP’s compliance with the
+            to the LSU as a consequence of the LSP&apos;s compliance with the
             aforementioned obligations applicable to the LSP as a legal service
             provider under applicable law.
           </p>
+
           <p>
             <strong>4. COMMUNICATION BETWEEN LSP AND LSU; COOPERATION</strong>
           </p>
@@ -849,15 +886,16 @@ export default function ContractModal({
             <br />- provide the LSP, as appropriate in connection with the
             LEXIFY Request and thereafter, with adequate background information
             and documents necessary for the due performance of the legal work;
-            <br />- respond without delay to the LSP’s reasonable requests for
-            additional information and instructions;
+            <br />- respond without delay to the LSP&apos;s reasonable requests
+            for additional information and instructions;
             <br />- provide the LSP with comprehensive, exact and accurate
-            information regarding the matter during the performance of the LSP’s
-            legal work under the LEXIFY Contract; and
+            information regarding the matter during the performance of the
+            LSP&apos;s legal work under the LEXIFY Contract; and
             <br />- inform the LSP without delay of any changes in circumstances
             relevant to the scope of legal services provided by the LSP under
             the LEXIFY Contract, or the matter at hand otherwise.
           </p>
+
           <p>
             <strong>5. CONFIDENTIALITY</strong>
           </p>
@@ -867,13 +905,14 @@ export default function ContractModal({
             confidential information disclosed to the LSP in an appropriate
             manner and in accordance with statutory confidentiality obligations,
             applicable bar rules (if any) and customary industry practice.
-            Regardless of whether the LSP’s involvement in the assignment for
-            the LSU has become publicly known (due to reasons not attributable
-            to the LSP), The LSP may not disclose acting on behalf of the LSU
-            and the LSP’s involvement in such matter in any manner without the
-            LSU’s prior written consent, save to the extent as may be required
-            by applicable mandatory law.
+            Regardless of whether the LSP&apos;s involvement in the assignment
+            for the LSU has become publicly known (due to reasons not
+            attributable to the LSP), The LSP may not disclose acting on behalf
+            of the LSU and the LSP&apos;s involvement in such matter in any
+            manner without the LSU&apos;s prior written consent, save to the
+            extent as may be required by applicable mandatory law.
           </p>
+
           <p>
             <strong>6. FEES AND EXPENSES</strong>
           </p>
@@ -883,7 +922,7 @@ export default function ContractModal({
             respective Offer submitted by the LSP, and the LSU shall not be
             obligated to pay any fee exceeding the amount set out in the Offer.
             Where the Offer has been provided by the LSP in the form of a lump
-            sum fixed fee, The LSP acknowledges that as an experienced legal
+            sum fixed fee, the LSP acknowledges that as an experienced legal
             professional it has carefully considered the facts and
             specifications of the LEXIFY Request and provided its Offer with due
             consideration of the customary duration and requirements of such
@@ -891,11 +930,16 @@ export default function ContractModal({
             amount of actual work required in such assignments may vary due to
             variables customary to such assignments, and that this does not
             entitle the LSP to revise its Offer later during the course of the
-            assignment. 3 The parties acknowledge and accept that the LSP shall
-            not be entitled to invoice, in addition to the fee set out in the
-            Offer, additional charges or costs (such as postage, copying,
-            telephone and similar expenses). The LSP shall be entitled to
-            separately invoice solely the following cost items (if applicable):
+            assignment. 3 Unless otherwise specified in the LEXIFY Request,
+            where the engagement is based on hourly rate(s), the hourly rate(s)
+            stated in the Offer shall remain valid for a period of 12 months
+            from the date of the LEXIFY Contract.
+            <br />
+            The parties acknowledge and accept that the LSP shall not be
+            entitled to invoice, in addition to the fee set out in the Offer,
+            additional charges or costs (such as copying, telephone and similar
+            expenses). The LSP shall be entitled to separately invoice solely
+            the following cost items (if applicable):
             <br />
             i) travel time and travel expenses for any travel specifically
             requested by the LSU and not explicitly mentioned in the LEXIFY
@@ -905,20 +949,23 @@ export default function ContractModal({
             connection with the assignment (for example, registration fees
             related to filings with a competent business register where such
             filings are part of the assignment described in the relevant LEXIFY
-            Request); and
+            Request);
             <br />
-            iii) costs resulting from additional services explicitly requested
-            by the LSU in writing and not originally included in the LEXIFY
-            Request (for example fees charged by professional translators where
-            the LSU later requests specific documentation to be translated).
-          </p>
-          <p>
+            iii) postage and courier fees related to the performance of the work
+            under the LEXIFY Contract; and
+            <br />
+            iv) costs resulting from additional services explicitly requested by
+            the LSU in writing and not originally included in the LEXIFY Request
+            (for example fees charged by professional translators where the LSU
+            later requests specific documentation to be translated).
+            <br />
             The LSP shall add value added tax and other applicable taxes (if
             any) to its fee and charge such taxes where appropriate in
             accordance with applicable laws and regulations. For the avoidance
             of doubt, it is acknowledged that the Offer submitted by the LSP is
             exclusive of value added tax and other applicable tax (if any).
           </p>
+
           <p>
             <strong>7. INVOICING AND PAYMENT</strong>
           </p>
@@ -930,32 +977,38 @@ export default function ContractModal({
             invoice, unless otherwise separately agreed between the LSP and the
             LSU in writing. Interest is payable on overdue invoices in
             accordance with applicable law from the due date until the date of
-            payment. If the LSP’s invoice(s) remain unpaid after the due date,
-            the LSP is also entitled to suspend all services to the LSU until
-            the outstanding payment has been made in full.
+            payment. If the LSP&apos;s invoice(s) remain unpaid after the due
+            date, the LSP is also entitled to suspend all services to the LSU
+            until the outstanding payment has been made in full.
           </p>
+
           <p>
             <strong>8. DOCUMENT RETENTION</strong>
           </p>
           <p>
-            Unless otherwise agreed between the LSP and the LSU or required by
-            law, the LSP will keep (or store with a third party) relevant
-            engagement-related material on file for ten years following the
-            completion of an engagement (or termination of an engagement), after
-            which the LSP may discard the material without separate
-            notification. Expenses for copying costs and related administrative
-            work may be charged by the LSP if copies are requested by the LSU at
-            a later date after the assignment.
+            Unless otherwise agreed between the LSP and the LSU, the LSP will
+            keep (or store with a third party) relevant engagement-related
+            material on file for the period required by applicable law and/or
+            applicable bar association rules, after which the LSP may discard
+            the material without separate notification. Expenses for copying
+            costs and related administrative work may be charged by the LSP if
+            copies are requested by the LSU at a later date after the
+            assignment.
           </p>
+
           <p>
             <strong>9. INTELLECTUAL PROPERTY RIGHTS</strong>
           </p>
           <p>
             The copyright and any other intellectual property rights in all work
-            products that the LSP generates for the LSU vest in the LSP,
-            although the LSU has the right to use such work products for the
-            purpose for which they were provided.
+            products that the LSP generates for the LSU under the LEXIFY
+            Contract vest in the LSP. The LSU has the right to use, modify and
+            adapt such work products for its own business purposes. The LSU may
+            not distribute, sell or otherwise make such work products available
+            to third parties as standalone deliverables without the LSP&apos;s
+            prior written consent.
           </p>
+
           <p>
             <strong>10. DATA PROTECTION</strong>
           </p>
@@ -963,69 +1016,84 @@ export default function ContractModal({
             During the course of performing services for the LSU, the LSP will
             process certain personal data as a &quot;controller&quot; (as
             defined in the EU General Data Protection Regulation), such as
-            contact details relating to the LSU’s representatives (names,
+            contact details relating to the LSU&apos;s representatives (names,
             telephone numbers, email addresses, work-related addresses and/or
             other identification data) for identity verification and
             relationship management purposes. The LSP may also process other
             types of personal data relating to the LSU and its
             counterparties&apos; (if any) representatives that is necessary to
-            enable the LSP to perform the legal work and to fulfill the LSP’s
-            obligations under the LEXIFY Contract and applicable anti-money
-            laundering and other laws. The LSU may consult the LSP directly for
-            further information on the LSP’s data protection practices.
+            enable the LSP to perform the legal work and to fulfill the
+            LSP&apos;s obligations under the LEXIFY Contract and applicable
+            anti-money laundering and other laws. The LSU may consult the LSP
+            directly for further information on the LSP&apos;s data protection
+            practices.
           </p>
+
           <p>
             <strong>11. COMPLAINTS BY LSU</strong>
           </p>
           <p>
             If, for any reason, the LSU is dissatisfied or has a complaint
-            regarding the service by the LSP, the LSU shall notify the LSP’s
-            responsible partner or other contact person in charge of the
-            specific matter. Such notice must be given within a reasonable time,
-            and in any event no later than 30 days after the date the LSU became
+            regarding the service by the LSP, the LSU shall notify the
+            LSP&apos;s responsible partner or other contact person in charge of
+            the specific matter. Such notice must be given within a reasonable
+            time, and in any event no later than 30 days after the date the LSU
+            became aware, or should have become aware upon reasonable
+            investigation, of the grounds for the complaint. The LSP will
+            investigate any complaint received promptly and inform the LSU of
+            planned corrective measures without undue delay.
+            <br />
+            If the LSU brings a claim against the LSP based on a claim made
+            against the LSU by a third party or any public authority, the LSP
+            will be entitled to defend and settle such claim on the LSU&apos;s
+            behalf, provided i) the LSP keeps the LSU continuously informed of
+            such claim proceedings and seeks the LSU&apos;s prior written
+            approval for any material decision (for example, the key terms of a
+            settlement) regarding such claim proceedings and ii) the LSU is
+            indemnified in full by the LSP. If the LSU is to be reimbursed by
+            the LSP for any such claim, the reimbursement will only be made if
+            the LSU transfers the right of recourse against third parties by way
+            of subrogation or assignment to the LSP or to its insurers.
+            <br />
+            Any claim for damages by the LSU against the LSP must be made no
+            later than three (3) months from the date on which the LSU became
             aware, or should have become aware upon reasonable investigation, of
-            the grounds for the complaint. The LSP will investigate any
-            complaint received promptly and inform the LSU of planned corrective
-            measures without undue delay. 4 If the LSU brings a claim against
-            the LSP based on a claim made against the LSU by a third party or
-            any public authority, the LSP will be entitled to defend and settle
-            such claim on the LSU’s behalf, provided i) the LSP keeps the LSU
-            continuously informed of such claim proceedings and seeks the LSU’s
-            prior written approval for any material decision (for example, the
-            key terms of a settlement) regarding such claim proceedings and ii)
-            the LSU is indemnified in full by the LSP. If the LSU is to be
-            reimbursed by the LSP for any such claim, the reimbursement will
-            only be made if the LSU transfers the right of recourse against
-            third parties by way of subrogation or assignment to the LSP or to
-            its insurers.
+            the act or omission giving rise to the claim. Where mandatory
+            applicable law or applicable bar association rules require a longer
+            period for making such a claim, such longer period shall apply.
           </p>
+
           <p>
             <strong>12. LIMITATION OF LIABILITY</strong>
           </p>
           <p>
             Save as may be required by mandatory provisions of applicable law,
-            the LSP’s liability to the LSU under the LEXIFY Contract is limited
-            to pure economic loss caused to the LSU as consequence of an error
-            or negligence on the LSP’s part in performing its work and is also
-            limited in amount to three times the fee charged during the course
-            of the engagement under the LEXIFY Contract or 200.000 (two hundred
-            thousand) euros, whichever is higher. If loss suffered by the LSU is
-            attributable to the willful misconduct or gross negligence of the
-            LSP, no limitations of liability shall apply.
+            the LSP&apos;s liability to the LSU under the LEXIFY Contract is
+            limited to pure economic loss caused to the LSU as consequence of an
+            error or negligence on the LSP&apos;s part in performing its work.
+            The LSP shall not be liable for any indirect, consequential, or
+            incidental loss or damage; however, for the avoidance of doubt, this
+            exclusion shall not limit the LSP&apos;s liability for pure economic
+            loss as set out in the preceding sentence. The LSP&apos;s liability
+            is further limited in amount to two (2) times the fee charged during
+            the course of the engagement under the LEXIFY Contract or 200.000
+            (two hundred thousand) euros, whichever is higher. If loss suffered
+            by the LSU is attributable to the willful misconduct or gross
+            negligence of the LSP, no limitations of liability shall apply.
             <br />
             The LSP assumes no liability to any third party through the use by
             the LSU of documents or other advice produced or provided by the
-            LSP. Notwithstanding the above, if at the LSU’s request the LSP in
-            its sole discretion agrees that a third party may rely on a document
-            produced by the LSP or on advice provided by the LSP, this will not
-            increase or otherwise affect the LSP’s liability, and the LSP will
-            only be liable to such third party to the extent the LSP would be
-            liable to the LSU. Any amount paid to a third party as a result of
-            such liability will reduce the LSP’s liability to the LSU
-            correspondingly and vice versa. If the LSP agrees that a third party
-            may rely on a document produced by the LSP or on advice provided by
-            the LSP, no attorney-client relationship will arise between the LSP
-            and such third party.
+            LSP. Notwithstanding the above, if at the LSU&apos;s request the LSP
+            in its sole discretion agrees that a third party may rely on a
+            document produced by the LSP or on advice provided by the LSP, this
+            will not increase or otherwise affect the LSP&apos;s liability, and
+            the LSP will only be liable to such third party to the extent the
+            LSP would be liable to the LSU. Any amount paid to a third party as
+            a result of such liability will reduce the LSP&apos;s liability to
+            the LSU correspondingly and vice versa. If the LSP agrees that a
+            third party may rely on a document produced by the LSP or on advice
+            provided by the LSP, no attorney-client relationship will arise
+            between the LSP and such third party.
             <br />
             The LSP assumes no liability for any delay in service where such
             delay is attributable to the LSU or any party acting on behalf of
@@ -1034,15 +1102,15 @@ export default function ContractModal({
             Neither the LSP nor the LSU shall be liable for any delay or failure
             to perform its obligations under the LEXIFY Contract if such delay
             or failure results from circumstances beyond the non-performing
-            party’s reasonable control, including but not limited to acts of
-            God, natural disasters, pandemic, epidemic, war, terrorism, riots,
-            civil unrest, government actions, strikes, power failures, or
+            party&apos;s reasonable control, including but not limited to acts
+            of God, natural disasters, pandemic, epidemic, war, terrorism,
+            riots, civil unrest, government actions, strikes, power failures, or
             telecommunications disruptions (&quot;Force Majeure Event&quot;).
             The affected party shall notify the other party of such Force
             Majeure Event as soon as reasonably possible. If a Force Majeure
             Event continues for more than 90 consecutive days, either party may
             terminate the LEXIFY Contract with written notice to the other Party
-            without penalty.
+            without penalty
             <br />
             The LSP shall at all times maintain a liability insurance in
             accordance with industry standards and issued by a reputable
@@ -1054,22 +1122,24 @@ export default function ContractModal({
             relation to the performance of the other party under the LEXIFY
             Contract.
           </p>
+
           <p>
             <strong>13. WORK OF OTHER ADVISORS</strong>
           </p>
           <p>
             The LSP may, upon request of the LSU, identify and instruct other
-            advisors for a particular engagement on the LSU’s behalf. If the LSP
-            instructs, engages and/or works together with other advisors, any
-            such advisors will be considered independent of the LSP and the LSP
-            assumes no responsibility or liability for recommending them to the
-            LSU or for the advice given by them. The LSP does not assume
-            responsibility for any quotes, estimates or fees charged by such
-            advisors, and such fees are not included in the price set out in the
-            Offer. Any authority to instruct advisors on the LSU’s behalf
-            includes authority to accept a reasonable limitation of liability on
-            the LSU’s behalf.
+            advisors for a particular engagement on the LSU&apos;s behalf. If
+            the LSP instructs, engages and/or works together with other
+            advisors, any such advisors will be considered independent of the
+            LSP and the LSP assumes no responsibility or liability for
+            recommending them to the LSU or for the advice given by them. The
+            LSP does not assume responsibility for any quotes, estimates or fees
+            charged by such advisors, and such fees are not included in the
+            price set out in the Offer. Any authority to instruct advisors on
+            the LSU&apos;s behalf includes authority to accept a reasonable
+            limitation of liability on the LSU&apos;s behalf.
           </p>
+
           <p>
             <strong>14. TERMINATION OF LEXIFY CONTRACT</strong>
           </p>
@@ -1081,7 +1151,7 @@ export default function ContractModal({
             is not completed due to unsuccessful negotiations between the seller
             and the buyer), the LEXIFY Contract and the engagement may be
             terminated at any time by written notice of the LSU, asking the LSP
-            to cease further work in the matter. In such 5 case, the LSU shall
+            to cease further work in the matter. In such case, the LSU shall
             compensate the LSP for services provided by the LSP under the LEXIFY
             Contract up to and including the date of the written notice. Where
             the Offer has been provided by the LSP in the form of a lump sum
@@ -1107,9 +1177,9 @@ export default function ContractModal({
             out circumstances that require the LSP to discontinue acting for the
             LSU. Where an engagement is terminated in this manner, unless
             prevented by applicable law, the LSP shall take reasonable measures
-            to preserve the LSU’s interests when discontinuing the engagement
-            (this may include, for example, reimbursement of fees already paid
-            by the LSU for services not yet rendered by the LSP).
+            to preserve the LSU&apos;s interests when discontinuing the
+            engagement (this may include, for example, reimbursement of fees
+            already paid by the LSU for services not yet rendered by the LSP).
             <br />
             Either party to the LEXIFY Contract may terminate the LEXIFY
             Contract at any time due to a material breach of the LEXIFY Contract
@@ -1117,6 +1187,7 @@ export default function ContractModal({
             party shall always provide the breaching party with a reasonable
             opportunity to remedy the breach.
           </p>
+
           <p>
             <strong>15. AMENDMENTS; NO WAIVER</strong>
           </p>
@@ -1134,6 +1205,7 @@ export default function ContractModal({
             any other, separate, or subsequent breach by either the LSP or the
             LSU of the LEXIFY Contract, as applicable.
           </p>
+
           <p>
             <strong>16. GOVERNING LAWS AND REGULATIONS; DISPUTES</strong>
           </p>
@@ -1145,15 +1217,21 @@ export default function ContractModal({
             services to the LSU pursuant to a LEXIFY Contract.
             <br />
             The LEXIFY Contract is governed by and construed in accordance with
-            the laws of the country of domicile of the LSU (excluding its choice
-            of law rules). Any dispute, controversy or claim that may arise out
-            of or in connection with the LEXIFY Contract or the breach,
-            termination or invalidity thereof and which is not resolved within a
-            reasonable time in amicable negotiations between the LSP and the
-            LSU, will be finally settled in arbitration by a reputable
-            arbitration tribunal of the country of domicile of the LSU. Arbitral
-            proceedings and all information disclosed in the course of such
-            proceedings, as well as any decision or award made or declared
+            the laws of Finland. Any dispute, controversy or claim arising out
+            of or relating to the LEXIFY Contract, or the breach, termination or
+            validity thereof and which is not resolved within a reasonable time
+            in amicable negotiations between the LSP and the LSU, shall be
+            finally settled by arbitration in accordance with the Rules for
+            Expedited Arbitration of the Finland Chamber of Commerce. However,
+            at the request of the LSU or the LSP, the Arbitration Institute of
+            the Finland Chamber of Commerce may determine that the Arbitration
+            Rules of the Finland Chamber of Commerce shall apply instead of the
+            Rules for Expedited Arbitration, if the Arbitration Institute
+            considers this to be appropriate taking into account the amount in
+            dispute, the complexity of the case, and other relevant
+            circumstances. The seat of arbitration shall be Helsinki, Finland.
+            Arbitral proceedings and all information disclosed in the course of
+            such proceedings, as well as any decision or award made or declared
             during the proceedings, shall be kept confidential and may not, in
             any form, be disclosed to a third party (except LEXIFY) without the
             express consent of both parties to the LEXIFY Contract.
@@ -1164,11 +1242,7 @@ export default function ContractModal({
             law or stock exchange rules and regulations or similar. In addition
             and notwithstanding the above, the LSP is entitled to commence
             proceedings to recover any amount due to it in any court with
-            jurisdiction over the LSU or any of the LSU’s assets.
-            <br />
-            If the country of domicile of the LSU is Finland, any arbitration
-            shall always take place in accordance with the Arbitration Rules of
-            the Finland Chamber of Commerce.
+            jurisdiction over the LSU or any of the LSU&apos;s assets.
           </p>
 
           <hr className="text-[#3a3a3c]" />

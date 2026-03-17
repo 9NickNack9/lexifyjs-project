@@ -1663,7 +1663,7 @@ export default function AdminPage() {
                         ) : (
                           <button
                             onClick={() => deleteRequest(r.requestId)}
-                            className="bg-red-500 text-white px-2 py-1 rounded"
+                            className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
                           >
                             Delete
                           </button>
@@ -1829,7 +1829,7 @@ export default function AdminPage() {
                   <td className="border p-2">
                     <button
                       onClick={() => deleteOffer(o.offerId)}
-                      className="bg-red-500 text-white px-2 py-1 rounded"
+                      className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
                     >
                       Delete
                     </button>
@@ -1947,7 +1947,7 @@ export default function AdminPage() {
                   <td className="border p-2">
                     <button
                       onClick={() => deleteContract(c.contractId)}
-                      className="bg-red-500 text-white px-2 py-1 rounded"
+                      className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
                     >
                       Delete
                     </button>

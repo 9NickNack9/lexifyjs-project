@@ -15,7 +15,7 @@ export async function GET(req) {
   const skip = Math.max(0, parseInt(searchParams.get("skip") || "0", 10));
   const take = Math.min(
     50,
-    Math.max(1, parseInt(searchParams.get("take") || "10", 10))
+    Math.max(1, parseInt(searchParams.get("take") || "10", 10)),
   );
 
   const where = search
@@ -57,6 +57,15 @@ export async function GET(req) {
           select: {
             offerId: true,
             offerLawyer: true,
+            providerUser: {
+              select: {
+                company: {
+                  select: {
+                    companyName: true,
+                  },
+                },
+              },
+            },
             provider: {
               select: {
                 companyName: true,
@@ -76,10 +85,13 @@ export async function GET(req) {
     if (r.selectedOfferId && Array.isArray(r.offers)) {
       const selIdStr = r.selectedOfferId.toString();
       const match = r.offers.find(
-        (o) => o.offerId && o.offerId.toString() === selIdStr
+        (o) => o.offerId && o.offerId.toString() === selIdStr,
       );
       if (match) {
-        selectedOfferCompanyName = match.provider?.companyName || null;
+        selectedOfferCompanyName =
+          match.providerUser?.company?.companyName ||
+          match.provider?.companyName ||
+          null;
         selectedOfferLawyer = match.offerLawyer || null;
       }
     }

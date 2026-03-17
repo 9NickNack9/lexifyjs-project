@@ -5,28 +5,6 @@ import { useRouter, useSearchParams } from "next/navigation";
 import QuestionMarkTooltip from "../../components/QuestionmarkTooltip";
 
 // ---------------- small helpers ----------------
-const pad2 = (n) => String(n).padStart(2, "0");
-const fmtLocalDDMMYYYY_HHMM = (isoish) => {
-  const d = new Date(isoish);
-  if (Number.isNaN(d.getTime())) return "—";
-  return `${pad2(d.getDate())}/${pad2(
-    d.getMonth() + 1,
-  )}/${d.getFullYear()} ${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
-};
-const formatTimeUntil = (end) => {
-  const d = new Date(end);
-  if (Number.isNaN(d.getTime())) return "";
-  const ms = d.getTime() - Date.now();
-  if (ms <= 0) return "";
-  const s = Math.floor(ms / 1000);
-  const days = Math.floor(s / 86400);
-  const hours = Math.floor((s % 86400) / 3600);
-  const mins = Math.floor((s % 3600) / 60);
-  if (days > 0) return `${days} day${days !== 1 ? "s" : ""} ${hours} h`;
-  if (hours > 0) return `${hours} h ${mins} min`;
-  return `${mins} min`;
-};
-
 function Section({ title, children }) {
   return (
     <div>

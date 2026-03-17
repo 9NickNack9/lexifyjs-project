@@ -11,10 +11,36 @@ function EmptyBox({ children }) {
   );
 }
 
-function formatTimeUntil(deadlineISO) {
-  if (!deadlineISO) return "";
-  const end = new Date(deadlineISO).getTime();
+function formatTimeUntilForOffer(offer) {
+  if (!offer) return "";
+
+  const state = (offer.requestState || offer.requestStatus || "")
+    .toString()
+    .trim()
+    .toUpperCase();
+
+  const selectedOfferId =
+    offer.selectedOfferId == null ? null : Number(offer.selectedOfferId);
+  const offerId = offer.offerId == null ? null : Number(offer.offerId);
+  const isSelectedInConflictCheck =
+    state === "CONFLICT_CHECK" &&
+    selectedOfferId != null &&
+    offerId != null &&
+    selectedOfferId === offerId;
+
+  if (isSelectedInConflictCheck) {
+    return "Expired. Awaiting Conflict Check.";
+  }
+
+  if (state === "ON HOLD" || state === "CONFLICT_CHECK") {
+    return "Expired. Awaiting Winning Offer Selection.";
+  }
+
+  if (!offer.dateExpired) return "";
+
+  const end = new Date(offer.dateExpired).getTime();
   if (Number.isNaN(end)) return "";
+
   const diffMs = end - Date.now();
   if (diffMs <= 0) return "Expired. Awaiting Winning Offer Selection.";
 
@@ -598,12 +624,27 @@ export default function ProviderArchive() {
         va = typeof va === "number" ? va : -Infinity;
         vb = typeof vb === "number" ? vb : -Infinity;
       } else if (key === "deadline") {
-        va = a.dateExpired
-          ? new Date(a.dateExpired).getTime() - Date.now()
-          : -Infinity;
-        vb = b.dateExpired
-          ? new Date(b.dateExpired).getTime() - Date.now()
-          : -Infinity;
+        const deadlineValue = (row) => {
+          const state = (row.requestState || row.requestStatus || "")
+            .toString()
+            .trim()
+            .toUpperCase();
+
+          if (state === "CONFLICT_CHECK") {
+            return row.selectedOfferId === row.offerId ? -2 : -1;
+          }
+
+          if (state === "ON HOLD") {
+            return -1;
+          }
+
+          return row.dateExpired
+            ? new Date(row.dateExpired).getTime() - Date.now()
+            : -Infinity;
+        };
+
+        va = deadlineValue(a);
+        vb = deadlineValue(b);
       } else {
         va = (va ?? "").toString().toLowerCase();
         vb = (vb ?? "").toString().toLowerCase();
@@ -814,7 +855,7 @@ export default function ProviderArchive() {
                           {fmtMoney(o.offeredPrice)}
                         </td>
                         <td className="border p-2 text-center">
-                          {formatTimeUntil(o.dateExpired)}
+                          {formatTimeUntilForOffer(o)}
                         </td>
                         <td className="border p-2 text-center">
                           <button
@@ -1129,9 +1170,7 @@ export default function ProviderArchive() {
             <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
               <div className="w-[min(900px,95vw)] max-h-[90vh] overflow-auto rounded-xl bg-white text-black p-6 shadow-xl">
                 <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-xl font-semibold">
-                    Preview — {reqPreview.title || "LEXIFY Request"}
-                  </h3>
+                  <h3 className="text-xl font-semibold">Preview</h3>
                   <button
                     className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300"
                     onClick={() => setShowReq(false)}
@@ -1157,14 +1196,12 @@ export default function ProviderArchive() {
                             (section) => !looksLikeProviderReqSection(section),
                           )
                           .map((section, si) => {
-                            // If this is a fields-table section, strip hidden fields.
                             const fields = Array.isArray(section.fields)
                               ? section.fields.filter(
                                   (f) => !shouldHideField(f),
                                 )
                               : null;
 
-                            // Skip empty sections after filtering
                             if (
                               Array.isArray(section.fields) &&
                               fields.length === 0
@@ -1182,14 +1219,12 @@ export default function ProviderArchive() {
                                     <tbody>
                                       {fields.map((f, fi) => {
                                         const label = f.label || "—";
-                                        // 1) primary: resolve by path
                                         let raw = resolvePath(
                                           reqPreview,
                                           f.path,
                                         );
                                         let display = renderValue(raw, f.path);
 
-                                        // 2) fallback: resolve by label (for parity with Make Offer)
                                         if (display === "—") {
                                           const byLabel = resolveByLabel(
                                             reqPreview,

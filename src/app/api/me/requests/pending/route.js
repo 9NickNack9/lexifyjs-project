@@ -59,7 +59,7 @@ export async function GET() {
     const requests = await prisma.request.findMany({
       where: {
         clientCompanyId: ua.companyId,
-        requestState: { in: ["PENDING", "ON HOLD"] },
+        requestState: { in: ["PENDING", "ON HOLD", "CONFLICT_CHECK"] },
       },
       orderBy: { dateCreated: "desc" },
       select: {

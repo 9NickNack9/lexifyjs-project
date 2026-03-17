@@ -192,6 +192,7 @@ export async function GET() {
             requestId: true,
             offerLawyer: true,
             offerTitle: true,
+            offerExpectedPrice: true,
             createdByUser: { select: { firstName: true, lastName: true } },
           },
         })
@@ -203,6 +204,9 @@ export async function GET() {
         {
           owner: fullName(o.createdByUser) || o.offerLawyer || "",
           offerTitle: o.offerTitle || "",
+          offerLawyer: o.offerLawyer || "",
+          offerExpectedPrice:
+            o.offerExpectedPrice != null ? toNum(o.offerExpectedPrice) : null,
         },
       ]),
     );
@@ -211,6 +215,13 @@ export async function GET() {
       const won = wonByRequestId.get(String(c.requestId));
       const owner = won?.owner || fullName(me) || "—";
       const offerTitle = won?.offerTitle || c.request?.title || "—";
+      const offer = won
+        ? {
+            offerLawyer: won.offerLawyer || null,
+            offerTitle: won.offerTitle || null,
+            offerExpectedPrice: won.offerExpectedPrice ?? null,
+          }
+        : null;
 
       // Purchaser primary contact fallback: first member of client company
       const clientMembers = c.clientCompany?.members || [];
@@ -258,6 +269,7 @@ export async function GET() {
 
           provider,
           purchaser,
+          offer,
 
           client: {
             companyName: c.clientCompany?.companyName || "—",

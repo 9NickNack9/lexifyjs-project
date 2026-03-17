@@ -94,7 +94,7 @@ export default function ProviderRequest() {
           `/api/provider/requests/available${
             queryString ? `?${queryString}` : ""
           }`,
-          { cache: "no-store" }
+          { cache: "no-store" },
         );
         const data = res.ok ? await res.json() : { requests: [] };
         if (active) setRows(data.requests || []);
@@ -191,7 +191,7 @@ export default function ProviderRequest() {
                   <option key={assignment} value={assignment}>
                     {assignment}
                   </option>
-                )
+                ),
               )}
             </select>
           )}
@@ -214,7 +214,7 @@ export default function ProviderRequest() {
                   <th className="border p-2 text-center">Assignment type</th>
                   <th className="border p-2 text-center">Client Name</th>
                   <th className="border p-2 text-center">
-                    Time until Deadline
+                    Time until Deadline for Offers
                   </th>
                   <th className="border p-2 text-center">
                     Review LEXIFY Request and Submit Offer{" "}

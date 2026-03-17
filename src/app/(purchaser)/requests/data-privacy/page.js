@@ -303,16 +303,10 @@ export default function DataPrivacy() {
               className="w-full border p-2"
               onChange={handleChange}
             >
-              <option value="">Select Service Provider Rating</option>
-              <option value="Any rating">
-                No, all legal service providers can tender
-              </option>
-              <option value="At least a rating of 3 stars">
-                Yes, at least 3 stars
-              </option>
-              <option value="At least a rating of 4 stars">
-                Yes, at least 4 stars
-              </option>
+              <option value="">Select</option>
+              <option value="Any rating">No</option>
+              <option value="3">Yes, average rating of at least 3/5</option>
+              <option value="4">Yes, average rating of at least 4/5</option>
             </select>
           </div>
           <div>

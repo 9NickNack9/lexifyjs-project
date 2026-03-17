@@ -49,9 +49,14 @@ function coerceProviderRating(row) {
   };
 }
 
-function RatingDetails({ label, rating, hasRatings = true }) {
+function RatingDetails({
+  label,
+  rating,
+  hasRatings = true,
+  emptyText = "No Ratings Yet",
+}) {
   if (!hasRatings) {
-    return <span>No Ratings Yet</span>;
+    return <span>{emptyText}</span>;
   }
 
   const has =
@@ -61,7 +66,7 @@ function RatingDetails({ label, rating, hasRatings = true }) {
       rating.communication != null ||
       rating.billing != null);
 
-  if (!has) return <span>N/A</span>;
+  if (!has) return <span>{emptyText}</span>;
 
   return (
     <details>
@@ -118,10 +123,10 @@ export default function ContractsTable({ rows, onShowContract }) {
                 <th className="border p-2 text-center">Contract Price</th>
                 <th className="border p-2 text-center">View LEXIFY Contract</th>
                 <th className="border p-2 text-center">
-                  My Rating of the Legal Service Provider on LEXIFY
+                  My Rating of the Law Firm on LEXIFY
                 </th>
                 <th className="border p-2 text-center">
-                  Aggregate Rating of the Legal Service Provider on LEXIFY
+                  Aggregate Rating of the Law Firm on LEXIFY
                 </th>
               </tr>
             </thead>
@@ -163,9 +168,10 @@ export default function ContractsTable({ rows, onShowContract }) {
 
                   <td className="border p-2 text-center">
                     <RatingDetails
-                      label="My rating"
+                      label="My rating for this contract"
                       rating={c.myRating}
                       hasRatings={c.myHasRating}
+                      emptyText="No Rating Yet"
                     />
                   </td>
 

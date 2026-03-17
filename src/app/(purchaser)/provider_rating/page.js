@@ -245,6 +245,7 @@ export default function ProviderRatingPage() {
 
     setSaving(true);
     setMessage("");
+
     try {
       const res = await fetch(`/api/providers/${selected.companyId}/rating`, {
         method: "POST",
@@ -258,8 +259,26 @@ export default function ProviderRatingPage() {
       });
 
       const json = await res.json().catch(() => ({}));
-      if (!res.ok) setMessage(json?.error || "Failed to save rating.");
-      else setMessage("Rating saved.");
+
+      if (!res.ok) {
+        setMessage(json?.error || "Failed to save rating.");
+        return;
+      }
+
+      alert("Rating saved successfully.");
+
+      // Close the rating view + reset search/form state
+      setSelected(null);
+      setContractsForSelected([]);
+      setSelectedContractId("");
+      setSelectedRequestTitle("");
+      setSelectedCategoryLabel("");
+      setQow(0);
+      setResp(0);
+      setBill(0);
+      setQuery("");
+      setResults([]);
+      setMessage("");
     } catch {
       setMessage("Network error while saving rating.");
     } finally {

@@ -86,14 +86,21 @@ function normalizePracticalRatings(pr) {
   return map;
 }
 
-function getPracticalCategoryTotal(provider, category) {
-  const entry = provider.categoryRatings?.[category];
+function getPracticalCategoryTotal(providerPracticalRatings, category) {
+  const ratings = normalizePracticalRatings(providerPracticalRatings);
+  const entry = ratings?.[category];
 
-  if (!entry || entry.numberOfRatings === 0) {
-    return null; // no ratings yet
+  if (!entry) {
+    return null; // no ratings for this category
   }
 
-  return entry.totalRating ?? 0;
+  const count = Number(entry.count ?? 0);
+  if (!Number.isFinite(count) || count <= 0) {
+    return null; // treat as no ratings yet
+  }
+
+  const total = Number(entry.total);
+  return Number.isFinite(total) ? total : null;
 }
 
 function toDecimalString(v) {
@@ -274,6 +281,9 @@ export async function POST(req) {
           companyName: true,
           businessId: true,
           companyCountry: true,
+          blockedServiceProviders: true,
+          preferredLegalServiceProviders: true,
+          legalPanelServiceProviders: true,
         },
       },
     },
@@ -441,6 +451,26 @@ export async function POST(req) {
     return [];
   }
 
+  const blockedProviderCompanies = new Set(
+    toStringArray(me.company?.blockedServiceProviders).map((s) =>
+      s.trim().toLowerCase(),
+    ),
+  );
+
+  const preferredProviderCompanies = new Set(
+    toStringArray(me.company?.preferredLegalServiceProviders).map((s) =>
+      s.trim().toLowerCase(),
+    ),
+  );
+
+  const legalPanelProviderCompanies = new Set(
+    toStringArray(me.company?.legalPanelServiceProviders).map((s) =>
+      s.trim().toLowerCase(),
+    ),
+  );
+
+  const hasLegalPanelRestriction = legalPanelProviderCompanies.size > 0;
+
   // ---- provider emailing uses UserAccount + Company ----
 
   // Which practical notification key does this request category correspond to?
@@ -474,6 +504,7 @@ export async function POST(req) {
         email: true,
         company: {
           select: {
+            companyName: true,
             companyAge: true,
             companyProfessionals: true,
             providerType: true,
@@ -493,55 +524,83 @@ export async function POST(req) {
       const co = u.company;
       if (!co) continue;
 
-      const pAge = Number.isFinite(Number(co.companyAge))
-        ? Number(co.companyAge)
-        : 0;
+      const providerCompanyName = String(co.companyName || "")
+        .trim()
+        .toLowerCase();
 
-      const pPros = Number.isFinite(Number(co.companyProfessionals))
-        ? Number(co.companyProfessionals)
-        : 0;
+      if (!providerCompanyName) continue;
 
-      const pRating = getPracticalCategoryTotal(
-        co.providerPracticalRatings,
-        reqPracticalCategoryKey,
-      );
-
-      const pTypeNorm = normalizeProviderType(co.providerType);
-
-      // Explicit request-side auto-pass values
-      const typeAutoPass =
-        String(body.serviceProviderType || "")
-          .trim()
-          .toLowerCase() === "all";
-
-      const sizeAutoPass =
-        String(body.providerSize || "")
-          .trim()
-          .toLowerCase() === "any size";
-
-      const ageAutoPass =
-        String(body.providerCompanyAge || "")
-          .trim()
-          .toLowerCase() === "any age";
-
-      const ratingAutoPass =
-        String(body.providerMinimumRating || "")
-          .trim()
-          .toLowerCase() === "any rating";
-
-      const typePass =
-        typeAutoPass || !reqTypeNorm || reqTypeNorm === pTypeNorm;
-      const sizePass = sizeAutoPass || pPros >= reqMinPros;
-      const agePass = ageAutoPass || pAge >= reqMinAge;
-      const hasNoRatings = pRating === null;
-
-      const ratingPass =
-        ratingAutoPass ||
-        hasNoRatings || // allow providers with no ratings
-        pRating >= reqMinRating;
-
-      if (!(typePass && sizePass && agePass && ratingPass)) {
+      // 1) Blocked providers: never email any user in a blocked company
+      if (blockedProviderCompanies.has(providerCompanyName)) {
         continue;
+      }
+
+      // 2) Legal panel restriction:
+      // if request maker has set any legal panel companies, ONLY those companies may receive emails
+      if (
+        hasLegalPanelRestriction &&
+        !legalPanelProviderCompanies.has(providerCompanyName)
+      ) {
+        continue;
+      }
+
+      const isPreferredProvider =
+        preferredProviderCompanies.has(providerCompanyName);
+
+      // Preferred providers pass capability gates automatically,
+      // but still had to pass the notificationPreferences + practicalNotificationPreferences
+      // because those were already enforced in the Prisma where clause.
+      if (!isPreferredProvider) {
+        const pAge = Number.isFinite(Number(co.companyAge))
+          ? Number(co.companyAge)
+          : 0;
+
+        const pPros = Number.isFinite(Number(co.companyProfessionals))
+          ? Number(co.companyProfessionals)
+          : 0;
+
+        const pRating = getPracticalCategoryTotal(
+          co.providerPracticalRatings,
+          reqPracticalCategoryKey,
+        );
+
+        const pTypeNorm = normalizeProviderType(co.providerType);
+
+        // Explicit request-side auto-pass values
+        const typeAutoPass =
+          String(body.serviceProviderType || "")
+            .trim()
+            .toLowerCase() === "all";
+
+        const sizeAutoPass =
+          String(body.providerSize || "")
+            .trim()
+            .toLowerCase() === "any size";
+
+        const ageAutoPass =
+          String(body.providerCompanyAge || "")
+            .trim()
+            .toLowerCase() === "any age";
+
+        const ratingAutoPass =
+          String(body.providerMinimumRating || "")
+            .trim()
+            .toLowerCase() === "any rating";
+
+        const typePass =
+          typeAutoPass || !reqTypeNorm || reqTypeNorm === pTypeNorm;
+        const sizePass = sizeAutoPass || pPros >= reqMinPros;
+        const agePass = ageAutoPass || pAge >= reqMinAge;
+        const hasNoRatings = pRating === null;
+
+        const ratingPass =
+          ratingAutoPass ||
+          hasNoRatings || // allow providers with no ratings
+          pRating >= reqMinRating;
+
+        if (!(typePass && sizePass && agePass && ratingPass)) {
+          continue;
+        }
       }
 
       if (!isEmail(u.email)) continue;

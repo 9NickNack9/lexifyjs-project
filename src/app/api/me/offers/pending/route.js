@@ -47,7 +47,7 @@ export async function GET() {
       where: {
         providerCompanyId: me.companyId,
         request: {
-          requestState: { in: ["PENDING", "ON HOLD"] },
+          requestState: { in: ["PENDING", "ON HOLD", "CONFLICT_CHECK"] },
         },
       },
       orderBy: { createdAt: "desc" },
@@ -64,6 +64,8 @@ export async function GET() {
         request: {
           select: {
             title: true,
+            requestState: true,
+            selectedOfferId: true,
             dateExpired: true,
             scopeOfWork: true,
             description: true,
@@ -105,6 +107,9 @@ export async function GET() {
         offerSubmissionDate: o.createdAt || null,
         offeredPrice: toNum(o.offerPrice),
         dateExpired: req.dateExpired,
+        requestState: req.requestState || null,
+        requestStatus: req.requestState || null,
+        selectedOfferId: safeNumber(req.selectedOfferId),
 
         // keep parity with your preview modal expectations
         preview: {
