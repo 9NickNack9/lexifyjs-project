@@ -164,7 +164,7 @@ export async function notifyPurchaserPendingExpiredNoOffers({
   await sendDynamicTemplateEmail({
     to,
     templateId,
-    dynamicTemplateData: { requestTitle }, // only field you asked to pass
+    dynamicTemplateData: { requestTitle },
   });
 }
 
@@ -178,7 +178,7 @@ export async function notifyPurchaserManualUnderMaxExpired({
   const templateId = "d-e36e6f28a80f4a4e8c610e5b108ff2ab";
 
   await sendDynamicTemplateEmail({
-    to, // send directly to purchaser contact (no bcc needed)
+    to, // send directly to purchaser contact
     templateId,
     dynamicTemplateData: { requestTitle },
   });
@@ -190,7 +190,7 @@ export async function notifyPurchaserManualAllOverMaxExpired({
 }) {
   if (!to) return;
 
-  const templateId = "d-60588bdd772546518a859a7be3e09e39"; // or hardcode here
+  const templateId = "d-60588bdd772546518a859a7be3e09e39";
 
   await sendDynamicTemplateEmail({
     to, // send directly to purchaser contact
@@ -313,7 +313,6 @@ export async function notifyProvidersAdditionalQuestionAnswered({
   requestSubcategory,
   assignmentType,
 }) {
-  // Use an env var so you can configure this in production
   const templateId = "d-c600106dbe9949e7a32dca2ac4be461d";
 
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

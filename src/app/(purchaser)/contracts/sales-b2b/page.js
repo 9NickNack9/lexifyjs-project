@@ -191,7 +191,7 @@ export default function SalesB2B() {
         providerMinimumRating: formData.firmRating,
         providerReferences: formData.providerReferences,
         currency: formData.currency,
-        paymentRate,
+        paymentRate: paymentRate,
         advanceRetainerFee: formData.retainerFee,
         invoiceType: formData.paymentTerms,
         language: languageCSV,

@@ -166,7 +166,7 @@ export default function SalesB2C() {
     setSubmitting(true);
     try {
       const paymentRate = isTemplateOption
-        ? "Lump sum fixed price"
+        ? "Lump sum fixed price."
         : "Blended Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the legal service provider submitting the winning offer. The offered hourly rate will be valid until the relevant customer contract has been signed or abandoned, whichever comes first.";
       const languageCSV = [
         ...(formData.checkboxes || []).filter((l) => l !== "Other:"),
@@ -192,7 +192,7 @@ export default function SalesB2C() {
         providerMinimumRating: formData.firmRating,
         providerReferences: formData.providerReferences,
         currency: formData.currency,
-        paymentRate,
+        paymentRate: paymentRate,
         advanceRetainerFee: formData.retainerFee,
         invoiceType: formData.paymentTerms,
         language: languageCSV,

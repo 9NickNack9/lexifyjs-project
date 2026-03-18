@@ -9,6 +9,12 @@ function jsonSafe(value) {
   );
 }
 
+function toNumericPrice(value) {
+  if (value == null || value === "") return Number.POSITIVE_INFINITY;
+  const n = Number(String(value).replace(",", "."));
+  return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY;
+}
+
 export async function GET(_req, { params }) {
   const session = await getServerSession(authOptions);
   if (!session || session.role !== "ADMIN") {
@@ -54,10 +60,46 @@ export async function GET(_req, { params }) {
       details: true,
       selectedOfferId: true,
       _count: { select: { offers: true } },
+
+      offers: {
+        select: {
+          offerId: true,
+          offerLawyer: true,
+          offerPrice: true,
+          createdAt: true,
+          providerCompany: {
+            select: {
+              companyName: true,
+            },
+          },
+        },
+      },
     },
   });
 
   if (!r) return NextResponse.json({ error: "Not found" }, { status: 404 });
+
+  const top5OffersReceived = (r.offers || [])
+    .slice()
+    .sort((a, b) => {
+      const priceDiff =
+        toNumericPrice(a.offerPrice) - toNumericPrice(b.offerPrice);
+      if (priceDiff !== 0) return priceDiff;
+
+      const aCreated = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+      const bCreated = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+      return aCreated - bCreated;
+    })
+    .slice(0, 5)
+    .map((o) => ({
+      offerId: o.offerId != null ? Number(o.offerId) : null,
+      providerCompany: {
+        companyName: o.providerCompany?.companyName ?? null,
+      },
+      offerLawyer: o.offerLawyer ?? null,
+      offerPrice: o.offerPrice ?? null,
+      createdAt: o.createdAt ? new Date(o.createdAt).toISOString() : null,
+    }));
 
   const out = {
     ...r,
@@ -78,7 +120,10 @@ export async function GET(_req, { params }) {
       : null,
     dateCreated: r.dateCreated ? new Date(r.dateCreated).toISOString() : null,
     dateExpired: r.dateExpired ? new Date(r.dateExpired).toISOString() : null,
+    top5OffersReceived,
   };
+
+  delete out.offers;
 
   return NextResponse.json(jsonSafe(out));
 }

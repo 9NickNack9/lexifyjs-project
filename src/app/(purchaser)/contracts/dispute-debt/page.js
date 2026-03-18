@@ -173,7 +173,7 @@ export default function DisputeDebt() {
         providerReferences: formData.providerReferences,
         currency: formData.currency,
         paymentRate: isLetter
-          ? "Lump sum fixed price"
+          ? "Lump sum fixed price."
           : "Blended Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the Legal Service Provider. The offered hourly rate will be valid until the relevant outstanding debt(s) has been collected or the collection of the relevant outstanding debt(s) has been abandoned, whichever comes first.",
         advanceRetainerFee: formData.retainerFee,
         invoiceType: formData.paymentTerms,

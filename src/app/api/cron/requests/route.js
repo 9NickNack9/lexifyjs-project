@@ -64,8 +64,8 @@ function toNumberOrNull(v) {
 
 function getMaximumPrice(request) {
   const raw =
-    request?.maximumPrice ??
     request?.details?.maximumPrice ??
+    request?.maximumPrice ??
     request?.details?.maxPrice ??
     null;
   return toNumberOrNull(raw);
@@ -247,7 +247,7 @@ export async function POST(req) {
 
       const isHourly =
         typeof r.paymentRate === "string" &&
-        r.paymentRate.trim().toLowerCase().startsWith("hourly rate");
+        r.paymentRate.trim().toLowerCase().startsWith("blended hourly rate");
 
       if (!hasOffers) {
         await prisma.request.update({

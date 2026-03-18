@@ -190,7 +190,7 @@ export default function FinanceBreachWaiver() {
         currency: formData.currency,
         paymentRate: isHourly
           ? "Blended Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the Legal Service Provider. The offered hourly rate will be valid until the transaction has been closed or abandoned, whichever comes first."
-          : "Lump sum fixed price",
+          : "Lump sum fixed price.",
         advanceRetainerFee: formData.retainerFee,
         invoiceType: formData.paymentTerms,
         language: languageCSV,

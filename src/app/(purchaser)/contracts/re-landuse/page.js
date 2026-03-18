@@ -148,7 +148,7 @@ export default function ReLandUse() {
     try {
       const paymentRate = isHourly
         ? "Blended Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the Legal Service Provider. The offered hourly rate will be valid until the land use agreement has been signed or abandoned."
-        : "Lump sum fixed price";
+        : "Lump sum fixed price.";
       const languageCSV = [
         ...(formData.checkboxes || []).filter((l) => l !== "Other:"),
         formData.otherLang || null,
@@ -173,7 +173,7 @@ export default function ReLandUse() {
         providerMinimumRating: formData.firmRating,
         providerReferences: formData.providerReferences,
         currency: formData.currency,
-        paymentRate,
+        paymentRate: paymentRate,
         advanceRetainerFee: formData.retainerFee,
         invoiceType: formData.paymentTerms,
         language: languageCSV,

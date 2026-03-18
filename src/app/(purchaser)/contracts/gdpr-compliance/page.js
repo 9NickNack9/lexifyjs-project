@@ -207,7 +207,7 @@ export default function GdprCompliance() {
         providerMinimumRating: formData.firmRating,
         providerReferences: formData.providerReferences,
         currency: formData.currency,
-        paymentRate: "Lump sum fixed price",
+        paymentRate: "Lump sum fixed price.",
         advanceRetainerFee: formData.retainerFee,
         invoiceType: formData.paymentTerms,
         language: languageCSV,
