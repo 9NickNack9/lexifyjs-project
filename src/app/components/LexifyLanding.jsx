@@ -849,12 +849,16 @@ const LexifyLanding = () => {
             <div className="p-8">
               <div className="flex justify-between items-start mb-6">
                 <div>
-                  <h2 className="text-2xl font-headline font-bold text-slate-900">
-                    Request a demo
-                  </h2>
-                  <p className="text-slate-600 mt-1">
-                    Tell us a bit about yourself
-                  </p>
+                  {!formSubmitted && (
+                    <>
+                      <h2 className="text-2xl font-headline font-bold text-slate-900">
+                        Request a demo
+                      </h2>
+                      <p className="text-slate-600 mt-1">
+                        Tell us a bit about yourself
+                      </p>
+                    </>
+                  )}
                 </div>
                 <button
                   onClick={() => {
