@@ -1144,37 +1144,7 @@ export default function Account() {
               />
             </div>
             <span className="ms-3 text-sm text-black dark:text-black">
-              My LEXIFY Request expires and I have received no qualifying offers
-            </span>
-          </label>
-          {/* 2) Best offer over max price */}
-          <label
-            htmlFor="pref-over_max_price"
-            className="inline-flex items-center cursor-pointer"
-          >
-            <input
-              id="pref-over_max_price"
-              type="checkbox"
-              className="sr-only"
-              checked={hasPref("over_max_price")}
-              onChange={(e) => setPref("over_max_price", e.target.checked)}
-            />
-            <div
-              className={`relative w-11 h-6 rounded-full transition-colors ${
-                hasPref("over_max_price") ? "bg-green-600" : "bg-gray-700"
-              }`}
-            >
-              <div
-                className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
-                  hasPref("over_max_price") ? "translate-x-full" : ""
-                }`}
-              />
-            </div>
-            <span className="ms-3 text-sm text-black dark:text-black">
-              My LEXIFY Request expires and qualifying offers have been
-              received, but the best offer exceeds the maximum price in my
-              LEXIFY Request{" "}
-              <NarrowTooltip tooltipText="Whenever your LEXIFY Request expires and you receive at least one qualifying offer but the offer exceeds the maximum price you have set in the LEXIFY Request, you will still have 7 days from the expiration of your LEXIFY Request to accept this best offer if you wish to do so. If not accepted within 7 days, the best offer exceeding your maximum price will automatically be rejected." />
+              My LEXIFY Request expires and I have not received any offers
             </span>
           </label>
           {/* 3) Pending offer selection (manual) */}
@@ -1205,8 +1175,8 @@ export default function Account() {
               />
             </div>
             <span className="ms-3 text-sm text-black dark:text-black">
-              My LEXIFY Request expires, qualifying offers have been received
-              and I need to select the winning service provider{" "}
+              My LEXIFY Request expires and I need to select the winning service
+              provider from the received offers.{" "}
             </span>
           </label>
         </div>

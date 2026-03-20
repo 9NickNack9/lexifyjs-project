@@ -12,16 +12,38 @@ const poppins = Poppins({
 
 export const metadata = {
   title: {
-    default: "LEXIFY - Buy Legal Services Efficiently",
+    default: "LEXIFY - The marketplace for legal services",
     template: "%s | LEXIFY",
   },
   description:
     "LEXIFY is a legal services marketplace where businesses can create requests, receive offers from legal service providers, and form contracts efficiently.",
   metadataBase: new URL("https://www.lexify.online"),
+  openGraph: {
+    title: "LEXIFY",
+    description: "The marketplace for legal services",
+    url: "https://www.lexify.online",
+    siteName: "LEXIFY",
+    images: [
+      {
+        url: "https://www.lexify.online/lexify.png",
+        width: 1200,
+        height: 630,
+        alt: "LEXIFY",
+      },
+    ],
+    locale: "en_US",
+    type: "website",
+  },
   icons: {
     icon: "/icon.png",
     shortcut: "/favicon.ico",
     apple: "/apple-touch-icon.png",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "LEXIFY",
+    description: "The marketplace for legal services",
+    images: ["https://www.lexify.online/lexify.png"],
   },
 };
 
