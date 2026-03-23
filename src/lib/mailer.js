@@ -429,3 +429,31 @@ export async function notifySupportDemoRequest({
     },
   });
 }
+
+export async function notifyPurchaserWelcome({ to, firstName }) {
+  if (!to) return;
+
+  const templateId = "d-65c8bdc162944e1194f5b0cc6f1ee87c";
+
+  await sendDynamicTemplateEmail({
+    to,
+    templateId,
+    dynamicTemplateData: {
+      firstName: firstName || "",
+    },
+  });
+}
+
+export async function notifyProviderWelcome({ to, firstName }) {
+  if (!to) return;
+
+  const templateId = "d-dd37ef88a2e5487ea40e3ea263270081";
+
+  await sendDynamicTemplateEmail({
+    to,
+    templateId,
+    dynamicTemplateData: {
+      firstName: firstName || "",
+    },
+  });
+}

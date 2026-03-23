@@ -3,7 +3,6 @@ import { prisma } from "@/lib/prisma";
 import {
   notifyPurchaserPendingExpiredNoOffers,
   notifyPurchaserManualUnderMaxExpired,
-  notifyPurchaserManualAllOverMaxExpired,
   notifyPurchaserOnHoldExpirySoon,
 } from "@/lib/mailer";
 
@@ -49,26 +48,6 @@ function toStringArray(val) {
 
 function hasNotificationPreference(user, pref) {
   return toStringArray(user?.notificationPreferences).includes(pref);
-}
-
-function toNumberOrNull(v) {
-  if (v === null || v === undefined) return null;
-  if (typeof v === "number") return Number.isFinite(v) ? v : null;
-  if (typeof v === "string") {
-    const s = v.replace(/[^\d.,-]/g, "").replace(",", ".");
-    const n = parseFloat(s);
-    return Number.isFinite(n) ? n : null;
-  }
-  return null;
-}
-
-function getMaximumPrice(request) {
-  const raw =
-    request?.details?.maximumPrice ??
-    request?.maximumPrice ??
-    request?.details?.maxPrice ??
-    null;
-  return toNumberOrNull(raw);
 }
 
 async function setContractResult(requestId, yesOrNo) {
@@ -159,7 +138,6 @@ const purchaserEmailSelect = {
       firstName: true,
       lastName: true,
       notificationPreferences: true,
-      winningOfferSelection: true,
     },
   },
   createdByUser: {
@@ -169,7 +147,6 @@ const purchaserEmailSelect = {
       firstName: true,
       lastName: true,
       notificationPreferences: true,
-      winningOfferSelection: true,
     },
   },
   clientCompany: {
@@ -228,26 +205,6 @@ export async function POST(req) {
       const requestId = r.requestId;
       const offers = Array.isArray(r.offers) ? r.offers : [];
       const hasOffers = offers.length > 0;
-      const winningMode = (
-        r.createdByUser?.winningOfferSelection ||
-        r.clientUser?.winningOfferSelection ||
-        ""
-      ).toLowerCase();
-
-      const maxPriceNum = getMaximumPrice(r);
-
-      const offersWithNum = offers
-        .map((o) => ({ ...o, priceNum: toNumberOrNull(o.offerPrice) }))
-        .filter((o) => o.priceNum != null);
-
-      const anyUnderMax =
-        maxPriceNum == null
-          ? offersWithNum.length > 0
-          : offersWithNum.some((o) => o.priceNum <= maxPriceNum);
-
-      const isHourly =
-        typeof r.paymentRate === "string" &&
-        r.paymentRate.trim().toLowerCase().startsWith("blended hourly rate");
 
       if (!hasOffers) {
         await prisma.request.update({
@@ -272,57 +229,29 @@ export async function POST(req) {
         continue;
       }
 
-      if (winningMode === "manual" || !winningMode) {
-        const accept = new Date(r.dateExpired ?? now);
-        accept.setDate(accept.getDate() + 7);
-        await prisma.request.update({
-          where: { requestId },
-          data: { requestState: "ON HOLD", acceptDeadline: accept },
-        });
-        onHoldManual++;
-
-        if (anyUnderMax || isHourly) {
-          try {
-            const toGroup = buildPurchaserRecipientGroup(
-              r,
-              "pending_offer_selection",
-            );
-            if (toGroup.length > 0) {
-              await notifyPurchaserManualUnderMaxExpired({
-                to: toGroup,
-                requestTitle: r.title || "",
-              });
-            }
-          } catch (e) {
-            console.error(
-              "Manual-under-max/hourly expiration email failed:",
-              e,
-            );
-          }
-        } else {
-          try {
-            const toGroup = buildPurchaserRecipientGroup(r, "over_max_price");
-            if (toGroup.length > 0) {
-              await notifyPurchaserManualAllOverMaxExpired({
-                to: toGroup,
-                requestTitle: r.title || "",
-              });
-            }
-          } catch (e) {
-            console.error("Manual-all-over-max expiration email failed:", e);
-          }
-        }
-
-        continue;
-      }
-
       const accept = new Date(r.dateExpired ?? now);
       accept.setDate(accept.getDate() + 7);
+
       await prisma.request.update({
         where: { requestId },
         data: { requestState: "ON HOLD", acceptDeadline: accept },
       });
       onHoldManual++;
+
+      try {
+        const toGroup = buildPurchaserRecipientGroup(
+          r,
+          "pending_offer_selection",
+        );
+        if (toGroup.length > 0) {
+          await notifyPurchaserManualUnderMaxExpired({
+            to: toGroup,
+            requestTitle: r.title || "",
+          });
+        }
+      } catch (e) {
+        console.error("Manual expiration email failed:", e);
+      }
     }
 
     const in48h = new Date(now.getTime() + 48 * 60 * 60 * 1000);
