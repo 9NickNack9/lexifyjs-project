@@ -101,7 +101,7 @@ export default function ArchivePage() {
   const handleCancelPending = async (requestId) => {
     if (
       !window.confirm(
-        "Are you sure? This will delete your LEXIFY Request and it will no longer be visible to legal service providers."
+        "Are you sure? This will delete your LEXIFY Request and it will no longer be visible to legal service providers.",
       )
     )
       return;
@@ -113,32 +113,6 @@ export default function ArchivePage() {
       const json = await res.json();
       if (!res.ok) throw new Error(json?.error || "Failed to cancel");
       setPending((xs) => xs.filter((r) => r.requestId !== requestId));
-    } catch (e) {
-      alert(e.message);
-    } finally {
-      setBusyIds((s) => {
-        const n = new Set(s);
-        n.delete(requestId);
-        return n;
-      });
-    }
-  };
-
-  const handleCancelAwaiting = async (requestId) => {
-    if (
-      !window.confirm(
-        "Are you sure? This will delete your LEXIFY Request and it will no longer be visible to legal service providers."
-      )
-    )
-      return;
-    setBusyIds((s) => new Set([...s, requestId]));
-    try {
-      const res = await fetch(`/api/requests/${requestId}`, {
-        method: "DELETE",
-      });
-      const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || "Failed to cancel");
-      setAwaiting((xs) => xs.filter((r) => r.requestId !== requestId));
     } catch (e) {
       alert(e.message);
     } finally {
@@ -166,11 +140,7 @@ export default function ArchivePage() {
             busyIds={busyIds}
           />
 
-          <AwaitingSelectionTable
-            rows={awaiting}
-            onPreview={handlePreview}
-            onCancel={handleCancelAwaiting}
-          />
+          <AwaitingSelectionTable rows={awaiting} onPreview={handlePreview} />
 
           <ExpiredRequestsTable rows={expired} onPreview={handlePreview} />
 

@@ -3,6 +3,40 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { notifyProvidersRequestCancelled } from "@/lib/mailer";
+
+function hasNotificationPreference(notificationPreferences, key) {
+  if (!notificationPreferences) return false;
+
+  if (Array.isArray(notificationPreferences)) {
+    return notificationPreferences.map(String).includes(key);
+  }
+
+  if (typeof notificationPreferences === "string") {
+    try {
+      const parsed = JSON.parse(notificationPreferences);
+      if (Array.isArray(parsed)) return parsed.map(String).includes(key);
+      if (parsed && typeof parsed === "object") return parsed[key] === true;
+    } catch {
+      return notificationPreferences
+        .split(",")
+        .map((s) => s.trim())
+        .includes(key);
+    }
+  }
+
+  if (typeof notificationPreferences === "object") {
+    if (Array.isArray(notificationPreferences.set)) {
+      return notificationPreferences.set.map(String).includes(key);
+    }
+    if (Array.isArray(notificationPreferences.value)) {
+      return notificationPreferences.value.map(String).includes(key);
+    }
+    return notificationPreferences[key] === true;
+  }
+
+  return false;
+}
 
 // BigInt-safe JSON helper
 const serialize = (obj) =>
@@ -276,6 +310,128 @@ export async function POST(req) {
     });
   } catch (e) {
     console.error("POST /api/me/requests/awaiting extend failed:", e);
+    return NextResponse.json({ error: "Server error" }, { status: 500 });
+  }
+}
+
+export async function DELETE(req) {
+  try {
+    const session = await getServerSession(authOptions);
+    if (!session?.userId) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const ua = await prisma.userAccount.findUnique({
+      where: { userPkId: BigInt(session.userId) },
+      select: { companyId: true },
+    });
+
+    if (!ua?.companyId) {
+      return NextResponse.json({ error: "Company not found" }, { status: 404 });
+    }
+
+    const body = await req.json().catch(() => ({}));
+    const requestIdRaw = body?.requestId;
+
+    if (!requestIdRaw) {
+      return NextResponse.json({ error: "Missing requestId" }, { status: 400 });
+    }
+
+    const requestId = BigInt(requestIdRaw);
+
+    const request = await prisma.request.findUnique({
+      where: { requestId },
+      select: {
+        requestId: true,
+        title: true,
+        clientCompanyId: true,
+        requestState: true,
+        offers: {
+          select: {
+            offerId: true,
+            offerTitle: true,
+            providerUser: {
+              select: {
+                email: true,
+                notificationPreferences: true,
+              },
+            },
+          },
+        },
+      },
+    });
+
+    if (!request || String(request.clientCompanyId) !== String(ua.companyId)) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    if (!["ON HOLD", "CONFLICT_CHECK"].includes(request.requestState)) {
+      return NextResponse.json(
+        { error: "Request cannot be cancelled from this state" },
+        { status: 400 },
+      );
+    }
+
+    // Build per-provider email list:
+    // - only valid email
+    // - only if notificationPreferences contains "request_cancelled"
+    // - one separate email per offerer
+    const recipients = [];
+    const seen = new Set();
+
+    for (const offer of request.offers || []) {
+      const email = offer?.providerUser?.email?.trim?.();
+      const prefs = offer?.providerUser?.notificationPreferences;
+
+      if (!email) continue;
+      if (!hasNotificationPreference(prefs, "request-cancelled")) continue;
+
+      // If same provider somehow has multiple offers, avoid sending duplicates.
+      // Prefer first seen offerTitle.
+      const dedupeKey = email.toLowerCase();
+      if (seen.has(dedupeKey)) continue;
+      seen.add(dedupeKey);
+
+      recipients.push({
+        to: email,
+        offerTitle: offer?.offerTitle || request.title || null,
+      });
+    }
+
+    await prisma.$transaction(async (tx) => {
+      await tx.offer.deleteMany({
+        where: { requestId },
+      });
+
+      await tx.request.delete({
+        where: { requestId },
+      });
+    });
+
+    try {
+      await notifyProvidersRequestCancelled({
+        recipients: [
+          ...recipients,
+          {
+            to: "support@lexify.online",
+            offerTitle: null,
+          },
+        ],
+      });
+    } catch (mailErr) {
+      console.error(
+        "DELETE /api/me/requests/awaiting cancelled request but email send failed:",
+        mailErr,
+      );
+    }
+
+    return NextResponse.json({
+      ok: true,
+      deletedRequestId: requestId.toString(),
+      notifiedProviders: recipients.length,
+    });
+  } catch (e) {
+    console.error("DELETE /api/me/requests/awaiting failed:", e);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

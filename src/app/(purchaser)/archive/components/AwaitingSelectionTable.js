@@ -263,6 +263,37 @@ export default function AwaitingSelectionTable({
     return { total, quality, responsiveness, billing };
   };
 
+  const handleCancelRequest = async (row) => {
+    if (!row?.requestId) return;
+
+    const confirmed = window.confirm(
+      `Are you sure you want to cancel "${row.requestTitle}"? This will permanently delete the request and notify all providers who submitted an offer.`,
+    );
+    if (!confirmed) return;
+
+    try {
+      if (onCancel) {
+        await onCancel(row.requestId, row);
+        return;
+      }
+
+      const res = await fetch("/api/me/requests/awaiting", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ requestId: row.requestId }),
+      });
+
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        throw new Error(data?.error || "Failed to cancel request.");
+      }
+
+      window.location.reload();
+    } catch (e) {
+      alert(e.message || "Failed to cancel request.");
+    }
+  };
+
   return (
     <div className="w-full mb-8">
       <h2 className="text-2xl font-semibold mb-4">
@@ -519,7 +550,7 @@ export default function AwaitingSelectionTable({
                       <div className="flex items-center justify-center gap-2">
                         <button
                           className="bg-red-500 text-white px-3 py-1 rounded cursor-pointer"
-                          onClick={() => onCancel?.(r.requestId)}
+                          onClick={() => handleCancelRequest(r)}
                         >
                           Cancel
                         </button>

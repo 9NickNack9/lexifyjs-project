@@ -275,15 +275,15 @@ export async function POST(req) {
       firstName: true,
       lastName: true,
       companyId: true,
+      blockedServiceProviders: true,
+      preferredLegalServiceProviders: true,
+      legalPanelServiceProviders: true,
       company: {
         select: {
           companyPkId: true,
           companyName: true,
           businessId: true,
           companyCountry: true,
-          blockedServiceProviders: true,
-          preferredLegalServiceProviders: true,
-          legalPanelServiceProviders: true,
         },
       },
     },
@@ -452,19 +452,19 @@ export async function POST(req) {
   }
 
   const blockedProviderCompanies = new Set(
-    toStringArray(me.company?.blockedServiceProviders).map((s) =>
+    toStringArray(me?.blockedServiceProviders).map((s) =>
       s.trim().toLowerCase(),
     ),
   );
 
   const preferredProviderCompanies = new Set(
-    toStringArray(me.company?.preferredLegalServiceProviders).map((s) =>
+    toStringArray(me?.preferredLegalServiceProviders).map((s) =>
       s.trim().toLowerCase(),
     ),
   );
 
   const legalPanelProviderCompanies = new Set(
-    toStringArray(me.company?.legalPanelServiceProviders).map((s) =>
+    toStringArray(me?.legalPanelServiceProviders).map((s) =>
       s.trim().toLowerCase(),
     ),
   );

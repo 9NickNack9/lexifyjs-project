@@ -122,15 +122,21 @@ export async function notifyProvidersNewAvailableRequest({
 }
 
 /** Providers — Request Cancelled convenience helper */
-export async function notifyProvidersRequestCancelled({ to }) {
+export async function notifyProvidersRequestCancelled({ recipients = [] }) {
   const templateId = "d-11ffd9181c6f498c90b05adb65701ef2";
+
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const isEmail = (s) => typeof s === "string" && EMAIL_RE.test(s.trim());
-  const list = Array.isArray(to)
-    ? Array.from(new Set(to.filter(isEmail)))
-    : isEmail(to)
-      ? [to]
-      : [];
+
+  const list = Array.isArray(recipients)
+    ? recipients
+        .map((r) => ({
+          to: typeof r?.to === "string" ? r.to.trim() : "",
+          offerTitle:
+            typeof r?.offerTitle === "string" ? r.offerTitle.trim() : "",
+        }))
+        .filter((r) => isEmail(r.to))
+    : [];
 
   if (list.length === 0) {
     await sendDynamicTemplateEmail({
@@ -141,13 +147,18 @@ export async function notifyProvidersRequestCancelled({ to }) {
     return;
   }
 
-  const [primary, ...cc] = list;
-  await sendDynamicTemplateEmail({
-    to: primary, // personal to primary
-    cc, // CC other allNotification contacts
-    templateId,
-    dynamicTemplateData: {},
-  });
+  // Send one separate email per provider
+  await Promise.allSettled(
+    list.map(({ to, offerTitle }) =>
+      sendDynamicTemplateEmail({
+        to,
+        templateId,
+        dynamicTemplateData: {
+          offerTitle: offerTitle || null,
+        },
+      }),
+    ),
+  );
 }
 
 // Send a dynamic-template email to the purchaser when a PENDING request expires with no offers
