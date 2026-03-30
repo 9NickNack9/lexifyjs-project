@@ -413,11 +413,10 @@ export async function POST(req) {
     // Contract Rating Reminder Emails
     const contractsForRatingReminder = await prisma.contract.findMany({
       where: {
-        AND: [
-          { contractDate: { not: null } },
-          { contractDate: { lte: now } },
-          { contractDate: { gte: new Date("2026-04-01T00:00:00.000Z") } },
-        ],
+        contractDate: {
+          gte: new Date("2026-04-01T00:00:00.000Z"),
+          lte: now,
+        },
       },
       select: {
         contractId: true,
