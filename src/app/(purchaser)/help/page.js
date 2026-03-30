@@ -262,7 +262,7 @@ export default function Help() {
           <a href="mailto:support@lexify.online" className="underline">
             support@lexify.online
           </a>
-          . Phone support is available Monday to Friday, 10:00-14:00 (EET),
+          . Phone support is available Monday to Friday, 09:00-12:00 (EET),
           excluding public holidays. Outside phone support hours, please contact
           us by email and we will respond as soon as possible.
         </h4>

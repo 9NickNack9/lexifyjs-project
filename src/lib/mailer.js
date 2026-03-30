@@ -468,3 +468,66 @@ export async function notifyProviderWelcome({ to, firstName }) {
     },
   });
 }
+
+export async function notifyPurchaserContractRatingReminder60Days({
+  to,
+  title,
+  firstName,
+  providerCompany,
+}) {
+  if (!to) return;
+
+  const templateId = "d-c539b800387c4d02b6320d6164a715fd";
+
+  await sendDynamicTemplateEmail({
+    to,
+    templateId,
+    dynamicTemplateData: {
+      title,
+      firstName,
+      providerCompany,
+    },
+  });
+}
+
+export async function notifyPurchaserContractRatingReminder90Days({
+  to,
+  title,
+  firstName,
+  providerCompany,
+}) {
+  if (!to) return;
+
+  const templateId = "d-036fab43a3d84e27940a595b71124220";
+
+  await sendDynamicTemplateEmail({
+    to,
+    templateId,
+    dynamicTemplateData: {
+      title,
+      firstName,
+      providerCompany,
+    },
+  });
+}
+
+export async function notifyPurchaserContractRatingReminder150Days({
+  to,
+  title,
+  firstName,
+  providerCompany,
+}) {
+  if (!to) return;
+
+  const templateId = "d-b7cc5da12a944f609bca43ccb56334c7";
+
+  await sendDynamicTemplateEmail({
+    to,
+    templateId,
+    dynamicTemplateData: {
+      title,
+      firstName,
+      providerCompany,
+    },
+  });
+}

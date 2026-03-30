@@ -4,6 +4,9 @@ import {
   notifyPurchaserPendingExpiredNoOffers,
   notifyPurchaserManualUnderMaxExpired,
   notifyPurchaserOnHoldExpirySoon,
+  notifyPurchaserContractRatingReminder60Days,
+  notifyPurchaserContractRatingReminder90Days,
+  notifyPurchaserContractRatingReminder150Days,
 } from "@/lib/mailer";
 
 function requireCronAuth(req) {
@@ -44,6 +47,101 @@ function toStringArray(val) {
     }
   }
   return [];
+}
+
+// Contract Rating Reminder Helpers
+function parseJsonArray(val) {
+  if (Array.isArray(val)) return val;
+  if (typeof val === "string") {
+    try {
+      const parsed = JSON.parse(val);
+      return Array.isArray(parsed) ? parsed : [];
+    } catch {
+      return [];
+    }
+  }
+  return [];
+}
+
+function bigintLikeEquals(a, b) {
+  if (a == null || b == null) return false;
+  return String(a).trim() === String(b).trim();
+}
+
+function hasClientRatedProviderOnContract(contract) {
+  const ratings = parseJsonArray(
+    contract?.providerCompany?.providerIndividualRating,
+  );
+
+  return ratings.some((rating) => {
+    if (!rating || typeof rating !== "object") return false;
+
+    return (
+      bigintLikeEquals(rating.contractId, contract?.contractId) &&
+      bigintLikeEquals(rating.raterCompanyPkId, contract?.clientCompanyId)
+    );
+  });
+}
+
+/* Contract Reminder Email Testing
+  function wholeSecondsSince(from, to) {
+  const ms = new Date(to).getTime() - new Date(from).getTime();
+  return Math.floor(ms / 1000);
+}
+
+function getRatingReminderStage(contractDate, now) {
+  const seconds = wholeSecondsSince(contractDate, now);
+  if (seconds >= 30) return 150;
+  if (seconds >= 20) return 90;
+  if (seconds >= 10) return 60;
+  return null;
+}
+*/
+
+function wholeDaysSince(from, to) {
+  const ms = new Date(to).getTime() - new Date(from).getTime();
+  return Math.floor(ms / (24 * 60 * 60 * 1000));
+}
+
+function getRatingReminderStage(contractDate, now) {
+  const days = wholeDaysSince(contractDate, now);
+  if (days >= 150) return 150;
+  if (days >= 90) return 90;
+  if (days >= 60) return 60;
+  return null;
+}
+
+function buildPurchaserRatingReminderRecipients(request) {
+  const recipients = new Set();
+  const companyMembers = Array.isArray(request?.clientCompany?.members)
+    ? request.clientCompany.members
+    : [];
+
+  const primaryUser = pickPrimaryPurchaserUser(request);
+  if (primaryUser && isEmail(primaryUser.email)) {
+    recipients.add(primaryUser.email.trim());
+  }
+
+  for (const member of companyMembers) {
+    if (!isEmail(member?.email)) continue;
+    if (!hasNotificationPreference(member, "all-notifications")) continue;
+    recipients.add(member.email.trim());
+  }
+
+  if (recipients.size === 0) {
+    const fallback = [
+      primaryUser,
+      request?.createdByUser,
+      request?.clientUser,
+      ...companyMembers,
+    ].find((u) => isEmail(u?.email));
+
+    if (fallback?.email) {
+      recipients.add(fallback.email.trim());
+    }
+  }
+
+  return Array.from(recipients);
 }
 
 function hasNotificationPreference(user, pref) {
@@ -312,6 +410,100 @@ export async function POST(req) {
       }
     }
 
+    // Contract Rating Reminder Emails
+    const contractsForRatingReminder = await prisma.contract.findMany({
+      where: {
+        contractDate: {
+          not: null,
+          lte: now,
+          gte: new Date("2026-04-01T00:00:00.000Z"),
+        },
+      },
+      select: {
+        contractId: true,
+        contractDate: true,
+        clientCompanyId: true,
+        request: {
+          select: {
+            requestId: true,
+            title: true,
+            details: true,
+            ...purchaserEmailSelect,
+          },
+        },
+        providerCompany: {
+          select: {
+            companyName: true,
+            providerIndividualRating: true,
+          },
+        },
+      },
+    });
+
+    let contractRatingReminder60 = 0;
+    let contractRatingReminder90 = 0;
+    let contractRatingReminder150 = 0;
+
+    for (const contract of contractsForRatingReminder) {
+      const reminderStage = getRatingReminderStage(contract.contractDate, now);
+      if (!reminderStage) continue;
+      if (hasClientRatedProviderOnContract(contract)) continue;
+
+      const request = contract.request;
+      if (!request) continue;
+
+      const details =
+        request.details && typeof request.details === "object"
+          ? request.details
+          : {};
+
+      if (
+        Number(details.contractRatingReminderLastSentDays || 0) >= reminderStage
+      ) {
+        continue;
+      }
+
+      const toGroup = buildPurchaserRatingReminderRecipients(request);
+      if (toGroup.length === 0) continue;
+
+      const payload = {
+        to: toGroup,
+        title: request.title || "",
+        firstName: request.clientUser?.firstName || "",
+        providerCompany: contract.providerCompany?.companyName || "",
+      };
+
+      try {
+        if (reminderStage === 150) {
+          await notifyPurchaserContractRatingReminder150Days(payload);
+          contractRatingReminder150++;
+        } else if (reminderStage === 90) {
+          await notifyPurchaserContractRatingReminder90Days(payload);
+          contractRatingReminder90++;
+        } else {
+          await notifyPurchaserContractRatingReminder60Days(payload);
+          contractRatingReminder60++;
+        }
+
+        await prisma.request.update({
+          where: { requestId: request.requestId },
+          data: {
+            details: {
+              ...details,
+              contractRatingReminderLastSentDays: reminderStage,
+              contractRatingReminderLastSentAt: now.toISOString(),
+            },
+          },
+        });
+      } catch (err) {
+        console.error(
+          `Failed to send ${reminderStage}-day contract rating reminder for contract`,
+          String(contract.contractId),
+          err,
+        );
+      }
+    }
+
     const onHoldPast = await prisma.request.findMany({
       where: { requestState: "ON HOLD", acceptDeadline: { lte: now } },
       select: { requestId: true, contractResult: true },
@@ -338,6 +530,9 @@ export async function POST(req) {
         expiredNoOffers,
         onHoldManual,
         onHoldExpiredNoContract: onHoldExpired,
+        contractRatingReminder60,
+        contractRatingReminder90,
+        contractRatingReminder150,
       },
     });
   } catch (err) {
