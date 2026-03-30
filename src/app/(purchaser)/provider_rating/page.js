@@ -500,6 +500,10 @@ export default function ProviderRatingPage() {
     return { total, quality, communication, billing };
   };
 
+  const getEntryCount = (entry) => {
+    return Number(entry?.ratingCount ?? entry?.count ?? 0);
+  };
+
   return (
     <div className="flex flex-col items-center min-h-screen p-6">
       <h1 className="text-2xl font-bold mb-6">
@@ -807,6 +811,7 @@ export default function ProviderRatingPage() {
                                   communication,
                                   billing,
                                 } = getCategoryNumbers(entry);
+                                const entryCount = getEntryCount(entry);
 
                                 return (
                                   <div key={categoryKey}>
@@ -836,6 +841,11 @@ export default function ProviderRatingPage() {
 
                                     {expanded && (
                                       <div className="mt-1 space-y-1">
+                                        <div className="text-sm text-gray-700 mb-2">
+                                          {entryCount} rating
+                                          {entryCount === 1 ? "" : "s"} received
+                                        </div>
+
                                         <AggregateRow
                                           label="Total"
                                           value={total ?? 0}
@@ -954,6 +964,19 @@ export default function ProviderRatingPage() {
                           )}
                         </div>
 
+                        <div className="text-sm text-gray-700 mb-3">
+                          {Array.isArray(p.providerIndividualRating)
+                            ? p.providerIndividualRating.length
+                            : 0}{" "}
+                          rating
+                          {(Array.isArray(p.providerIndividualRating)
+                            ? p.providerIndividualRating.length
+                            : 0) === 1
+                            ? ""
+                            : "s"}{" "}
+                          received
+                        </div>
+
                         <div className="mt-2 space-y-2">
                           {/* Total rating (expandable) */}
                           {(() => {
@@ -1007,6 +1030,21 @@ export default function ProviderRatingPage() {
 
                                 {totalExpanded && (
                                   <div className="mt-1 space-y-1">
+                                    <div className="text-sm text-gray-700 mb-2">
+                                      {Array.isArray(p.providerIndividualRating)
+                                        ? p.providerIndividualRating.length
+                                        : 0}{" "}
+                                      rating
+                                      {(Array.isArray(
+                                        p.providerIndividualRating,
+                                      )
+                                        ? p.providerIndividualRating.length
+                                        : 0) === 1
+                                        ? ""
+                                        : "s"}{" "}
+                                      received
+                                    </div>
+
                                     <AggregateRow
                                       label="Total"
                                       value={p.providerTotalRating ?? 0}
@@ -1061,6 +1099,7 @@ export default function ProviderRatingPage() {
 
                             const { total, quality, communication, billing } =
                               getCategoryNumbers(entry);
+                            const entryCount = getEntryCount(entry);
 
                             return (
                               <div key={categoryKey}>
@@ -1095,6 +1134,11 @@ export default function ProviderRatingPage() {
                                 {/* Category breakdown (visible only when expanded) */}
                                 {expanded && (
                                   <div className="mt-1 space-y-1">
+                                    <div className="text-sm text-gray-700 mb-2">
+                                      {entryCount} rating
+                                      {entryCount === 1 ? "" : "s"} received
+                                    </div>
+
                                     <AggregateRow
                                       label="Total"
                                       value={total ?? 0}
