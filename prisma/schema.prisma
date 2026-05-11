@@ -75,6 +75,7 @@ model UserAccount {
   blockedServiceProviders          Json    @default("[]")
   preferredLegalServiceProviders   Json    @default("[]")
   legalPanelServiceProviders       Json    @default("[]")
+  requestDrafts                    Json    @default("[]")
   winningOfferSelection            String  @default("manual")
   twoFactorRecoveryCodes           Json? // stores hashed codes + used flag
 

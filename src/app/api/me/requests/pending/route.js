@@ -41,6 +41,7 @@ export async function GET() {
       select: {
         winningOfferSelection: true,
         companyId: true,
+        role: true,
         company: {
           select: {
             companyName: true,
@@ -55,11 +56,25 @@ export async function GET() {
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
     }
 
+    const isAdmin = ua?.role === "ADMIN";
+
     // filter by purchaser Company PK
     const requests = await prisma.request.findMany({
       where: {
-        clientCompanyId: ua.companyId,
         requestState: { in: ["PENDING", "ON HOLD", "CONFLICT_CHECK"] },
+        ...(isAdmin
+          ? {} // admins see ALL
+          : {
+              OR: [
+                { clientCompanyId: ua.companyId },
+                {
+                  details: {
+                    path: ["sharedAccounts"],
+                    array_contains: [{ userPkId: Number(session.userId) }],
+                  },
+                },
+              ],
+            }),
       },
       orderBy: { dateCreated: "desc" },
       select: {
@@ -73,6 +88,7 @@ export async function GET() {
         currency: true,
         language: true,
         details: true,
+        createdByUserId: true,
         scopeOfWork: true,
         description: true,
         additionalBackgroundInfo: true,
@@ -104,6 +120,15 @@ export async function GET() {
       const bestOffer = offerValues.length ? Math.min(...offerValues) : null;
       const maximumPrice = maxFromDetails(r.details);
       const offersDeadline = resolveOffersDeadline(r);
+      const sharedAccounts = r.details?.sharedAccounts || [];
+
+      const currentUserShare = sharedAccounts.find(
+        (u) => String(u.userPkId) === String(session.userId),
+      );
+
+      const permission = currentUserShare
+        ? currentUserShare.permission
+        : "owner";
 
       return {
         requestId: safeNumber(r.requestId),
@@ -129,6 +154,8 @@ export async function GET() {
         requestCategory: r.requestCategory,
         requestSubcategory: r.requestSubcategory || null,
         assignmentType: r.assignmentType || null,
+        createdByUserId:
+          r.createdByUserId != null ? safeNumber(r.createdByUserId) : null,
 
         // meta (kept for UI)
         companyName: ua.company?.companyName || null,
@@ -141,6 +168,8 @@ export async function GET() {
         bestOffer,
         maximumPrice,
         requestState: r.requestState,
+        permission,
+        isOwner: !currentUserShare,
       };
     });
 

@@ -36,53 +36,54 @@ export default function ArchivePage() {
   // Busy ids (for pending cancel)
   const [busyIds, setBusyIds] = useState(new Set());
 
+  const fetchPending = async () => {
+    const res = await fetch("/api/me/requests/pending", { cache: "no-store" });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error || "Failed to load pending");
+    setPending(data.requests || []);
+  };
+
+  const fetchAwaiting = async () => {
+    const res = await fetch("/api/me/requests/awaiting", { cache: "no-store" });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data?.error || "Failed to load awaiting");
+    setAwaiting(data.requests || []);
+  };
+
+  const refreshAllRequests = async () => {
+    await Promise.all([fetchPending(), fetchAwaiting()]);
+  };
+
   useEffect(() => {
     (async () => {
       try {
         setLoading(true);
 
-        // Fetch all sections in parallel
-        const [pRes, aRes, eRes, cRes] = await Promise.all([
-          fetch("/api/me/requests/pending", { cache: "no-store" }),
-          fetch("/api/me/requests/awaiting", { cache: "no-store" }),
-          fetch("/api/me/requests/expired", { cache: "no-store" }),
-          fetch("/api/me/contracts", { cache: "no-store" }),
+        await Promise.all([
+          fetchPending(),
+          fetchAwaiting(),
+          // keep others as they are:
+          (async () => {
+            const res = await fetch("/api/me/requests/expired", {
+              cache: "no-store",
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data?.error || "Failed expired");
+            setExpired(data.requests || []);
+          })(),
+          (async () => {
+            const res = await fetch("/api/me/contracts", {
+              cache: "no-store",
+            });
+            const data = await res.json();
+            if (!res.ok) throw new Error(data?.error || "Failed contracts");
+            setContracts(data.contracts || []);
+            if (!companyName && data.companyName)
+              setCompanyName(data.companyName);
+          })(),
         ]);
-
-        const read = async (res) => {
-          const ct = res.headers.get("content-type") || "";
-          return ct.includes("application/json")
-            ? await res.json()
-            : { error: await res.text() };
-        };
-
-        const [p, a, e, c] = await Promise.all([
-          read(pRes),
-          read(aRes),
-          read(eRes),
-          read(cRes),
-        ]);
-
-        if (!pRes.ok) throw new Error(p.error || "Failed to load pending");
-        if (!aRes.ok) throw new Error(a.error || "Failed to load awaiting");
-        if (!eRes.ok) throw new Error(e.error || "Failed to load expired");
-        if (!cRes.ok) throw new Error(c.error || "Failed to load contracts");
-
-        setPending(p.requests || []);
-        setWinningOfferSelection(p.winningOfferSelection || "Automatic");
-        setCompanyName(p.companyName || null);
-
-        setAwaiting(a.requests || []);
-        setExpired(e.requests || []);
-
-        setContracts(c.contracts || []);
-        if (!companyName && c.companyName) setCompanyName(c.companyName);
       } catch (e) {
         alert(e.message);
-        setPending([]);
-        setAwaiting([]);
-        setExpired([]);
-        setContracts([]);
       } finally {
         setLoading(false);
       }
@@ -129,7 +130,9 @@ export default function ArchivePage() {
       <h1 className="text-3xl font-bold mb-6">My Dashboard</h1>
 
       {loading ? (
-        <div className="p-4 bg-white rounded border">Loading…</div>
+        <div className="p-4 bg-white rounded border text-black">
+          Loading Dashboard…
+        </div>
       ) : (
         <>
           <PendingRequestsTable
@@ -138,9 +141,14 @@ export default function ArchivePage() {
             onPreview={handlePreview}
             onCancel={handleCancelPending}
             busyIds={busyIds}
+            refreshAllRequests={refreshAllRequests}
           />
 
-          <AwaitingSelectionTable rows={awaiting} onPreview={handlePreview} />
+          <AwaitingSelectionTable
+            rows={awaiting}
+            onPreview={handlePreview}
+            refreshAllRequests={refreshAllRequests}
+          />
 
           <ExpiredRequestsTable rows={expired} onPreview={handlePreview} />
 

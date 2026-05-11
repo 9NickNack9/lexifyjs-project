@@ -1,15 +1,15 @@
 "use client";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import QuestionMarkTooltip from "../../../components/QuestionmarkTooltip";
 
 export default function FinanceDebt() {
   const router = useRouter();
+  const searchParams = useSearchParams();
 
   const initialFormState = {
     termSign: "",
     refinanceType: "",
-    financeAct: "",
     financeAct: "",
     agreementCoverage: "",
     relationRole: "",
@@ -21,6 +21,7 @@ export default function FinanceDebt() {
     backgroundFiles: [],
     offerer: "",
     providerCountry: "",
+    counterparty: "",
     lawyerCount: "",
     firmAge: "",
     firmRating: "",
@@ -40,6 +41,16 @@ export default function FinanceDebt() {
   const [formData, setFormData] = useState(initialFormState);
   const [showPreview, setShowPreview] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+
+  const [showLoadDraftModal, setShowLoadDraftModal] = useState(false);
+  const [drafts, setDrafts] = useState([]);
+  const [draftsLoading, setDraftsLoading] = useState(false);
+  const [draftActionLoading, setDraftActionLoading] = useState(false);
+
+  const REQUEST_DRAFT_TYPE = "bankingRefinancing";
+  const DRAFT_EMPTY_TEXT =
+    "No saved Refinancing of Existing Debt drafts found.";
+
   const [company, setCompany] = useState({
     name: "",
     businessId: "",
@@ -63,6 +74,48 @@ export default function FinanceDebt() {
       }
     })();
   }, []);
+
+  useEffect(() => {
+    const draftId = searchParams.get("draftId");
+
+    if (!draftId) return;
+
+    const loadDraftFromUrl = async () => {
+      try {
+        const res = await fetch(`/api/request-drafts/${REQUEST_DRAFT_TYPE}`, {
+          method: "GET",
+          cache: "no-store",
+        });
+
+        const json = await res.json().catch(() => null);
+
+        if (!res.ok) {
+          throw new Error(json?.error || "Failed to load draft.");
+        }
+
+        const draft = Array.isArray(json?.drafts)
+          ? json.drafts.find((item) => String(item.id) === String(draftId))
+          : null;
+
+        if (!draft) {
+          alert("The selected draft could not be found.");
+          return;
+        }
+
+        setFormData((prev) => ({
+          ...prev,
+          ...draft.data,
+          backgroundFiles: [],
+          supplierFiles: [],
+          agree: false,
+        }));
+      } catch (error) {
+        alert(error.message || "Failed to load draft.");
+      }
+    };
+
+    loadDraftFromUrl();
+  }, [searchParams]);
 
   // File handlers
   const handleBackgroundFileChange = (e) => {
@@ -123,8 +176,6 @@ export default function FinanceDebt() {
   // Validation
   const validate = () => {
     if (!formData.supportType) return "Please select what you need.";
-    if (dueDiligenceOptions && !formData.dueDiligence)
-      return "Please choose the due diligence reporting format.";
     if (!formData.refinanceType)
       return "Please select the refinancing process role.";
     if (!formData.termSign)
@@ -154,6 +205,155 @@ export default function FinanceDebt() {
     if (!formData.requestTitle) return "Give a title for your LEXIFY Request.";
     if (!formData.agree) return "Confirm you're ready to submit.";
     return null;
+  };
+
+  const getDraftDataForSave = () => {
+    const { backgroundFiles, supplierFiles, agree, ...draftData } = formData;
+
+    return {
+      ...draftData,
+      backgroundFiles: [],
+      supplierFiles: [],
+      agree: false,
+    };
+  };
+
+  const fetchDrafts = async () => {
+    setDraftsLoading(true);
+
+    try {
+      const res = await fetch(`/api/request-drafts/${REQUEST_DRAFT_TYPE}`, {
+        method: "GET",
+        cache: "no-store",
+      });
+
+      const json = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        throw new Error(json?.error || "Failed to load drafts.");
+      }
+
+      setDrafts(Array.isArray(json?.drafts) ? json.drafts : []);
+    } catch (error) {
+      alert(error.message || "Failed to load drafts.");
+      setDrafts([]);
+    } finally {
+      setDraftsLoading(false);
+    }
+  };
+
+  const openLoadDraftModal = () => {
+    setShowLoadDraftModal(true);
+    fetchDrafts();
+  };
+
+  const postDraft = async ({ overwrite = false } = {}) => {
+    const res = await fetch(`/api/request-drafts/${REQUEST_DRAFT_TYPE}`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        title: formData.requestTitle,
+        data: getDraftDataForSave(),
+        overwrite,
+      }),
+    });
+
+    const json = await res.json().catch(() => null);
+
+    return { res, json };
+  };
+
+  const handleSaveDraft = async () => {
+    const title = String(formData.requestTitle || "").trim();
+
+    if (!title) {
+      alert(
+        "Please give a title for your LEXIFY Request before saving a draft.",
+      );
+      return;
+    }
+
+    const confirmed = confirm(
+      "Your LEXIFY Request will be saved as a draft for later completion. Attachments are not saved with drafts — please upload them only before submitting the LEXIFY Request. The draft will be saved under the LEXIFY Request title you have entered. Do you want to save this LEXIFY Request as a draft?",
+    );
+
+    if (!confirmed) return;
+
+    setDraftActionLoading(true);
+
+    try {
+      let { res, json } = await postDraft({ overwrite: false });
+
+      if (res.status === 409 && json?.duplicate) {
+        const overwriteConfirmed = confirm(
+          `A draft named "${title}" already exists in this request type. Do you want to overwrite the existing draft?`,
+        );
+
+        if (!overwriteConfirmed) {
+          return;
+        }
+
+        ({ res, json } = await postDraft({ overwrite: true }));
+      }
+
+      if (!res.ok) {
+        throw new Error(json?.error || "Failed to save draft.");
+      }
+
+      alert(
+        json?.overwritten
+          ? "Draft overwritten successfully."
+          : "Draft saved successfully.",
+      );
+      router.push("/main");
+    } catch (error) {
+      alert(error.message || "Failed to save draft.");
+    } finally {
+      setDraftActionLoading(false);
+    }
+  };
+
+  const handleLoadDraft = (draft) => {
+    setFormData((prev) => ({
+      ...prev,
+      ...draft.data,
+      backgroundFiles: [],
+      supplierFiles: [],
+      agree: false,
+    }));
+
+    setShowLoadDraftModal(false);
+  };
+
+  const handleDeleteDraft = async (draftId) => {
+    const confirmed = confirm("Are you sure you want to delete this draft?");
+    if (!confirmed) return;
+
+    setDraftActionLoading(true);
+
+    try {
+      const res = await fetch(`/api/request-drafts/${REQUEST_DRAFT_TYPE}`, {
+        method: "DELETE",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ draftId }),
+      });
+
+      const json = await res.json().catch(() => null);
+
+      if (!res.ok) {
+        throw new Error(json?.error || "Failed to delete draft.");
+      }
+
+      setDrafts(Array.isArray(json?.drafts) ? json.drafts : []);
+    } catch (error) {
+      alert(error.message || "Failed to delete draft.");
+    } finally {
+      setDraftActionLoading(false);
+    }
   };
 
   // Submit (multipart/form-data to /api/requests)
@@ -245,18 +445,6 @@ export default function FinanceDebt() {
     }
   };
 
-  // Clear
-  const handleClear = () => {
-    setFormData(initialFormState);
-    document.querySelectorAll("input, textarea, select").forEach((el) => {
-      if (el.type === "text" || el.tagName === "TEXTAREA") el.value = "";
-      else if (el.type === "checkbox" || el.type === "radio")
-        el.checked = false;
-      else if (el.tagName === "SELECT") el.selectedIndex = 0;
-      else if (el.type === "file") el.value = [];
-    });
-  };
-
   // Small helper for preview sections
   function Section({ title, children }) {
     return (
@@ -269,6 +457,24 @@ export default function FinanceDebt() {
     );
   }
 
+  const formatDraftSavedDate = (draft) => {
+    const rawDate = draft?.savedAt || draft?.updatedAt || draft?.createdAt;
+
+    if (!rawDate) return "Draft saved date unavailable";
+
+    const parsed = new Date(rawDate);
+
+    if (Number.isNaN(parsed.getTime())) {
+      return "Draft saved date unavailable";
+    }
+
+    return `Draft Saved ${parsed.toLocaleDateString("en-GB", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    })}`;
+  };
+
   return (
     <div className="flex flex-col items-center justify-center min-h-screen p-6">
       <h1 className="text-3xl font-bold mb-4">Create a LEXIFY Request</h1>
@@ -279,9 +485,19 @@ export default function FinanceDebt() {
       <div className="w-full max-w-7xl p-6 rounded shadow-2xl bg-white text-black">
         {/* Form Section */}
         <form onSubmit={handleSubmit} className="space-y-4">
-          <h4 className="text-md font-medium mb-1 font-semibold">
-            What do you need?
-          </h4>
+          <div className="flex justify-between items-start gap-4 mb-2">
+            <h4 className="text-md font-medium font-semibold">
+              What do you need?
+            </h4>
+
+            <button
+              type="button"
+              onClick={openLoadDraftModal}
+              className="px-4 py-2 bg-[#19999e] text-white border border-black rounded hover:opacity-90 cursor-pointer shrink-0"
+            >
+              Load Draft
+            </button>
+          </div>
           <div className="space-y-2">
             {[
               "Comprehensive legal support throughout the refinancing process (including but not limited to drafting or commenting of a facility/facilities agreement and related legal documentation, required negotiations with the counterparty and drafting/collecting or reviewing of customary conditions precedent documents)",
@@ -332,6 +548,7 @@ export default function FinanceDebt() {
               name="refinanceType"
               className="w-full border p-2"
               onChange={handleChange}
+              value={formData.refinanceType}
             >
               <option value="">Select</option>
               <option value="I am the lender">I am the lender</option>
@@ -353,6 +570,7 @@ export default function FinanceDebt() {
                     name="financeAct"
                     className="w-full border p-2"
                     onChange={handleChange}
+                    value={formData.financeAct}
                   >
                     <option value="">Select</option>
                     <option value="On my own behalf only">
@@ -382,6 +600,7 @@ export default function FinanceDebt() {
                         name="relationRole"
                         className="w-full border p-2"
                         onChange={handleChange}
+                        value={formData.relationRole}
                       ></textarea>
                     </div>
                   )}
@@ -400,6 +619,7 @@ export default function FinanceDebt() {
               name="counterparty"
               className="w-full border p-2"
               onChange={handleChange}
+              value={formData.counterparty}
             ></textarea>
           </div>
           <br />
@@ -414,6 +634,7 @@ export default function FinanceDebt() {
               name="termSign"
               className="w-full border p-2"
               onChange={handleChange}
+              value={formData.termSign}
             >
               <option value="">Select</option>
               <option value="Yes, a signed term sheet is available">
@@ -444,6 +665,7 @@ export default function FinanceDebt() {
               name="agreementCoverage"
               className="w-full border p-2"
               onChange={handleChange}
+              value={formData.agreementCoverage}
             >
               <option value="">Select</option>
               <option value="Investment grade">Investment grade</option>
@@ -468,6 +690,7 @@ export default function FinanceDebt() {
             name="description"
             className="w-full border p-2"
             onChange={handleChange}
+            value={formData.description}
           ></textarea>
           <br />
           <hr />
@@ -480,6 +703,7 @@ export default function FinanceDebt() {
               name="debtSecurance"
               className="w-full border p-2"
               onChange={handleChange}
+              value={formData.debtSecurance}
             >
               <option value="">Select</option>
               <option value="Unsecured - the debt will not be backed by any collateral">
@@ -508,6 +732,7 @@ export default function FinanceDebt() {
                     name="assetDescription"
                     className="w-full border p-2"
                     onChange={handleChange}
+                    value={formData.assetDescription}
                   ></textarea>
                 </div>
                 <br />
@@ -530,6 +755,7 @@ export default function FinanceDebt() {
             name="background"
             className="w-full border p-2"
             onChange={handleChange}
+            value={formData.background}
           ></textarea>
           <div className="mt-2">
             <label className="inline-block px-4 py-2 bg-[#c8c8cf] text-black border border-black rounded cursor-pointer">
@@ -580,6 +806,7 @@ export default function FinanceDebt() {
               name="offerer"
               className="w-full border p-2"
               onChange={handleChange}
+              value={formData.offerer}
             >
               <option value="">Select</option>
               <option value="Attorneys-at-law">Attorneys-at-law</option>
@@ -609,6 +836,7 @@ export default function FinanceDebt() {
               name="providerCountry"
               className="w-full border p-2"
               onChange={handleChange}
+              value={formData.providerCountry}
             >
               <option value="">Select</option>
               <option value="Yes, I want offers from domestic legal service providers only.">
@@ -632,6 +860,7 @@ export default function FinanceDebt() {
               name="lawyerCount"
               className="w-full border p-2"
               onChange={handleChange}
+              value={formData.lawyerCount}
             >
               <option value="">Select</option>
               <option value="Any size">
@@ -660,6 +889,7 @@ export default function FinanceDebt() {
               name="firmAge"
               className="w-full border p-2"
               onChange={handleChange}
+              value={formData.firmAge}
             >
               <option value="">Select</option>
               <option value="Any age">
@@ -693,6 +923,7 @@ export default function FinanceDebt() {
               name="firmRating"
               className="w-full border p-2"
               onChange={handleChange}
+              value={formData.firmRating}
             >
               <option value="">Select</option>
               <option value="Any rating">No</option>
@@ -736,6 +967,7 @@ export default function FinanceDebt() {
               name="currency"
               className="w-full border p-2"
               onChange={handleChange}
+              value={formData.currency}
             >
               <option value="">Select</option>
               <option value="Euro (€)">Euro (€)</option>
@@ -799,6 +1031,7 @@ export default function FinanceDebt() {
               name="retainerFee"
               className="w-full border p-2"
               onChange={handleChange}
+              value={formData.retainerFee}
             >
               <option value="">Select</option>
               <option value="No">No</option>
@@ -955,16 +1188,17 @@ export default function FinanceDebt() {
             <button
               type="button"
               onClick={() => setShowPreview(true)}
-              className="p-2 bg-yellow-500 text-white rounded cursor-pointer"
+              className="p-2 bg-gray-700 text-white rounded cursor-pointer"
             >
               Preview LEXIFY Request
             </button>
             <button
               type="button"
-              onClick={() => router.push("/main")}
-              className="p-2 bg-red-500 text-white rounded cursor-pointer"
+              onClick={handleSaveDraft}
+              disabled={draftActionLoading}
+              className="p-2 bg-gray-500 text-white rounded cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              Cancel
+              {draftActionLoading ? "Saving…" : "Save as Draft"}
             </button>
           </div>
           <br />
@@ -1004,16 +1238,22 @@ export default function FinanceDebt() {
             <button
               type="submit"
               disabled={submitting}
-              className="p-2 bg-[#11999e] text-white rounded disabled:opacity-60 cursor-pointer"
+              className="p-2 bg-[#11999e] text-white rounded disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
             >
               {submitting ? "Submitting…" : "Submit LEXIFY Request"}
             </button>
             <button
               type="button"
-              onClick={handleClear}
-              className="p-2 bg-gray-300 text-black rounded"
+              onClick={() => {
+                const confirmed = confirm(
+                  "Are you sure you want to exit? All unsaved changes will be lost.",
+                );
+                if (!confirmed) return;
+                router.push("/main");
+              }}
+              className="p-2 bg-red-500 text-white rounded cursor-pointer"
             >
-              Clear
+              Exit Without Submitting
             </button>
           </div>
         </form>
@@ -1265,6 +1505,68 @@ export default function FinanceDebt() {
               >
                 Close Preview
               </button>
+            </div>
+          </div>
+        )}
+        {showLoadDraftModal && (
+          <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
+            <div className="bg-white w-full max-w-xl p-6 rounded shadow-lg relative">
+              <button
+                type="button"
+                className="absolute top-3 right-3 px-3 py-1 rounded bg-gray-300 hover:bg-gray-400 cursor-pointer"
+                onClick={() => setShowLoadDraftModal(false)}
+              >
+                Close
+              </button>
+
+              <h2 className="text-xl font-semibold mb-4">
+                Select a draft to load
+              </h2>
+
+              <div className="space-y-3 max-h-[400px] overflow-y-auto">
+                {draftsLoading ? (
+                  <p className="text-sm text-gray-600">Loading drafts…</p>
+                ) : drafts.length === 0 ? (
+                  <p className="text-sm text-gray-600">{DRAFT_EMPTY_TEXT}</p>
+                ) : (
+                  drafts.map((draft) => (
+                    <div
+                      key={draft.id}
+                      className="flex justify-between items-center border p-3 rounded gap-3"
+                    >
+                      <div className="min-w-0">
+                        <p className="font-medium break-words">
+                          {draft.title || "Untitled draft"}
+                        </p>
+
+                        <p className="text-xs text-gray-400 mt-1">
+                          {formatDraftSavedDate(draft)}
+                        </p>
+                      </div>
+
+                      <div className="flex gap-2 shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => handleLoadDraft(draft)}
+                          disabled={draftActionLoading}
+                          className="px-3 py-1 bg-[#11999e] text-white rounded hover:opacity-90 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          Load Draft
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteDraft(draft.id)}
+                          disabled={draftActionLoading}
+                          className="px-3 py-1 bg-red-500 text-white rounded hover:opacity-90 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
+                        >
+                          Delete Draft
+                        </button>
+                      </div>
+                    </div>
+                  ))
+                )}
+              </div>
             </div>
           </div>
         )}

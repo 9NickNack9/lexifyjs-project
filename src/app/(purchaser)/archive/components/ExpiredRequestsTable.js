@@ -49,6 +49,7 @@ export default function ExpiredRequestsTable({ rows }) {
             <thead>
               <tr className="bg-[#3a3a3c] text-white">
                 <th className="border p-2 text-center">Title</th>
+                <th className="border p-2 text-center">Created by</th>
                 <th className="border p-2 text-center">Date Created</th>
                 <th className="border p-2 text-center">Date Expired</th>
                 <th className="border p-2 text-center">
@@ -113,6 +114,9 @@ export default function ExpiredRequestsTable({ rows }) {
                   <tr key={r.requestId}>
                     <td className="border p-2 text-center">
                       {r.requestTitle || "—"}
+                    </td>
+                    <td className="border p-2 text-center">
+                      {r.createdBy || "—"}
                     </td>
                     <td className="border p-2 text-center">
                       {formatDateDDMMYYYY(r.dateCreated)}

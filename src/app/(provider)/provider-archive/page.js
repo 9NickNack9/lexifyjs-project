@@ -747,18 +747,6 @@ export default function ProviderArchive() {
           <div className="w-full mb-8">
             <h2 className="text-2xl font-semibold mb-4">My Pending Offers</h2>
 
-            <select
-              value={contactFilterPending}
-              onChange={(e) => setContactFilterPending(e.target.value)}
-              className="mb-4 p-2 border rounded bg-white text-black"
-            >
-              {contactOptions.map((n) => (
-                <option key={n} value={n}>
-                  {n === "All" ? "Filter Pending Offers by Offer Owner" : n}
-                </option>
-              ))}
-            </select>
-
             {filteredOffers.length === 0 ? (
               <EmptyBox>N/A</EmptyBox>
             ) : (
@@ -890,18 +878,6 @@ export default function ProviderArchive() {
           {/* Expired Offers */}
           <div className="w-full mb-8">
             <h2 className="text-2xl font-semibold mb-4">My Expired Offers</h2>
-
-            <select
-              value={contactFilterExpired}
-              onChange={(e) => setContactFilterExpired(e.target.value)}
-              className="mb-4 p-2 border rounded bg-white text-black"
-            >
-              {contactOptions.map((n) => (
-                <option key={n} value={n}>
-                  {n === "All" ? "Filter Expired Offers by Offer Owner" : n}
-                </option>
-              ))}
-            </select>
 
             {filteredExpiredOffers.length === 0 ? (
               <EmptyBox>N/A</EmptyBox>
@@ -1035,18 +1011,6 @@ export default function ProviderArchive() {
           {/* Contracts */}
           <div className="w-full mb-8">
             <h2 className="text-2xl font-semibold mb-4">My LEXIFY Contracts</h2>
-
-            <select
-              value={contactFilterContracts}
-              onChange={(e) => setContactFilterContracts(e.target.value)}
-              className="mb-4 p-2 border rounded bg-white text-black"
-            >
-              {contactOptions.map((n) => (
-                <option key={n} value={n}>
-                  {n === "All" ? "Filter Contracts by Contract Owner" : n}
-                </option>
-              ))}
-            </select>
 
             {filteredContracts.length === 0 ? (
               <EmptyBox>N/A</EmptyBox>

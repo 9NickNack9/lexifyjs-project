@@ -347,6 +347,30 @@ async function sendContractPackageEmail(prismaClient, requestId) {
 
   if (!contract) return;
 
+  const sharedAccounts = contract.request?.details?.sharedAccounts || [];
+
+  let sharedUserEmails = [];
+
+  if (Array.isArray(sharedAccounts) && sharedAccounts.length > 0) {
+    const ids = sharedAccounts
+      .map((u) => u?.userPkId)
+      .filter(Boolean)
+      .map((id) => BigInt(id));
+
+    if (ids.length > 0) {
+      const users = await prisma.userAccount.findMany({
+        where: {
+          userPkId: { in: ids },
+        },
+        select: {
+          email: true,
+        },
+      });
+
+      sharedUserEmails = users.map((u) => u.email).filter((e) => isEmail(e));
+    }
+  }
+
   const purchaserCompanyId =
     contract.request?.clientCompanyId ?? contract.clientCompanyId ?? null;
   const providerCompanyId = contract.providerCompanyId ?? null;
@@ -585,7 +609,7 @@ async function sendContractPackageEmail(prismaClient, requestId) {
   if (toPurchaser.length > 0) {
     await sendContractEmail({
       to: toPurchaser,
-      bcc: ["support@lexify.online"],
+      bcc: Array.from(new Set(["support@lexify.online", ...sharedUserEmails])),
       subject: `LEXIFY Contract - ${shaped.request.title || ""}`,
       html: purchaserEmailHtml,
       attachments,

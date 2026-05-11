@@ -24,8 +24,11 @@ export async function GET() {
         firstName: true,
         lastName: true,
         companyId: true,
+        role: true,
       },
     });
+
+    const isAdmin = me?.role === "ADMIN";
 
     if (!me?.companyId) {
       return NextResponse.json(
@@ -45,10 +48,18 @@ export async function GET() {
 
     const offers = await prisma.offer.findMany({
       where: {
-        providerCompanyId: me.companyId,
-        request: {
-          requestState: { in: ["PENDING", "ON HOLD", "CONFLICT_CHECK"] },
-        },
+        ...(isAdmin
+          ? {
+              request: {
+                requestState: { in: ["PENDING", "ON HOLD", "CONFLICT_CHECK"] },
+              },
+            }
+          : {
+              providerCompanyId: me.companyId,
+              request: {
+                requestState: { in: ["PENDING", "ON HOLD", "CONFLICT_CHECK"] },
+              },
+            }),
       },
       orderBy: { createdAt: "desc" },
       select: {

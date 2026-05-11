@@ -24,7 +24,7 @@ export default function CreateRequest() {
     },
     {
       title: "Help with Mergers & Acquisitions",
-      link: "/requests/mergers-aquisitions",
+      link: "/requests/mergers-acquisitions",
     },
     {
       title: "Help with Corporate Governance",

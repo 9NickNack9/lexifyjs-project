@@ -84,20 +84,29 @@ export async function GET() {
     // resolve purchaser companyId
     const ua = await prisma.userAccount.findUnique({
       where: { userPkId: BigInt(session.userId) },
-      select: { companyId: true },
+      select: { companyId: true, role: true },
     });
     if (!ua?.companyId)
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
 
-    const now = new Date();
+    const isAdmin = ua?.role === "ADMIN";
 
     const reqs = await prisma.request.findMany({
       where: {
-        clientCompanyId: ua.companyId,
-        OR: [
-          { requestState: "ON HOLD", acceptDeadline: { gt: now } },
-          { requestState: "CONFLICT_CHECK" },
-        ],
+        requestState: { in: ["ON HOLD", "CONFLICT_CHECK"] },
+        ...(isAdmin
+          ? {}
+          : {
+              OR: [
+                { clientCompanyId: ua.companyId },
+                {
+                  details: {
+                    path: ["sharedAccounts"],
+                    array_contains: [{ userPkId: Number(session.userId) }],
+                  },
+                },
+              ],
+            }),
       },
       orderBy: { dateCreated: "desc" },
       select: {
@@ -108,12 +117,15 @@ export async function GET() {
         acceptDeadline: true,
         currency: true,
         details: true,
+        createdByUserId: true,
         requestCategory: true,
         requestSubcategory: true,
         selectedOfferId: true,
         acceptDeadlinePausedRemainingMs: true,
         requestState: true,
         disqualifiedOfferIds: true,
+        primaryContactPerson: true,
+        paymentRate: true,
         offers: {
           select: {
             offerId: true,
@@ -146,6 +158,15 @@ export async function GET() {
       const disqSet = new Set(
         toStringArray(r.disqualifiedOfferIds).map(String),
       );
+      const sharedAccounts = r.details?.sharedAccounts || [];
+
+      const currentUserShare = sharedAccounts.find(
+        (u) => String(u.userPkId) === String(session.userId),
+      );
+
+      const permission = currentUserShare
+        ? currentUserShare.permission
+        : "owner";
 
       const offers = (r.offers || [])
         .filter((o) => (o.offerStatus || "").toUpperCase() !== "DISQUALIFIED")
@@ -203,11 +224,15 @@ export async function GET() {
           typeof r.requestId === "bigint"
             ? r.requestId.toString()
             : String(r.requestId),
+        createdByUserId:
+          r.createdByUserId != null ? Number(r.createdByUserId) : null,
         requestTitle: r.title,
         dateCreated: r.dateCreated,
         dateExpired: r.dateExpired,
         acceptDeadline: r.acceptDeadline,
+        paymentRate: r.paymentRate,
         currency: r.currency,
+        primaryContactPerson: r.primaryContactPerson,
         maxPrice,
         topOffers: offers,
         requestState: r.requestState,
@@ -217,6 +242,9 @@ export async function GET() {
         extendedOnce: r.details?.acceptDeadlineExtendedOnce === true,
         requestCategory: r.requestCategory ?? null,
         requestSubcategory: r.requestSubcategory ?? null,
+        details: r.details || {},
+        permission,
+        isOwner: !currentUserShare,
       };
     });
 

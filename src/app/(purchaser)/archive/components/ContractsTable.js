@@ -116,6 +116,7 @@ export default function ContractsTable({ rows, onShowContract }) {
             <thead>
               <tr className="bg-[#3a3a3c] text-white">
                 <th className="border p-2 text-center">Title</th>
+                <th className="border p-2 text-center">Created by</th>
                 <th className="border p-2 text-center">Date of Contract</th>
                 <th className="border p-2 text-center">
                   Legal Service Provider
@@ -137,7 +138,9 @@ export default function ContractsTable({ rows, onShowContract }) {
                   <td className="border p-2 text-center">
                     {c.request?.title || "—"}
                   </td>
-
+                  <td className="border p-2 text-center">
+                    {c.createdBy || "—"}
+                  </td>
                   <td className="border p-2 text-center">
                     {formatDateDDMMYYYY(c.contractDate)}
                   </td>

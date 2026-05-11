@@ -72,6 +72,11 @@ export async function GET() {
                 r."clientCompanyId" = ${ua.companyId}
                 OR r."clientId" = ${ua.companyId}
                 OR LOWER(COALESCE(a."companyName", '')) = LOWER(${companyName})
+                OR EXISTS (
+                  SELECT 1
+                  FROM jsonb_array_elements(COALESCE(r."details"->'sharedAccounts', '[]'::jsonb)) sa
+                  WHERE (sa->>'userPkId')::bigint = ${BigInt(session.userId)}
+                )
               )
             ORDER BY r."dateCreated" DESC
           `
@@ -110,6 +115,13 @@ export async function GET() {
         paymentRate: true,
         contractResult: true,
         details: true,
+        primaryContactPerson: true,
+        clientUser: {
+          select: {
+            firstName: true,
+            lastName: true,
+          },
+        },
         offers: {
           select: {
             offerId: true,
@@ -170,6 +182,10 @@ export async function GET() {
         maxPrice,
         bestOffer,
         runnerUps,
+        createdBy:
+          r.primaryContactPerson ||
+          `${r.clientUser?.firstName || ""} ${r.clientUser?.lastName || ""}`.trim() ||
+          "—",
       };
     });
 

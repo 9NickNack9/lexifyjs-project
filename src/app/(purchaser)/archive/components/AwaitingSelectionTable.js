@@ -16,6 +16,7 @@ export default function AwaitingSelectionTable({
   onPreview,
   onCancel,
   onSelect, // optional custom handler
+  refreshAllRequests,
 }) {
   const [modalOpen, setModalOpen] = useState(false);
   const [modalRow, setModalRow] = useState(null);
@@ -38,6 +39,42 @@ export default function AwaitingSelectionTable({
 
   const PAGE_SIZE = 5;
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+
+  const [isShareOpen, setIsShareOpen] = useState(false);
+  const [selectedUsers, setSelectedUsers] = useState({});
+
+  const [companyUsers, setCompanyUsers] = useState([]);
+  const [shareRequestId, setShareRequestId] = useState(null);
+  const [isLoadingUsers, setIsLoadingUsers] = useState(false);
+  const [companyName, setCompanyName] = useState("");
+  const [shareOwnerUserId, setShareOwnerUserId] = useState(null);
+
+  useEffect(() => {
+    if (!isShareOpen) return;
+
+    const fetchUsers = async () => {
+      setIsLoadingUsers(true);
+
+      try {
+        const res = await fetch("/api/me/company/users");
+        const data = await res.json();
+
+        if (data?.users) {
+          setCompanyUsers(data.users);
+          setCompanyName(data.companyName || "");
+        } else {
+          setCompanyUsers([]);
+        }
+      } catch (err) {
+        console.error("Failed to fetch users:", err);
+        setCompanyUsers([]);
+      } finally {
+        setIsLoadingUsers(false);
+      }
+    };
+
+    fetchUsers();
+  }, [isShareOpen]);
 
   useEffect(() => {
     setVisibleCount(PAGE_SIZE);
@@ -294,6 +331,111 @@ export default function AwaitingSelectionTable({
     }
   };
 
+  const openShareModal = () => {
+    setIsShareOpen(true);
+  };
+
+  const closeShareModal = () => {
+    setIsShareOpen(false);
+  };
+
+  const toggleUser = (userId) => {
+    if (isOriginalOwnerInShareModal(userId)) return;
+
+    setSelectedUsers((prev) => {
+      const updated = { ...prev };
+
+      if (updated[userId]) {
+        delete updated[userId];
+      } else {
+        updated[userId] = "viewer";
+      }
+
+      return updated;
+    });
+  };
+
+  const updatePermission = (userId, permission) => {
+    if (isOriginalOwnerInShareModal(userId)) return;
+
+    setSelectedUsers((prev) => ({
+      ...prev,
+      [userId]: permission,
+    }));
+  };
+
+  const handleShare = async () => {
+    const selected = Object.entries(selectedUsers)
+      .filter(([userPkId, permission]) => {
+        if (permission === "owner") return false;
+        if (isOriginalOwnerInShareModal(userPkId)) return false;
+        return true;
+      })
+      .map(([userPkId, permission]) => {
+        const user = companyUsers.find((u) => u.userPkId === Number(userPkId));
+
+        return {
+          userPkId: Number(userPkId),
+          fullName: user?.fullName || "",
+          permission,
+        };
+      });
+
+    await fetch("/api/me/requests/share", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        requestId: shareRequestId,
+        sharedUsers: selected,
+      }),
+    });
+
+    await refreshAllRequests();
+    setIsShareOpen(false);
+  };
+
+  const isViewer = (r) => r.permission === "viewer";
+
+  const getOriginalOwnerUserId = (r) => {
+    const rawOwnerId =
+      r.createdByUserId ??
+      r.createdByUser?.userPkId ??
+      r.createdBy?.userPkId ??
+      r.clientUserId ??
+      r.clientId ??
+      r.details?.createdByUserId ??
+      r.details?.ownerUserId ??
+      null;
+
+    return rawOwnerId != null ? Number(rawOwnerId) : null;
+  };
+
+  const openShareForRequest = (r) => {
+    const ownerUserId = getOriginalOwnerUserId(r);
+
+    setShareRequestId(r.requestId);
+    setShareOwnerUserId(ownerUserId);
+
+    const existingShared = r.details?.sharedAccounts || [];
+    const prefilled = {};
+
+    for (const u of existingShared) {
+      prefilled[Number(u.userPkId)] = u.permission || "viewer";
+    }
+
+    // When a co-owner opens the share window, show the original owner as
+    // permanently selected. Do not save this as a shared account later.
+    if (ownerUserId != null) {
+      prefilled[ownerUserId] = "owner";
+    }
+
+    setSelectedUsers(prefilled);
+    setIsShareOpen(true);
+  };
+
+  const isOriginalOwnerInShareModal = (userId) =>
+    shareOwnerUserId != null && Number(userId) === Number(shareOwnerUserId);
+
   return (
     <div className="w-full mb-8">
       <h2 className="text-2xl font-semibold mb-4">
@@ -308,6 +450,7 @@ export default function AwaitingSelectionTable({
             <thead>
               <tr className="bg-[#3a3a3c] text-white">
                 <th className="border p-2 text-center">Title</th>
+                <th className="border p-2 text-center">Created by</th>
                 <th className="border p-2 text-center">Date Created</th>
                 <th className="border p-2 text-center">Date Expired</th>
                 <th className="border p-2 text-center">
@@ -321,6 +464,10 @@ export default function AwaitingSelectionTable({
                 <th className="border p-2 text-center">
                   Time until Automatic Rejection of All Offers{" "}
                   <NarrowTooltip tooltipText="If you need additional time to decide, click the 'I need more time' button to extend your offer selection deadline by 7 days (168 hours). This extension can only be used once." />
+                </th>
+                <th className="border p-2 text-center">
+                  Share LEXIFY Request{" "}
+                  <NarrowTooltip tooltipText="You can share a LEXIFY Request with colleagues in your organization. You choose whether each colleague can only view the Request — useful for keeping stakeholders informed — or have full co-owner rights, equivalent to your own. You control their access level and can revoke it anytime." />
                 </th>
                 <th className="border p-2 text-center">
                   Cancel LEXIFY Request
@@ -343,15 +490,15 @@ export default function AwaitingSelectionTable({
                 return (
                   <tr key={r.requestId}>
                     <td className="border p-2 text-center">{r.requestTitle}</td>
-
+                    <td className="border p-2 text-center">
+                      {r.primaryContactPerson || "—"}
+                    </td>
                     <td className="border p-2 text-center">
                       {formatDateDDMMYYYY(r.dateCreated)}
                     </td>
-
                     <td className="border p-2 text-center">
                       {formatDateDDMMYYYY(r.dateExpired)}
                     </td>
-
                     <td className="border p-2 text-center">
                       {r.maxPrice != null && r.maxPrice !== ""
                         ? fmtMoney(r.maxPrice, r.currency)
@@ -389,12 +536,18 @@ export default function AwaitingSelectionTable({
                         if (!Array.isArray(offers) || offers.length === 0)
                           return "—";
 
+                        const addPerHour =
+                          typeof r.paymentRate === "string" &&
+                          r.paymentRate
+                            .toLowerCase()
+                            .startsWith("blended hourly rate");
+
                         return (
                           <ul>
                             {offers.map((o, idx) => (
                               <li
                                 key={o.offerId}
-                                className={`flex items-center justify-between gap-4 py-3 ${
+                                className={`flex items-center justify-between gap-4 py-3 whitespace-nowrap ${
                                   idx !== offers.length - 1
                                     ? "border-b border-gray-300"
                                     : ""
@@ -402,24 +555,30 @@ export default function AwaitingSelectionTable({
                               >
                                 {/* Select button */}
                                 <button
-                                  className={`px-3 py-1 rounded shrink-0 cursor-pointer ${
-                                    r.requestState === "CONFLICT_CHECK"
-                                      ? "bg-gray-300 text-gray-600 cursor-not-allowed"
-                                      : "bg-[#11999e] text-white"
+                                  disabled={
+                                    r.requestState === "CONFLICT_CHECK" ||
+                                    isViewer(r)
+                                  }
+                                  className={`px-3 py-1 rounded shrink-0 ${
+                                    isViewer(r)
+                                      ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                                      : r.requestState === "CONFLICT_CHECK"
+                                        ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                                        : "bg-[#11999e] text-white cursor-pointer"
                                   }`}
-                                  disabled={r.requestState === "CONFLICT_CHECK"}
                                   onClick={() => confirmAndSelect(r, o)}
                                 >
                                   Select
                                 </button>
 
                                 {/* Offer info */}
-                                <div className="flex flex-col flex-1 leading-tight text-sm gap-0.5">
+                                <div className="flex flex-col flex-1 text-sm gap-1 min-w-0">
                                   <div>
                                     <span className="font-semibold">
                                       Offered Price:
                                     </span>{" "}
                                     {fmtMoney(o.offeredPrice, r.currency)}
+                                    {addPerHour ? "/h" : ""}
                                   </div>
 
                                   <div>
@@ -431,7 +590,7 @@ export default function AwaitingSelectionTable({
                                         href={o.providerCompanyWebsite}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="text-blue-600 hover:underline cursor-pointer"
+                                        className="text-blue-600 hover:underline cursor-pointer truncate"
                                       >
                                         {o.providerCompanyName}
                                       </a>
@@ -483,29 +642,28 @@ export default function AwaitingSelectionTable({
                                       );
                                     })()}
                                   </div>
+                                  {/* Details button */}
+                                  <button
+                                    type="button"
+                                    className="px-3 py-1 rounded bg-[#11999e] text-white shrink-0 whitespace-nowrap cursor-pointer"
+                                    onClick={() => {
+                                      const categoryKey = mapRequestToCategory(
+                                        r.requestCategory,
+                                        r.requestSubcategory,
+                                      );
+                                      setFullOfferPopupData({
+                                        offer: o,
+                                        request: r,
+                                        categoryKey,
+                                      });
+                                      setFullOfferPopupOpen(true);
+                                      setPopupShowTotalBreakdown(false);
+                                      setPopupExpandedCategories({});
+                                    }}
+                                  >
+                                    Show full offer details
+                                  </button>
                                 </div>
-
-                                {/* Details button */}
-                                <button
-                                  type="button"
-                                  className="px-3 py-1 rounded bg-[#11999e] text-white shrink-0 whitespace-nowrap cursor-pointer"
-                                  onClick={() => {
-                                    const categoryKey = mapRequestToCategory(
-                                      r.requestCategory,
-                                      r.requestSubcategory,
-                                    );
-                                    setFullOfferPopupData({
-                                      offer: o,
-                                      request: r,
-                                      categoryKey,
-                                    });
-                                    setFullOfferPopupOpen(true);
-                                    setPopupShowTotalBreakdown(false);
-                                    setPopupExpandedCategories({});
-                                  }}
-                                >
-                                  Show full offer details
-                                </button>
                               </li>
                             ))}
                           </ul>
@@ -525,12 +683,12 @@ export default function AwaitingSelectionTable({
                         <span>{timeLeft || "Expired"}</span>
                         {r.requestState === "ON HOLD" && timeLeft && (
                           <button
-                            className={`px-2 py-1 rounded text-white ${
-                              r.canExtend
-                                ? "bg-[#11999e] cursor-pointer"
-                                : "bg-gray-400 cursor-not-allowed"
+                            className={`px-2 py-1 rounded ${
+                              r.canExtend && !isViewer(r)
+                                ? "bg-[#11999e] cursor-pointer text-white"
+                                : "bg-gray-300 cursor-not-allowed text-gray-500"
                             }`}
-                            disabled={!r.canExtend}
+                            disabled={!r.canExtend || isViewer(r)}
                             onClick={() => handleExtend(r.requestId)}
                             title={
                               r.canExtend
@@ -545,11 +703,43 @@ export default function AwaitingSelectionTable({
                         )}
                       </div>
                     </td>
+                    <td className="border p-2 text-center">
+                      <div className="flex flex-col items-center gap-1">
+                        {(() => {
+                          const count = r.details?.sharedAccounts?.length || 0;
+                          if (count > 0) {
+                            return (
+                              <span className="text-xs text-gray-600">
+                                Shared with {count}{" "}
+                                {count === 1 ? "person" : "people"}
+                              </span>
+                            );
+                          }
+                          return null;
+                        })()}
 
+                        <button
+                          className={`px-3 py-1 rounded shrink-0 ${
+                            isViewer(r)
+                              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                              : "cursor-pointer bg-[#11999e] text-white"
+                          }`}
+                          onClick={() => openShareForRequest(r)}
+                          disabled={isViewer(r)}
+                        >
+                          Manage Access
+                        </button>
+                      </div>
+                    </td>
                     <td className="border p-2 text-center">
                       <div className="flex items-center justify-center gap-2">
                         <button
-                          className="bg-red-500 text-white px-3 py-1 rounded cursor-pointer"
+                          disabled={isViewer(r)}
+                          className={`px-3 py-1 rounded ${
+                            isViewer(r)
+                              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+                              : "bg-red-500 text-white cursor-pointer"
+                          }`}
                           onClick={() => handleCancelRequest(r)}
                         >
                           Cancel
@@ -564,7 +754,7 @@ export default function AwaitingSelectionTable({
           {canLoadMore && (
             <div className="mt-4 flex justify-center">
               <button
-                className="bg-[#11999e] text-white px-4 py-2 rounded cursor-pointer"
+                className="bg-white text-black px-4 py-2 rounded cursor-pointer"
                 onClick={() =>
                   setVisibleCount((n) =>
                     Math.min(n + PAGE_SIZE, safeRows.length),
@@ -1235,6 +1425,110 @@ export default function AwaitingSelectionTable({
                   </div>
                 );
               })()}
+            </div>
+          </div>
+        </div>
+      )}
+      {isShareOpen && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
+          <div className="bg-white text-black rounded-xl shadow-2xl w-full max-w-md p-6">
+            <h3 className="text-xl font-semibold mb-4">
+              Share this LEXIFY Request with colleagues at{" "}
+              {companyName || "your company"}{" "}
+              <NarrowTooltip tooltipText="You can share a LEXIFY Request with colleagues in your organization. You choose whether each colleague can only view the Request — useful for keeping stakeholders informed — or have full co-owner rights, equivalent to your own. You control their access level and can revoke it anytime." />
+            </h3>
+
+            <div className="space-y-3 max-h-[300px] overflow-y-auto">
+              {isLoadingUsers ? (
+                <div className="text-sm text-gray-600 text-center py-4">
+                  Loading company users...
+                </div>
+              ) : companyUsers.length === 0 ? (
+                <div className="text-sm text-gray-600 text-center py-4">
+                  No other user accounts registered for your company.
+                </div>
+              ) : (
+                companyUsers.map((user) => {
+                  const isOwner = isOriginalOwnerInShareModal(user.userPkId);
+                  const isSelected = !!selectedUsers[user.userPkId] || isOwner;
+
+                  return (
+                    <div
+                      key={user.userPkId}
+                      className="flex items-center justify-between gap-3"
+                    >
+                      <label
+                        className={`flex items-center gap-2 ${
+                          isOwner
+                            ? "cursor-not-allowed text-gray-700"
+                            : "cursor-pointer"
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          disabled={isOwner}
+                          onChange={() => toggleUser(user.userPkId)}
+                          className={
+                            isOwner ? "cursor-not-allowed" : "cursor-pointer"
+                          }
+                        />
+
+                        <span>
+                          {user.fullName}
+                          {isOwner && (
+                            <span className="ml-2 text-xs font-semibold text-gray-600">
+                              Owner
+                            </span>
+                          )}
+                        </span>
+                      </label>
+
+                      {isSelected && (
+                        <select
+                          value={
+                            isOwner ? "owner" : selectedUsers[user.userPkId]
+                          }
+                          disabled={isOwner}
+                          onChange={(e) =>
+                            updatePermission(user.userPkId, e.target.value)
+                          }
+                          className={`border rounded px-2 py-1 text-sm ${
+                            isOwner
+                              ? "bg-gray-100 text-gray-500 cursor-not-allowed"
+                              : ""
+                          }`}
+                        >
+                          {isOwner && <option value="owner">Owner</option>}
+                          <option value="viewer">Viewer</option>
+                          <option value="co-owner">Co-owner</option>
+                        </select>
+                      )}
+                    </div>
+                  );
+                })
+              )}
+            </div>
+
+            <div className="flex justify-end gap-2 mt-6">
+              <button
+                onClick={() => closeShareModal()}
+                className="px-4 py-2 border border-gray-400 rounded text-gray-700 cursor-pointer"
+              >
+                Cancel
+              </button>
+
+              <button
+                onClick={handleShare}
+                disabled={companyUsers.length === 0}
+                className={`px-4 py-2 rounded ${
+                  companyUsers.length === 0
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-[#11999e] text-white cursor-pointer"
+                }`}
+              >
+                Update Permissions
+              </button>
             </div>
           </div>
         </div>

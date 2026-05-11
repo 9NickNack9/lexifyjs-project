@@ -10,7 +10,7 @@ export default function MainClient() {
     {
       title: "Create a LEXIFY Request",
       description: "Create a request for proposal to buy legal services.",
-      link: "/create-request",
+      link: "/request-start",
     },
     {
       title: "My Dashboard",
