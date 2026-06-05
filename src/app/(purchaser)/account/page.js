@@ -102,6 +102,7 @@ export default function Account() {
     "Help with Mergers & Acquisitions",
     "Help with Corporate Governance",
     "Help with Personal Data Protection",
+    "Help with Banking & Finance Matters",
     "Help with KYC (Know Your Customer) or Compliance related Questionnaire",
     "Legal Training for Management and/or Personnel",
   ];
@@ -330,44 +331,6 @@ export default function Account() {
     };
   }, [status, session?.userId, session?.companyId, session?.role]);
 
-  // --- helpers (replace your current helpers with these) ---
-
-  const updateContact = (id, field, value) =>
-    setContacts((xs) =>
-      xs.map((c) => (c.id === id ? { ...c, [field]: value } : c)),
-    );
-
-  const toggleAllNotifications = async (id, checked) => {
-    // Optimistic UI
-    const next = contacts.map((c) =>
-      c.id === id ? { ...c, allNotifications: checked } : c,
-    );
-    setContacts(next);
-
-    // Persist immediately
-    try {
-      await saveContacts(next);
-    } catch (e) {
-      // Revert on error
-      setContacts(contacts);
-      alert("Failed to update notification flag for this contact.");
-    }
-  };
-
-  const addContact = () =>
-    setContacts((xs) => [
-      ...xs,
-      {
-        id: xs.length + 1,
-        firstName: "",
-        lastName: "",
-        position: "",
-        telephone: "",
-        email: "",
-        isEditing: true,
-      },
-    ]);
-
   const normalizeForApi = (xs) =>
     xs.map((c) => ({
       firstName: (c.firstName || "").trim(),
@@ -392,49 +355,6 @@ export default function Account() {
       if (!res.ok) throw new Error(json?.error || "Failed to save contacts");
     } finally {
       setBusy(false);
-    }
-  };
-
-  // Edit/Save button behavior:
-  // - If NOT editing → turn this row into editing mode
-  // - If editing → persist, then set ONLY this row's isEditing=false
-  const toggleEdit = async (id) => {
-    const row = contacts.find((c) => c.id === id);
-    if (!row) return;
-
-    if (!row.isEditing) {
-      // enter edit mode
-      setContacts((xs) =>
-        xs.map((c) => (c.id === id ? { ...c, isEditing: true } : c)),
-      );
-      return;
-    }
-
-    // was editing → save everything, then exit edit mode for this row
-    const next = [...contacts];
-    await saveContacts(next);
-
-    setContacts((xs) =>
-      xs.map((c) => (c.id === id ? { ...c, isEditing: false } : c)),
-    );
-  };
-
-  // Delete: enforce at least one, persist after removing
-  const removeContact = async (id) => {
-    if (contacts.length === 1) {
-      alert("At least one contact must remain.");
-      return;
-    }
-    if (!confirm("Delete this contact?")) return;
-
-    const next = contacts
-      .filter((c) => c.id !== id)
-      .map((c, i) => ({ ...c, id: i + 1, isEditing: false }));
-    try {
-      await saveContacts(next);
-      setContacts(next);
-    } catch {
-      // keep UI unchanged on failure
     }
   };
 
@@ -707,11 +627,11 @@ export default function Account() {
     try {
       const res = await fetch("/api/me/mfa/setup", { cache: "no-store" });
       const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json?.error || "Failed to start MFA setup");
+      if (!res.ok) throw new Error(json?.error || "Failed to start 2FA setup");
       setMfaQr(json.qrDataUrl || "");
       setMfaOtpAuth(json.otpauth || "");
       setMfaMsg(
-        "Scan the QR code with your authenticator app, then enter the 6-digit code to enable MFA.",
+        "Scan the QR code with your authenticator app, then enter the 6-digit code to enable 2FA.",
       );
     } catch (e) {
       setMfaErr(e.message);
@@ -731,7 +651,7 @@ export default function Account() {
         body: JSON.stringify({ code: mfaCode }),
       });
       const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json?.error || "Failed to enable MFA");
+      if (!res.ok) throw new Error(json?.error || "Failed to enable 2FA");
       setMfaEnabled(true);
       if (Array.isArray(json.recoveryCodes))
         setRecoveryCodes(json.recoveryCodes);
@@ -747,7 +667,7 @@ export default function Account() {
   };
 
   const disableMfa = async () => {
-    if (!confirm("Disable MFA for your account?")) return;
+    if (!confirm("Disable 2FA for your account?")) return;
     setMfaBusy(true);
     setMfaErr("");
     setMfaMsg("");
@@ -758,7 +678,7 @@ export default function Account() {
         body: JSON.stringify({ code: mfaCode }),
       });
       const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json?.error || "Failed to disable MFA");
+      if (!res.ok) throw new Error(json?.error || "Failed to disable 2FA");
       setMfaEnabled(false);
       setMfaQr("");
       setMfaOtpAuth("");
@@ -948,7 +868,7 @@ export default function Account() {
           <br />
           <div className="w-full max-w-6xl rounded bg-white text-black mt-8">
             <h2 className="text-md font-semibold mb-2">
-              Multi-Factor Authentication
+              Two-Factor Authentication
             </h2>
             <br />
             <div className="text-sm mb-4">
@@ -978,7 +898,7 @@ export default function Account() {
                   onClick={startMfaSetup}
                   className="bg-[#11999e] text-white px-4 py-2 rounded cursor-pointer disabled:opacity-50"
                 >
-                  Set up MFA (Authenticator App Required)
+                  Set up 2FA (Authenticator App Required)
                 </button>
 
                 {mfaQr && (
@@ -1019,7 +939,7 @@ export default function Account() {
                         onClick={enableMfa}
                         className="mt-3 bg-green-600 text-white px-4 py-2 rounded cursor-pointer disabled:opacity-50"
                       >
-                        Enable MFA
+                        Enable 2FA
                       </button>
                     </div>
                   </div>
@@ -1030,7 +950,7 @@ export default function Account() {
             {mfaEnabled && (
               <div className="max-w-md">
                 <div className="text-sm mb-2">
-                  To disable MFA, confirm with a current 6-digit authenticator
+                  To disable 2FA, confirm with a current 6-digit authenticator
                   code:
                 </div>
                 <input
@@ -1046,7 +966,7 @@ export default function Account() {
                   onClick={disableMfa}
                   className="mt-3 bg-red-600 text-white px-4 py-2 rounded cursor-pointer disabled:opacity-50"
                 >
-                  Disable MFA
+                  Disable 2FA
                 </button>
               </div>
             )}

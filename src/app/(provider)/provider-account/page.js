@@ -603,11 +603,11 @@ export default function ProviderAccount() {
     try {
       const res = await fetch("/api/me/mfa/setup", { cache: "no-store" });
       const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json?.error || "Failed to start MFA setup");
+      if (!res.ok) throw new Error(json?.error || "Failed to start 2FA setup");
       setMfaQr(json.qrDataUrl || "");
       setMfaOtpAuth(json.otpauth || "");
       setMfaMsg(
-        "Scan the QR code with your authenticator app, then enter the 6-digit code to enable MFA.",
+        "Scan the QR code with your authenticator app, then enter the 6-digit code to enable 2FA.",
       );
     } catch (e) {
       setMfaErr(e.message);
@@ -627,14 +627,14 @@ export default function ProviderAccount() {
         body: JSON.stringify({ code: mfaCode.replace(/\D/g, "").slice(0, 6) }),
       });
       const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json?.error || "Failed to enable MFA");
+      if (!res.ok) throw new Error(json?.error || "Failed to enable 2FA");
       setMfaEnabled(true);
       if (Array.isArray(json.recoveryCodes))
         setRecoveryCodes(json.recoveryCodes);
       setMfaQr("");
       setMfaOtpAuth("");
       setMfaCode("");
-      setMfaMsg("MFA enabled.");
+      setMfaMsg("2FA enabled.");
     } catch (e) {
       setMfaErr(e.message);
     } finally {
@@ -643,7 +643,7 @@ export default function ProviderAccount() {
   };
 
   const disableMfa = async () => {
-    if (!confirm("Disable MFA for your account?")) return;
+    if (!confirm("Disable 2FA for your account?")) return;
     setMfaBusy(true);
     setMfaErr("");
     setMfaMsg("");
@@ -654,12 +654,12 @@ export default function ProviderAccount() {
         body: JSON.stringify({ code: mfaCode.replace(/\D/g, "").slice(0, 6) }),
       });
       const json = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(json?.error || "Failed to disable MFA");
+      if (!res.ok) throw new Error(json?.error || "Failed to disable 2FA");
       setMfaEnabled(false);
       setMfaQr("");
       setMfaOtpAuth("");
       setMfaCode("");
-      setMfaMsg("MFA disabled.");
+      setMfaMsg("2FA disabled.");
     } catch (e) {
       setMfaErr(e.message);
     } finally {
@@ -839,7 +839,7 @@ export default function ProviderAccount() {
         <br />
         <div className="w-full max-w-6xl rounded bg-white text-black mt-8">
           <h2 className="text-md font-semibold mb-2">
-            Multi-Factor Authentication
+            Two-Factor Authentication
           </h2>
           <div className="text-sm mb-4">
             Status:{" "}
@@ -866,7 +866,7 @@ export default function ProviderAccount() {
                 onClick={startMfaSetup}
                 className="bg-[#11999e] text-white px-4 py-2 rounded cursor-pointer disabled:opacity-50"
               >
-                Set up MFA (Authenticator App Required)
+                Set up 2FA (Authenticator App Required)
               </button>
 
               {mfaQr && (
@@ -907,7 +907,7 @@ export default function ProviderAccount() {
                       onClick={enableMfa}
                       className="mt-3 bg-green-600 text-white px-4 py-2 rounded cursor-pointer disabled:opacity-50"
                     >
-                      Enable MFA
+                      Enable 2FA
                     </button>
                   </div>
                 </div>
@@ -918,7 +918,7 @@ export default function ProviderAccount() {
           {mfaEnabled && (
             <div className="max-w-md">
               <div className="text-sm mb-2">
-                To disable MFA, confirm with a current 6-digit authenticator
+                To disable 2FA, confirm with a current 6-digit authenticator
                 code:
               </div>
               <input
@@ -934,7 +934,7 @@ export default function ProviderAccount() {
                 onClick={disableMfa}
                 className="mt-3 bg-red-600 text-white px-4 py-2 rounded cursor-pointer disabled:opacity-50"
               >
-                Disable MFA
+                Disable 2FA
               </button>
             </div>
           )}
