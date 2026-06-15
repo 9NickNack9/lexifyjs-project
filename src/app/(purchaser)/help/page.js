@@ -268,6 +268,21 @@ export default function Help() {
         </h4>
       </div>
       <br />
+      {/* Feedback */}
+      <div className="w-full max-w-6xl p-6 rounded shadow-2xl bg-white text-black">
+        <h2 className="text-2xl font-semibold mb-4">Give Feedback to LEXIFY</h2>
+        <h4 className="text-md">
+          Let us know what you like about LEXIFY and what we could do better.
+          Your feedback helps us improve the platform for everyone.
+        </h4>
+        <Link
+          href="/feedback"
+          className="inline-block mt-4 px-6 py-3 rounded-lg text-white bg-[#19999e] hover:opacity-90 transition"
+        >
+          Give Feedback
+        </Link>
+      </div>
+      <br />
       {/* LEXIFY Legal Terms and Conditions */}
       <div className="w-full max-w-6xl p-6 rounded shadow-2xl bg-white text-black">
         <h2 className="text-2xl font-semibold mb-4">

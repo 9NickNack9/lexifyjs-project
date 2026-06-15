@@ -16,6 +16,7 @@ export default function Providers({ children }) {
     "/contact",
     "/forgot-password",
     "/reset-password",
+    "/referral-link-used",
     "/",
   ];
 

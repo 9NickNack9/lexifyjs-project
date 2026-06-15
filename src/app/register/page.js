@@ -1,12 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import NarrowTooltip from "../components/QuestionmarkTooltip";
 
 export default function Register() {
   const [role, setRole] = useState("");
   const [companyJoinType, setCompanyJoinType] = useState(""); // "new_company" | "existing_company"
+  const [referralToken, setReferralToken] = useState("");
+  const [referralChecked, setReferralChecked] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [showRePassword, setShowRePassword] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
@@ -40,6 +42,35 @@ export default function Register() {
   });
 
   const orgLabel = role === "provider" ? "Law Firm" : "Company";
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const ref = params.get("ref");
+    if (!ref) {
+      setReferralChecked(true);
+      return;
+    }
+
+    fetch(`/api/invite/referral/${encodeURIComponent(ref)}`)
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok || !data.valid) {
+          window.location.href = "/referral-link-used";
+          return;
+        }
+
+        setReferralToken(ref);
+        setCompanyJoinType("new_company");
+        setRole("provider");
+        if (data.firmName) {
+          setFormData((prev) => ({ ...prev, companyName: data.firmName }));
+        }
+        setReferralChecked(true);
+      })
+      .catch(() => {
+        window.location.href = "/referral-link-used";
+      });
+  }, []);
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -78,6 +109,10 @@ export default function Register() {
       countryCode: formData.countryCode,
       phone: String(formData.phone).trim(),
     };
+
+    if (referralToken) {
+      payload.referralToken = referralToken;
+    }
 
     if (companyJoinType === "new_company") {
       Object.assign(payload, {
@@ -120,6 +155,9 @@ export default function Register() {
 
   return (
     <div className="flex flex-col items-center min-h-screen p-4">
+      {!referralChecked ? (
+        <p className="text-white mb-4">Loading registration…</p>
+      ) : null}
       <img src="/lexify_wide.png" alt="Business Logo" className="mb-4 w-96" />
       <h1 className="text-3xl font-bold mb-4">Create a LEXIFY Account</h1>
       <div className="w-full max-w-4xl p-3 rounded shadow-2xl bg-white text-black text-center">

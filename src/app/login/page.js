@@ -1,12 +1,11 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { signIn, getSession, signOut } from "next-auth/react";
 
 export default function Login() {
   const router = useRouter();
-  const bootstrappedRef = useRef(false);
 
   const [showPassword, setShowPassword] = useState(false);
   const [credentials, setCredentials] = useState({
@@ -21,21 +20,22 @@ export default function Login() {
   const [rememberDevice, setRememberDevice] = useState(true);
 
   useEffect(() => {
-    if (bootstrappedRef.current) return;
-    bootstrappedRef.current = true;
-
     let cancelled = false;
 
-    (async () => {
+    const prepareLoginPage = async () => {
       try {
-        // Kill any stale session when user lands on /login
-        await signOut({ redirect: false });
+        await Promise.race([
+          signOut({ redirect: false }),
+          new Promise((resolve) => setTimeout(resolve, 5000)),
+        ]);
       } catch {
-        // ignore
+        // ignore stale session cleanup failures
       } finally {
         if (!cancelled) setPageReady(true);
       }
-    })();
+    };
+
+    prepareLoginPage();
 
     return () => {
       cancelled = true;

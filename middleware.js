@@ -10,6 +10,7 @@ const PUBLIC_PATHS = new Set([
   "/feedback",
   "/register",
   "/register-screening",
+  "/referral-link-used",
   "/favicon.ico",
 ]);
 

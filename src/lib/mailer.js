@@ -412,6 +412,78 @@ export async function notifyPurchaserOnHoldExpirySoon({ to, requestTitle }) {
   });
 }
 
+// Notify law firm contact persons of an invite from a purchaser
+export async function notifyProviderInvites({
+  firmName,
+  personalMessage,
+  contacts,
+  referralLink,
+  inviterCompanyName,
+  inviterEmail,
+  inviterFirstName,
+  inviterLastName,
+  inviterCompanyRole,
+}) {
+  const trimmedMessage = (personalMessage ?? "").toString().trim();
+  const hasPersonalMessage = Boolean(trimmedMessage);
+  const templateId = hasPersonalMessage
+    ? "d-daddd8b400b347b1a47432a13168c8ca"
+    : "d-d72a9b0daaa343c09971bdabc13391c6";
+
+  const recipientEmails = Array.from(
+    new Set(
+      (contacts || [])
+        .map((contact) => (contact?.email ?? "").toString().trim())
+        .filter(Boolean),
+    ),
+  );
+
+  if (recipientEmails.length === 0) {
+    throw new Error("At least one recipient email is required");
+  }
+
+  const contactPersons = (contacts || []).map((contact) => ({
+    contactFirstName: (contact?.firstName ?? "").toString().trim(),
+    contactLastName: (contact?.lastName ?? "").toString().trim(),
+    contactEmail: (contact?.email ?? "").toString().trim(),
+  }));
+
+  const contactNames = contactPersons
+    .map((contact) =>
+      [contact.contactFirstName, contact.contactLastName]
+        .filter(Boolean)
+        .join(" ")
+        .trim(),
+    )
+    .filter(Boolean)
+    .join(", ");
+
+  const dynamicTemplateData = {
+    firmName,
+    contactPersons,
+    contactNames,
+    contactFirstName: contactPersons[0]?.contactFirstName || "",
+    contactLastName: contactPersons[0]?.contactLastName || "",
+    referralLink: referralLink || "",
+    inviterCompanyName: inviterCompanyName || "",
+    inviterEmail: inviterEmail || "",
+    inviterFirstName: inviterFirstName || "",
+    inviterLastName: inviterLastName || "",
+    inviterCompanyRole: inviterCompanyRole || "",
+  };
+
+  if (hasPersonalMessage) {
+    dynamicTemplateData.personalMessage = trimmedMessage;
+  }
+
+  await sendDynamicTemplateEmail({
+    to: recipientEmails,
+    bcc: ["support@lexify.online"],
+    templateId,
+    dynamicTemplateData,
+  });
+}
+
 // Notify support of new demo request
 export async function notifySupportDemoRequest({
   name,

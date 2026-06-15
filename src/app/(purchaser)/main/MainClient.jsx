@@ -25,6 +25,12 @@ export default function MainClient() {
       link: "/provider_rating",
     },
     {
+      title: "Invite a Law Firm",
+      description:
+        "Invite a law firm you work with to join LEXIFY and receive your requests.",
+      link: "/invite",
+    },
+    {
       title: "My Account",
       description:
         "Your account settings and contact details can be found and updated here. Here you can also manage which legal service providers can view your LEXIFY Requests and make offers to you.",
@@ -33,14 +39,8 @@ export default function MainClient() {
     {
       title: "Help & Resources",
       description:
-        "Here you can book a guided LEXIFY Request preparation session with a LEXIFY representative, watch video tutorials on using the platform, and find our support contact details.",
+        "Here you can book a guided LEXIFY Request preparation session with a LEXIFY representative, watch video tutorials on using the platform, find our support contact details, and share your feedback with us.",
       link: "/help",
-    },
-    {
-      title: "Give Feedback to LEXIFY",
-      description:
-        "Let us know what you like about LEXIFY and what we could do better.",
-      link: "/feedback",
     },
   ];
 

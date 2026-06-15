@@ -43,7 +43,7 @@ model Company {
   providerIndividualRating    Json     @default("[]")
   providerPracticalRatings    Json     @default("[]")
 
-  invoiceFee                   Decimal @default("0") @db.Decimal
+  invoiceFee                   Decimal @default("7.5") @db.Decimal
   companyInvoiceContactPersons Json
 
   members UserAccount[]
@@ -52,6 +52,7 @@ model Company {
   offers          Offer[]    @relation("CompanyOffers")
   contractsClient Contract[] @relation("ClientCompanyContracts")
   contractsProv   Contract[] @relation("ProviderCompanyContracts")
+  referralInvites ProviderInvite[] @relation("ReferralRegisteredCompanies")
 }
 
 model UserAccount {
@@ -94,6 +95,7 @@ model UserAccount {
   clientContracts   Contract[]      @relation("UserAccountClientContracts")
   providerContracts Contract[]      @relation("UserAccountProviderContracts")
   trustedDevices    TrustedDevice[]
+  sentProviderInvites ProviderInvite[] @relation("SentProviderInvites")
 
   @@index([companyId])
 }
@@ -313,4 +315,23 @@ model AuthAttempt {
 
   @@index([username, createdAt])
   @@index([ip, createdAt])
+}
+
+model ProviderInvite {
+  inviteId            BigInt    @id @default(autoincrement()) @db.BigInt
+  referralToken       String    @unique
+  invitedByUserId     BigInt    @db.BigInt
+  firmName            String
+  contactPersons      Json
+  personalMessage     String    @default("")
+  status              String    @default("PENDING")
+  registeredCompanyId BigInt?   @db.BigInt
+  usedAt              DateTime?
+  createdAt           DateTime  @default(now())
+
+  invitedByUser     UserAccount @relation("SentProviderInvites", fields: [invitedByUserId], references: [userPkId], onDelete: Cascade)
+  registeredCompany Company?    @relation("ReferralRegisteredCompanies", fields: [registeredCompanyId], references: [companyPkId], onDelete: SetNull)
+
+  @@index([invitedByUserId])
+  @@index([status])
 }

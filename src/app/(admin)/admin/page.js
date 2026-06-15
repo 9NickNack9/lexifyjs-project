@@ -370,6 +370,43 @@ export default function AdminPage() {
     }
   };
 
+  // --- INVITES state ---
+  const [invites, setInvites] = useState([]);
+  const [inviteSearchInput, setInviteSearchInput] = useState("");
+  const [inviteSearch, setInviteSearch] = useState("");
+  const [inviteSkip, setInviteSkip] = useState(0);
+  const inviteTake = 5;
+  const [inviteHasMore, setInviteHasMore] = useState(true);
+  const [inviteLoading, setInviteLoading] = useState(false);
+  const [inviteError, setInviteError] = useState("");
+
+  const fetchInvites = async (reset = false) => {
+    if (inviteLoading) return;
+    setInviteLoading(true);
+    setInviteError("");
+
+    const nextSkip = reset ? 0 : inviteSkip;
+
+    try {
+      const res = await fetch(
+        `/api/admin/invites?search=${encodeURIComponent(
+          inviteSearch,
+        )}&skip=${nextSkip}&take=${inviteTake}`,
+        { cache: "no-store" },
+      );
+      if (!res.ok) throw new Error("Failed to load invites");
+      const data = await res.json();
+      const nextList = reset ? data.invites : [...invites, ...data.invites];
+      setInvites(nextList);
+      setInviteSkip(nextSkip + data.invites.length);
+      setInviteHasMore(nextList.length < data.total);
+    } catch (e) {
+      setInviteError(e.message || "Error loading invites");
+    } finally {
+      setInviteLoading(false);
+    }
+  };
+
   const showContractDetails = async (contractId) => {
     const res = await fetch(`/api/admin/contracts/${contractId}`, {
       cache: "no-store",
@@ -466,6 +503,11 @@ export default function AdminPage() {
     setContractHasMore(true);
     fetchContracts(true);
 
+    setInviteSkip(0);
+    setInvites([]);
+    setInviteHasMore(true);
+    fetchInvites(true);
+
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [search, companySearch, accountSearch, session, status]);
 
@@ -489,6 +531,12 @@ export default function AdminPage() {
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [contractSearch]);
+
+  useEffect(() => {
+    const t = setTimeout(() => fetchInvites(true), 300);
+    return () => clearTimeout(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [inviteSearch]);
 
   function formatTimeUntil(iso) {
     if (!iso) return "Expired";
@@ -1995,333 +2043,117 @@ export default function AdminPage() {
           </div>
         </div>
       )}
+
+      {/* --- All Invites --- */}
       <br />
-      <br />
-      <div className="flex flex-col gap-6">
-        <section className="rounded bg-black/20 p-4">
-          <h2 className="text-xl font-bold mb-3 text-white">
-            Registered Users
-          </h2>
+      <section className="rounded bg-black/20 p-4">
+        <h2 className="text-xl font-bold mb-2">All Invites</h2>
+        <div className="mb-3 flex items-center gap-2">
+          <input
+            type="text"
+            value={inviteSearchInput}
+            onChange={(e) => setInviteSearchInput(e.target.value)}
+            placeholder="Search by inviter, invited firm, or status…"
+            className="border rounded p-2 w-full"
+          />
+          <button
+            className="bg-[#11999e] text-white px-3 py-2 rounded border cursor-pointer"
+            onClick={() => setInviteSearch(inviteSearchInput.trim())}
+          >
+            Search
+          </button>
+          <button
+            className="bg-red-500 text-white px-3 py-2 rounded cursor-pointer"
+            onClick={() => {
+              setInviteSearchInput("");
+              setInviteSearch("");
+            }}
+          >
+            Clear
+          </button>
+        </div>
 
-          <div className="flex items-center gap-2 mb-4">
-            <input
-              type="text"
-              placeholder="Search by company name"
-              className="border p-2 w-full"
-              value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              onKeyDown={onKeyDown}
-            />
-            <button
-              className="bg-[#11999e] text-white px-3 py-2 rounded border cursor-pointer"
-              onClick={onSearch}
-            >
-              Search
-            </button>
-            <button
-              className="bg-red-500 text-white px-3 py-2 rounded cursor-pointer"
-              onClick={() => {
-                setSearchInput("");
-                setSearch(""); // triggers role table reset+fetch via useEffect
-              }}
-            >
-              Clear
-            </button>
-          </div>
-
-          {/* --- Admin Users --- */}
-          <h3 className="text-lg font-semibold mt-2 mb-2 text-white">
-            Admin Users
-          </h3>
-          <div className="max-h-[28vh] overflow-y-auto border rounded bg-white text-black">
-            <table className="w-full border-collapse">
-              <thead className="bg-gray-200 sticky top-0">
+        <div className="overflow-y-auto max-h-[60vh] border rounded bg-white text-black">
+          <table className="w-full border-collapse">
+            <thead className="bg-gray-200">
+              <tr>
+                <th className="border p-2">Inviter Company</th>
+                <th className="border p-2">Inviter Name</th>
+                <th className="border p-2">Invited Firm</th>
+                <th className="border p-2">Recipients</th>
+                <th className="border p-2">Date Sent</th>
+                <th className="border p-2">Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              {inviteLoading && invites.length === 0 && (
                 <tr>
-                  <th className="border p-2">User ID</th>
-                  <th className="border p-2">Role</th>
-                  <th className="border p-2">Status</th>
-                  <th className="border p-2">Company</th>
-                  <th className="border p-2">Actions</th>
+                  <td colSpan={6} className="text-center p-4">
+                    Loading…
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {userTables.ADMIN.items.map((u) => (
-                  <tr key={u.userId} className="text-center">
-                    <td
-                      className="border p-2 text-blue-600 cursor-pointer underline"
-                      onClick={() => showUserDetails(u.userId)}
-                    >
-                      {u.userId}
-                    </td>
-                    <td className="border p-2">{u.role}</td>
-                    <td className="border p-2">
-                      <select
-                        className="border rounded"
-                        value={u.registerStatus}
-                        onChange={(e) =>
-                          updateRegisterStatus(u.userId, e.target.value, u.role)
-                        }
-                      >
-                        <option value="pending">Pending</option>
-                        <option value="confirmed">Confirmed</option>
-                      </select>
-                    </td>
-                    <td className="border p-2">{u.companyName}</td>
-                    <td className="border p-2">
-                      <button
-                        onClick={() => deleteUser(u.userId, u.role)}
-                        className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-
-                {!userTables.ADMIN.loading &&
-                  userTables.ADMIN.items.length === 0 && (
-                    <tr>
-                      <td colSpan={5} className="text-center p-4 text-gray-500">
-                        No admin users found.
-                      </td>
-                    </tr>
-                  )}
-
-                {userTables.ADMIN.loading && (
-                  <tr>
-                    <td colSpan={5} className="text-center p-4">
-                      Loading…
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {userTables.ADMIN.hasMore && !userTables.ADMIN.loading && (
-            <button
-              onClick={() => fetchUsersByRole("ADMIN", false)}
-              className="w-full bg-gray-100 p-2 mt-2 rounded text-black"
-            >
-              Load more
-            </button>
-          )}
-
-          {/* --- Purchasers --- */}
-          <h3 className="text-lg font-semibold mt-6 mb-2 text-white">
-            Registered Purchasers
-          </h3>
-          <div className="max-h-[28vh] overflow-y-auto border rounded bg-white text-black">
-            <table className="w-full border-collapse">
-              <thead className="bg-gray-200 sticky top-0">
+              )}
+              {!inviteLoading && inviteError && (
                 <tr>
-                  <th className="border p-2">User ID</th>
-                  <th className="border p-2">Role</th>
-                  <th className="border p-2">Status</th>
-                  <th className="border p-2">Company</th>
-                  <th className="border p-2">Requests</th>
-                  <th className="border p-2">Contracts</th>
-                  <th className="border p-2">Actions</th>
+                  <td colSpan={6} className="text-center p-4 text-red-600">
+                    {inviteError}
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {userTables.PURCHASER.items.map((u) => (
-                  <tr key={u.userId} className="text-center">
-                    <td
-                      className="border p-2 text-blue-600 cursor-pointer underline"
-                      onClick={() => showUserDetails(u.userId)}
-                    >
-                      {u.userId}
-                    </td>
-                    <td className="border p-2">{u.role}</td>
-                    <td className="border p-2">
-                      <select
-                        className="border rounded"
-                        value={u.registerStatus}
-                        onChange={(e) =>
-                          updateRegisterStatus(u.userId, e.target.value, u.role)
-                        }
-                      >
-                        <option value="pending">Pending</option>
-                        <option value="confirmed">Confirmed</option>
-                      </select>
-                    </td>
-                    <td className="border p-2">{u.companyName}</td>
-                    <td className="border p-2">{u.requestsCount}</td>
-                    <td className="border p-2">{u.contractsCount}</td>
-                    <td className="border p-2">
-                      <button
-                        onClick={() => deleteUser(u.userId)}
-                        className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-
-                {!userTables.PURCHASER.loading &&
-                  userTables.PURCHASER.items.length === 0 && (
-                    <tr>
-                      <td colSpan={7} className="text-center p-4 text-gray-500">
-                        No purchasers found.
-                      </td>
-                    </tr>
-                  )}
-
-                {userTables.PURCHASER.loading && (
-                  <tr>
-                    <td colSpan={7} className="text-center p-4">
-                      Loading…
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {userTables.PURCHASER.hasMore && !userTables.PURCHASER.loading && (
-            <button
-              onClick={() => fetchUsersByRole("PURCHASER", false)}
-              className="w-full bg-gray-100 p-2 mt-2 rounded text-black"
-            >
-              Load more
-            </button>
-          )}
-
-          {/* --- Providers --- */}
-          <h3 className="text-lg font-semibold mt-6 mb-2 text-white">
-            Registered Providers
-          </h3>
-          <div className="max-h-[28vh] overflow-y-auto border rounded bg-white text-black">
-            <table className="w-full border-collapse">
-              <thead className="bg-gray-200 sticky top-0">
+              )}
+              {!inviteLoading && !inviteError && invites.length === 0 && (
                 <tr>
-                  <th className="border p-2">User ID</th>
-                  <th className="border p-2">Role</th>
-                  <th className="border p-2">Status</th>
-                  <th className="border p-2">Company</th>
-                  <th className="border p-2">Total Rating</th>
-                  <th className="border p-2">Invoice Fee</th>
-                  <th className="border p-2">Company Age</th>
-                  <th className="border p-2">Provider Type</th>
-                  <th className="border p-2">Offers</th>
-                  <th className="border p-2">Contracts</th>
-                  <th className="border p-2">Actions</th>
+                  <td colSpan={6} className="text-center p-4 text-gray-500">
+                    No invites found.
+                  </td>
                 </tr>
-              </thead>
-              <tbody>
-                {userTables.PROVIDER.items.map((u) => (
-                  <tr key={u.userId} className="text-center">
-                    <td
-                      className="border p-2 text-blue-600 cursor-pointer underline"
-                      onClick={() => showUserDetails(u.userId)}
+              )}
+              {invites.map((invite) => (
+                <tr key={invite.id} className="text-center">
+                  <td className="border p-2">
+                    {invite.inviterCompanyName || "—"}
+                  </td>
+                  <td className="border p-2">{invite.inviterName || "—"}</td>
+                  <td className="border p-2">
+                    {invite.invitedCompanyName || "—"}
+                  </td>
+                  <td className="border p-2">{invite.recipients || "—"}</td>
+                  <td className="border p-2">{invite.dateSent}</td>
+                  <td className="border p-2">
+                    <span
+                      className={`inline-flex rounded-full px-3 py-1 text-sm font-semibold ${
+                        invite.status === "Joined"
+                          ? "text-green-700 bg-green-100"
+                          : "text-orange-700 bg-orange-100"
+                      }`}
                     >
-                      {u.userId}
-                    </td>
-                    <td className="border p-2">{u.role}</td>
-                    <td className="border p-2">
-                      <select
-                        className="border rounded"
-                        value={u.registerStatus}
-                        onChange={(e) =>
-                          updateRegisterStatus(u.userId, e.target.value, u.role)
-                        }
-                      >
-                        <option value="pending">Pending</option>
-                        <option value="confirmed">Confirmed</option>
-                      </select>
-                    </td>
-                    <td className="border p-2">{u.companyName}</td>
-                    <td className="border p-2">
-                      {u.providerTotalRating ?? "N/A"}
-                    </td>
-                    <td className="border p-2">
-                      <input
-                        type="number"
-                        defaultValue={u.invoiceFee}
-                        onBlur={(e) =>
-                          updateInvoiceFee(u.userId, e.target.value, u.role)
-                        }
-                        className="w-20 border p-1 text-center"
-                      />
-                    </td>
-                    <td className="border p-2">
-                      <input
-                        type="number"
-                        min={0}
-                        defaultValue={u.companyAge ?? 0}
-                        onBlur={(e) =>
-                          updateCompanyAge(u.userId, e.target.value, u.role)
-                        }
-                        className="w-24 border p-1 text-center"
-                      />
-                    </td>
-                    <td className="border p-2">
-                      <select
-                        className="border rounded text-center"
-                        value={
-                          u.providerType && u.providerType.trim()
-                            ? u.providerType
-                            : "N/A"
-                        }
-                        onChange={(e) =>
-                          updateProviderType(u.userId, e.target.value, u.role)
-                        }
-                      >
-                        <option value="N/A">N/A</option>
-                        <option value="Attorneys-at-law">
-                          Attorneys-at-law
-                        </option>
-                        <option value="Law Firm">Law Firm</option>
-                      </select>
-                    </td>
-                    <td className="border p-2">{u.offersCount}</td>
-                    <td className="border p-2">{u.contractsCount}</td>
-                    <td className="border p-2">
-                      <button
-                        onClick={() => deleteUser(u.userId)}
-                        className="bg-red-500 text-white px-2 py-1 rounded cursor-pointer"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-
-                {!userTables.PROVIDER.loading &&
-                  userTables.PROVIDER.items.length === 0 && (
-                    <tr>
-                      <td
-                        colSpan={11}
-                        className="text-center p-4 text-gray-500"
-                      >
-                        No providers found.
-                      </td>
-                    </tr>
-                  )}
-
-                {userTables.PROVIDER.loading && (
-                  <tr>
-                    <td colSpan={11} className="text-center p-4">
-                      Loading…
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-
-          {userTables.PROVIDER.hasMore && !userTables.PROVIDER.loading && (
-            <button
-              onClick={() => fetchUsersByRole("PROVIDER", false)}
-              className="w-full bg-gray-100 p-2 mt-2 rounded text-black"
-            >
-              Load more
-            </button>
-          )}
-        </section>
-      </div>
+                      {invite.status}
+                    </span>
+                  </td>
+                </tr>
+              ))}
+              {inviteHasMore && !inviteLoading && invites.length > 0 && (
+                <tr>
+                  <td colSpan={6} className="p-2">
+                    <button
+                      onClick={() => fetchInvites(false)}
+                      className="w-full bg-gray-100 p-2 text-black cursor-pointer"
+                    >
+                      Load more
+                    </button>
+                  </td>
+                </tr>
+              )}
+              {inviteLoading && invites.length > 0 && (
+                <tr>
+                  <td colSpan={6} className="text-center p-3 text-gray-500">
+                    Loading more…
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
     </div>
   );
 }

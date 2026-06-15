@@ -61,6 +61,7 @@ const BaseSchema = z.object({
   contactPosition: z.string().min(1, "Position is required"),
   countryCode: z.string().min(1, "Country code is required"),
   phone: z.string().min(3, "Phone is required"),
+  referralToken: z.string().optional(),
 });
 
 /** Normalization + conditional validation */
@@ -203,6 +204,7 @@ const RegisterSchema = BaseSchema.transform((raw) => {
     email: s.contactEmail,
     position: s.contactPosition,
     telephone,
+    referralToken: (s.referralToken || "").trim(),
   };
 });
 
@@ -223,6 +225,30 @@ export async function POST(req) {
       );
     }
     const data = parsed.data;
+
+    let invite = null;
+    if (data.referralToken) {
+      invite = await prisma.providerInvite.findUnique({
+        where: { referralToken: data.referralToken },
+      });
+
+      if (!invite || invite.status !== "PENDING") {
+        return NextResponse.json(
+          { error: "Invalid or already used referral link." },
+          { status: 400 },
+        );
+      }
+
+      if (data.role !== "provider" || data.companyJoinType !== "new_company") {
+        return NextResponse.json(
+          {
+            error:
+              "Referral invites are only valid when registering a new law firm on LEXIFY.",
+          },
+          { status: 400 },
+        );
+      }
+    }
 
     // Uniqueness checks on UserAccount
     const [usernameTaken, emailTaken] = await Promise.all([
@@ -303,6 +329,7 @@ export async function POST(req) {
             companyCity: data.companyCity,
             companyCountry: data.companyCountry,
             companyWebsite: data.companyWebsite,
+            invoiceFee: invite ? 0 : undefined,
 
             // provider-only fields (safe for purchaser too)
             companyProfessionals:
@@ -353,6 +380,17 @@ export async function POST(req) {
         },
         select: { userPkId: true, companyId: true },
       });
+
+      if (invite) {
+        await tx.providerInvite.update({
+          where: { inviteId: invite.inviteId },
+          data: {
+            status: "JOINED",
+            usedAt: new Date(),
+            registeredCompanyId: company.companyPkId,
+          },
+        });
+      }
 
       return {
         companyPkId: company.companyPkId,

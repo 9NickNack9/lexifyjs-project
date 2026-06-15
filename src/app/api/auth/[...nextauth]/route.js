@@ -93,6 +93,7 @@ export const authOptions = {
             username: true,
             firstName: true,
             lastName: true,
+            position: true,
             passwordHash: true,
             role: true, // "ADMIN" | "PROVIDER" | "PURCHASER"
             companyId: true,
@@ -210,6 +211,7 @@ export const authOptions = {
           name: user.username,
           firstName: user.firstName ?? null,
           lastName: user.lastName ?? null,
+          position: user.position ?? null,
           role: user.role,
           registerStatus,
           companyId: String(user.companyId),
@@ -229,6 +231,7 @@ export const authOptions = {
         token.companyName = user.companyName ?? null;
         token.firstName = user.firstName ?? null;
         token.lastName = user.lastName ?? null;
+        token.position = user.position ?? null;
       }
 
       // Optional: keep token fresh if company registerStatus can change server-side
@@ -243,6 +246,7 @@ export const authOptions = {
                 registerStatus: true,
                 firstName: true,
                 lastName: true,
+                position: true,
                 company: {
                   select: { companyName: true },
                 },
@@ -261,6 +265,7 @@ export const authOptions = {
               token.companyName = row.company?.companyName ?? token.companyName;
               token.firstName = row.firstName ?? token.firstName;
               token.lastName = row.lastName ?? token.lastName;
+              token.position = row.position ?? token.position;
             }
           }
         } catch (error) {
@@ -279,6 +284,7 @@ export const authOptions = {
       session.companyName = token.companyName ?? null;
       session.firstName = token.firstName ?? null;
       session.lastName = token.lastName ?? null;
+      session.position = token.position ?? null;
       return session;
     },
 
