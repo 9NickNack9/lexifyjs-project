@@ -3,7 +3,7 @@ import "./globals.css";
 import { Poppins } from "next/font/google";
 import Script from "next/script";
 import Providers from "./providers";
-import FloatingChatWrapper from "@/app/components/FloatingChatWrapper";
+//import FloatingChatWrapper from "@/app/components/FloatingChatWrapper";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -79,7 +79,7 @@ export default function RootLayout({ children }) {
       <body className={poppins.className}>
         <Providers>
           {children}
-          <FloatingChatWrapper />
+          {/*<FloatingChatWrapper />*/}
         </Providers>
       </body>
     </html>
