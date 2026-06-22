@@ -3,6 +3,7 @@ import "./globals.css";
 import { Poppins } from "next/font/google";
 import Script from "next/script";
 import Providers from "./providers";
+import FloatingChatWrapper from "@/app/components/FloatingChatWrapper";
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -25,7 +26,7 @@ export const metadata = {
     siteName: "LEXIFY",
     images: [
       {
-        url: "https://www.lexify.online/lexify.png",
+        url: "https://www.lexify.online/lexify_og_image.png",
         width: 1200,
         height: 630,
         alt: "LEXIFY",
@@ -76,7 +77,10 @@ export default function RootLayout({ children }) {
         </Script>
       </head>
       <body className={poppins.className}>
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+          <FloatingChatWrapper />
+        </Providers>
       </body>
     </html>
   );
