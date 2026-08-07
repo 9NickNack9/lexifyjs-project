@@ -297,7 +297,7 @@ export default function Help() {
           conditions may be amended from time to time:
         </h4>
         <br />
-        <ul className="max-w-md space-y-1 text-black list-disc list-inside dark:text-black">
+        <ul className="max-w-full space-y-1 text-black list-disc list-inside dark:text-black">
           <li>
             <Link
               href="/docs/lexify-tos.pdf"
@@ -305,7 +305,17 @@ export default function Help() {
               rel="noopener"
               className="text-blue-600 dark:text-blue-500 hover:underline"
             >
-              LEXIFY Terms of Service
+              LEXIFY Terms of Service (valid until 8 September 2026)
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/docs/lexify-tos-september-2026.pdf"
+              target="_blank"
+              rel="noopener"
+              className="text-blue-600 dark:text-blue-500 hover:underline"
+            >
+              LEXIFY Terms of Service (valid from 8 September 2026)
             </Link>
           </li>
           <li>
@@ -315,7 +325,19 @@ export default function Help() {
               rel="noopener"
               className="text-blue-600 dark:text-blue-500 hover:underline"
             >
-              Privacy Statement for LEXIFY Platform
+              Privacy Statement for LEXIFY Platform (valid until 8 September
+              2026)
+            </Link>
+          </li>
+          <li>
+            <Link
+              href="/docs/lexify-privacy-statement-september-2026.pdf"
+              target="_blank"
+              rel="noopener"
+              className="text-blue-600 dark:text-blue-500 hover:underline"
+            >
+              Privacy Statement for LEXIFY Platform (valid from 8 September
+              2026)
             </Link>
           </li>
           <li>
