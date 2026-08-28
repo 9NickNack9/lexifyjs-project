@@ -1,7 +1,10 @@
 "use client";
 import { useEffect, useState } from "react";
+// Temporarily disabled so form changes can ship without Lexi wiring.
+// import useLexiDraftPrefill from "@/hooks/useLexiDraftPrefill";
 import { useRouter, useSearchParams } from "next/navigation";
 import QuestionMarkTooltip from "../../../components/QuestionmarkTooltip";
+import AutoGrowTextarea from "../../../components/AutoGrowTextarea";
 
 // ==== component start ====
 export default function EmploymentNegotiation() {
@@ -33,6 +36,7 @@ export default function EmploymentNegotiation() {
   };
 
   const [formData, setFormData] = useState(initialFormState);
+  // useLexiDraftPrefill(setFormData);
   const [showPreview, setShowPreview] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
@@ -106,6 +110,49 @@ export default function EmploymentNegotiation() {
 
     loadDraftFromUrl();
   }, [searchParams]);
+
+  // Temporarily disabled so form changes can ship without Lexi wiring.
+  // useEffect(() => {
+  //   window.__LEXIFY_REQUEST_CONTEXT__ = {
+  //     requestType: "Employment Negotiation",
+  //
+  //     legalArea: [
+  //       ...(formData.areaboxes || []).filter((x) => x !== "Other"),
+  //       formData.otherTopic || null,
+  //     ].filter(Boolean),
+  //
+  //     description: formData.description,
+  //
+  //     additionalBackgroundInfo: formData.background,
+  //
+  //     providerRequirements: {
+  //       providerType: formData.offerer,
+  //       providerCountry: formData.providerCountry,
+  //       minimumLawyerCount: formData.lawyerCount,
+  //       minimumFirmAge: formData.firmAge,
+  //       minimumRating: formData.firmRating,
+  //       requiredReferences: formData.providerReferences,
+  //     },
+  //
+  //     commercialTerms: {
+  //       currency: formData.currency,
+  //       maximumPrice: formData.maxPrice,
+  //       retainerFee: formData.retainerFee,
+  //       paymentTerms: formData.paymentTerms,
+  //     },
+  //
+  //     languages: [
+  //       ...(formData.checkboxes || []).filter((l) => l !== "Other:"),
+  //       formData.otherLang || null,
+  //     ].filter(Boolean),
+  //
+  //     offersDeadline: formData.date,
+  //
+  //     uploadedBackgroundFiles: formData.backgroundFiles?.map((f) => f.name),
+  //
+  //     uploadedSupplierFiles: formData.supplierFiles?.map((f) => f.name),
+  //   };
+  // }, [formData]);
 
   // files
   const handleBackgroundFileChange = (e) => {
@@ -523,22 +570,15 @@ export default function EmploymentNegotiation() {
           <hr />
           <br />
           <h4 className="text-md font-medium mb-1 font-semibold">
-            Please provide the name and position (in your company) of the
-            employee with whom you are negotiating
+            Please provide the position (in your company) of the employee with
+            whom you are negotiating
           </h4>
-          <textarea
+          <AutoGrowTextarea
             name="description"
             className="w-full border p-2"
             onChange={handleChange}
             value={formData.description}
-          ></textarea>
-          <p className="text-xs">
-            <strong>NOTE:</strong>{" "}
-            <em>
-              This information will be disclosed only to the legal service
-              provider submitting the winning offer.
-            </em>
-          </p>
+          ></AutoGrowTextarea>
           <br />
           <hr />
           <br />
@@ -549,12 +589,12 @@ export default function EmploymentNegotiation() {
             information by clicking “Upload Background Info”
             <QuestionMarkTooltip tooltipText="Please do not include any personal data in the description. Any additional background information provided will be visible to all legal service providers qualified to submit an offer in response to your LEXIFY Request." />
           </h4>
-          <textarea
+          <AutoGrowTextarea
             name="background"
             className="w-full border p-2"
             onChange={handleChange}
             value={formData.background}
-          ></textarea>
+          ></AutoGrowTextarea>
           <div className="mt-2">
             <label className="inline-block px-4 py-2 bg-[#c8c8cf] text-black border border-black rounded cursor-pointer">
               Upload Background Info
@@ -1077,6 +1117,11 @@ export default function EmploymentNegotiation() {
                   ) : (
                     "-"
                   )}
+                </Section>
+
+                {/* Description */}
+                <Section title="Title/Position of the Employee with Whom We Are Negotiating">
+                  {formData.description || "-"}
                 </Section>
 
                 {/* Contract Price and Currency */}
