@@ -3,8 +3,48 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
-import { Pencil, Save } from "lucide-react";
+import { Pencil, Save, Building2, User, Lock, Users, Shield } from "lucide-react";
 import NarrowTooltip from "../../components/NarrowTooltip";
+import { AppPage } from "@/app/components/HubPage";
+import {
+  AccountActionButton,
+  AccountHeading,
+  AccountNestedCard,
+  OutlinedField,
+} from "@/app/components/AccountContactUi";
+
+function PrefSwitch({ id, checked, onChange, children }) {
+  return (
+    <label
+      htmlFor={id}
+      className="flex cursor-pointer items-center gap-3 touch-manipulation select-none"
+    >
+      <input
+        id={id}
+        type="checkbox"
+        role="switch"
+        className="peer sr-only"
+        checked={checked}
+        onChange={onChange}
+      />
+      <span
+        aria-hidden="true"
+        className={`relative inline-flex h-6 w-11 shrink-0 rounded-full shadow-[inset_0_1px_3px_rgba(0,0,0,0.35)] transition-colors duration-200 ease-out peer-focus-visible:ring-2 peer-focus-visible:ring-[#11999e] peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-white ${
+          checked ? "bg-green-600" : "bg-gray-700"
+        }`}
+      >
+        <span
+          className={`pointer-events-none absolute top-[2px] left-[2px] h-5 w-5 rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.28),0_0_0_1px_rgba(0,0,0,0.04)] transition-transform duration-200 ease-out ${
+            checked ? "translate-x-5" : "translate-x-0"
+          }`}
+        />
+      </span>
+      <span className="min-w-0 flex-1 text-sm leading-6 text-black">
+        {children}
+      </span>
+    </label>
+  );
+}
 
 export default function ProviderAccount() {
   const router = useRouter();
@@ -667,305 +707,296 @@ export default function ProviderAccount() {
     }
   };
 
-  if (loading) return <div className="p-6">Loading your account…</div>;
+  if (loading)
+    return (
+      <AppPage eyebrow="Account" title="My LEXIFY Account">
+        <div className="rounded-2xl bg-white px-6 py-12 text-center text-sm text-gray-500 shadow-[0_16px_44px_rgba(17,153,158,0.22)] ring-1 ring-black/10">
+          Loading your account…
+        </div>
+      </AppPage>
+    );
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-6">
-      <h1 className="text-3xl font-bold mb-6">My LEXIFY Account</h1>
-
+    <AppPage eyebrow="Account" title="My LEXIFY Account">
       {/* My Contact Information */}
-      <div className="w-full max-w-6xl p-6 rounded shadow-2xl bg-white text-black">
-        <h2 className="text-2xl font-semibold mb-4">My Contact Information</h2>
+      <div className="w-full rounded-2xl bg-white p-6 text-black shadow-[0_16px_44px_rgba(17,153,158,0.22)] ring-1 ring-black/10">
+        <AccountHeading icon={Building2} title="My Contact Information" />
 
-        {/* Company information */}
-        <div className="grid grid-cols-2 gap-4">
-          <h4 className="text-md font-semibold col-span-2">My Law Firm</h4>
-
-          <div className="w-full text-sm border p-2">
-            Law Firm Name: {me?.company?.companyName || me?.companyName || "-"}
-          </div>
-          <div className="w-full text-sm border p-2">
-            Business ID (in country of domicile):{" "}
-            {me?.company?.businessId || me?.companyId || "-"}
-          </div>
-          <div className="w-full text-sm border p-2">
-            Street Address:{" "}
-            {me?.company?.companyAddress || me?.companyAddress || "-"}
-          </div>
-          <div className="w-full text-sm border p-2">
-            Postal Code:{" "}
-            {me?.company?.companyPostalCode || me?.companyPostalCode || "-"}
-          </div>
-          <div className="w-full text-sm border p-2">
-            City: {me?.company?.companyCity || me?.companyCity || "-"}
-          </div>
-          <div className="w-full text-sm border p-2">
-            Country of Domicile:{" "}
-            {me?.company?.companyCountry || me?.companyCountry || "-"}
-          </div>
-        </div>
-
-        <div className="mt-4">
-          <button
-            type="button"
-            onClick={openMembersModal}
-            className="bg-[#11999e] text-white px-4 py-2 rounded cursor-pointer"
-          >
-            View All Users
-          </button>
-        </div>
-
-        <br />
-
-        {/* UserAccount information */}
-        <div className="grid grid-cols-2 gap-4">
-          <h4 className="text-md font-semibold col-span-2">
-            My Account Information
-          </h4>
-
-          <div className="w-full text-sm border p-2 flex items-center gap-2">
-            <span className="whitespace-nowrap">First Name:</span>
-            {uaEditing ? (
-              <input
-                className="border p-1 flex-1"
-                value={uaDraft.firstName}
-                onChange={(e) =>
-                  setUaDraft((d) => ({ ...d, firstName: e.target.value }))
-                }
+        <div className="space-y-5">
+          <AccountNestedCard>
+            <AccountHeading as="h3" title="My Law Firm" />
+            <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
+              <OutlinedField
+                label="Law Firm Name"
+                value={me?.company?.companyName || me?.companyName}
               />
-            ) : (
-              <span>{me?.userAccount?.firstName || "-"}</span>
-            )}
-          </div>
-
-          <div className="w-full text-sm border p-2 flex items-center gap-2">
-            <span className="whitespace-nowrap">Last Name:</span>
-            {uaEditing ? (
-              <input
-                className="border p-1 flex-1"
-                value={uaDraft.lastName}
-                onChange={(e) =>
-                  setUaDraft((d) => ({ ...d, lastName: e.target.value }))
-                }
+              <OutlinedField
+                label="Business ID (in country of domicile)"
+                value={me?.company?.businessId || me?.companyId}
               />
-            ) : (
-              <span>{me?.userAccount?.lastName || "-"}</span>
-            )}
-          </div>
-
-          <div className="w-full text-sm border p-2 flex items-center gap-2">
-            <span className="whitespace-nowrap">E-mail:</span>
-            {uaEditing ? (
-              <input
-                className="border p-1 flex-1"
-                value={uaDraft.email}
-                onChange={(e) =>
-                  setUaDraft((d) => ({ ...d, email: e.target.value }))
-                }
+              <OutlinedField
+                label="Street Address"
+                value={me?.company?.companyAddress || me?.companyAddress}
               />
-            ) : (
-              <span>{me?.userAccount?.email || "-"}</span>
-            )}
-          </div>
-
-          <div className="w-full text-sm border p-2 flex items-center gap-2">
-            <span className="whitespace-nowrap">Telephone:</span>
-            {uaEditing ? (
-              <input
-                className="border p-1 flex-1"
-                value={uaDraft.telephone}
-                onChange={(e) =>
-                  setUaDraft((d) => ({ ...d, telephone: e.target.value }))
-                }
+              <OutlinedField
+                label="Postal Code"
+                value={me?.company?.companyPostalCode || me?.companyPostalCode}
               />
-            ) : (
-              <span>{me?.userAccount?.telephone || "-"}</span>
-            )}
-          </div>
-
-          <div className="mt-4">
-            {!uaEditing ? (
-              <button
-                type="button"
-                onClick={startEditUa}
-                className="bg-[#11999e] text-white px-4 py-2 rounded cursor-pointer"
-              >
-                Edit My Account Information
-              </button>
-            ) : (
-              <div className="flex gap-3">
-                <button
-                  type="button"
-                  disabled={uaBusy}
-                  onClick={saveUa}
-                  className="bg-green-600 text-white px-4 py-2 rounded cursor-pointer disabled:opacity-50"
-                >
-                  Save Account Information
-                </button>
-                <button
-                  type="button"
-                  disabled={uaBusy}
-                  onClick={cancelEditUa}
-                  className="bg-gray-500 text-white px-4 py-2 rounded cursor-pointer disabled:opacity-50"
-                >
-                  Cancel Without Saving
-                </button>
-              </div>
-            )}
-          </div>
-        </div>
-
-        <br />
-
-        {/* Username & Password */}
-        <div className="grid grid-cols-2 gap-4">
-          <h4 className="text-md font-semibold col-span-2">
-            Username & Password
-          </h4>
-
-          <div className="col-span-2">
-            <div className="w-1/3 text-sm border p-2">
-              Username:{" "}
-              {me?.userAccount?.username || me?.username || username || "-"}
+              <OutlinedField
+                label="City"
+                value={me?.company?.companyCity || me?.companyCity}
+              />
+              <OutlinedField
+                label="Country of Domicile"
+                value={me?.company?.companyCountry || me?.companyCountry}
+              />
             </div>
-            <button
-              onClick={() => router.push("/change-password")}
-              className="mt-4 bg-[#11999e] text-white px-11 py-2 rounded cursor-pointer"
-            >
-              Change Password
-            </button>
-          </div>
-        </div>
-        <br />
-        <div className="w-full max-w-6xl rounded bg-white text-black mt-8">
-          <h2 className="text-md font-semibold mb-2">
-            Two-Factor Authentication
-          </h2>
-          <div className="text-sm mb-4">
-            Status:{" "}
-            <span
-              className={
-                mfaEnabled
-                  ? "text-green-700 font-semibold"
-                  : "text-red-700 font-semibold"
-              }
-            >
-              {mfaEnabled ? "Enabled" : "Disabled"}
-            </span>
-          </div>
+            <div className="mt-5">
+              <AccountActionButton icon={Users} onClick={openMembersModal}>
+                View All Users
+              </AccountActionButton>
+            </div>
+          </AccountNestedCard>
 
-          {mfaErr && <div className="mb-3 text-sm text-red-700">{mfaErr}</div>}
-          {mfaMsg && (
-            <div className="mb-3 text-sm text-green-700">{mfaMsg}</div>
-          )}
+          <AccountNestedCard>
+            <AccountHeading
+              as="h3"
+              icon={User}
+              title="My Account Information"
+            />
 
-          {!mfaEnabled && (
-            <>
-              <button
-                disabled={mfaBusy}
-                onClick={startMfaSetup}
-                className="bg-[#11999e] text-white px-4 py-2 rounded cursor-pointer disabled:opacity-50"
-              >
-                Set up 2FA (Authenticator App Required)
-              </button>
-
-              {mfaQr && (
-                <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
-                  <div>
-                    <div className="text-sm font-semibold mb-2">
-                      Scan this QR code
-                    </div>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={mfaQr}
-                      alt="MFA QR code"
-                      className="border p-2 bg-white w-64 h-64"
-                    />
-                    <div className="text-xs text-gray-600 mt-2">
-                      If you can&apos;t scan, your authenticator can also accept
-                      an otpauth URI.
-                    </div>
-                    <div className="text-xs break-all text-gray-600">
-                      {mfaOtpAuth}
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="text-sm font-semibold mb-2">
-                      Enter the 6-digit code
-                    </div>
-                    <input
-                      value={mfaCode}
-                      onChange={(e) => setMfaCode(e.target.value)}
-                      placeholder="123456"
-                      className="border p-2 w-full"
-                      inputMode="numeric"
-                      autoComplete="one-time-code"
-                    />
-                    <button
-                      disabled={mfaBusy || !mfaCode.trim()}
-                      onClick={enableMfa}
-                      className="mt-3 bg-green-600 text-white px-4 py-2 rounded cursor-pointer disabled:opacity-50"
-                    >
-                      Enable 2FA
-                    </button>
-                  </div>
+            <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
+              <OutlinedField
+                label="First Name"
+                value={me?.userAccount?.firstName}
+                editing={uaEditing}
+                inputProps={{
+                  value: uaDraft.firstName,
+                  onChange: (e) =>
+                    setUaDraft((d) => ({ ...d, firstName: e.target.value })),
+                }}
+              />
+              <OutlinedField
+                label="Last Name"
+                value={me?.userAccount?.lastName}
+                editing={uaEditing}
+                inputProps={{
+                  value: uaDraft.lastName,
+                  onChange: (e) =>
+                    setUaDraft((d) => ({ ...d, lastName: e.target.value })),
+                }}
+              />
+              <OutlinedField
+                label="E-mail"
+                value={me?.userAccount?.email}
+                editing={uaEditing}
+                inputProps={{
+                  value: uaDraft.email,
+                  onChange: (e) =>
+                    setUaDraft((d) => ({ ...d, email: e.target.value })),
+                }}
+              />
+              <OutlinedField
+                label="Telephone"
+                value={me?.userAccount?.telephone}
+                editing={uaEditing}
+                inputProps={{
+                  value: uaDraft.telephone,
+                  onChange: (e) =>
+                    setUaDraft((d) => ({ ...d, telephone: e.target.value })),
+                }}
+              />
+            </div>
+            <div className="mt-5">
+              {!uaEditing ? (
+                <AccountActionButton icon={Pencil} onClick={startEditUa}>
+                  Edit My Account Information
+                </AccountActionButton>
+              ) : (
+                <div className="flex flex-wrap gap-3">
+                  <button
+                    type="button"
+                    disabled={uaBusy}
+                    onClick={saveUa}
+                    className="cursor-pointer rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+                  >
+                    Save Account Information
+                  </button>
+                  <button
+                    type="button"
+                    disabled={uaBusy}
+                    onClick={cancelEditUa}
+                    className="cursor-pointer rounded-lg bg-gray-500 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
+                  >
+                    Cancel Without Saving
+                  </button>
                 </div>
               )}
-            </>
-          )}
+            </div>
+          </AccountNestedCard>
 
-          {mfaEnabled && (
-            <div className="max-w-md">
-              <div className="text-sm mb-2">
-                To disable 2FA, confirm with a current 6-digit authenticator
-                code:
-              </div>
-              <input
-                value={mfaCode}
-                onChange={(e) => setMfaCode(e.target.value)}
-                placeholder="123456"
-                className="border p-2 w-full"
-                inputMode="numeric"
-                autoComplete="one-time-code"
+          <AccountNestedCard>
+            <AccountHeading as="h3" icon={Lock} title="Username & Password" />
+            <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
+              <OutlinedField
+                label="Username"
+                value={me?.userAccount?.username || me?.username || username}
               />
-              <button
-                disabled={mfaBusy || !mfaCode.trim()}
-                onClick={disableMfa}
-                className="mt-3 bg-red-600 text-white px-4 py-2 rounded cursor-pointer disabled:opacity-50"
-              >
-                Disable 2FA
-              </button>
             </div>
-          )}
-          {recoveryCodes.length > 0 && (
-            <div className="mt-4 p-4 border rounded bg-gray-50">
-              <div className="font-semibold mb-2">
-                Recovery codes (save these now)
-              </div>
-              <div className="text-sm text-gray-700 mb-2">
-                Each code can be used once if you can&apos;t access your
-                authenticator app. They won&apos;t be shown again.
-              </div>
-              <pre className="text-sm whitespace-pre-wrap">
-                {recoveryCodes.join("\n")}
-              </pre>
-              <button
-                className="mt-3 bg-[#11999e] text-white px-4 py-2 rounded cursor-pointer"
-                onClick={async () => {
-                  await navigator.clipboard.writeText(recoveryCodes.join("\n"));
-                  alert("Copied recovery codes to clipboard.");
-                }}
+            <div className="mt-5">
+              <AccountActionButton
+                icon={Lock}
+                onClick={() => router.push("/change-password")}
               >
-                Copy recovery codes
-              </button>
+                Change Password
+              </AccountActionButton>
             </div>
-          )}
+          </AccountNestedCard>
+
+          <AccountNestedCard>
+            <AccountHeading
+              as="h3"
+              icon={Shield}
+              title="Two-Factor Authentication"
+            />
+            <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
+              <OutlinedField
+                label="Status"
+                value={mfaEnabled ? "Enabled" : "Disabled"}
+              />
+            </div>
+
+            {mfaErr && (
+              <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {mfaErr}
+              </div>
+            )}
+            {mfaMsg && (
+              <div className="mt-4 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
+                {mfaMsg}
+              </div>
+            )}
+
+            {!mfaEnabled && (
+              <div className="mt-5">
+                <AccountActionButton
+                  icon={Shield}
+                  disabled={mfaBusy}
+                  onClick={startMfaSetup}
+                >
+                  Set up 2FA (Authenticator App Required)
+                </AccountActionButton>
+
+                {mfaQr && (
+                  <div className="mt-5 grid grid-cols-1 items-start gap-6 md:grid-cols-2">
+                    <div>
+                      <p className="mb-3 text-sm font-medium text-gray-800">
+                        Scan this QR code
+                      </p>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={mfaQr}
+                        alt="MFA QR code"
+                        className="h-64 w-64 rounded-md border border-gray-300 bg-white p-2"
+                      />
+                      <p className="mt-2 text-xs text-gray-500">
+                        If you can&apos;t scan, your authenticator can also
+                        accept an otpauth URI.
+                      </p>
+                      <p className="mt-1 break-all text-xs text-gray-500">
+                        {mfaOtpAuth}
+                      </p>
+                    </div>
+
+                    <div>
+                      <OutlinedField
+                        label="6-digit code"
+                        editing
+                        inputProps={{
+                          value: mfaCode,
+                          onChange: (e) => setMfaCode(e.target.value),
+                          placeholder: "123456",
+                          inputMode: "numeric",
+                          autoComplete: "one-time-code",
+                        }}
+                      />
+                      <div className="mt-4">
+                        <AccountActionButton
+                          tone="success"
+                          showChevron={false}
+                          disabled={mfaBusy || !mfaCode.trim()}
+                          onClick={enableMfa}
+                        >
+                          Enable 2FA
+                        </AccountActionButton>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            )}
+
+            {mfaEnabled && (
+              <div className="mt-5 max-w-md">
+                <p className="mb-4 text-sm text-gray-600">
+                  To disable 2FA, confirm with a current 6-digit authenticator
+                  code:
+                </p>
+                <OutlinedField
+                  label="6-digit code"
+                  editing
+                  inputProps={{
+                    value: mfaCode,
+                    onChange: (e) => setMfaCode(e.target.value),
+                    placeholder: "123456",
+                    inputMode: "numeric",
+                    autoComplete: "one-time-code",
+                  }}
+                />
+                <div className="mt-4">
+                  <AccountActionButton
+                    tone="danger"
+                    showChevron={false}
+                    disabled={mfaBusy || !mfaCode.trim()}
+                    onClick={disableMfa}
+                  >
+                    Disable 2FA
+                  </AccountActionButton>
+                </div>
+              </div>
+            )}
+
+            {recoveryCodes.length > 0 && (
+              <div className="mt-5 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                <p className="mb-2 font-semibold text-gray-800">
+                  Recovery codes (save these now)
+                </p>
+                <p className="mb-3 text-sm text-gray-600">
+                  Each code can be used once if you can&apos;t access your
+                  authenticator app. They won&apos;t be shown again.
+                </p>
+                <pre className="whitespace-pre-wrap text-sm text-gray-800">
+                  {recoveryCodes.join("\n")}
+                </pre>
+                <div className="mt-4">
+                  <AccountActionButton
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(
+                        recoveryCodes.join("\n"),
+                      );
+                      alert("Copied recovery codes to clipboard.");
+                    }}
+                  >
+                    Copy recovery codes
+                  </AccountActionButton>
+                </div>
+              </div>
+            )}
+          </AccountNestedCard>
         </div>
       </div>
-      <br />
       {/* Notification Preferences */}
-      <div className="w-full max-w-6xl p-6 rounded shadow-2xl bg-white text-black">
+      <div className="w-full rounded-2xl bg-white p-6 text-black shadow-[0_16px_44px_rgba(17,153,158,0.22)] ring-1 ring-black/10">
         <h2 className="text-2xl font-semibold mb-4">
           Notification Preferences
         </h2>
@@ -976,155 +1007,51 @@ export default function ProviderAccount() {
         </h4>
         <br />
         <div className="flex flex-col gap-4">
-          {/* 0) all-notifications */}
-          <label
-            htmlFor="prov-all-notifications"
-            className="inline-flex items-center cursor-pointer"
+          <PrefSwitch
+            id="prov-all-notifications"
+            checked={hasPref("all-notifications")}
+            onChange={(e) => setPref("all-notifications", e.target.checked)}
           >
-            <input
-              id="prov-all-notifications"
-              type="checkbox"
-              className="sr-only"
-              checked={hasPref("all-notifications")}
-              onChange={(e) => setPref("all-notifications", e.target.checked)}
-            />
-            <div
-              className={`relative w-11 h-6 rounded-full transition-colors ${
-                hasPref("all-notifications") ? "bg-green-600" : "bg-gray-700"
-              }`}
-            >
-              <div
-                className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
-                  hasPref("all-notifications") ? "translate-x-full" : ""
-                }`}
-              />
-            </div>
-            <span className="ms-3 text-sm text-black dark:text-black">
-              Firm-wide notifications{" "}
-              <NarrowTooltip tooltipText="When enabled, you will receive automatic notifications for all pending offers across your firm, including those of other users and your own." />
-            </span>
-          </label>
-          {/* 1) no-winning-offer */}
-          <label
-            htmlFor="prov-no-winning-offer"
-            className="inline-flex items-center cursor-pointer"
+            Firm-wide notifications{" "}
+            <NarrowTooltip tooltipText="When enabled, you will receive automatic notifications for all pending offers across your firm, including those of other users and your own." />
+          </PrefSwitch>
+          <PrefSwitch
+            id="prov-no-winning-offer"
+            checked={hasPref("no-winning-offer")}
+            onChange={(e) => setPref("no-winning-offer", e.target.checked)}
           >
-            <input
-              id="prov-no-winning-offer"
-              type="checkbox"
-              className="sr-only"
-              checked={hasPref("no-winning-offer")}
-              onChange={(e) => setPref("no-winning-offer", e.target.checked)}
-            />
-            <div
-              className={`relative w-11 h-6 rounded-full transition-colors ${
-                hasPref("no-winning-offer") ? "bg-green-600" : "bg-gray-700"
-              }`}
-            >
-              <div
-                className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
-                  hasPref("no-winning-offer") ? "translate-x-full" : ""
-                }`}
-              />
-            </div>
-            <span className="ms-3 text-sm text-black dark:text-black">
-              A pending LEXIFY Request expires and the offer I have submitted is
-              not the winning offer
-            </span>
-          </label>
-          {/* 2) winner-conflict-check */}
-          <label
-            htmlFor="prov-winner-conflict-check"
-            className="inline-flex items-center cursor-pointer"
+            A pending LEXIFY Request expires and the offer I have submitted is
+            not the winning offer
+          </PrefSwitch>
+          <PrefSwitch
+            id="prov-winner-conflict-check"
+            checked={hasPref("winner-conflict-check")}
+            onChange={(e) =>
+              setPref("winner-conflict-check", e.target.checked)
+            }
           >
-            <input
-              id="prov-winner-conflict-check"
-              type="checkbox"
-              className="sr-only"
-              checked={hasPref("winner-conflict-check")}
-              onChange={(e) =>
-                setPref("winner-conflict-check", e.target.checked)
-              }
-            />
-            <div
-              className={`relative w-11 h-6 rounded-full transition-colors ${
-                hasPref("winner-conflict-check")
-                  ? "bg-green-600"
-                  : "bg-gray-700"
-              }`}
-            >
-              <div
-                className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
-                  hasPref("winner-conflict-check") ? "translate-x-full" : ""
-                }`}
-              />
-            </div>
-            <span className="ms-3 text-sm text-black dark:text-black">
-              A pending LEXIFY Request expires and the offer I have submitted is
-              the winning offer subject to clearance of remaining conflict
-              checks{" "}
-              <NarrowTooltip tooltipText="If the LEXIFY Request does not disclose the identities of all relevant parties in the matter, the remaining conflict checks will be performed only with the legal service provider submitting the winning offer. If the legal service provider notifies LEXIFY of an existing conflict, the provider's offer will automatically be disqualified and the client company may select another provider's offer as the winning offer." />
-            </span>
-          </label>
-          {/* 3) request-cancelled */}
-          <label
-            htmlFor="prov-request-cancelled"
-            className="inline-flex items-center cursor-pointer"
+            A pending LEXIFY Request expires and the offer I have submitted is
+            the winning offer subject to clearance of remaining conflict
+            checks{" "}
+            <NarrowTooltip tooltipText="If the LEXIFY Request does not disclose the identities of all relevant parties in the matter, the remaining conflict checks will be performed only with the legal service provider submitting the winning offer. If the legal service provider notifies LEXIFY of an existing conflict, the provider's offer will automatically be disqualified and the client company may select another provider's offer as the winning offer." />
+          </PrefSwitch>
+          <PrefSwitch
+            id="prov-request-cancelled"
+            checked={hasPref("request-cancelled")}
+            onChange={(e) => setPref("request-cancelled", e.target.checked)}
           >
-            <input
-              id="prov-request-cancelled"
-              type="checkbox"
-              className="sr-only"
-              checked={hasPref("request-cancelled")}
-              onChange={(e) => setPref("request-cancelled", e.target.checked)}
-            />
-            <div
-              className={`relative w-11 h-6 rounded-full transition-colors ${
-                hasPref("request-cancelled") ? "bg-green-600" : "bg-gray-700"
-              }`}
-            >
-              <div
-                className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
-                  hasPref("request-cancelled") ? "translate-x-full" : ""
-                }`}
-              />
-            </div>
-            <span className="ms-3 text-sm text-black dark:text-black">
-              A pending LEXIFY Request is cancelled by the client after I have
-              submitted an offer
-            </span>
-          </label>
-          {/* 4) new-available-request */}
-          <label
-            htmlFor="prov-new-available-request"
-            className="inline-flex items-center cursor-pointer"
+            A pending LEXIFY Request is cancelled by the client after I have
+            submitted an offer
+          </PrefSwitch>
+          <PrefSwitch
+            id="prov-new-available-request"
+            checked={hasPref("new-available-request")}
+            onChange={(e) =>
+              setPref("new-available-request", e.target.checked)
+            }
           >
-            <input
-              id="prov-new-available-request"
-              type="checkbox"
-              className="sr-only"
-              checked={hasPref("new-available-request")}
-              onChange={(e) =>
-                setPref("new-available-request", e.target.checked)
-              }
-            />
-            <div
-              className={`relative w-11 h-6 rounded-full transition-colors ${
-                hasPref("new-available-request")
-                  ? "bg-green-600"
-                  : "bg-gray-700"
-              }`}
-            >
-              <div
-                className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
-                  hasPref("new-available-request") ? "translate-x-full" : ""
-                }`}
-              />
-            </div>
-            <span className="ms-3 text-sm text-black dark:text-black">
-              A new LEXIFY Request has been published and is awaiting offers
-            </span>
-          </label>
+            A new LEXIFY Request has been published and is awaiting offers
+          </PrefSwitch>
           {/* Categories dropdown: only visible when "new-available-request" is ON */}
           {hasPref("new-available-request") && (
             <div className="mt-4" ref={categoryDropdownRef}>
@@ -1136,7 +1063,7 @@ export default function ProviderAccount() {
               <button
                 type="button"
                 onClick={() => setCategoryDropdownOpen((v) => !v)}
-                className="w-full border rounded px-3 py-2 text-sm text-left bg-white"
+                className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-left text-sm"
               >
                 {categoryPrefs.length === 0
                   ? "No categories selected"
@@ -1164,9 +1091,8 @@ export default function ProviderAccount() {
           )}
         </div>
       </div>
-      <br />
       {/* Invoicing and Payment Methods */}
-      <div className="w-full max-w-6xl p-6 rounded shadow-2xl bg-white text-black">
+      <div className="w-full rounded-2xl bg-white p-6 text-black shadow-[0_16px_44px_rgba(17,153,158,0.22)] ring-1 ring-black/10">
         <h2 className="text-2xl font-semibold mb-4">Fees and Invoicing</h2>
         <h4 className="text-md">
           LEXIFY charges a monthly service fee for the use of the LEXIFY
@@ -1184,7 +1110,7 @@ export default function ProviderAccount() {
           <div className="col-span-2">
             <table className="w-full border border-gray-300 text-sm">
               <thead className="bg-gray-200">
-                <tr className="bg-[#3a3a3c] text-white">
+                <tr className="bg-gray-200 text-gray-700">
                   <th className="border p-2">First Name</th>
                   <th className="border p-2">Last Name</th>
                   <th className="border p-2">Title/Position in Law Firm</th>
@@ -1308,7 +1234,7 @@ export default function ProviderAccount() {
             <button
               disabled={busyInvoice}
               onClick={addInvoiceContact}
-              className="mt-4 bg-[#11999e] text-white px-4 py-2 rounded cursor-pointer disabled:opacity-50"
+              className="mt-4 cursor-pointer rounded-lg bg-[#11999e] px-4 py-2 text-white transition-colors hover:bg-[#0e8488] disabled:opacity-50"
             >
               Add New Invoicing Contact
             </button>
@@ -1320,7 +1246,7 @@ export default function ProviderAccount() {
       <br />
       {membersOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4"
           onMouseDown={(e) => {
             // close if backdrop clicked
             if (e.target === e.currentTarget) closeMembersModal();
@@ -1350,7 +1276,7 @@ export default function ProviderAccount() {
               ) : (
                 <table className="w-full border border-gray-300 text-sm">
                   <thead className="bg-gray-200">
-                    <tr className="bg-[#3a3a3c] text-white">
+                    <tr className="bg-gray-200 text-gray-700">
                       <th className="border p-2 text-left">Name</th>
                       <th className="border p-2 text-left">Position</th>
                       <th className="border p-2 text-left">Telephone</th>
@@ -1376,6 +1302,6 @@ export default function ProviderAccount() {
           </div>
         </div>
       )}
-    </div>
+    </AppPage>
   );
 }

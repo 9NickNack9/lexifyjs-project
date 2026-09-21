@@ -5,6 +5,11 @@ import { z } from "zod";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { notifyProvidersRequestCancelled } from "@/lib/mailer";
+import {
+  getDummyRequestById,
+  isAdminRole,
+  isDummyId,
+} from "@/lib/adminDummyCases";
 
 // --- email helpers ---
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -85,9 +90,24 @@ export async function GET(_req, ctx) {
     if (!session?.userId)
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
+    let idParam;
+    try {
+      ({ id: idParam } = await ctx.params);
+    } catch {
+      return NextResponse.json({ error: "Bad request" }, { status: 400 });
+    }
+
+    if (isDummyId(idParam)) {
+      if (!isAdminRole(session.role)) {
+        return NextResponse.json({ error: "Not found" }, { status: 404 });
+      }
+      const dummy = getDummyRequestById(idParam);
+      if (!dummy) return NextResponse.json({ error: "Not found" }, { status: 404 });
+      return NextResponse.json(dummy);
+    }
+
     let id;
     try {
-      const { id: idParam } = await ctx.params; // Next.js: params is async
       id = BigInt(idParam);
     } catch {
       return NextResponse.json({ error: "Bad request" }, { status: 400 });
@@ -237,6 +257,12 @@ export async function PATCH(req, ctx) {
     let id;
     try {
       const { id: idParam } = await ctx.params;
+      if (isDummyId(idParam) && isAdminRole(session.role)) {
+        return NextResponse.json({
+          ok: true,
+          requestId: String(idParam),
+        });
+      }
       id = BigInt(idParam);
     } catch {
       return NextResponse.json({ error: "Bad request" }, { status: 400 });
@@ -304,6 +330,12 @@ export async function DELETE(_req, ctx) {
   let id;
   try {
     const { id: idParam } = await ctx.params;
+    if (isDummyId(idParam) && isAdminRole(session.role)) {
+      return NextResponse.json({
+        ok: true,
+        requestId: String(idParam),
+      });
+    }
     id = BigInt(idParam);
   } catch {
     return NextResponse.json({ error: "Bad request" }, { status: 400 });

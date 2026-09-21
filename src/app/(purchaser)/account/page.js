@@ -3,9 +3,59 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { signOut, useSession } from "next-auth/react";
-import { Pencil, Save, CheckCircle } from "lucide-react";
+import {
+  Pencil,
+  Save,
+  Building2,
+  User,
+  Lock,
+  Users,
+  Shield,
+  Info,
+  Trash2,
+} from "lucide-react";
 import NarrowTooltip from "../../components/NarrowTooltip";
 import Link from "next/link";
+import { AppPage } from "@/app/components/HubPage";
+import {
+  AccountActionButton,
+  AccountHeading,
+  AccountNestedCard,
+  OutlinedField,
+} from "@/app/components/AccountContactUi";
+
+function PrefSwitch({ id, checked, onChange, children }) {
+  return (
+    <label
+      htmlFor={id}
+      className="flex cursor-pointer items-center gap-3 touch-manipulation select-none"
+    >
+      <input
+        id={id}
+        type="checkbox"
+        role="switch"
+        className="peer sr-only"
+        checked={checked}
+        onChange={onChange}
+      />
+      <span
+        aria-hidden="true"
+        className={`relative inline-flex h-6 w-11 shrink-0 rounded-full shadow-[inset_0_1px_3px_rgba(0,0,0,0.35)] transition-colors duration-200 ease-out peer-focus-visible:ring-2 peer-focus-visible:ring-[#11999e] peer-focus-visible:ring-offset-2 peer-focus-visible:ring-offset-white ${
+          checked ? "bg-green-600" : "bg-gray-700"
+        }`}
+      >
+        <span
+          className={`pointer-events-none absolute top-[2px] left-[2px] h-5 w-5 rounded-full bg-white shadow-[0_1px_3px_rgba(0,0,0,0.28),0_0_0_1px_rgba(0,0,0,0.04)] transition-transform duration-200 ease-out ${
+            checked ? "translate-x-5" : "translate-x-0"
+          }`}
+        />
+      </span>
+      <span className="min-w-0 flex-1 text-sm leading-6 text-black">
+        {children}
+      </span>
+    </label>
+  );
+}
 
 export default function Account() {
   const router = useRouter();
@@ -24,19 +74,22 @@ export default function Account() {
   const [notificationPrefs, setNotificationPrefs] = useState([]);
 
   // Search UI state
-  const [bpQuery, setBpQuery] = useState("");
-  const [bpResults, setBpResults] = useState([]);
-  const [bpSelected, setBpSelected] = useState(null);
-  const [bpLoading, setBpLoading] = useState(false);
+  const [bpPickerOpen, setBpPickerOpen] = useState(false);
+  const [bpAllProviders, setBpAllProviders] = useState([]);
+  const [bpPickedNames, setBpPickedNames] = useState([]);
+  const [bpProvidersLoading, setBpProvidersLoading] = useState(false);
+  const [bpPickerFilter, setBpPickerFilter] = useState("");
+  const [bpBusy, setBpBusy] = useState(false);
 
   // Blocked list state
   const [blockedProviders, setBlockedProviders] = useState([]);
 
   // Preferred Providers
-  const [ppQuery, setPpQuery] = useState("");
-  const [ppResults, setPpResults] = useState([]);
-  const [ppSelected, setPpSelected] = useState(null);
-  const [ppLoading, setPpLoading] = useState(false);
+  const [ppPickerOpen, setPpPickerOpen] = useState(false);
+  const [ppAllProviders, setPpAllProviders] = useState([]);
+  const [ppSelectedName, setPpSelectedName] = useState("");
+  const [ppProvidersLoading, setPpProvidersLoading] = useState(false);
+  const [ppPickerFilter, setPpPickerFilter] = useState("");
 
   // Preferred state
   const [preferredProviders, setPreferredProviders] = useState([]);
@@ -44,12 +97,17 @@ export default function Account() {
   const [editAreas, setEditAreas] = useState([]);
   const [ppBusy, setPpBusy] = useState(false); // network guard for edit ops
 
-  // Legal Panel
-  const [lpQuery, setLpQuery] = useState("");
-  const [lpResults, setLpResults] = useState([]);
-  const [lpSelected, setLpSelected] = useState(null);
-  const [lpLoading, setLpLoading] = useState(false);
-  const [legalPanelProviders, setLegalPanelProviders] = useState([]);
+  // Legal Panel Groups
+  const [legalPanelGroups, setLegalPanelGroups] = useState([]);
+  const [newPanelName, setNewPanelName] = useState("");
+  const [renamingGroupId, setRenamingGroupId] = useState(null);
+  const [renameValue, setRenameValue] = useState("");
+  const [lpBusy, setLpBusy] = useState(false);
+  const [lpPickerGroupId, setLpPickerGroupId] = useState(null);
+  const [lpAllProviders, setLpAllProviders] = useState([]);
+  const [lpPickedNames, setLpPickedNames] = useState([]);
+  const [lpProvidersLoading, setLpProvidersLoading] = useState(false);
+  const [lpPickerFilter, setLpPickerFilter] = useState("");
 
   // MFA
   const [mfaEnabled, setMfaEnabled] = useState(false);
@@ -287,11 +345,10 @@ export default function Account() {
             ? data.preferredLegalServiceProviders
             : [],
         );
-        setLegalPanelProviders(
-          Array.isArray(data.legalPanelServiceProviders)
-            ? data.legalPanelServiceProviders
-            : [],
-        );
+        const nextGroups = Array.isArray(data.legalPanelGroups)
+          ? data.legalPanelGroups
+          : [];
+        setLegalPanelGroups(nextGroups);
 
         try {
           const pr = await fetch(
@@ -358,49 +415,81 @@ export default function Account() {
     }
   };
 
-  // Search Function
-  const searchProviders = async (q) => {
-    setBpQuery(q);
-    setBpSelected(null);
-    if (!q.trim()) {
-      setBpResults([]);
-      return;
-    }
-    setBpLoading(true);
+  const parseProviderRows = (rows) =>
+    Array.isArray(rows)
+      ? rows
+          .map((row) => ({
+            companyId: row.companyId || row.userId || row.companyName,
+            companyName: (row.companyName || "").trim(),
+          }))
+          .filter((row) => row.companyName)
+      : [];
+
+  const loadAllProviders = async (setProviders, setLoading) => {
+    setLoading(true);
     try {
-      const res = await fetch(`/api/users/search?q=${encodeURIComponent(q)}`, {
+      const res = await fetch("/api/providers/search?all=1", {
         cache: "no-store",
       });
-      const rows = await res.json();
-      setBpResults(Array.isArray(rows) ? rows : []);
+      const rows = await res.json().catch(() => []);
+      setProviders(parseProviderRows(rows));
     } catch {
-      setBpResults([]);
+      setProviders([]);
     } finally {
-      setBpLoading(false);
+      setLoading(false);
     }
   };
 
-  // Search Handlers
-  const blockSelectedProvider = async () => {
-    if (!bpSelected?.companyName)
-      return alert("Please select a provider to block.");
-    if (blockedProviders.includes(bpSelected.companyName))
-      return alert("Provider is already blocked.");
+  const openBlockedPicker = async () => {
+    setBpPickerOpen(true);
+    setBpPickedNames([]);
+    setBpPickerFilter("");
+    await loadAllProviders(setBpAllProviders, setBpProvidersLoading);
+  };
 
+  const closeBlockedPicker = () => {
+    setBpPickerOpen(false);
+    setBpPickedNames([]);
+    setBpPickerFilter("");
+  };
+
+  const toggleBlockedPick = (companyName, checked) => {
+    setBpPickedNames((current) => {
+      if (checked) {
+        if (
+          current.some(
+            (name) => name.toLowerCase() === companyName.toLowerCase(),
+          )
+        ) {
+          return current;
+        }
+        return [...current, companyName];
+      }
+      return current.filter(
+        (name) => name.toLowerCase() !== companyName.toLowerCase(),
+      );
+    });
+  };
+
+  const blockSelectedProviders = async () => {
+    if (bpPickedNames.length === 0)
+      return alert("Please select at least one provider.");
+
+    setBpBusy(true);
     try {
       const res = await fetch("/api/me/blocked-providers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ companyName: bpSelected.companyName }),
+        body: JSON.stringify({ companyNames: bpPickedNames }),
       });
       const json = await res.json();
-      if (!res.ok) throw new Error(json?.error || "Failed to block provider");
+      if (!res.ok) throw new Error(json?.error || "Failed to block providers");
       setBlockedProviders(json.blockedServiceProviders || []);
-      setBpSelected(null);
-      setBpQuery("");
-      setBpResults([]);
+      closeBlockedPicker();
     } catch (e) {
       alert(e.message);
+    } finally {
+      setBpBusy(false);
     }
   };
 
@@ -420,38 +509,33 @@ export default function Account() {
     }
   };
 
-  const searchPreferredProviders = async (q) => {
-    setPpQuery(q);
-    setPpSelected(null);
-    if (!q.trim()) {
-      setPpResults([]);
-      return;
-    }
-    setPpLoading(true);
-    try {
-      const res = await fetch(`/api/users/search?q=${encodeURIComponent(q)}`, {
-        cache: "no-store",
-      });
-      const rows = await res.json();
-      setPpResults(Array.isArray(rows) ? rows : []);
-    } catch {
-      setPpResults([]);
-    } finally {
-      setPpLoading(false);
-    }
+  const openPreferredPicker = async () => {
+    setPpPickerOpen(true);
+    setPpSelectedName("");
+    setSelectedAreas([]);
+    setPpPickerFilter("");
+    await loadAllProviders(setPpAllProviders, setPpProvidersLoading);
+  };
+
+  const closePreferredPicker = () => {
+    setPpPickerOpen(false);
+    setPpSelectedName("");
+    setSelectedAreas([]);
+    setPpPickerFilter("");
   };
 
   const assignPreferredProvider = async () => {
-    if (!ppSelected?.companyName) return alert("Select a provider.");
+    if (!ppSelectedName) return alert("Select a provider.");
     if (selectedAreas.length === 0)
       return alert("Choose at least one area of law.");
 
+    setPpBusy(true);
     try {
       const res = await fetch("/api/me/preferred-providers", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          companyName: ppSelected.companyName,
+          companyName: ppSelectedName,
           areasOfLaw: selectedAreas,
         }),
       });
@@ -459,12 +543,11 @@ export default function Account() {
       if (!res.ok)
         throw new Error(json?.error || "Failed to assign preferred provider");
       setPreferredProviders(json.preferredLegalServiceProviders || []);
-      setPpSelected(null);
-      setPpQuery("");
-      setPpResults([]);
-      setSelectedAreas([]);
+      closePreferredPicker();
     } catch (e) {
       alert(e.message);
+    } finally {
+      setPpBusy(false);
     }
   };
 
@@ -526,64 +609,156 @@ export default function Account() {
     }
   };
 
-  // Legal Panel Search
-  const searchLegalPanel = async (q) => {
-    setLpQuery(q);
-    setLpSelected(null);
-    if (!q.trim()) {
-      setLpResults([]);
-      return;
-    }
-    setLpLoading(true);
-    try {
-      const res = await fetch(`/api/users/search?q=${encodeURIComponent(q)}`, {
-        cache: "no-store",
-      });
-      const rows = await res.json();
-      setLpResults(Array.isArray(rows) ? rows : []);
-    } catch {
-      setLpResults([]);
-    } finally {
-      setLpLoading(false);
-    }
+  const applyLegalPanelGroups = (groups) => {
+    setLegalPanelGroups(Array.isArray(groups) ? groups : []);
   };
 
-  // Legal Panel Handlers
-  const addToLegalPanel = async () => {
-    if (!lpSelected?.companyName) return alert("Please select a provider.");
-    if (legalPanelProviders.includes(lpSelected.companyName))
-      return alert("Provider is already in your panel.");
+  const closeLegalPanelPicker = () => {
+    setLpPickerGroupId(null);
+    setLpPickedNames([]);
+    setLpPickerFilter("");
+  };
 
+  const openLegalPanelPicker = async (group) => {
+    setLpPickerGroupId(group.id);
+    setLpPickedNames([]);
+    setLpPickerFilter("");
+    await loadAllProviders(setLpAllProviders, setLpProvidersLoading);
+  };
+
+  const togglePickedProvider = (companyName, checked) => {
+    setLpPickedNames((current) => {
+      if (checked) {
+        if (
+          current.some(
+            (name) => name.toLowerCase() === companyName.toLowerCase(),
+          )
+        ) {
+          return current;
+        }
+        return [...current, companyName];
+      }
+      return current.filter(
+        (name) => name.toLowerCase() !== companyName.toLowerCase(),
+      );
+    });
+  };
+
+  const createLegalPanelGroup = async () => {
+    const name = newPanelName.trim();
+    if (!name) return alert("Please enter a name for the legal panel group.");
+    setLpBusy(true);
     try {
       const res = await fetch("/api/me/legal-panel", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ companyName: lpSelected.companyName }),
+        body: JSON.stringify({ name }),
       });
-      const json = await res.json();
+      const json = await res.json().catch(() => ({}));
       if (!res.ok)
-        throw new Error(json?.error || "Failed to add provider to panel");
-      setLegalPanelProviders(json.legalPanelServiceProviders || []);
-      setLpSelected(null);
-      setLpQuery("");
-      setLpResults([]);
+        throw new Error(json?.error || "Failed to create legal panel group");
+      applyLegalPanelGroups(json.legalPanelGroups || []);
+      setNewPanelName("");
     } catch (e) {
       alert(e.message);
+    } finally {
+      setLpBusy(false);
     }
   };
 
-  const removeFromLegalPanel = async (name) => {
+  const addSelectedProvidersToGroup = async () => {
+    if (!lpPickerGroupId) return;
+    if (lpPickedNames.length === 0) {
+      return alert("Please select at least one provider.");
+    }
+
+    setLpBusy(true);
     try {
-      const res = await fetch(
-        `/api/me/legal-panel?companyName=${encodeURIComponent(name)}`,
-        { method: "DELETE" },
-      );
-      const json = await res.json();
+      const res = await fetch("/api/me/legal-panel", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: lpPickerGroupId,
+          companyNames: lpPickedNames,
+        }),
+      });
+      const json = await res.json().catch(() => ({}));
       if (!res.ok)
-        throw new Error(json?.error || "Failed to remove provider from panel");
-      setLegalPanelProviders(json.legalPanelServiceProviders || []);
+        throw new Error(json?.error || "Failed to add providers to group");
+      applyLegalPanelGroups(json.legalPanelGroups || []);
+      closeLegalPanelPicker();
     } catch (e) {
       alert(e.message);
+    } finally {
+      setLpBusy(false);
+    }
+  };
+
+  const removeFromLegalPanelGroup = async (groupId, companyName) => {
+    setLpBusy(true);
+    try {
+      const res = await fetch(
+        `/api/me/legal-panel?id=${encodeURIComponent(groupId)}&companyName=${encodeURIComponent(companyName)}`,
+        { method: "DELETE" },
+      );
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok)
+        throw new Error(json?.error || "Failed to remove provider from group");
+      applyLegalPanelGroups(json.legalPanelGroups || []);
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setLpBusy(false);
+    }
+  };
+
+  const startRenameGroup = (group) => {
+    setRenamingGroupId(group.id);
+    setRenameValue(group.name);
+  };
+
+  const saveRenameGroup = async (groupId) => {
+    const name = renameValue.trim();
+    if (!name) return alert("Please enter a name for the legal panel group.");
+    setLpBusy(true);
+    try {
+      const res = await fetch("/api/me/legal-panel", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: groupId, name }),
+      });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok)
+        throw new Error(json?.error || "Failed to rename legal panel group");
+      applyLegalPanelGroups(json.legalPanelGroups || []);
+      setRenamingGroupId(null);
+      setRenameValue("");
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setLpBusy(false);
+    }
+  };
+
+  const deleteLegalPanelGroup = async (group) => {
+    const confirmed = confirm(
+      `Delete the legal panel group "${group.name}"? This will not affect already submitted LEXIFY Requests.`,
+    );
+    if (!confirmed) return;
+    setLpBusy(true);
+    try {
+      const res = await fetch(
+        `/api/me/legal-panel?id=${encodeURIComponent(group.id)}`,
+        { method: "DELETE" },
+      );
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok)
+        throw new Error(json?.error || "Failed to delete legal panel group");
+      applyLegalPanelGroups(json.legalPanelGroups || []);
+    } catch (e) {
+      alert(e.message);
+    } finally {
+      setLpBusy(false);
     }
   };
 
@@ -591,33 +766,38 @@ export default function Account() {
     return <div className="p-6">Loading your account…</div>;
   }
 
-  // Result row with hover + selected visuals and keyboard support
-  const ResultRow = ({ item, isSelected, onSelect }) => (
-    <div
-      role="option"
-      aria-selected={isSelected}
-      tabIndex={0}
-      onClick={() => onSelect(item)}
-      onKeyDown={(e) => {
-        if (e.key === "Enter" || e.key === " ") onSelect(item);
-      }}
-      className={[
-        "group relative p-2 text-sm cursor-pointer select-none",
-        "transition-all duration-150 ease-out",
-        "hover:bg-[#f3f8f8] hover:pl-3 active:scale-[.99]",
-        isSelected
-          ? "bg-[#e6f7f7] ring-2 ring-[#11999e] ring-offset-1 border-l-4 border-[#11999e]"
-          : "border-l-4 border-transparent",
-      ].join(" ")}
-    >
-      <div className="flex items-center justify-between">
-        <div className={`font-medium ${isSelected ? "text-[#0b6d70]" : ""}`}>
-          {item.companyName || "(no company name)"}
-        </div>
-        {isSelected && <CheckCircle size={16} className="text-[#11999e]" />}
-      </div>
-    </div>
+  const lpPickerGroup = legalPanelGroups.find(
+    (group) => group.id === lpPickerGroupId,
   );
+  const lpPickerExisting = new Set(
+    (lpPickerGroup?.providers || []).map((name) => name.toLowerCase()),
+  );
+  const lpFilter = lpPickerFilter.trim().toLowerCase();
+  const lpAvailableProviders = lpAllProviders.filter((provider) => {
+    if (lpPickerExisting.has(provider.companyName.toLowerCase())) return false;
+    if (!lpFilter) return true;
+    return provider.companyName.toLowerCase().includes(lpFilter);
+  });
+
+  const bpBlockedSet = new Set(
+    blockedProviders.map((name) => String(name).toLowerCase()),
+  );
+  const bpFilter = bpPickerFilter.trim().toLowerCase();
+  const bpAvailableProviders = bpAllProviders.filter((provider) => {
+    if (bpBlockedSet.has(provider.companyName.toLowerCase())) return false;
+    if (!bpFilter) return true;
+    return provider.companyName.toLowerCase().includes(bpFilter);
+  });
+
+  const ppPreferredSet = new Set(
+    preferredProviders.map((p) => String(p.companyName || "").toLowerCase()),
+  );
+  const ppFilter = ppPickerFilter.trim().toLowerCase();
+  const ppAvailableProviders = ppAllProviders.filter((provider) => {
+    if (ppPreferredSet.has(provider.companyName.toLowerCase())) return false;
+    if (!ppFilter) return true;
+    return provider.companyName.toLowerCase().includes(ppFilter);
+  });
 
   const startMfaSetup = async () => {
     setMfaBusy(true);
@@ -692,141 +872,107 @@ export default function Account() {
   };
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-6">
-      <h1 className="text-3xl font-bold mb-6">My LEXIFY Account</h1>
-
+    <AppPage eyebrow="Account" title="My LEXIFY Account">
       {/* My Contact Information */}
-      <div className="w-full max-w-6xl p-6 rounded bg-white text-black">
-        {/* My Contact Information */}
-        <div className="w-full max-w-6xl p-6 rounded bg-white text-black">
-          <h2 className="text-2xl font-semibold mb-4">
-            My Contact Information
-          </h2>
+      <div className="w-full rounded-2xl bg-white p-6 text-black shadow-[0_16px_44px_rgba(17,153,158,0.22)] ring-1 ring-black/10">
+        <AccountHeading icon={Building2} title="My Contact Information" />
 
-          {/* Company information */}
-          <div className="grid grid-cols-2 gap-4">
-            <h4 className="text-md font-semibold col-span-2">
-              My Company Information
-            </h4>
+        <div className="space-y-5">
+          <AccountNestedCard>
+            <AccountHeading as="h3" title="My Company Information" />
+            <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
+              <OutlinedField
+                label="Company Name"
+                value={me?.company?.companyName || me?.companyName}
+              />
+              <OutlinedField
+                label="Business ID (in country of domicile)"
+                value={me?.company?.businessId || me?.companyId}
+              />
+              <OutlinedField
+                label="Street Address"
+                value={me?.company?.companyAddress || me?.companyAddress}
+              />
+              <OutlinedField
+                label="Postal Code"
+                value={me?.company?.companyPostalCode || me?.companyPostalCode}
+              />
+              <OutlinedField
+                label="City"
+                value={me?.company?.companyCity || me?.companyCity}
+              />
+              <OutlinedField
+                label="Country of Domicile"
+                value={me?.company?.companyCountry || me?.companyCountry}
+              />
+            </div>
+            <div className="mt-5">
+              <AccountActionButton icon={Users} onClick={openMembersModal}>
+                Show List of All Company Users
+              </AccountActionButton>
+            </div>
+          </AccountNestedCard>
 
-            <div className="w-full text-sm border p-2">
-              Company Name: {me?.company?.companyName || me?.companyName || "-"}
+          <AccountNestedCard>
+            <AccountHeading
+              as="h3"
+              icon={User}
+              title="My Account Information"
+            />
+            <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
+              <OutlinedField
+                label="First Name"
+                value={me?.userAccount?.firstName}
+                editing={uaEditing}
+                inputProps={{
+                  value: uaDraft.firstName,
+                  onChange: (e) =>
+                    setUaDraft((d) => ({ ...d, firstName: e.target.value })),
+                }}
+              />
+              <OutlinedField
+                label="Last Name"
+                value={me?.userAccount?.lastName}
+                editing={uaEditing}
+                inputProps={{
+                  value: uaDraft.lastName,
+                  onChange: (e) =>
+                    setUaDraft((d) => ({ ...d, lastName: e.target.value })),
+                }}
+              />
+              <OutlinedField
+                label="E-mail"
+                value={me?.userAccount?.email}
+                editing={uaEditing}
+                inputProps={{
+                  value: uaDraft.email,
+                  onChange: (e) =>
+                    setUaDraft((d) => ({ ...d, email: e.target.value })),
+                }}
+              />
+              <OutlinedField
+                label="Telephone"
+                value={me?.userAccount?.telephone}
+                editing={uaEditing}
+                inputProps={{
+                  value: uaDraft.telephone,
+                  onChange: (e) =>
+                    setUaDraft((d) => ({ ...d, telephone: e.target.value })),
+                }}
+              />
             </div>
-            <div className="w-full text-sm border p-2">
-              Business ID (in country of domicile):{" "}
-              {me?.company?.businessId || me?.companyId || "-"}
-            </div>
-            <div className="w-full text-sm border p-2">
-              Street Address:{" "}
-              {me?.company?.companyAddress || me?.companyAddress || "-"}
-            </div>
-            <div className="w-full text-sm border p-2">
-              Postal Code:{" "}
-              {me?.company?.companyPostalCode || me?.companyPostalCode || "-"}
-            </div>
-            <div className="w-full text-sm border p-2">
-              City: {me?.company?.companyCity || me?.companyCity || "-"}
-            </div>
-            <div className="w-full text-sm border p-2">
-              Country of Domicile:{" "}
-              {me?.company?.companyCountry || me?.companyCountry || "-"}
-            </div>
-          </div>
-
-          <div className="mt-4">
-            <button
-              type="button"
-              onClick={openMembersModal}
-              className="bg-[#11999e] text-white px-4 py-2 rounded cursor-pointer"
-            >
-              Show List of All Company Users
-            </button>
-          </div>
-
-          <br />
-
-          {/* UserAccount information */}
-          <div className="grid grid-cols-2 gap-4">
-            <h4 className="text-md font-semibold col-span-2">
-              My Account Information
-            </h4>
-
-            <div className="w-full text-sm border p-2 flex items-center gap-2">
-              <span className="whitespace-nowrap">First Name:</span>
-              {uaEditing ? (
-                <input
-                  className="border p-1 flex-1"
-                  value={uaDraft.firstName}
-                  onChange={(e) =>
-                    setUaDraft((d) => ({ ...d, firstName: e.target.value }))
-                  }
-                />
-              ) : (
-                <span>{me?.userAccount?.firstName || "-"}</span>
-              )}
-            </div>
-
-            <div className="w-full text-sm border p-2 flex items-center gap-2">
-              <span className="whitespace-nowrap">Last Name:</span>
-              {uaEditing ? (
-                <input
-                  className="border p-1 flex-1"
-                  value={uaDraft.lastName}
-                  onChange={(e) =>
-                    setUaDraft((d) => ({ ...d, lastName: e.target.value }))
-                  }
-                />
-              ) : (
-                <span>{me?.userAccount?.lastName || "-"}</span>
-              )}
-            </div>
-
-            <div className="w-full text-sm border p-2 flex items-center gap-2">
-              <span className="whitespace-nowrap">E-mail:</span>
-              {uaEditing ? (
-                <input
-                  className="border p-1 flex-1"
-                  value={uaDraft.email}
-                  onChange={(e) =>
-                    setUaDraft((d) => ({ ...d, email: e.target.value }))
-                  }
-                />
-              ) : (
-                <span>{me?.userAccount?.email || "-"}</span>
-              )}
-            </div>
-
-            <div className="w-full text-sm border p-2 flex items-center gap-2">
-              <span className="whitespace-nowrap">Telephone:</span>
-              {uaEditing ? (
-                <input
-                  className="border p-1 flex-1"
-                  value={uaDraft.telephone}
-                  onChange={(e) =>
-                    setUaDraft((d) => ({ ...d, telephone: e.target.value }))
-                  }
-                />
-              ) : (
-                <span>{me?.userAccount?.telephone || "-"}</span>
-              )}
-            </div>
-
-            <div className="mt-4">
+            <div className="mt-5">
               {!uaEditing ? (
-                <button
-                  type="button"
-                  onClick={startEditUa}
-                  className="bg-[#11999e] text-white px-4 py-2 rounded cursor-pointer"
-                >
+                <AccountActionButton icon={Pencil} onClick={startEditUa}>
                   Edit My Account Information
-                </button>
+                </AccountActionButton>
               ) : (
-                <div className="flex gap-3">
+                <div className="flex flex-wrap gap-3">
                   <button
                     type="button"
                     disabled={uaBusy}
                     onClick={saveUa}
-                    className="bg-green-600 text-white px-4 py-2 rounded cursor-pointer disabled:opacity-50"
+                    className="cursor-pointer rounded-lg bg-green-600 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
                   >
                     Save Account Information
                   </button>
@@ -834,174 +980,178 @@ export default function Account() {
                     type="button"
                     disabled={uaBusy}
                     onClick={cancelEditUa}
-                    className="bg-gray-500 text-white px-4 py-2 rounded cursor-pointer disabled:opacity-50"
+                    className="cursor-pointer rounded-lg bg-gray-500 px-4 py-2.5 text-sm font-medium text-white disabled:opacity-50"
                   >
                     Cancel Without Saving
                   </button>
                 </div>
               )}
             </div>
-          </div>
+          </AccountNestedCard>
 
-          <br />
-
-          <br />
-
-          {/* Username & Password (keep, but read username from userAccount/aliases) */}
-          <div className="grid grid-cols-2 gap-4">
-            <h4 className="text-md font-semibold col-span-2">
-              Username & Password
-            </h4>
-
-            <div className="col-span-2">
-              <div className="w-1/3 text-sm border p-2">
-                Username: {me?.userAccount?.username || me?.username || "-"}
-              </div>
-              <button
+          <AccountNestedCard>
+            <AccountHeading as="h3" icon={Lock} title="Username & Password" />
+            <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
+              <OutlinedField
+                label="Username"
+                value={me?.userAccount?.username || me?.username}
+              />
+            </div>
+            <div className="mt-5">
+              <AccountActionButton
+                icon={Lock}
                 onClick={() => router.push("/change-password")}
-                className="mt-4 bg-[#11999e] text-white px-11 py-2 rounded cursor-pointer"
               >
                 Change Password
-              </button>
+              </AccountActionButton>
             </div>
-          </div>
-          <br />
-          <div className="w-full max-w-6xl rounded bg-white text-black mt-8">
-            <h2 className="text-md font-semibold mb-2">
-              Two-Factor Authentication
-            </h2>
-            <br />
-            <div className="text-sm mb-4">
-              Status:{" "}
-              <span
-                className={
-                  mfaEnabled
-                    ? "text-green-700 font-semibold"
-                    : "text-red-700 font-semibold"
-                }
-              >
-                {mfaEnabled ? "Enabled" : "Disabled"}
-              </span>
+          </AccountNestedCard>
+
+          <AccountNestedCard>
+            <AccountHeading
+              as="h3"
+              icon={Shield}
+              title="Two-Factor Authentication"
+            />
+            <div className="grid grid-cols-1 gap-x-6 gap-y-5 sm:grid-cols-2">
+              <OutlinedField
+                label="Status"
+                value={mfaEnabled ? "Enabled" : "Disabled"}
+              />
             </div>
 
             {mfaErr && (
-              <div className="mb-3 text-sm text-red-700">{mfaErr}</div>
+              <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+                {mfaErr}
+              </div>
             )}
             {mfaMsg && (
-              <div className="mb-3 text-sm text-green-700">{mfaMsg}</div>
+              <div className="mt-4 rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-sm text-green-700">
+                {mfaMsg}
+              </div>
             )}
-            <br />
+
             {!mfaEnabled && (
-              <>
-                <button
+              <div className="mt-5">
+                <AccountActionButton
+                  icon={Shield}
                   disabled={mfaBusy}
                   onClick={startMfaSetup}
-                  className="bg-[#11999e] text-white px-4 py-2 rounded cursor-pointer disabled:opacity-50"
                 >
                   Set up 2FA (Authenticator App Required)
-                </button>
+                </AccountActionButton>
 
                 {mfaQr && (
-                  <div className="mt-4 grid grid-cols-2 gap-6 items-start">
+                  <div className="mt-5 grid grid-cols-1 items-start gap-6 md:grid-cols-2">
                     <div>
-                      <div className="text-sm font-semibold mb-2">
+                      <p className="mb-3 text-sm font-medium text-gray-800">
                         Scan this QR code
-                      </div>
+                      </p>
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={mfaQr}
                         alt="MFA QR code"
-                        className="border p-2 bg-white w-64 h-64"
+                        className="h-64 w-64 rounded-md border border-gray-300 bg-white p-2"
                       />
-                      <div className="text-xs text-gray-600 mt-2">
+                      <p className="mt-2 text-xs text-gray-500">
                         If you can&apos;t scan, your authenticator can also
                         accept an otpauth URI.
-                      </div>
-                      <div className="text-xs break-all text-gray-600">
+                      </p>
+                      <p className="mt-1 break-all text-xs text-gray-500">
                         {mfaOtpAuth}
-                      </div>
+                      </p>
                     </div>
 
                     <div>
-                      <div className="text-sm font-semibold mb-2">
-                        Enter the 6-digit code
-                      </div>
-                      <input
-                        value={mfaCode}
-                        onChange={(e) => setMfaCode(e.target.value)}
-                        placeholder="123456"
-                        className="border p-2 w-full"
-                        inputMode="numeric"
-                        autoComplete="one-time-code"
+                      <OutlinedField
+                        label="6-digit code"
+                        editing
+                        inputProps={{
+                          value: mfaCode,
+                          onChange: (e) => setMfaCode(e.target.value),
+                          placeholder: "123456",
+                          inputMode: "numeric",
+                          autoComplete: "one-time-code",
+                        }}
                       />
-                      <button
-                        disabled={mfaBusy || !mfaCode.trim()}
-                        onClick={enableMfa}
-                        className="mt-3 bg-green-600 text-white px-4 py-2 rounded cursor-pointer disabled:opacity-50"
-                      >
-                        Enable 2FA
-                      </button>
+                      <div className="mt-4">
+                        <AccountActionButton
+                          tone="success"
+                          showChevron={false}
+                          disabled={mfaBusy || !mfaCode.trim()}
+                          onClick={enableMfa}
+                        >
+                          Enable 2FA
+                        </AccountActionButton>
+                      </div>
                     </div>
                   </div>
                 )}
-              </>
+              </div>
             )}
 
             {mfaEnabled && (
-              <div className="max-w-md">
-                <div className="text-sm mb-2">
+              <div className="mt-5 max-w-md">
+                <p className="mb-4 text-sm text-gray-600">
                   To disable 2FA, confirm with a current 6-digit authenticator
                   code:
-                </div>
-                <input
-                  value={mfaCode}
-                  onChange={(e) => setMfaCode(e.target.value)}
-                  placeholder="123456"
-                  className="border p-2 w-full"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
+                </p>
+                <OutlinedField
+                  label="6-digit code"
+                  editing
+                  inputProps={{
+                    value: mfaCode,
+                    onChange: (e) => setMfaCode(e.target.value),
+                    placeholder: "123456",
+                    inputMode: "numeric",
+                    autoComplete: "one-time-code",
+                  }}
                 />
-                <button
-                  disabled={mfaBusy || !mfaCode.trim()}
-                  onClick={disableMfa}
-                  className="mt-3 bg-red-600 text-white px-4 py-2 rounded cursor-pointer disabled:opacity-50"
-                >
-                  Disable 2FA
-                </button>
+                <div className="mt-4">
+                  <AccountActionButton
+                    tone="danger"
+                    showChevron={false}
+                    disabled={mfaBusy || !mfaCode.trim()}
+                    onClick={disableMfa}
+                  >
+                    Disable 2FA
+                  </AccountActionButton>
+                </div>
               </div>
             )}
+
             {recoveryCodes.length > 0 && (
-              <div className="mt-4 p-4 border rounded bg-gray-50">
-                <div className="font-semibold mb-2">
+              <div className="mt-5 rounded-xl border border-gray-200 bg-gray-50 p-4">
+                <p className="mb-2 font-semibold text-gray-800">
                   Recovery codes (save these now)
-                </div>
-                <div className="text-sm text-gray-700 mb-2">
+                </p>
+                <p className="mb-3 text-sm text-gray-600">
                   Each code can be used once if you can&apos;t access your
                   authenticator app. They won&apos;t be shown again.
-                </div>
-                <pre className="text-sm whitespace-pre-wrap">
+                </p>
+                <pre className="whitespace-pre-wrap text-sm text-gray-800">
                   {recoveryCodes.join("\n")}
                 </pre>
-                <button
-                  className="mt-3 bg-[#11999e] text-white px-4 py-2 rounded"
-                  onClick={async () => {
-                    await navigator.clipboard.writeText(
-                      recoveryCodes.join("\n"),
-                    );
-                    alert("Copied recovery codes to clipboard.");
-                  }}
-                >
-                  Copy recovery codes
-                </button>
+                <div className="mt-4">
+                  <AccountActionButton
+                    onClick={async () => {
+                      await navigator.clipboard.writeText(
+                        recoveryCodes.join("\n"),
+                      );
+                      alert("Copied recovery codes to clipboard.");
+                    }}
+                  >
+                    Copy recovery codes
+                  </AccountActionButton>
+                </div>
               </div>
             )}
-          </div>
+          </AccountNestedCard>
         </div>
       </div>
 
-      <br />
       {/* Notifications */}
-      <div className="w-full max-w-6xl p-6 rounded shadow-2xl bg-white text-black">
+      <div className="w-full rounded-2xl bg-white p-6 text-black shadow-[0_16px_44px_rgba(17,153,158,0.22)] ring-1 ring-black/10">
         <h2 className="text-2xl font-semibold mb-4">
           Notification Preferences
         </h2>
@@ -1012,98 +1162,35 @@ export default function Account() {
         </h4>
         <br />
         <div className="flex flex-col gap-4">
-          {/* 0) all-notifications */}
-          <label
-            htmlFor="pref-all-notifications"
-            className="inline-flex items-center cursor-pointer"
+          <PrefSwitch
+            id="pref-all-notifications"
+            checked={hasPref("all-notifications")}
+            onChange={(e) => setPref("all-notifications", e.target.checked)}
           >
-            <input
-              id="pref-all-notifications"
-              type="checkbox"
-              className="sr-only"
-              checked={hasPref("all-notifications")}
-              onChange={(e) => setPref("all-notifications", e.target.checked)}
-            />
-            <div
-              className={`relative w-11 h-6 rounded-full transition-colors ${
-                hasPref("all-notifications") ? "bg-green-600" : "bg-gray-700"
-              }`}
-            >
-              <div
-                className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
-                  hasPref("all-notifications") ? "translate-x-full" : ""
-                }`}
-              />
-            </div>
-            <span className="ms-3 text-sm text-black dark:text-black">
-              Company-wide notifications{" "}
-              <NarrowTooltip tooltipText="When enabled, you will receive automatic notifications for all pending LEXIFY Requests across your company, including those of other users and your own." />
-            </span>
-          </label>
-          {/* 1) No qualifying offers */}
-          <label
-            htmlFor="pref-no_offers"
-            className="inline-flex items-center cursor-pointer"
+            Company-wide notifications{" "}
+            <NarrowTooltip tooltipText="When enabled, you will receive automatic notifications for all pending LEXIFY Requests across your company, including those of other users and your own." />
+          </PrefSwitch>
+          <PrefSwitch
+            id="pref-no_offers"
+            checked={hasPref("no_offers")}
+            onChange={(e) => setPref("no_offers", e.target.checked)}
           >
-            <input
-              id="pref-no_offers"
-              type="checkbox"
-              className="sr-only"
-              checked={hasPref("no_offers")}
-              onChange={(e) => setPref("no_offers", e.target.checked)}
-            />
-            <div
-              className={`relative w-11 h-6 rounded-full transition-colors ${
-                hasPref("no_offers") ? "bg-green-600" : "bg-gray-700"
-              }`}
-            >
-              <div
-                className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
-                  hasPref("no_offers") ? "translate-x-full" : ""
-                }`}
-              />
-            </div>
-            <span className="ms-3 text-sm text-black dark:text-black">
-              My LEXIFY Request expires and I have not received any offers
-            </span>
-          </label>
-          {/* 3) Pending offer selection (manual) */}
-          <label
-            htmlFor="pref-pending_offer_selection"
-            className="inline-flex items-center cursor-pointer"
+            My LEXIFY Request expires and I have not received any offers
+          </PrefSwitch>
+          <PrefSwitch
+            id="pref-pending_offer_selection"
+            checked={hasPref("pending_offer_selection")}
+            onChange={(e) =>
+              setPref("pending_offer_selection", e.target.checked)
+            }
           >
-            <input
-              id="pref-pending_offer_selection"
-              type="checkbox"
-              className="sr-only"
-              checked={hasPref("pending_offer_selection")}
-              onChange={(e) =>
-                setPref("pending_offer_selection", e.target.checked)
-              }
-            />
-            <div
-              className={`relative w-11 h-6 rounded-full transition-colors ${
-                hasPref("pending_offer_selection")
-                  ? "bg-green-600"
-                  : "bg-gray-700"
-              }`}
-            >
-              <div
-                className={`absolute top-[2px] left-[2px] bg-white border border-gray-300 rounded-full h-5 w-5 transition-transform ${
-                  hasPref("pending_offer_selection") ? "translate-x-full" : ""
-                }`}
-              />
-            </div>
-            <span className="ms-3 text-sm text-black dark:text-black">
-              My LEXIFY Request expires and I need to select the winning service
-              provider from the received offers.{" "}
-            </span>
-          </label>
+            My LEXIFY Request expires and I need to select the winning service
+            provider from the received offers.
+          </PrefSwitch>
         </div>
       </div>
-      <br />
       {/* Blocked Lexify Service Providers */}
-      <div className="w-full max-w-6xl p-6 rounded shadow-2xl bg-white text-black">
+      <div className="w-full rounded-2xl bg-white p-6 text-black shadow-[0_16px_44px_rgba(17,153,158,0.22)] ring-1 ring-black/10">
         <h2 className="text-2xl font-semibold mb-4">
           Legal Service Provider Management
         </h2>
@@ -1111,53 +1198,21 @@ export default function Account() {
           Blocked Legal Service Providers
         </h4>
         <h4 className="text-md">
-          Have you had a negative experience with a specific legal service
-          provider? Don&apos;t worry - you can block that service provider from
-          seeing any LEXIFY Requests you submit. Simply enter the name of the
-          legal service provider in the search field below, click the name of
-          the service provider and then click &quot;Block Service
-          Provider&quot;. If you later want to unblock any previously blocked
-          legal service provider, just click the “Unblock Service Provider”
-          button next to the name of the service provider to remove it from the
-          list of blocked legal service providers.{" "}
-          <NarrowTooltip tooltipText="If you do not find a specific legal service provider when entering its name below, that legal service provider is not yet a registered user of LEXIFY. " />
+          If there is a firm you do not want to work with, for any reason, you
+          can block it from seeing your LEXIFY Requests. Blocked firms will not
+          see any Request you submit and cannot submit offers. <br />
+          <br />
+          To block a firm, click &quot;Block Service Providers&quot; and select
+          one or more firms from the list. Blocking can be removed at any
+          time.{" "}
         </h4>
         <br />
-        <input
-          type="text"
-          className="border border-lg rounded bg-[#11999e] p-2 w-full"
-          placeholder="Search by legal service provider name..."
-          value={bpQuery}
-          onChange={(e) => searchProviders(e.target.value)}
-        />
-        {/* Results dropdown */}
-        {bpQuery && (
-          <div className="border mt-2 max-h-56 overflow-auto bg-white">
-            {bpLoading ? (
-              <div className="p-2 text-sm text-gray-500">Searching…</div>
-            ) : bpResults.length === 0 ? (
-              <div className="p-2 text-sm text-gray-500">
-                No matching provider found.
-              </div>
-            ) : (
-              bpResults.map((r) => (
-                <ResultRow
-                  key={String(r.userId)}
-                  item={r}
-                  isSelected={bpSelected?.userId === r.userId}
-                  onSelect={setBpSelected}
-                />
-              ))
-            )}
-          </div>
-        )}
-        <br />
         <button
-          className="mt-3 bg-[#11999e] text-white px-4 py-2 rounded cursor-pointer disabled:opacity-50"
-          onClick={blockSelectedProvider}
-          disabled={!bpSelected}
+          className="bg-[#11999e] text-white px-4 py-2 rounded-xl cursor-pointer disabled:opacity-50"
+          onClick={openBlockedPicker}
+          disabled={bpBusy}
         >
-          Block Service Provider
+          Block Service Providers
         </button>
 
         {/* Blocked list table */}
@@ -1172,9 +1227,9 @@ export default function Account() {
           ) : (
             <table className="w-full border border-gray-300 text-sm">
               <thead className="bg-gray-200">
-                <tr className="bg-[#3a3a3c] text-white">
-                  <th className="border p-2 text-left">
-                    Legal Service Provider Company Name
+                <tr className="bg-gray-200 text-gray-700">
+                  <th className="border p-2 text-center">
+                    Service Provider Name
                   </th>
                   <th className="border p-2">Unblock Service Provider</th>
                 </tr>
@@ -1182,7 +1237,7 @@ export default function Account() {
               <tbody>
                 {blockedProviders.map((name) => (
                   <tr key={name}>
-                    <td className="border p-2">{name}</td>
+                    <td className="border p-2 text-center">{name}</td>
                     <td className="border p-2 text-center">
                       <button
                         className="bg-green-600 text-white px-3 py-1 rounded cursor-pointer"
@@ -1204,83 +1259,23 @@ export default function Account() {
           Preferred Legal Service Providers
         </h4>
         <h4 className="text-md">
-          Do you have one or more legal service providers that you would like to
-          be able to see your LEXIFY Requests even when they don&apos;t meet the
-          criteria of a specific request (for example, if they are a smaller law
-          firm than what you normally require)? Not a problem! You can designate
-          any legal service provider as a preferred provider, allowing them to
-          review all your LEXIFY Requests in the selected areas of law. Simply
-          enter the provider&apos;s name in the search field below, click their
-          name, select the areas of law you want them to have preferred provider
-          status in, and then click &quot;Assign Preferred Status.&quot; You can
-          edit a provider&apos;s preferred status using the &quot;Select Areas
-          of Law&quot; button (remember to click &quot;Save&quot; afterward). If
-          you later want to remove the preferred provider status entirely, just
-          click the &quot;Unassign Preferred Status&quot; button next to the
-          provider&apos;s name.{" "}
-          <NarrowTooltip tooltipText="If you do not find a specific legal service provider when entering its name below, that legal service provider is not yet a registered user of LEXIFY. " />
+          If you want a specific firm to see your LEXIFY Requests even when it
+          does not meet the criteria you have set — a smaller firm than you
+          normally require, for example — you can give it preferred status. A
+          preferred firm will see all your Requests in the practice areas you
+          select, regardless of your other criteria. <br /> <br /> To give a
+          firm preferred status, click &quot;Assign Preferred Provider&quot;,
+          select the firm, choose the relevant practice areas and click
+          &quot;Assign Preferred Status&quot;. You can change the practice areas
+          or remove the preferred status at any time.{" "}
         </h4>
         <br />
-        <input
-          type="text"
-          className="border border-lg rounded bg-[#11999e] p-2 w-full"
-          placeholder="Search by legal service provider name..."
-          value={ppQuery}
-          onChange={(e) => searchPreferredProviders(e.target.value)}
-        />
-        {/* Results dropdown */}
-        {ppQuery && (
-          <div className="border mt-2 max-h-56 overflow-auto bg-white">
-            {ppLoading ? (
-              <div className="p-2 text-sm text-gray-500">Searching…</div>
-            ) : ppResults.length === 0 ? (
-              <div className="p-2 text-sm text-gray-500">
-                No matching provider found.
-              </div>
-            ) : (
-              ppResults.map((r) => (
-                <ResultRow
-                  key={String(r.userId)}
-                  item={r}
-                  isSelected={ppSelected?.userId === r.userId}
-                  onSelect={setPpSelected}
-                />
-              ))
-            )}
-          </div>
-        )}
-        <br />
-        {/* Tickbox area selection */}
-        {ppSelected && (
-          <div className="mt-3 p-2 border bg-gray-50">
-            <h4 className="font-semibold mb-2">Select areas of law:</h4>
-            <div className="grid grid-cols-2 gap-2">
-              {AREAS_OF_LAW.map((area) => (
-                <label key={area} className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    checked={selectedAreas.includes(area)}
-                    onChange={(e) => {
-                      if (e.target.checked) {
-                        setSelectedAreas((xs) => [...xs, area]);
-                      } else {
-                        setSelectedAreas((xs) => xs.filter((a) => a !== area));
-                      }
-                    }}
-                  />
-                  <span>{area}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-        )}
-
         <button
-          className="mt-3 bg-[#11999e] text-white px-4 py-2 rounded cursor-pointer disabled:opacity-50"
-          onClick={assignPreferredProvider}
-          disabled={!ppSelected || selectedAreas.length === 0}
+          className="bg-[#11999e] text-white px-4 py-2 rounded-xl cursor-pointer disabled:opacity-50"
+          onClick={openPreferredPicker}
+          disabled={ppBusy}
         >
-          Assign Preferred Status
+          Assign Preferred Provider
         </button>
 
         <div className="mt-6">
@@ -1294,14 +1289,14 @@ export default function Account() {
           ) : (
             <table className="w-full border border-gray-300 text-sm">
               <thead className="bg-gray-200">
-                <tr className="bg-[#3a3a3c] text-white">
+                <tr className="bg-gray-200 text-gray-700">
                   <th className="border p-2 text-center">
-                    Provider Company Name
+                    Service Provider Name
                   </th>
                   <th className="border p-2 text-center">
-                    Preferred Areas of Law
+                    Preferred Provider in
                   </th>
-                  <th className="border p-2">Select Areas of Law</th>
+                  <th className="border p-2">Select Practice Areas</th>
                   <th className="border p-2">Unassign Preferred Status</th>
                 </tr>
               </thead>
@@ -1310,7 +1305,9 @@ export default function Account() {
                   const isEditing = editingProvider === p.companyName;
                   return (
                     <tr key={p.companyName}>
-                      <td className="border p-2">{p.companyName}</td>
+                      <td className="border p-2 text-center">
+                        {p.companyName}
+                      </td>
 
                       <td className="border p-2">
                         {isEditing ? (
@@ -1360,7 +1357,7 @@ export default function Account() {
                               className="bg-blue-600 text-white px-3 py-1 rounded cursor-pointer"
                               onClick={() => startEdit(p)}
                             >
-                              Select Areas of Law
+                              Select
                             </button>
                           </div>
                         )}
@@ -1372,7 +1369,7 @@ export default function Account() {
                             unassignPreferredProvider(p.companyName)
                           }
                         >
-                          Unassign Preferred Status
+                          Unassign
                         </button>
                       </td>
                     </tr>
@@ -1386,102 +1383,463 @@ export default function Account() {
         <br />
         <hr />
         <br />
-        {/* Legal Panel Service Providers */}
-        <h2 className="text-md font-semibold">Legal Panel Service Providers</h2>
+        {/* Legal Panel Groups */}
+        <h2 className="text-md font-semibold">Legal Panels</h2>
         <h4 className="text-md">
-          Do you prefer to buy all your legal services on LEXIFY from a fixed
-          group of specific legal service providers? This is easy to do: you can
-          designate such legal service providers to be legal panel service
-          providers. Thereafter, only these service providers will be able to
-          review your LEXIFY Requests. To assign legal panel service provider
-          status to a specific service provider, enter the name of the relevant
-          legal service provider in the search field below, click the name of
-          the service provider and then click &quot;Assign Legal Panel
-          Status&quot;. If you later want to remove the legal panel service
-          provider status from a legal service provider, just click the
-          &quot;Unassign Legal Panel Status&quot; button next to the name of
-          that legal service provider. Note that as long as even one service
-          provider has the legal panel service provider status active, no
-          service provider without the legal panel service provider status will
-          be able to review any of your pending LEXIFY Requests.{" "}
-          <NarrowTooltip tooltipText="If you do not find a specific legal service provider when entering its name below, that legal service provider is not yet a registered user of LEXIFY. " />
+          If you prefer to buy legal services only from a fixed group of firms,
+          you can save them as a legal panel. Panels are practice-specific, so
+          you can keep separate panels for different practice areas — M&A,
+          banking, employment, or whatever fits how you buy.
+        </h4>
+        <div className="mt-4 flex gap-3 rounded-2xl border border-[#11999e]/35 bg-[#e7f6f7] p-4">
+          <Info
+            className="mt-0.5 h-5 w-5 shrink-0 text-[#11999e]"
+            strokeWidth={2}
+            aria-hidden="true"
+          />
+          <p className="text-sm leading-relaxed text-gray-700">
+            Saving a panel does not apply it to individual LEXIFY Requests. You
+            choose for each LEXIFY Request whether to restrict it to one of your
+            saved panels or to leave it open to other qualifying firms. If you
+            apply a panel when preparing a LEXIFY Request, only the firms on the
+            selected panel will see that Request and be able to submit offers.
+            Note that a panel overrides all your other settings, including any
+            blocked and preferred status of individual firms.
+          </p>
+        </div>
+        <h4 className="mt-4 text-md">
+          To build a panel, name it and add the firms you would like to include.
+          Panels can be edited or deleted at any time.
         </h4>
         <br />
-        <input
-          type="text"
-          className="border border-lg rounded bg-[#11999e] p-2 w-full"
-          placeholder="Search by legal service provider name..."
-          value={lpQuery}
-          onChange={(e) => searchLegalPanel(e.target.value)}
-        />
-
-        {lpQuery && (
-          <div className="border mt-2 max-h-56 overflow-auto bg-white">
-            {lpLoading ? (
-              <div className="p-2 text-sm text-gray-500">Searching…</div>
-            ) : lpResults.length === 0 ? (
-              <div className="p-2 text-sm text-gray-500">
-                No matching provider found.
-              </div>
-            ) : (
-              lpResults.map((r) => (
-                <ResultRow
-                  key={String(r.userId)}
-                  item={r}
-                  isSelected={lpSelected?.userId === r.userId}
-                  onSelect={setLpSelected}
-                />
-              ))
-            )}
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <div className="flex-1">
+            <label className="mb-1 block text-sm font-medium text-gray-700">
+              New legal panel name
+            </label>
+            <input
+              type="text"
+              className="w-full rounded-lg border border-gray-200 bg-white p-2 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#11999e]/30"
+              placeholder="e.g. M&A Panel"
+              value={newPanelName}
+              onChange={(e) => setNewPanelName(e.target.value)}
+            />
           </div>
-        )}
-
-        <button
-          className="mt-3 bg-[#11999e] text-white px-4 py-2 rounded cursor-pointer disabled:opacity-50"
-          onClick={addToLegalPanel}
-          disabled={!lpSelected}
-        >
-          Assign Legal Panel Status
-        </button>
-
-        <div className="mt-6">
-          <h3 className="text-md font-semibold mb-2">Current Panel</h3>
-          {legalPanelProviders.length === 0 ? (
+          <button
+            className="bg-[#11999e] text-white px-4 py-2 rounded-xl cursor-pointer disabled:opacity-50"
+            onClick={createLegalPanelGroup}
+            disabled={lpBusy || !newPanelName.trim()}
+          >
+            Create Legal Panel
+          </button>
+        </div>
+        <br />
+        <div className="mt-6 space-y-6">
+          <h3 className="text-md font-semibold">Your Legal Panels</h3>
+          {legalPanelGroups.length === 0 ? (
             <div className="text-sm text-gray-500">
-              You have not assigned any legal panel service providers.
+              You have not created any legal panels yet.
             </div>
           ) : (
-            <table className="w-full border border-gray-300 text-sm">
-              <thead className="bg-gray-200">
-                <tr className="bg-[#3a3a3c] text-white">
-                  <th className="border p-2 text-left">
-                    Provider Company Name
-                  </th>
-                  <th className="border p-2">Unassign Legal Panel Status</th>
-                </tr>
-              </thead>
-              <tbody>
-                {legalPanelProviders.map((name) => (
-                  <tr key={name}>
-                    <td className="border p-2">{name}</td>
-                    <td className="border p-2 text-center">
+            legalPanelGroups.map((group) => (
+              <div
+                key={group.id}
+                className="rounded-lg border-2 border-gray-300 p-4"
+              >
+                <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  {renamingGroupId === group.id ? (
+                    <div className="flex flex-1 items-center gap-2">
+                      <input
+                        type="text"
+                        className="w-full rounded-lg border border-gray-200 bg-white p-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#11999e]/30"
+                        value={renameValue}
+                        onChange={(e) => setRenameValue(e.target.value)}
+                      />
                       <button
-                        className="bg-red-600 text-white px-3 py-1 rounded cursor-pointer"
-                        onClick={() => removeFromLegalPanel(name)}
+                        className="inline-flex items-center gap-1 rounded bg-[#11999e] px-3 py-1 text-white cursor-pointer disabled:opacity-50"
+                        onClick={() => saveRenameGroup(group.id)}
+                        disabled={lpBusy}
                       >
-                        Unassign Legal Panel Status
+                        <Save size={14} />
+                        Save
                       </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                      <button
+                        className="rounded border px-3 py-1 cursor-pointer"
+                        onClick={() => {
+                          setRenamingGroupId(null);
+                          setRenameValue("");
+                        }}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <h3 className="text-md font-semibold">{group.name}</h3>
+                  )}
+                  {renamingGroupId !== group.id ? (
+                    <div className="flex flex-wrap gap-2">
+                      <button
+                        className="inline-flex cursor-pointer items-center justify-center rounded-xl bg-[#11999e] px-4 py-2 text-sm font-medium text-white transition-colors duration-200 hover:bg-[#0e8488] disabled:opacity-50"
+                        onClick={() => openLegalPanelPicker(group)}
+                        disabled={lpBusy}
+                      >
+                        Add Service Providers
+                      </button>
+                      <button
+                        className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border-2 border-[#11999e] bg-white px-4 py-2 text-sm font-medium text-[#11999e] transition-colors duration-200 hover:bg-[#11999e] hover:text-white"
+                        onClick={() => startRenameGroup(group)}
+                      >
+                        <Pencil size={14} />
+                        Rename
+                      </button>
+                      <button
+                        className="inline-flex cursor-pointer items-center justify-center gap-1.5 rounded-xl border-2 border-red-300 bg-red-100 px-4 py-2 text-sm font-medium text-red-500 transition-colors duration-200 hover:bg-red-500 hover:text-white disabled:opacity-50"
+                        onClick={() => deleteLegalPanelGroup(group)}
+                        disabled={lpBusy}
+                      >
+                        <Trash2 size={14} />
+                        Delete Panel
+                      </button>
+                    </div>
+                  ) : null}
+                </div>
+                {(group.providers || []).length === 0 ? (
+                  <div className="text-sm text-gray-500">
+                    This panel does not have any providers yet.
+                  </div>
+                ) : (
+                  <table className="w-full border border-gray-300 text-sm">
+                    <thead className="bg-gray-200">
+                      <tr className="bg-gray-200 text-gray-700">
+                        <th className="border p-2 text-left">
+                          Service Provider Name
+                        </th>
+                        <th className="border p-2">Remove from Legal Panel</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {group.providers.map((name) => (
+                        <tr key={`${group.id}-${name}`}>
+                          <td className="border p-2">{name}</td>
+                          <td className="border p-2 text-center">
+                            <button
+                              className="inline-flex cursor-pointer items-center justify-center rounded-xl border-2 border-red-400 bg-white px-4 py-1.5 text-sm font-medium text-red-500 transition-colors duration-200 hover:bg-red-500 hover:text-white disabled:opacity-50"
+                              onClick={() =>
+                                removeFromLegalPanelGroup(group.id, name)
+                              }
+                              disabled={lpBusy}
+                            >
+                              Remove
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            ))
           )}
         </div>
       </div>
+      {bpPickerOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) closeBlockedPicker();
+          }}
+        >
+          <div className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded bg-white text-black shadow-2xl">
+            <div className="flex items-center justify-between border-b p-4">
+              <h3 className="text-lg font-semibold">
+                Block legal service providers{" "}
+              </h3>
+              <button
+                type="button"
+                onClick={closeBlockedPicker}
+                className="px-3 py-1 rounded border cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="flex min-h-0 flex-1 flex-col p-4">
+              <input
+                type="text"
+                className="mb-3 w-full rounded-lg border border-gray-200 bg-white p-2 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#11999e]/30"
+                placeholder="Search providers by name..."
+                value={bpPickerFilter}
+                onChange={(e) => setBpPickerFilter(e.target.value)}
+              />
+              {bpProvidersLoading ? (
+                <div className="text-sm text-gray-500">Loading providers…</div>
+              ) : bpAvailableProviders.length === 0 ? (
+                <div className="text-sm text-gray-600">
+                  {bpAllProviders.length === 0
+                    ? "No legal service providers are available."
+                    : bpFilter
+                      ? "No matching providers found."
+                      : "All available providers are already blocked."}
+                </div>
+              ) : (
+                <div className="max-h-[50vh] overflow-auto rounded border border-gray-300">
+                  {bpAvailableProviders.map((provider) => {
+                    const checked = bpPickedNames.some(
+                      (name) =>
+                        name.toLowerCase() ===
+                        provider.companyName.toLowerCase(),
+                    );
+                    return (
+                      <label
+                        key={String(provider.companyId)}
+                        className="flex cursor-pointer items-center gap-3 border-b border-gray-200 px-3 py-2 last:border-b-0 hover:bg-[#f3f8f8]"
+                      >
+                        <input
+                          type="checkbox"
+                          className="accent-[#11999e]"
+                          checked={checked}
+                          onChange={(e) =>
+                            toggleBlockedPick(
+                              provider.companyName,
+                              e.target.checked,
+                            )
+                          }
+                        />
+                        <span className="text-sm">{provider.companyName}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between gap-3 border-t p-4">
+              <span className="text-sm text-gray-600">
+                {bpPickedNames.length} selected
+              </span>
+              <button
+                type="button"
+                className="bg-[#11999e] text-white px-4 py-2 rounded-xl cursor-pointer disabled:opacity-50"
+                onClick={blockSelectedProviders}
+                disabled={bpBusy || bpPickedNames.length === 0}
+              >
+                Block Selected Providers
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {ppPickerOpen && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) closePreferredPicker();
+          }}
+        >
+          <div className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded bg-white text-black shadow-2xl">
+            <div className="flex items-center justify-between border-b p-4">
+              <h3 className="text-lg font-semibold">
+                Assign preferred provider{" "}
+                <NarrowTooltip tooltipText='If a specific firm you would like to add is not in the list, it has not yet joined LEXIFY. You can invite it to join using "Invite a Law Firm" in the main menu.' />
+              </h3>
+              <button
+                type="button"
+                onClick={closePreferredPicker}
+                className="px-3 py-1 rounded border cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-auto p-4">
+              <input
+                type="text"
+                className="w-full rounded-lg border border-gray-200 bg-white p-2 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#11999e]/30"
+                placeholder="Search providers by name..."
+                value={ppPickerFilter}
+                onChange={(e) => setPpPickerFilter(e.target.value)}
+              />
+              {ppProvidersLoading ? (
+                <div className="text-sm text-gray-500">Loading providers…</div>
+              ) : ppAvailableProviders.length === 0 ? (
+                <div className="text-sm text-gray-600">
+                  {ppAllProviders.length === 0
+                    ? "No legal service providers are available."
+                    : ppFilter
+                      ? "No matching providers found."
+                      : "All available providers already have preferred status."}
+                </div>
+              ) : (
+                <div className="max-h-[32vh] overflow-auto rounded border border-gray-300">
+                  {ppAvailableProviders.map((provider) => {
+                    const selected =
+                      ppSelectedName.toLowerCase() ===
+                      provider.companyName.toLowerCase();
+                    return (
+                      <label
+                        key={String(provider.companyId)}
+                        className={`flex cursor-pointer items-center gap-3 border-b border-gray-200 px-3 py-2 last:border-b-0 hover:bg-[#f3f8f8] ${
+                          selected ? "bg-[#e6f7f7]" : ""
+                        }`}
+                      >
+                        <input
+                          type="radio"
+                          name="preferred-provider"
+                          className="accent-[#11999e]"
+                          checked={selected}
+                          onChange={() => {
+                            setPpSelectedName(provider.companyName);
+                            setSelectedAreas([]);
+                          }}
+                        />
+                        <span className="text-sm">{provider.companyName}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+
+              {ppSelectedName ? (
+                <div className="rounded border border-gray-200 bg-gray-50 p-3">
+                  <h4 className="mb-2 font-semibold">
+                    Select areas of law for {ppSelectedName}
+                  </h4>
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                    {AREAS_OF_LAW.map((area) => (
+                      <label
+                        key={area}
+                        className="flex items-center space-x-2 text-sm"
+                      >
+                        <input
+                          type="checkbox"
+                          className="accent-[#11999e]"
+                          checked={selectedAreas.includes(area)}
+                          onChange={(e) => {
+                            if (e.target.checked) {
+                              setSelectedAreas((xs) => [...xs, area]);
+                            } else {
+                              setSelectedAreas((xs) =>
+                                xs.filter((a) => a !== area),
+                              );
+                            }
+                          }}
+                        />
+                        <span>{area}</span>
+                      </label>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
+            <div className="flex items-center justify-end gap-3 border-t p-4">
+              <button
+                type="button"
+                className="bg-[#11999e] text-white px-4 py-2 rounded-xl cursor-pointer disabled:opacity-50"
+                onClick={assignPreferredProvider}
+                disabled={
+                  ppBusy || !ppSelectedName || selectedAreas.length === 0
+                }
+              >
+                Assign Preferred Status
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {lpPickerGroupId && (
+        <div
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4"
+          onMouseDown={(e) => {
+            if (e.target === e.currentTarget) closeLegalPanelPicker();
+          }}
+        >
+          <div className="flex max-h-[85vh] w-full max-w-2xl flex-col rounded bg-white text-black shadow-2xl">
+            <div className="flex items-center justify-between border-b p-4">
+              <h3 className="text-lg font-semibold">
+                {lpPickerGroup
+                  ? `Add providers to "${lpPickerGroup.name}"`
+                  : "Add providers to group"}{" "}
+                <NarrowTooltip tooltipText='If a specific firm you would like to add is not in the list, it has not yet joined LEXIFY. You can invite it to join using "Invite a Law Firm" in the main menu.' />
+              </h3>
+              <button
+                type="button"
+                onClick={closeLegalPanelPicker}
+                className="px-3 py-1 rounded border cursor-pointer"
+              >
+                Close
+              </button>
+            </div>
+
+            <div className="flex min-h-0 flex-1 flex-col p-4">
+              <input
+                type="text"
+                className="mb-3 w-full rounded-lg border border-gray-200 bg-white p-2 text-gray-900 placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-[#11999e]/30"
+                placeholder="Search providers by name..."
+                value={lpPickerFilter}
+                onChange={(e) => setLpPickerFilter(e.target.value)}
+              />
+              {lpProvidersLoading ? (
+                <div className="text-sm text-gray-500">Loading providers…</div>
+              ) : lpAvailableProviders.length === 0 ? (
+                <div className="text-sm text-gray-600">
+                  {lpAllProviders.length === 0
+                    ? "No legal service providers are available."
+                    : lpFilter
+                      ? "No matching providers found."
+                      : "All available providers are already in this group."}
+                </div>
+              ) : (
+                <div className="max-h-[50vh] overflow-auto rounded border border-gray-300">
+                  {lpAvailableProviders.map((provider) => {
+                    const checked = lpPickedNames.some(
+                      (name) =>
+                        name.toLowerCase() ===
+                        provider.companyName.toLowerCase(),
+                    );
+                    return (
+                      <label
+                        key={String(provider.companyId)}
+                        className="flex cursor-pointer items-center gap-3 border-b border-gray-200 px-3 py-2 last:border-b-0 hover:bg-[#f3f8f8]"
+                      >
+                        <input
+                          type="checkbox"
+                          className="accent-[#11999e]"
+                          checked={checked}
+                          onChange={(e) =>
+                            togglePickedProvider(
+                              provider.companyName,
+                              e.target.checked,
+                            )
+                          }
+                        />
+                        <span className="text-sm">{provider.companyName}</span>
+                      </label>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between gap-3 border-t p-4">
+              <span className="text-sm text-gray-600">
+                {lpPickedNames.length} selected
+              </span>
+              <button
+                type="button"
+                className="bg-[#11999e] text-white px-4 py-2 rounded cursor-pointer disabled:opacity-50"
+                onClick={addSelectedProvidersToGroup}
+                disabled={lpBusy || lpPickedNames.length === 0}
+              >
+                Add Selected Providers to Panel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
       {membersOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 p-4"
           onMouseDown={(e) => {
             // close if backdrop clicked
             if (e.target === e.currentTarget) closeMembersModal();
@@ -1511,7 +1869,7 @@ export default function Account() {
               ) : (
                 <table className="w-full border border-gray-300 text-sm">
                   <thead className="bg-gray-200">
-                    <tr className="bg-[#3a3a3c] text-white">
+                    <tr className="bg-gray-200 text-gray-700">
                       <th className="border p-2 text-left">Name</th>
                       <th className="border p-2 text-left">Position</th>
                       <th className="border p-2 text-left">Telephone</th>
@@ -1537,6 +1895,6 @@ export default function Account() {
           </div>
         </div>
       )}
-    </div>
+    </AppPage>
   );
 }

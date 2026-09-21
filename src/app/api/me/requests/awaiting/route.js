@@ -4,6 +4,12 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import { notifyProvidersRequestCancelled } from "@/lib/mailer";
+import {
+  getDummyAwaitingRequests,
+  isAdminRole,
+  isDummyId,
+  withAdminDummyRows,
+} from "@/lib/adminDummyCases";
 
 function hasNotificationPreference(notificationPreferences, key) {
   if (!notificationPreferences) return false;
@@ -89,24 +95,20 @@ export async function GET() {
     if (!ua?.companyId)
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
 
-    const isAdmin = ua?.role === "ADMIN";
+    const isAdmin = isAdminRole(ua?.role || session.role);
 
     const reqs = await prisma.request.findMany({
       where: {
         requestState: { in: ["ON HOLD", "CONFLICT_CHECK"] },
-        ...(isAdmin
-          ? {}
-          : {
-              OR: [
-                { clientCompanyId: ua.companyId },
-                {
-                  details: {
-                    path: ["sharedAccounts"],
-                    array_contains: [{ userPkId: Number(session.userId) }],
-                  },
-                },
-              ],
-            }),
+        OR: [
+          { clientCompanyId: ua.companyId },
+          {
+            details: {
+              path: ["sharedAccounts"],
+              array_contains: [{ userPkId: Number(session.userId) }],
+            },
+          },
+        ],
       },
       orderBy: { dateCreated: "desc" },
       select: {
@@ -203,6 +205,7 @@ export async function GET() {
             ? o.providerCompany.providerIndividualRating.length
             : 0,
           providerWebsite: o.providerCompany?.companyWebsite || "",
+          providerCompanyWebsite: o.providerCompany?.companyWebsite || "",
           providerPracticalRatings:
             o.providerCompany?.providerPracticalRatings ?? [],
           providerReferenceFiles: Array.isArray(o.providerReferenceFiles)
@@ -210,8 +213,7 @@ export async function GET() {
             : [],
         }))
         .filter((o) => typeof o.offeredPrice === "number")
-        .sort((a, b) => a.offeredPrice - b.offeredPrice)
-        .slice(0, 5);
+        .sort((a, b) => a.offeredPrice - b.offeredPrice);
 
       const canExtend =
         r.requestState === "ON HOLD" &&
@@ -234,7 +236,9 @@ export async function GET() {
         currency: r.currency,
         primaryContactPerson: r.primaryContactPerson,
         maxPrice,
+        offers,
         topOffers: offers,
+        offerCount: offers.length,
         requestState: r.requestState,
         selectedOfferId: r.selectedOfferId?.toString?.() ?? null,
         pausedRemainingMs: r.acceptDeadlinePausedRemainingMs ?? null,
@@ -248,7 +252,15 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json(serialize({ requests: shaped }));
+    return NextResponse.json(
+      serialize({
+        requests: withAdminDummyRows(
+          isAdmin ? "ADMIN" : ua?.role,
+          getDummyAwaitingRequests(),
+          shaped,
+        ),
+      }),
+    );
   } catch (e) {
     console.error("GET /api/me/requests/awaiting failed:", e);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
@@ -272,6 +284,15 @@ export async function POST(req) {
     const requestIdRaw = body?.requestId;
     if (!requestIdRaw)
       return NextResponse.json({ error: "Missing requestId" }, { status: 400 });
+
+    if (isDummyId(requestIdRaw) && isAdminRole(session.role)) {
+      const newDeadline = new Date(Date.now() + 168 * 60 * 60 * 1000);
+      return NextResponse.json({
+        ok: true,
+        acceptDeadline: newDeadline.toISOString(),
+        acceptDeadlineExtendedAt: 24,
+      });
+    }
 
     const requestId = BigInt(requestIdRaw);
     const now = new Date();
@@ -363,6 +384,14 @@ export async function DELETE(req) {
 
     if (!requestIdRaw) {
       return NextResponse.json({ error: "Missing requestId" }, { status: 400 });
+    }
+
+    if (isDummyId(requestIdRaw) && isAdminRole(session.role)) {
+      return NextResponse.json({
+        ok: true,
+        deletedRequestId: String(requestIdRaw),
+        notifiedProviders: 0,
+      });
     }
 
     const requestId = BigInt(requestIdRaw);

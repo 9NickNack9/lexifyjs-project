@@ -3,8 +3,7 @@ import { getServerSession } from "next-auth";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
-
-const MIN_LEN = 8;
+import { validateNewPassword } from "@/lib/password";
 
 export async function POST(req) {
   try {
@@ -29,11 +28,10 @@ export async function POST(req) {
         { status: 400 },
       );
     }
-    if (newPassword.length < MIN_LEN) {
-      return NextResponse.json(
-        { error: `New password must be at least ${MIN_LEN} characters` },
-        { status: 400 },
-      );
+
+    const passwordError = validateNewPassword(newPassword);
+    if (passwordError) {
+      return NextResponse.json({ error: passwordError }, { status: 400 });
     }
 
     const userPkId = BigInt(session.userId);

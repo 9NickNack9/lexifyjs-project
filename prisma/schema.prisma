@@ -75,6 +75,8 @@ model UserAccount {
   practicalNotificationPreferences Json    @default("[\"contracts\", \"day_to_day\", \"employment\", \"dispute_resolution\", \"m_and_a\", \"corporate_advisory\", \"data_protection\", \"compliance\", \"legal_training\", \"banking_and_finance\"]")
   blockedServiceProviders          Json    @default("[]")
   preferredLegalServiceProviders   Json    @default("[]")
+  // Legal panel groups: [{ id: string, name: string, providers: string[] }]
+  // Legacy: string[] of company names (normalized to a default group on read)
   legalPanelServiceProviders       Json    @default("[]")
   requestDrafts                    Json    @default("[]")
   winningOfferSelection            String  @default("manual")
@@ -94,6 +96,7 @@ model UserAccount {
   offers            Offer[]         @relation("UserAccountOffers")
   clientContracts   Contract[]      @relation("UserAccountClientContracts")
   providerContracts Contract[]      @relation("UserAccountProviderContracts")
+  uploadedInvoices  Invoice[]       @relation("InvoiceUploadedBy")
   trustedDevices    TrustedDevice[]
   sentProviderInvites ProviderInvite[] @relation("SentProviderInvites")
 
@@ -172,6 +175,10 @@ model Request {
   providerSize          String
   providerCompanyAge    String
   providerMinimumRating String
+  // Snapshot of the legal panel group used for this request (empty = criteria-based)
+  legalPanelGroupId     String?
+  legalPanelGroupName   String?
+  legalPanelProviders   Json     @default("[]")
   currency              String
   paymentRate           String
   advanceRetainerFee    String
@@ -243,6 +250,7 @@ model Contract {
   contractDate      DateTime @default(now())
   contractPrice     Decimal  @db.Decimal
   contractPdfFile   Json     @default("[]")
+  assignmentStatus  String   @default("Ongoing")
   clientCompanyId   BigInt?  @db.BigInt
   providerCompanyId BigInt?  @db.BigInt
 
@@ -253,11 +261,37 @@ model Contract {
   providerUser    UserAccount? @relation("UserAccountProviderContracts", fields: [providerUserId], references: [userPkId], onDelete: Restrict)
   client          AppUser?     @relation("ClientContracts", fields: [clientId], references: [userId], onDelete: Cascade)
   provider        AppUser?     @relation("ProviderContracts", fields: [providerId], references: [userId], onDelete: Cascade)
+  invoices        Invoice[]
 
   @@index([clientCompanyId])
   @@index([providerCompanyId])
   @@index([clientUserId])
   @@index([providerUserId])
+}
+
+model Invoice {
+  invoiceId        BigInt @id @default(autoincrement()) @db.BigInt
+  contractId       BigInt @db.BigInt
+  uploadedByUserId BigInt @db.BigInt
+
+  invoiceNumber        String
+  documentType         String // "Invoice" | "Credit note"
+  invoiceDate          DateTime
+  periodStart          DateTime?
+  periodEnd            DateTime?
+  feesExclVat          Decimal  @db.Decimal(12, 2)
+  disbursementsExclVat Decimal  @default("0") @db.Decimal(12, 2)
+  vatAmount            Decimal? @db.Decimal(12, 2)
+  file                 Json     @default("{}")
+
+  createdAt DateTime @default(now())
+
+  contract   Contract    @relation(fields: [contractId], references: [contractId], onDelete: Cascade)
+  uploadedBy UserAccount @relation("InvoiceUploadedBy", fields: [uploadedByUserId], references: [userPkId], onDelete: Restrict)
+
+  @@index([contractId])
+  @@index([uploadedByUserId])
+  @@index([invoiceDate])
 }
 
 model PasswordResetToken {

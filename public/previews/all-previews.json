@@ -2849,7 +2849,7 @@
             "title": "Description",
             "fields": [
               {
-                "label": "Description",
+                "label": "Title/Position of the Employee with Whom We Are Negotiating",
                 "path": "description"
               }
             ]
@@ -4785,14 +4785,17 @@
         "providerCompanyAge": "Any / ≥5y / ≥10y / ≥25y",
         "providerMinimumRating": "Any / 3 / 4",
         "currency": "Euro (€) | …",
-        "paymentRate": "Hourly Rate",
-        "advanceRetainerFee": "No | 10% | 25% | 50%",
+        "paymentRate": "Blended Hourly Rate … | Lump sum fixed price.",
+        "advanceRetainerFee": "No | hourly multiplier | % of lump sum",
         "invoiceType": "Monthly / On completion …",
         "language": "English, …",
         "offersDeadline": "2025-10-28",
         "title": "LEXIFY Request title",
         "dateExpired": "2025-10-28",
-        "details": {}
+        "details": {
+          "maximumPrice": "number | null",
+          "pricingType": "Hourly Rate | Fixed Fee"
+        }
       }
     },
     {

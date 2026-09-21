@@ -328,38 +328,40 @@ export async function notifyProvidersAdditionalQuestionAnswered({
 
   const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
   const isEmail = (s) => typeof s === "string" && EMAIL_RE.test(s.trim());
+  const SUPPORT_EMAIL = "support@lexify.online";
 
-  // Normalize + dedupe
+  // Normalize + dedupe; never BCC Support (they are already the TO)
   const list = Array.isArray(to)
     ? Array.from(new Set(to.filter(isEmail).map((e) => e.trim())))
     : isEmail(to)
       ? [to.trim()]
       : [];
+  const bccList = list.filter(
+    (email) => email.toLowerCase() !== SUPPORT_EMAIL.toLowerCase(),
+  );
+
+  const dynamicTemplateData = {
+    requestCategory: requestCategory || null,
+    requestSubcategory: requestSubcategory ?? null,
+    assignmentType: assignmentType ?? null,
+  };
 
   // If nobody valid, still send to Support so the event is tracked
-  if (list.length === 0) {
+  if (bccList.length === 0) {
     await sendDynamicTemplateEmail({
-      to: "support@lexify.online",
+      to: SUPPORT_EMAIL,
       templateId,
-      dynamicTemplateData: {
-        requestCategory: requestCategory || null,
-        requestSubcategory: requestSubcategory ?? null,
-        assignmentType: assignmentType ?? null,
-      },
+      dynamicTemplateData,
     });
     return;
   }
 
   // Single email, TO = support, providers in BCC
   await sendDynamicTemplateEmail({
-    to: "support@lexify.online",
-    bcc: list,
+    to: SUPPORT_EMAIL,
+    bcc: bccList,
     templateId,
-    dynamicTemplateData: {
-      requestCategory: requestCategory || null,
-      requestSubcategory: requestSubcategory ?? null,
-      assignmentType: assignmentType ?? null,
-    },
+    dynamicTemplateData,
   });
 }
 
@@ -509,6 +511,42 @@ export async function notifySupportDemoRequest({
       companyType,
       turnoverRange,
       website,
+    },
+  });
+}
+
+export async function notifyPurchaserInvoiceUploaded({
+  to,
+  invoiceNumber,
+  documentType,
+  requestTitle,
+  offerTitle,
+  providerCompany,
+  purchaserCompany,
+  firstName,
+}) {
+  const templateId = "d-eac1e200e8cf444b8a3bf26fbca7c14b";
+  const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const isEmail = (s) => typeof s === "string" && EMAIL_RE.test(s.trim());
+  const list = Array.isArray(to)
+    ? Array.from(new Set(to.filter(isEmail).map((e) => e.trim())))
+    : isEmail(to)
+      ? [to.trim()]
+      : [];
+
+  if (list.length === 0) return;
+
+  await sendDynamicTemplateEmail({
+    to: list,
+    templateId,
+    dynamicTemplateData: {
+      invoiceNumber: invoiceNumber || "",
+      documentType: documentType || "",
+      requestTitle: requestTitle || "",
+      offerTitle: offerTitle || "",
+      providerCompany: providerCompany || "",
+      purchaserCompany: purchaserCompany || "",
+      firstName: firstName || "",
     },
   });
 }

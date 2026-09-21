@@ -1,11 +1,19 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
+import { Check, Clock, MessageCircle, Pencil, Send } from "lucide-react";
+import DashboardPage from "../../../components/DashboardPage";
+import { emptyCard, loadingCard } from "../../../components/tableUi";
+
+const cardClass =
+  "rounded-2xl bg-white p-6 text-gray-900 shadow-[0_8px_24px_rgba(17,153,158,0.12)] ring-1 ring-black/5";
+
+const inputClass =
+  "mt-2 w-full min-h-[110px] rounded-xl border border-gray-200 bg-white p-3 text-sm text-gray-800 outline-none placeholder:text-gray-400 focus:border-[#11999e] focus:ring-1 focus:ring-[#11999e]/30";
 
 export default function AdditionalQuestionsPage() {
   const params = useParams();
-  const router = useRouter();
   const id = params?.id;
 
   const [loading, setLoading] = useState(true);
@@ -65,7 +73,7 @@ export default function AdditionalQuestionsPage() {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ question, answer }),
-        }
+        },
       );
       const json = await res.json().catch(() => ({}));
 
@@ -117,44 +125,29 @@ export default function AdditionalQuestionsPage() {
     }));
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen p-8 flex items-center justify-center">
-        <div className="bg-white border rounded p-4 text-black">
-          Loading additional questions…
-        </div>
-      </div>
-    );
-  }
-
   const aq = request?.details?.additionalQuestions;
   const isObj = aq && typeof aq === "object" && !Array.isArray(aq);
   const questions = isObj ? Object.keys(aq) : [];
   const aqMap = isObj ? aq : {};
 
   return (
-    <div className="min-h-screen p-8 flex flex-col gap-6">
-      {/* small, non-full-width back button */}
-      <div className="mb-2 w-auto">
-        <button
-          type="button"
-          onClick={() => router.back()}
-          className="inline-flex w-auto max-w-fit px-2 py-1 text-sm rounded bg-gray-700 text-white cursor-pointer"
-        >
-          ← Back to My Dashboard
-        </button>
-      </div>
-
-      <h1 className="text-3xl font-bold mb-2">
-        Additional Information Requests for {request?.title || "LEXIFY Request"}
-      </h1>
-
-      {questions.length === 0 ? (
-        <div className="bg-white border rounded p-4 text-black">
+    <DashboardPage
+      title={`Additional Information Requests for ${request?.title || "LEXIFY Request"}`}
+      backLabel="Back to My Dashboard"
+      backHref="/archive/pending"
+    >
+      {loading ? (
+        <div className={loadingCard}>Loading additional questions…</div>
+      ) : questions.length === 0 ? (
+        <div className={emptyCard}>
           No additional questions have been submitted for this request.
         </div>
       ) : (
-        <div className="space-y-6">
+        <div className="space-y-4">
+          <p className="text-sm text-[#0f7c80]">
+            {questions.length} question{questions.length === 1 ? "" : "s"}
+          </p>
+
           {questions.map((q) => {
             // Persisted answer from the request in DB
             const persistedRaw = aqMap[q];
@@ -172,34 +165,63 @@ export default function AdditionalQuestionsPage() {
               answers[q] !== undefined ? answers[q] : persistedAnswer;
 
             return (
-              <div
-                key={q}
-                className="bg-white border rounded p-4 text-black flex flex-col gap-2"
-              >
-                <div className="font-semibold">Information Request</div>
-                <div className="mb-2 whitespace-pre-wrap">{q}</div>
+              <div key={q} className={cardClass}>
+                <div className="flex items-start justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <MessageCircle
+                      className="h-5 w-5 text-[#11999e]"
+                      strokeWidth={2}
+                      aria-hidden="true"
+                    />
+                    <h2 className="text-base font-bold text-gray-900">
+                      Information Request
+                    </h2>
+                  </div>
+                  {hasPersistedAnswer ? (
+                    <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-600">
+                      <Check className="h-3.5 w-3.5" aria-hidden="true" />
+                      Answered
+                    </span>
+                  ) : (
+                    <span className="inline-flex shrink-0 items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-medium text-amber-500">
+                      <Clock className="h-3.5 w-3.5" aria-hidden="true" />
+                      Awaiting response
+                    </span>
+                  )}
+                </div>
 
-                <label className="font-semibold">Your Response</label>
+                <p className="mt-3 text-sm text-gray-800 whitespace-pre-wrap">
+                  {q}
+                </p>
 
-                {/* Already answered & not editing: show read-only answer + Edit button */}
                 {hasPersistedAnswer && !isEditing ? (
                   <>
-                    <div className="mb-2 whitespace-pre-wrap">
-                      {persistedAnswer}
+                    <div className="mt-4 rounded-xl border-l-[3px] border-[#11999e] bg-[#e7f6f7] px-4 py-3">
+                      <div className="text-sm font-semibold text-gray-900">
+                        Your Response
+                      </div>
+                      <div className="mt-1 text-sm whitespace-pre-wrap text-gray-700">
+                        {persistedAnswer}
+                      </div>
                     </div>
-                    <button
-                      type="button"
-                      onClick={() => handleStartEdit(q)}
-                      className="px-3 py-1 text-sm bg-gray-300 rounded cursor-pointer"
-                    >
-                      Edit Your Response
-                    </button>
+                    <div className="mt-4 flex justify-end">
+                      <button
+                        type="button"
+                        onClick={() => handleStartEdit(q)}
+                        className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-[#11999e] bg-white px-4 py-2 text-sm font-medium text-[#11999e] transition-colors hover:bg-[#11999e]/10"
+                      >
+                        <Pencil className="h-4 w-4" aria-hidden="true" />
+                        Edit Your Response
+                      </button>
+                    </div>
                   </>
                 ) : (
-                  // Unanswered OR editing: show textarea + submit/save button
                   <>
+                    <label className="mt-4 block text-sm font-semibold text-gray-900">
+                      Your Response
+                    </label>
                     <textarea
-                      className="w-full border rounded p-2 min-h-[80px]"
+                      className={inputClass}
                       value={currentAnswer}
                       onChange={(e) => handleChange(q, e.target.value)}
                       onKeyDown={(e) => {
@@ -212,21 +234,21 @@ export default function AdditionalQuestionsPage() {
                           : "Insert your response here"
                       }
                     />
-
-                    <div>
+                    <div className="mt-4 flex justify-end">
                       <button
                         type="button"
                         onClick={() => handleSubmitAnswer(q)}
                         disabled={savingKey === q}
-                        className="px-4 py-2 bg-[#11999e] text-white rounded disabled:opacity-50 cursor-pointer"
+                        className="inline-flex cursor-pointer items-center gap-2 rounded-lg bg-[#11999e] px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-[#0e8488] disabled:cursor-not-allowed disabled:opacity-50"
                       >
+                        <Send className="h-4 w-4" aria-hidden="true" />
                         {savingKey === q
                           ? hasPersistedAnswer
                             ? "Saving Response..."
                             : "Submitting Response..."
                           : hasPersistedAnswer
-                          ? "Save Response"
-                          : "Submit Response"}
+                            ? "Save Response"
+                            : "Submit Response"}
                       </button>
                     </div>
                   </>
@@ -236,6 +258,6 @@ export default function AdditionalQuestionsPage() {
           })}
         </div>
       )}
-    </div>
+    </DashboardPage>
   );
 }

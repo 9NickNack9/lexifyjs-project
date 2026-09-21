@@ -3,6 +3,11 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import {
+  getDummyPurchaserContracts,
+  isAdminRole,
+  withAdminDummyRows,
+} from "@/lib/adminDummyCases";
 
 // BigInt-safe JSON
 const serialize = (obj) =>
@@ -142,6 +147,7 @@ export async function GET() {
       where: { userPkId: BigInt(session.userId) },
       select: {
         companyId: true,
+        role: true,
         company: { select: { companyName: true } },
       },
     });
@@ -187,6 +193,19 @@ export async function GET() {
     const contractIds = Array.isArray(contractIdRows)
       ? contractIdRows.map((r) => r?.contractId).filter(Boolean)
       : [];
+
+    const dummyContracts = isAdminRole(ua?.role || session.role)
+      ? getDummyPurchaserContracts()
+      : [];
+
+    if (contractIds.length === 0) {
+      return NextResponse.json(
+        serialize({
+          companyName: ua.company?.companyName || null,
+          contracts: dummyContracts,
+        }),
+      );
+    }
 
     const contracts = await prisma.contract.findMany({
       where: { contractId: { in: contractIds } },
@@ -608,7 +627,11 @@ export async function GET() {
     return NextResponse.json(
       serialize({
         companyName: ua.company?.companyName || null,
-        contracts: shaped,
+        contracts: withAdminDummyRows(
+          ua?.role || session.role,
+          dummyContracts,
+          shaped,
+        ),
       }),
     );
   } catch (e) {

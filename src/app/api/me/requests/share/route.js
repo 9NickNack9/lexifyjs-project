@@ -1,6 +1,7 @@
 import { prisma } from "@/lib/prisma";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { isAdminRole, isDummyId } from "@/lib/adminDummyCases";
 
 export async function POST(req) {
   const session = await getServerSession(authOptions);
@@ -14,6 +15,10 @@ export async function POST(req) {
 
   if (!requestId || !Array.isArray(sharedUsers)) {
     return Response.json({ error: "Invalid input" }, { status: 400 });
+  }
+
+  if (isDummyId(requestId) && isAdminRole(session.role)) {
+    return Response.json({ success: true });
   }
 
   const request = await prisma.request.findUnique({

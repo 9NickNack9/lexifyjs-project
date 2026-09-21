@@ -5,6 +5,11 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { hasProviderName, uniqueProviderNames } from "@/lib/legalPanel";
+import {
+  getDummyAvailableRequests,
+  isAdminRole,
+} from "@/lib/adminDummyCases";
 
 /** BigInt-safe JSON + no-store */
 const safeJson = (data, status = 200) =>
@@ -243,6 +248,17 @@ export async function GET(req) {
     const myCompanyId = ua?.companyId ?? null;
     const myCompanyName = (ua?.company?.companyName || "").trim();
 
+    // Admins see only the sample cases, not other users' live requests.
+    if (isAdminRole(myRole)) {
+      return safeJson({
+        requests: getDummyAvailableRequests({
+          category,
+          subcategory,
+          assignment,
+        }),
+      });
+    }
+
     const isProvider = myRole === "PROVIDER" && myCompanyId && myCompanyName;
 
     // -------------------------------------------------------------------
@@ -320,6 +336,7 @@ export async function GET(req) {
         providerMinimumRating: true,
         providerCompanyAge: true,
         serviceProviderType: true,
+        legalPanelProviders: true,
         details: true,
 
         clientCompany: {
@@ -332,13 +349,12 @@ export async function GET(req) {
           select: {
             blockedServiceProviders: true,
             preferredLegalServiceProviders: true,
-            legalPanelServiceProviders: true,
           },
         },
       },
     });
 
-    // Admins/non-providers: skip provider gating
+    // Non-providers: skip provider gating. Admins never reach here.
     if (!isProvider) {
       const shaped = rows.map((r) => ({
         requestId: r.requestId?.toString?.() ?? String(r.requestId),
@@ -381,11 +397,11 @@ export async function GET(req) {
       const blocked = toStringArray(maker.blockedServiceProviders);
       if (blocked.includes(myCompanyName)) return false;
 
-      // 2) Panel handling
-      const panel = toStringArray(maker.legalPanelServiceProviders);
-      const onPanel = panel.includes(myCompanyName);
+      // 2) Panel handling is per-request (snapshot at submission)
+      const panel = uniqueProviderNames(r.legalPanelProviders);
+      const onPanel = hasProviderName(panel, myCompanyName);
 
-      // If purchaser uses a panel, non-panel providers never see the request
+      // If this request used a legal panel group, non-panel providers never see it
       if (panel.length > 0 && !onPanel) return false;
 
       // 3) Preferred handling

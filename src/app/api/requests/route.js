@@ -7,6 +7,12 @@ import { randomBytes } from "crypto";
 import { promises as fs } from "fs";
 import path from "path";
 import { notifyProvidersNewAvailableRequest } from "@/lib/mailer";
+import {
+  findLegalPanelGroup,
+  hasProviderName,
+  normalizeLegalPanelGroups,
+  uniqueProviderNames,
+} from "@/lib/legalPanel";
 
 function mapRequestToCategory(requestCategory, requestSubcategory) {
   const sub = (requestSubcategory || "").trim();
@@ -304,6 +310,39 @@ export async function POST(req) {
     );
   }
 
+  const legalPanelGroups = normalizeLegalPanelGroups(
+    me?.legalPanelServiceProviders,
+  );
+  const requestedPanelGroupId =
+    typeof body.legalPanelGroupId === "string"
+      ? body.legalPanelGroupId.trim()
+      : "";
+  let legalPanelGroupId = null;
+  let legalPanelGroupName = null;
+  let legalPanelProviders = [];
+
+  if (requestedPanelGroupId) {
+    const selectedGroup = findLegalPanelGroup(
+      legalPanelGroups,
+      requestedPanelGroupId,
+    );
+    if (!selectedGroup) {
+      return NextResponse.json(
+        { error: "Selected legal panel group was not found." },
+        { status: 400 },
+      );
+    }
+    legalPanelProviders = uniqueProviderNames(selectedGroup.providers);
+    if (legalPanelProviders.length === 0) {
+      return NextResponse.json(
+        { error: "Selected legal panel group has no providers." },
+        { status: 400 },
+      );
+    }
+    legalPanelGroupId = selectedGroup.id;
+    legalPanelGroupName = selectedGroup.name;
+  }
+
   const additionalBackgroundInfo = body.additionalBackgroundInfo ?? "";
 
   let backgroundInfoFiles = Array.isArray(body.backgroundInfoFiles)
@@ -386,6 +425,9 @@ export async function POST(req) {
       providerSize: body.providerSize,
       providerCompanyAge: body.providerCompanyAge,
       providerMinimumRating: body.providerMinimumRating,
+      legalPanelGroupId,
+      legalPanelGroupName,
+      legalPanelProviders,
       providerReferences: body.providerReferences,
       currency: body.currency,
       paymentRate: paymentType,
@@ -463,13 +505,7 @@ export async function POST(req) {
     ),
   );
 
-  const legalPanelProviderCompanies = new Set(
-    toStringArray(me?.legalPanelServiceProviders).map((s) =>
-      s.trim().toLowerCase(),
-    ),
-  );
-
-  const hasLegalPanelRestriction = legalPanelProviderCompanies.size > 0;
+  const hasLegalPanelRestriction = legalPanelProviders.length > 0;
 
   // ---- provider emailing uses UserAccount + Company ----
 
@@ -535,22 +571,25 @@ export async function POST(req) {
         continue;
       }
 
-      // 2) Legal panel restriction:
-      // if request maker has set any legal panel companies, ONLY those companies may receive emails
+      // 2) Legal panel restriction is per-request:
+      // if this request used a legal panel group, ONLY those companies may receive emails
       if (
         hasLegalPanelRestriction &&
-        !legalPanelProviderCompanies.has(providerCompanyName)
+        !hasProviderName(legalPanelProviders, providerCompanyName)
       ) {
         continue;
       }
 
       const isPreferredProvider =
         preferredProviderCompanies.has(providerCompanyName);
+      const onSelectedPanel =
+        hasLegalPanelRestriction &&
+        hasProviderName(legalPanelProviders, providerCompanyName);
 
-      // Preferred providers pass capability gates automatically,
+      // Panel members and preferred providers pass capability gates automatically,
       // but still had to pass the notificationPreferences + practicalNotificationPreferences
       // because those were already enforced in the Prisma where clause.
-      if (!isPreferredProvider) {
+      if (!onSelectedPanel && !isPreferredProvider) {
         const pAge = Number.isFinite(Number(co.companyAge))
           ? Number(co.companyAge)
           : 0;

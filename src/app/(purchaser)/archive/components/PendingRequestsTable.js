@@ -3,8 +3,22 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { fmtMoney, formatTimeUntil } from "../utils/format";
+import { fmtMoney, formatTimeUntil, isHourlyRate } from "../utils/format";
 import NarrowTooltip from "../../../components/NarrowTooltip";
+import {
+  btnDanger,
+  btnDisabled,
+  btnGhost,
+  btnPrimary,
+  emptyCard,
+  table,
+  tableCard,
+  tableScroll,
+  td,
+  th,
+  theadRow,
+  tr,
+} from "./tableUi";
 
 export default function PendingRequestsTable({
   rows,
@@ -13,6 +27,7 @@ export default function PendingRequestsTable({
   onCancel,
   busyIds,
   refreshAllRequests,
+  hideHeading = false,
 }) {
   const router = useRouter();
 
@@ -214,41 +229,41 @@ export default function PendingRequestsTable({
     shareOwnerUserId != null && Number(userId) === Number(shareOwnerUserId);
 
   return (
-    <div className="w-full mb-8">
-      <h2 className="text-2xl font-semibold mb-4">
-        My Pending LEXIFY Requests
-      </h2>
+    <div className="w-full">
+      {!hideHeading && (
+        <h2 className="mb-4 text-2xl font-semibold text-gray-900">
+          My Pending LEXIFY Requests
+        </h2>
+      )}
 
       {active.length === 0 ? (
-        <div className="p-4 bg-white rounded border text-black">N/A</div>
+        <div className={emptyCard}>N/A</div>
       ) : (
         <>
-          <table className="w-full border-collapse border border-gray-300 bg-white text-black">
+          <div className={tableCard}>
+            <div className={tableScroll}>
+              <table className={table}>
             <thead>
-              <tr className="bg-[#3a3a3c] text-white">
-                <th className="border p-2 text-center">Title</th>
-                <th className="border p-2 text-center">Created by</th>
-                <th className="border p-2 text-center">Date Created</th>
-                <th className="border p-2 text-center">
+              <tr className={theadRow}>
+                <th className={th}>Title</th>
+                <th className={th}>Created by</th>
+                <th className={th}>Date Created</th>
+                <th className={th}>
                   Time until Deadline for Offers
                 </th>
-                <th className="border p-2 text-center">Offers Received</th>
-                <th className="border p-2 text-center">
+                <th className={th}>Offers Received</th>
+                <th className={th}>
                   Current Best Offer (VAT 0%)
                 </th>
-                <th className="border p-2 text-center">
-                  My Max. Price (VAT 0%){" "}
-                  <NarrowTooltip tooltipText="If you have included a maximum price for the legal service in your LEXIFY Request, the maximum price is displayed here. A maximum price can be set for lump sum offers only. " />
-                </th>
-                <th className="border p-2 text-center">
+                <th className={th}>
                   Additional Information Requests from Legal Service Providers
                 </th>
-                <th className="border p-2 text-center">View LEXIFY Request</th>
-                <th className="border p-2 text-center">
+                <th className={th}>View LEXIFY Request</th>
+                <th className={th}>
                   Share LEXIFY Request{" "}
                   <NarrowTooltip tooltipText="You can share a LEXIFY Request with colleagues in your organization. You choose whether each colleague can only view the Request — useful for keeping stakeholders informed — or have full co-owner rights, equivalent to your own. You control their access level and can revoke it anytime." />
                 </th>
-                <th className="border p-2 text-center">
+                <th className={th}>
                   Cancel LEXIFY Request
                 </th>
               </tr>
@@ -256,41 +271,34 @@ export default function PendingRequestsTable({
 
             <tbody>
               {visibleRows.map((r) => {
-                const addPerHour =
-                  typeof r.paymentRate === "string" &&
-                  r.paymentRate.toLowerCase().startsWith("blended hourly rate");
+                const addPerHour = isHourlyRate(r.paymentRate);
 
                 return (
-                  <tr key={r.requestId}>
-                    <td className="border p-2 text-center">{r.title}</td>
-                    <td className="border p-2 text-center">
+                  <tr key={r.requestId} className={tr}>
+                    <td className={td}>{r.title}</td>
+                    <td className={td}>
                       {r.primaryContactPerson || "—"}
                     </td>
-                    <td className="border p-2 text-center">
+                    <td className={td}>
                       {new Date(r.dateCreated).toLocaleDateString()}
                     </td>
                     <td
-                      className="border p-2 text-center"
+                      className={td}
                       title={
                         r.rawDeadline ? new Date(r.rawDeadline).toString() : ""
                       }
                     >
                       {r.deadlineText}
                     </td>
-                    <td className="border p-2 text-center">
+                    <td className={td}>
                       {r.offersReceived || 0}
                     </td>
-                    <td className="border p-2 text-center">
+                    <td className={td}>
                       {fmtMoney(r.bestOffer, r.currency)}
                       {addPerHour ? "/h" : ""}
                     </td>
-                    <td className="border p-2 text-center">
-                      {r.maximumPrice != null && r.maximumPrice !== ""
-                        ? fmtMoney(r.maximumPrice, r.currency)
-                        : "N/A"}
-                    </td>
 
-                    <td className="border p-2 text-center">
+                    <td className={td}>
                       {(() => {
                         const aq = r.details?.additionalQuestions;
                         const isObj =
@@ -305,7 +313,7 @@ export default function PendingRequestsTable({
                             </span>
                             <button
                               type="button"
-                              className="bg-[#11999e] text-white px-3 py-1 rounded cursor-pointer"
+                              className={btnPrimary}
                               onClick={() =>
                                 router.push(
                                   `/archive/requests/${r.requestId}/additional-questions`,
@@ -319,21 +327,21 @@ export default function PendingRequestsTable({
                       })()}
                     </td>
 
-                    <td className="border p-2 text-center">
+                    <td className={td}>
                       <button
-                        className="bg-[#11999e] text-white px-3 py-1 rounded cursor-pointer"
+                        className={btnPrimary}
                         onClick={() => onPreview(r)}
                       >
                         View
                       </button>
                     </td>
-                    <td className="border p-2 text-center">
+                    <td className={td}>
                       <div className="flex flex-col items-center gap-1">
                         {(() => {
                           const count = r.details?.sharedAccounts?.length || 0;
                           if (count > 0) {
                             return (
-                              <span className="text-xs text-gray-600">
+                              <span className="text-xs text-gray-500">
                                 Shared with {count}{" "}
                                 {count === 1 ? "person" : "people"}
                               </span>
@@ -343,11 +351,9 @@ export default function PendingRequestsTable({
                         })()}
 
                         <button
-                          className={`px-3 py-1 rounded shrink-0 ${
-                            isViewer(r)
-                              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                              : "cursor-pointer bg-[#11999e] text-white"
-                          }`}
+                          className={
+                            isViewer(r) ? btnDisabled : btnPrimary
+                          }
                           onClick={() => openShareForRequest(r)}
                           disabled={isViewer(r)}
                         >
@@ -355,13 +361,13 @@ export default function PendingRequestsTable({
                         </button>
                       </div>
                     </td>
-                    <td className="border p-2 text-center">
+                    <td className={td}>
                       <button
-                        className={`px-3 py-1 rounded ${
-                          isViewer(r)
-                            ? "bg-gray-300 text-gray-500 cursor-not-allowed"
-                            : "bg-red-500 text-white cursor-pointer"
-                        }`}
+                        className={
+                          isViewer(r) || r.isExpired || busyIds.has(r.requestId)
+                            ? btnDisabled
+                            : btnDanger
+                        }
                         disabled={
                           r.isExpired || busyIds.has(r.requestId) || isViewer(r)
                         }
@@ -374,12 +380,14 @@ export default function PendingRequestsTable({
                 );
               })}
             </tbody>
-          </table>
+            </table>
+            </div>
+          </div>
 
           {canLoadMore && (
             <div className="mt-4 flex justify-center">
               <button
-                className="bg-[#11999e] text-white px-4 py-2 rounded cursor-pointer"
+                className={btnGhost}
                 onClick={() =>
                   setVisibleCount((n) => Math.min(n + PAGE_SIZE, active.length))
                 }
@@ -389,8 +397,8 @@ export default function PendingRequestsTable({
             </div>
           )}
           {isShareOpen && (
-            <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-              <div className="bg-white text-black rounded-xl shadow-2xl w-full max-w-md p-6">
+            <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40">
+              <div className="w-full max-w-md rounded-2xl bg-white p-6 text-black shadow-2xl ring-1 ring-black/5">
                 <h3 className="text-xl font-semibold mb-4">
                   Share this LEXIFY Request with colleagues at{" "}
                   {companyName || "your company"}{" "}
@@ -477,7 +485,7 @@ export default function PendingRequestsTable({
                 <div className="flex justify-end gap-2 mt-6">
                   <button
                     onClick={() => closeShareModal()}
-                    className="px-4 py-2 border border-gray-400 rounded text-gray-700 cursor-pointer"
+                    className="cursor-pointer rounded-lg border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
                   >
                     Cancel
                   </button>
@@ -485,10 +493,10 @@ export default function PendingRequestsTable({
                   <button
                     onClick={handleShare}
                     disabled={companyUsers.length === 0}
-                    className={`px-4 py-2 rounded ${
+                    className={`rounded-lg px-4 py-2 text-sm font-medium ${
                       companyUsers.length === 0
-                        ? "bg-gray-400 cursor-not-allowed"
-                        : "bg-[#11999e] text-white cursor-pointer"
+                        ? "cursor-not-allowed bg-gray-200 text-gray-500"
+                        : "cursor-pointer bg-[#11999e] text-white hover:bg-[#0e8488]"
                     }`}
                   >
                     Update Permissions

@@ -1,8 +1,7 @@
 // src/app/api/providers/search/route.js
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-
-const dec = (v) => (v == null ? null : Number(v));
+import { ratingAggregatesForDisplay } from "@/lib/providerRatings";
 
 export async function GET(req) {
   const { searchParams } = new URL(req.url);
@@ -21,13 +20,7 @@ export async function GET(req) {
       companyPkId: true,
       companyName: true,
       companyWebsite: true,
-
-      providerTotalRating: true,
-      providerQualityRating: true,
-      providerCommunicationRating: true,
-      providerBillingRating: true,
       providerIndividualRating: true,
-      providerPracticalRatings: true,
     },
     orderBy: { companyName: "asc" },
   };
@@ -36,19 +29,30 @@ export async function GET(req) {
 
   const providers = await prisma.company.findMany(options);
 
-  const out = providers.map((c) => ({
-    companyId: String(c.companyPkId),
-    companyName: c.companyName,
-    companyWebsite: c.companyWebsite || null,
+  const out = providers.map((c) => {
+    const entries = Array.isArray(c.providerIndividualRating)
+      ? c.providerIndividualRating
+      : [];
+    const computed = ratingAggregatesForDisplay(entries);
 
-    providerTotalRating: dec(c.providerTotalRating),
-    providerQualityRating: dec(c.providerQualityRating),
-    providerCommunicationRating: dec(c.providerCommunicationRating),
-    providerBillingRating: dec(c.providerBillingRating),
+    return {
+      companyId: String(c.companyPkId),
+      companyName: c.companyName,
+      companyWebsite: c.companyWebsite || null,
 
-    providerIndividualRating: c.providerIndividualRating ?? [],
-    providerPracticalRatings: c.providerPracticalRatings ?? null,
-  }));
+      providerTotalRating: computed.hasRealRatings ? computed.total : null,
+      providerQualityRating: computed.hasRealRatings ? computed.quality : null,
+      providerCommunicationRating: computed.hasRealRatings
+        ? computed.communication
+        : null,
+      providerBillingRating: computed.hasRealRatings ? computed.billing : null,
+
+      providerIndividualRating: entries,
+      providerPracticalRatings: computed.hasRealRatings
+        ? computed.practical
+        : {},
+    };
+  });
 
   return NextResponse.json(out);
 }

@@ -2,6 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
+import { AppPage } from "@/app/components/HubPage";
 
 const DRAFT_TYPE_META = {
   salesB2b: {
@@ -267,87 +270,83 @@ export default function RequestDraftsPage() {
   };
 
   return (
-    <div className="flex items-start justify-center min-h-screen p-8">
-      <div className="w-full max-w-6xl">
-        <div className="flex justify-between items-center gap-4 mb-8">
-          <div>
-            <h1 className="text-3xl font-bold">Your Saved Drafts</h1>
-            <p className="text-sm text-white mt-2">
-              Select a saved draft to resume your LEXIFY Request and submit when
-              ready.
-            </p>
-          </div>
+    <AppPage
+      eyebrow="LEXIFY Request"
+      title="Your Saved Drafts"
+      description="Select a saved draft to resume your LEXIFY Request and submit when ready."
+    >
+      <div className="flex justify-start">
+        <Link
+          href="/request-start"
+          className="inline-flex items-center gap-2 text-sm font-medium text-[#0f7c80] transition-colors hover:text-[#11999e]"
+        >
+          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          Back
+        </Link>
+      </div>
 
+      {loading ? (
+        <div className="rounded-2xl bg-white px-6 py-12 text-center text-sm text-gray-500 shadow-[0_16px_44px_rgba(17,153,158,0.22)] ring-1 ring-black/10">
+          Loading drafts…
+        </div>
+      ) : totalDraftCount === 0 ? (
+        <div className="rounded-2xl bg-white p-8 text-center shadow-[0_16px_44px_rgba(17,153,158,0.22)] ring-1 ring-black/10">
+          <p className="text-gray-600">You currently have no saved drafts.</p>
           <button
             type="button"
-            onClick={() => router.push("/request-start")}
-            className="px-4 py-2 rounded bg-[#3a3a3c] hover:bg-gray-400 cursor-pointer"
+            onClick={() => router.push("/create-request")}
+            className="mt-4 cursor-pointer rounded-lg bg-[#11999e] px-4 py-2 text-white transition-colors hover:bg-[#0e8488]"
           >
-            Back
+            Create a New LEXIFY Request
           </button>
         </div>
-
-        {loading ? (
-          <p className="text-sm text-white">Loading drafts…</p>
-        ) : totalDraftCount === 0 ? (
-          <div className="bg-white border rounded p-6 shadow">
-            <p className="text-gray-700">You currently have no saved drafts.</p>
-            <button
-              type="button"
-              onClick={() => router.push("/create-request")}
-              className="mt-4 px-4 py-2 bg-[#11999e] text-white rounded cursor-pointer hover:opacity-90"
+      ) : (
+        <div className="flex flex-col gap-6">
+          {Object.entries(groupedDrafts).map(([category, drafts]) => (
+            <section
+              key={category}
+              className="overflow-hidden rounded-2xl bg-white shadow-[0_16px_44px_rgba(17,153,158,0.22)] ring-1 ring-black/10"
             >
-              Create a New LEXIFY Request
-            </button>
-          </div>
-        ) : (
-          <div className="flex flex-col gap-10">
-            {Object.entries(groupedDrafts).map(([category, drafts]) => (
-              <section
-                key={category}
-                className="bg-white border border-gray-300 rounded-lg shadow-xl overflow-hidden"
-              >
-                <div className="bg-[#0b6063] p-3 rounded-t">
-                  <h2 className="text-xl font-semibold text-white">
-                    {category}
-                  </h2>
-                </div>
+              <div className="border-b border-gray-100 bg-gray-50 px-5 py-3">
+                <h2 className="text-lg font-semibold text-gray-900">
+                  {category}
+                </h2>
+              </div>
 
-                <div className="divide-y">
-                  {drafts.map((draft) => (
-                    <button
-                      key={`${draft.requestType}-${draft.id}`}
-                      type="button"
-                      onClick={() => handleOpenDraft(draft)}
-                      className="w-full text-left p-4 hover:bg-gray-50 cursor-pointer border"
-                    >
-                      <div className="flex justify-between items-start gap-4">
-                        <div className="min-w-0">
-                          <p className="font-semibold break-words text-gray-700">
-                            {draft.title || "Untitled draft"}
-                          </p>
+              <div className="divide-y divide-gray-100">
+                {drafts.map((draft) => (
+                  <button
+                    key={`${draft.requestType}-${draft.id}`}
+                    type="button"
+                    onClick={() => handleOpenDraft(draft)}
+                    className="w-full cursor-pointer p-5 text-left transition-colors hover:bg-[#11999e]/[0.04]"
+                  >
+                    <div className="flex items-start justify-between gap-4">
+                      <div className="min-w-0">
+                        <p className="break-words font-semibold text-gray-900">
+                          {draft.title || "Untitled draft"}
+                        </p>
 
-                          <p className="text-sm text-gray-600 mt-1">
-                            {draft.requestTypeLabel}
-                          </p>
+                        <p className="mt-1 text-sm text-gray-600">
+                          {draft.requestTypeLabel}
+                        </p>
 
-                          <p className="text-xs text-gray-400 mt-1">
-                            {formatDraftSavedDate(draft)}
-                          </p>
-                        </div>
-
-                        <span className="shrink-0 px-3 py-1 rounded bg-[#11999e] text-white text-sm">
-                          Load Draft
-                        </span>
+                        <p className="mt-1 text-xs text-gray-400">
+                          {formatDraftSavedDate(draft)}
+                        </p>
                       </div>
-                    </button>
-                  ))}
-                </div>
-              </section>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+
+                      <span className="shrink-0 rounded-lg bg-[#11999e] px-3 py-1.5 text-sm font-medium text-white">
+                        Load Draft
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      )}
+    </AppPage>
   );
 }

@@ -3,12 +3,12 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
-
-// Clamp to 0..5 in 0.5 steps
-const sanitize = (n) => {
-  const v = Math.max(0, Math.min(5, Number(n ?? 0)));
-  return Math.round(v * 2) / 2;
-};
+import {
+  ratingAggregatesForDisplay,
+  recomputeOverallAggregates,
+  recomputePracticalRatings,
+  sanitizeRating,
+} from "@/lib/providerRatings";
 
 function mapRequestToCategory(requestCategory, requestSubcategory) {
   const sub = (requestSubcategory || "").trim();
@@ -37,80 +37,16 @@ function mapRequestToCategory(requestCategory, requestSubcategory) {
   return sub || cat || "Other";
 }
 
-function recomputeOverallAggregates(entries) {
-  if (!entries.length) {
-    return { avgQuality: 5.0, avgComm: 5.0, avgBilling: 5.0, totalAvg: 5.0 };
-  }
-
-  const count = entries.length;
-  const sumQuality = entries.reduce((a, r) => a + Number(r.quality || 0), 0);
-  const sumComm = entries.reduce(
-    (a, r) => a + Number(r.responsiveness || 0),
-    0,
-  );
-  const sumBilling = entries.reduce((a, r) => a + Number(r.billing || 0), 0);
-
-  const avgQuality = Number((sumQuality / count).toFixed(2));
-  const avgComm = Number((sumComm / count).toFixed(2));
-  const avgBilling = Number((sumBilling / count).toFixed(2));
-
-  const perEntryMeans = entries.map(
-    (r) =>
-      (Number(r.quality || 0) +
-        Number(r.responsiveness || 0) +
-        Number(r.billing || 0)) /
-      3,
-  );
-  const totalAvg = Number(
-    (perEntryMeans.reduce((a, b) => a + b, 0) / perEntryMeans.length).toFixed(
-      2,
-    ),
-  );
-
-  return { avgQuality, avgComm, avgBilling, totalAvg };
-}
-
-function recomputePracticalRatings(entries) {
-  const grouped = new Map();
-
-  for (const r of entries) {
-    const category = (r.category || "Other").trim() || "Other";
-    if (!grouped.has(category)) grouped.set(category, []);
-    grouped.get(category).push(r);
-  }
-
-  const out = {};
-  for (const [category, arr] of grouped.entries()) {
-    const count = arr.length;
-
-    const sumQuality = arr.reduce((a, r) => a + Number(r.quality || 0), 0);
-    const sumComm = arr.reduce((a, r) => a + Number(r.responsiveness || 0), 0);
-    const sumBilling = arr.reduce((a, r) => a + Number(r.billing || 0), 0);
-
-    const quality = Number((sumQuality / count).toFixed(2));
-    const responsiveness = Number((sumComm / count).toFixed(2));
-    const billing = Number((sumBilling / count).toFixed(2));
-
-    const perEntryMeans = arr.map(
-      (r) =>
-        (Number(r.quality || 0) +
-          Number(r.responsiveness || 0) +
-          Number(r.billing || 0)) /
-        3,
-    );
-    const total = Number(
-      (perEntryMeans.reduce((a, b) => a + b, 0) / perEntryMeans.length).toFixed(
-        2,
-      ),
-    );
-
-    out[category] = { quality, responsiveness, billing, total, count };
-  }
-
-  return out;
-}
-
 const dec = (v) => (v == null ? 0 : Number(v));
+
+function storedAggregatesDiffer(provider, computed) {
+  return (
+    dec(provider?.providerQualityRating) !== computed.avgQuality ||
+    dec(provider?.providerCommunicationRating) !== computed.avgComm ||
+    dec(provider?.providerBillingRating) !== computed.avgBilling ||
+    dec(provider?.providerTotalRating) !== computed.totalAvg
+  );
+}
 
 export async function GET(req, context) {
   const params = await context.params;
@@ -145,12 +81,39 @@ export async function GET(req, context) {
     ? provider.providerIndividualRating
     : [];
 
-  const ratingCount = arr.length;
+  const computed = ratingAggregatesForDisplay(arr);
+
+  if (
+    arr.length > 0 &&
+    storedAggregatesDiffer(provider, {
+      avgQuality: computed.quality,
+      avgComm: computed.communication,
+      avgBilling: computed.billing,
+      totalAvg: computed.total,
+    })
+  ) {
+    try {
+      await prisma.company.update({
+        where: { companyPkId: providerCompanyId },
+        data: {
+          providerQualityRating: computed.quality,
+          providerCommunicationRating: computed.communication,
+          providerBillingRating: computed.billing,
+          providerTotalRating: computed.total,
+          providerPracticalRatings: computed.practical,
+        },
+      });
+    } catch (err) {
+      console.error("Failed to persist recomputed provider ratings:", err);
+    }
+  }
+
+  const ratingCount = computed.ratingCount;
 
   // Only return "mine" when contractId is specified (contract-specific rating)
   const myCompanyId = session.companyId ? BigInt(session.companyId) : null;
 
-  const mine =
+  const mineRaw =
     contractId && myCompanyId
       ? arr.find(
           (r) =>
@@ -159,14 +122,32 @@ export async function GET(req, context) {
         ) || null
       : null;
 
-  const hasRealRatings = arr.length > 0;
+  const mine = mineRaw
+    ? {
+        ...mineRaw,
+        quality: sanitizeRating(
+          mineRaw.quality ?? mineRaw.providerQualityRating ?? 0,
+        ),
+        responsiveness: sanitizeRating(
+          mineRaw.responsiveness ??
+            mineRaw.communication ??
+            mineRaw.providerCommunicationRating ??
+            0,
+        ),
+        billing: sanitizeRating(
+          mineRaw.billing ?? mineRaw.providerBillingRating ?? 0,
+        ),
+      }
+    : null;
+
+  const hasRealRatings = computed.hasRealRatings;
 
   const aggregates = hasRealRatings
     ? {
-        quality: dec(provider?.providerQualityRating),
-        communication: dec(provider?.providerCommunicationRating),
-        billing: dec(provider?.providerBillingRating),
-        total: dec(provider?.providerTotalRating),
+        quality: computed.quality,
+        communication: computed.communication,
+        billing: computed.billing,
+        total: computed.total,
       }
     : { quality: 5.0, communication: 5.0, billing: 5.0, total: 5.0 };
 
@@ -249,9 +230,9 @@ export async function POST(req, context) {
     );
   }
 
-  const quality = sanitize(body.quality);
-  const responsiveness = sanitize(body.responsiveness);
-  const billing = sanitize(body.billing);
+  const quality = sanitizeRating(body.quality);
+  const responsiveness = sanitizeRating(body.responsiveness);
+  const billing = sanitizeRating(body.billing);
 
   // Validate contract belongs to current COMPANY and provider COMPANY
   const contract = await prisma.contract.findFirst({
@@ -312,6 +293,7 @@ export async function POST(req, context) {
     category,
     quality,
     responsiveness,
+    communication: responsiveness,
     billing,
     subratings: [quality, responsiveness, billing],
     updatedAt: now,
@@ -357,10 +339,10 @@ export async function POST(req, context) {
     ok: true,
     companyId: String(updated.companyPkId),
     aggregates: {
-      quality: dec(updated.providerQualityRating),
-      communication: dec(updated.providerCommunicationRating),
-      billing: dec(updated.providerBillingRating),
-      total: dec(updated.providerTotalRating),
+      quality: avgQuality,
+      communication: avgComm,
+      billing: avgBilling,
+      total: totalAvg,
     },
     category,
   });

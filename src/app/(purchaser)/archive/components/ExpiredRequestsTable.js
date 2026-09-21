@@ -2,15 +2,23 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { fmtMoney } from "../utils/format";
-import NarrowTooltip from "../../../components/NarrowTooltip";
+import { fmtMoney, isHourlyRate } from "../utils/format";
+import {
+  btnGhost,
+  emptyCard,
+  table,
+  tableCard,
+  tableScroll,
+  td,
+  th,
+  theadRow,
+  tr,
+} from "./tableUi";
 
 function formatOfferLine(offer, currency, paymentRate) {
   if (!offer) return "N/A";
   const price = fmtMoney(offer.offeredPrice, currency);
-  const suffix = paymentRate?.toLowerCase().startsWith("hourly rate")
-    ? "/h"
-    : "";
+  const suffix = isHourlyRate(paymentRate) ? "/h" : "";
   const name = offer.providerCompanyName || "—";
   return `${price}${suffix} (${name})`;
 }
@@ -22,7 +30,7 @@ function formatDateDDMMYYYY(isoish) {
   return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()}`;
 }
 
-export default function ExpiredRequestsTable({ rows }) {
+export default function ExpiredRequestsTable({ rows, hideHeading = false }) {
   const safeRows = useMemo(() => rows || [], [rows]);
 
   const PAGE_SIZE = 5;
@@ -36,31 +44,31 @@ export default function ExpiredRequestsTable({ rows }) {
   const canLoadMore = visibleCount < safeRows.length;
 
   return (
-    <div className="w-full mb-8">
-      <h2 className="text-2xl font-semibold mb-4">
-        My Expired LEXIFY Requests
-      </h2>
+    <div className="w-full">
+      {!hideHeading && (
+        <h2 className="mb-4 text-2xl font-semibold text-gray-900">
+          My Expired LEXIFY Requests
+        </h2>
+      )}
 
       {safeRows.length === 0 ? (
-        <div className="p-4 bg-white rounded border text-black">N/A</div>
+        <div className={emptyCard}>N/A</div>
       ) : (
         <>
-          <table className="w-full border-collapse border border-gray-300 bg-white text-black">
+          <div className={tableCard}>
+            <div className={tableScroll}>
+              <table className={table}>
             <thead>
-              <tr className="bg-[#3a3a3c] text-white">
-                <th className="border p-2 text-center">Title</th>
-                <th className="border p-2 text-center">Created by</th>
-                <th className="border p-2 text-center">Date Created</th>
-                <th className="border p-2 text-center">Date Expired</th>
-                <th className="border p-2 text-center">
+              <tr className={theadRow}>
+                <th className={th}>Title</th>
+                <th className={th}>Created by</th>
+                <th className={th}>Date Created</th>
+                <th className={th}>Date Expired</th>
+                <th className={th}>
                   Did Request Result in Contract?
                 </th>
-                <th className="border p-2 text-center">
-                  My Max. Price (VAT 0%){" "}
-                  <NarrowTooltip tooltipText="If you have included a maximum price for the legal service in your LEXIFY Request, the maximum price is displayed here. A maximum price can be set for lump sum offers only. " />
-                </th>
-                <th className="border p-2 text-center">Best Offer (VAT 0%)</th>
-                <th className="border p-2 text-center">
+                <th className={th}>Best Offer (VAT 0%)</th>
+                <th className={th}>
                   Top 2 Runner-up Offers (VAT 0%)
                 </th>
               </tr>
@@ -104,48 +112,39 @@ export default function ExpiredRequestsTable({ rows }) {
                   }
                 }
 
-                const suffixForMax = r.paymentRate
-                  ?.toLowerCase()
-                  .startsWith("hourly rate")
-                  ? "/h"
-                  : "";
-
                 return (
-                  <tr key={r.requestId}>
-                    <td className="border p-2 text-center">
+                  <tr key={r.requestId} className={tr}>
+                    <td className={td}>
                       {r.requestTitle || "—"}
                     </td>
-                    <td className="border p-2 text-center">
+                    <td className={td}>
                       {r.createdBy || "—"}
                     </td>
-                    <td className="border p-2 text-center">
+                    <td className={td}>
                       {formatDateDDMMYYYY(r.dateCreated)}
                     </td>
-                    <td className="border p-2 text-center">
+                    <td className={td}>
                       {formatDateDDMMYYYY(r.dateExpired)}
                     </td>
-                    <td className="border p-2 text-center">
+                    <td className={td}>
                       {r.contractResult ?? "—"}
                     </td>
-                    <td className="border p-2 text-center">
-                      {r.maxPrice != null
-                        ? `${fmtMoney(r.maxPrice, r.currency)}${suffixForMax}`
-                        : "N/A"}
-                    </td>
-                    <td className="border p-2 text-center">{best}</td>
-                    <td className="border p-2 text-center">
+                    <td className={td}>{best}</td>
+                    <td className={td}>
                       {runnerUpContent}
                     </td>
                   </tr>
                 );
               })}
             </tbody>
-          </table>
+            </table>
+            </div>
+          </div>
 
           {canLoadMore && (
             <div className="mt-4 flex justify-center">
               <button
-                className="bg-white text-black px-4 py-2 rounded cursor-pointer"
+                className={btnGhost}
                 onClick={() =>
                   setVisibleCount((n) =>
                     Math.min(n + PAGE_SIZE, safeRows.length),

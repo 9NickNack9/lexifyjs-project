@@ -85,9 +85,9 @@ export const authOptions = {
           throw new Error("RATE_LIMIT");
         }
 
-        // UserAccount + Company
-        const user = await prisma.userAccount.findUnique({
-          where: { username },
+        // UserAccount + Company (username or email)
+        const user = await prisma.userAccount.findFirst({
+          where: { OR: [{ username }, { email: username }] },
           select: {
             userPkId: true,
             username: true,

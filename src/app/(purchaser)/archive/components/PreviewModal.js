@@ -2,6 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { fmtMoney } from "../utils/format";
+import HubPreviewModal, {
+  PreviewSection,
+} from "@/app/components/request-wizard/RequestPreviewModal";
 
 function formatLocalDDMMYYYY_HHMM(date) {
   if (!(date instanceof Date) || Number.isNaN(date.getTime())) return "—";
@@ -126,63 +129,42 @@ export default function PreviewModal({ open, onClose, row, companyName }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="w-[min(900px,95vw)] max-h-[90vh] overflow-auto bg-white text-black p-6 shadow-xl">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-xl font-semibold">
-            Preview — {row.title || "LEXIFY Request"}
-          </h3>
-          <button
-            className="px-3 py-1 rounded bg-gray-200 hover:bg-gray-300 cursor-pointer"
-            onClick={onClose}
-          >
-            Close
-          </button>
+    <HubPreviewModal
+      open
+      onClose={onClose}
+      overlayClassName="z-[100]"
+    >
+      {!def ? (
+        <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-black">
+          No matching preview definition found.
         </div>
-
-        {!def ? (
-          <div className="p-3 border rounded bg-gray-50">
-            No matching preview definition found.
-          </div>
-        ) : (
-          <div className="space-y-6">
-            {(def.preview?.sections || []).map((section, si) => (
-              <div key={si} className="border border-white">
-                <div className="px-4 py-2 font-medium bg-[#119999] text-white">
-                  {section.title}
-                </div>
-
-                {/* two supported shapes:
-                    1) { fields: [{label, path}, ...] }
-                    2) { value: "<named-block>" }  (some entries in JSON use this) */}
-                {Array.isArray(section.fields) ? (
-                  <table className="w-full">
-                    <tbody>
-                      {section.fields.map((f, fi) => (
-                        <tr key={fi} className="border-t">
-                          <td className="p-3 align-top w-1/3 font-medium">
-                            {f.label}
-                          </td>
-                          <td className="p-3 align-top">
-                            {renderValue(resolvePath(f.path), f.path)}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                ) : section.value ? (
-                  <div className="p-3">
-                    {renderNamedBlock(section.value, row, companyName)}
-                  </div>
-                ) : (
-                  <div className="p-3 text-sm text-gray-500">—</div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    </div>
+      ) : (
+        (def.preview?.sections || []).map((section, si) => (
+          <PreviewSection key={si} title={section.title || "—"}>
+            {Array.isArray(section.fields) ? (
+              <table className="w-full">
+                <tbody>
+                  {section.fields.map((f, fi) => (
+                    <tr key={fi} className="border-t border-gray-200">
+                      <td className="w-1/3 py-2 pr-4 align-top font-semibold text-gray-800">
+                        {f.label}
+                      </td>
+                      <td className="py-2 align-top text-gray-800">
+                        {renderValue(resolvePath(f.path), f.path)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            ) : section.value ? (
+              renderNamedBlock(section.value, row, companyName)
+            ) : (
+              "—"
+            )}
+          </PreviewSection>
+        ))
+      )}
+    </HubPreviewModal>
   );
 }
 

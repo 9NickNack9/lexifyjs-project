@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import {
+  getDummyProviderExpiredOffers,
+  withAdminDummyRows,
+} from "@/lib/adminDummyCases";
 
 const toNum = (d) => (d == null ? null : Number(d));
 const safeNumber = (v) => (typeof v === "bigint" ? Number(v) : v);
@@ -18,7 +22,7 @@ export async function GET() {
 
     const me = await prisma.userAccount.findUnique({
       where: { userPkId: BigInt(session.userId) },
-      select: { firstName: true, lastName: true, companyId: true },
+      select: { firstName: true, lastName: true, companyId: true, role: true },
     });
 
     if (!me?.companyId) {
@@ -80,7 +84,14 @@ export async function GET() {
         new Set([...contactsFromMembers, meName].filter(Boolean)),
       );
 
-      return NextResponse.json({ contacts, offers: [] });
+      return NextResponse.json({
+        contacts,
+        offers: withAdminDummyRows(
+          me?.role || session.role,
+          getDummyProviderExpiredOffers(),
+          [],
+        ),
+      });
     }
 
     // 2) Fetch full offer objects as before
@@ -102,6 +113,7 @@ export async function GET() {
           select: {
             title: true,
             details: true,
+            paymentRate: true,
             clientCompany: { select: { companyName: true } },
           },
         },
@@ -122,6 +134,7 @@ export async function GET() {
           fullName(o.createdByUser) || o.offerLawyer || fullName(me) || "—",
         offerSubmissionDate: o.createdAt || null,
         offeredPrice: toNum(o.offerPrice),
+        paymentRate: req.paymentRate || null,
         offerStatus: o.offerStatus || "—",
         selectReason,
       };
@@ -137,7 +150,11 @@ export async function GET() {
 
     return NextResponse.json({
       contacts,
-      offers: shaped,
+      offers: withAdminDummyRows(
+        me?.role || session.role,
+        getDummyProviderExpiredOffers(),
+        shaped,
+      ),
     });
   } catch (e) {
     console.error("GET /api/me/offers/expired failed:", e);

@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import { notifyPurchaserAdditionalQuestion } from "@/lib/mailer";
+import { isAdminRole, isDummyId } from "@/lib/adminDummyCases";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const isEmail = (s) => typeof s === "string" && EMAIL_RE.test(s.trim());
@@ -56,6 +57,10 @@ export async function POST(req, ctx) {
         { error: "Question is required" },
         { status: 400 },
       );
+    }
+
+    if (isDummyId(id) && isAdminRole(session.role)) {
+      return NextResponse.json({ ok: true });
     }
 
     const existing = await prisma.request.findUnique({

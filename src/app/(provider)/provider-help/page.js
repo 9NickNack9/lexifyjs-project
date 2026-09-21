@@ -1,7 +1,7 @@
 "use client";
-import { useMemo, useState } from "react";
-import VideoPlayer from "@/app/components/VideoPlayer";
+import { useMemo } from "react";
 import Link from "next/link";
+import { AppPage } from "@/app/components/HubPage";
 
 function TutorialGrid() {
   const tutorials = useMemo(
@@ -40,34 +40,26 @@ function TutorialGrid() {
     [],
   );
 
-  const [active, setActive] = useState(null); // active tutorial object or null
-
   return (
-    <>
-      {/* Cards */}
-      <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div className="relative mt-6">
+      <div className="pointer-events-none grid select-none grid-cols-1 gap-6 md:grid-cols-3">
         {tutorials.map((t) => (
-          <button
+          <div
             key={t.id}
-            type="button"
-            onClick={() => setActive(t)}
-            className="group flex h-full flex-col text-left rounded-xl border border-black/10 bg-white shadow-md hover:shadow-xl transition overflow-hidden cursor-pointer"
+            className="flex h-full flex-col overflow-hidden rounded-2xl bg-white text-left shadow-[0_16px_44px_rgba(17,153,158,0.22)] ring-1 ring-black/10"
           >
-            {/* Thumbnail */}
             <div className="relative">
               <img
                 src={t.poster}
                 alt={`${t.number}. ${t.title}`}
-                className="w-full aspect-video object-cover object-top bg-black/5"
+                className="aspect-video w-full bg-black/5 object-cover object-top"
                 loading="lazy"
               />
-
-              {/* Play overlay */}
               <div className="absolute inset-0 flex items-center justify-center">
-                <div className="h-12 w-12 rounded-full bg-black/70 flex items-center justify-center group-hover:bg-black/80 transition">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-black/70">
                   <svg
                     viewBox="0 0 24 24"
-                    className="h-6 w-6 text-white translate-x-[1px]"
+                    className="h-6 w-6 translate-x-[1px] text-white"
                     fill="currentColor"
                     aria-hidden="true"
                   >
@@ -75,84 +67,30 @@ function TutorialGrid() {
                   </svg>
                 </div>
               </div>
-
-              {/* Duration pill */}
               {t.duration ? (
-                <div className="absolute bottom-3 right-3 text-xs px-2 py-1 rounded bg-black/75 text-white">
+                <div className="absolute right-3 bottom-3 rounded bg-black/75 px-2 py-1 text-xs text-white">
                   {t.duration}
                 </div>
               ) : null}
             </div>
-
-            {/* Text */}
             <div className="flex flex-1 flex-col p-4">
               <div className="flex items-start justify-between gap-3">
-                <h3 className="font-semibold text-base leading-snug">
+                <h3 className="text-base leading-snug font-semibold">
                   {t.number}. {t.title}
                 </h3>
-                <span className="text-xs text-black/50 whitespace-nowrap mt-0.5">
+                <span className="mt-0.5 text-xs whitespace-nowrap text-black/50">
                   Tutorial
                 </span>
               </div>
               <p className="mt-2 text-sm text-black/70">{t.description}</p>
             </div>
-          </button>
+          </div>
         ))}
       </div>
-
-      {/* Modal */}
-      {active ? (
-        <VideoModal tutorial={active} onClose={() => setActive(null)} />
-      ) : null}
-    </>
-  );
-}
-
-function VideoModal({ tutorial, onClose }) {
-  // Close on backdrop click
-  const onBackdrop = (e) => {
-    if (e.target === e.currentTarget) onClose();
-  };
-
-  return (
-    <div
-      className="fixed inset-0 z-50 bg-black/60 flex items-center justify-center p-4"
-      onMouseDown={onBackdrop}
-      role="dialog"
-      aria-modal="true"
-      aria-label={`${tutorial.number}. ${tutorial.title}`}
-    >
-      <div className="w-full max-w-5xl rounded-xl bg-white shadow-xl overflow-hidden">
-        {/* Modal header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b border-black/10">
-          <div>
-            <div className="text-sm text-black/60">
-              Tutorial {tutorial.number}
-            </div>
-            <div className="font-semibold">{tutorial.title}</div>
-          </div>
-
-          <button
-            type="button"
-            onClick={onClose}
-            className="rounded-lg px-3 py-2 text-sm bg-black/5 hover:bg-black/10 transition cursor-pointer"
-          >
-            Close
-          </button>
-        </div>
-
-        {/* Player */}
-        <div className="p-4">
-          <div className="w-full min-h-[280px]">
-            <VideoPlayer
-              key={tutorial.id}
-              title=""
-              src={tutorial.src}
-              poster={tutorial.poster}
-              className="w-full"
-            />
-          </div>
-        </div>
+      <div className="absolute inset-0 z-10 flex items-center justify-center rounded-2xl bg-white/40 backdrop-blur-sm">
+        <span className="rounded-xl bg-white/95 px-6 py-3 text-2xl font-semibold text-gray-900 shadow-sm ring-1 ring-black/10">
+          New video tutorials coming soon!
+        </span>
       </div>
     </div>
   );
@@ -160,11 +98,10 @@ function VideoModal({ tutorial, onClose }) {
 
 export default function ProviderHelp() {
   return (
-    <div className="flex flex-col items-center min-h-screen p-6">
-      <h1 className="text-3xl font-bold mb-6">Help & Resources</h1>
+    <AppPage eyebrow="" title="Help & Resources">
       {/* Video Tutorials */}
-      <div className="w-full max-w-6xl p-6 rounded shadow-2xl bg-white text-black">
-        <h2 className="text-2xl font-semibold mb-4">Video Tutorials</h2>
+      <div className="w-full rounded-2xl bg-white p-6 text-black shadow-[0_16px_44px_rgba(17,153,158,0.22)] ring-1 ring-black/10">
+        <h2 className="text-2xl font-semibold mb-2">Video Tutorials</h2>
         <p className="text-md text-black">
           Get started and make the most of the platform with our step-by-step
           video guides. For a complete introduction to LEXIFY, watch the videos
@@ -172,9 +109,9 @@ export default function ProviderHelp() {
         </p>
         <TutorialGrid />
       </div>
-      <br />
+
       {/* Contact */}
-      <div className="w-full max-w-6xl p-6 rounded shadow-2xl bg-white text-black">
+      <div className="w-full rounded-2xl bg-white p-6 text-black shadow-[0_16px_44px_rgba(17,153,158,0.22)] ring-1 ring-black/10">
         <h2 className="text-2xl font-semibold mb-4">
           Contact Our Support Team
         </h2>
@@ -209,9 +146,24 @@ export default function ProviderHelp() {
           .
         </h4>
       </div>
-      <br />
+
+      {/* Feedback */}
+      <div className="w-full rounded-2xl bg-white p-6 text-black shadow-[0_16px_44px_rgba(17,153,158,0.22)] ring-1 ring-black/10">
+        <h2 className="text-2xl font-semibold mb-4">Give Feedback to LEXIFY</h2>
+        <h4 className="text-md">
+          Let us know what you like about LEXIFY and what we could do better.
+          Your feedback helps us improve the platform for everyone.
+        </h4>
+        <Link
+          href="/feedback"
+          className="inline-block mt-4 px-6 py-3 rounded-lg text-white bg-[#19999e] hover:opacity-90 transition"
+        >
+          Give Feedback
+        </Link>
+      </div>
+
       {/* LEXIFY Legal Terms and Conditions */}
-      <div className="w-full max-w-6xl p-6 rounded shadow-2xl bg-white text-black">
+      <div className="w-full rounded-2xl bg-white p-6 text-black shadow-[0_16px_44px_rgba(17,153,158,0.22)] ring-1 ring-black/10">
         <h2 className="text-2xl font-semibold mb-4">
           LEXIFY Legal Terms and Conditions
         </h2>
@@ -227,33 +179,12 @@ export default function ProviderHelp() {
         <ul className="max-w-full space-y-1 text-black list-disc list-inside dark:text-black">
           <li>
             <Link
-              href="/docs/lexify-tos.pdf"
-              target="_blank"
-              rel="noopener"
-              className="text-blue-600 dark:text-blue-500 hover:underline"
-            >
-              LEXIFY Terms of Service (valid until 8 September 2026)
-            </Link>
-          </li>
-          <li>
-            <Link
               href="/docs/lexify-tos-september-2026.pdf"
               target="_blank"
               rel="noopener"
               className="text-blue-600 dark:text-blue-500 hover:underline"
             >
-              LEXIFY Terms of Service (valid from 8 September 2026)
-            </Link>
-          </li>
-          <li>
-            <Link
-              href="/docs/lexify-privacy-statement.pdf"
-              target="_blank"
-              rel="noopener"
-              className="text-blue-600 dark:text-blue-500 hover:underline"
-            >
-              Privacy Statement for LEXIFY Platform (valid until 8 September
-              2026)
+              LEXIFY Terms of Service
             </Link>
           </li>
           <li>
@@ -263,8 +194,7 @@ export default function ProviderHelp() {
               rel="noopener"
               className="text-blue-600 dark:text-blue-500 hover:underline"
             >
-              Privacy Statement for LEXIFY Platform (valid from 8 September
-              2026)
+              Privacy Statement for LEXIFY Platform
             </Link>
           </li>
           <li>
@@ -286,6 +216,6 @@ export default function ProviderHelp() {
           change is not acceptable to you.
         </h4>
       </div>
-    </div>
+    </AppPage>
   );
 }

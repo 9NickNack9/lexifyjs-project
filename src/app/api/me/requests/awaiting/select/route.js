@@ -16,6 +16,7 @@ import {
   notifyLosingLawyerNotSelected,
   notifyProviderConflictCheck,
 } from "@/lib/mailer";
+import { isAdminRole, isDummyId } from "@/lib/adminDummyCases";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { randomBytes } from "crypto";
 
@@ -664,6 +665,10 @@ export async function POST(req) {
 
     const body = await req.json().catch(() => ({}));
     const { requestId, offerId, selectReason, teamRequest } = body || {};
+
+    if (isDummyId(requestId) && isAdminRole(currentUser.role || session.role)) {
+      return NextResponse.json({ ok: true, dummy: true });
+    }
 
     let reqIdBig;
     let offerIdBig;

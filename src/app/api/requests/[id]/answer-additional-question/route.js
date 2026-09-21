@@ -3,6 +3,7 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import { notifyProvidersAdditionalQuestionAnswered } from "@/lib/mailer";
+import { isAdminRole, isDummyId } from "@/lib/adminDummyCases";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const isEmail = (s) => typeof s === "string" && EMAIL_RE.test(s.trim());
@@ -37,6 +38,10 @@ export async function POST(req, context) {
         { error: "Both question and answer are required" },
         { status: 400 },
       );
+    }
+
+    if (isDummyId(id) && isAdminRole(session.role)) {
+      return NextResponse.json({ ok: true });
     }
 
     const userPkId = BigInt(String(session.userId));
@@ -84,10 +89,7 @@ export async function POST(req, context) {
       requestRecord.clientUserId != null &&
       String(requestRecord.clientUserId) === String(me.userPkId);
 
-    const allowedByRole =
-      me.role === "ADMIN" || (me.role === "PURCHASER" && sameCompany);
-
-    if (!isClientUser && !allowedByRole) {
+    if (!isClientUser && !sameCompany) {
       return NextResponse.json(
         { error: "Not allowed to answer questions for this request" },
         { status: 403 },
@@ -163,6 +165,9 @@ export async function POST(req, context) {
         },
       });
 
+      // Recipients: matching provider users + company members with all-notifications
+      const recipientsSet = new Set();
+
       for (const u of providerUsers) {
         const co = u.company;
         if (!co) continue;
@@ -216,9 +221,6 @@ export async function POST(req, context) {
 
         if (!ok) continue;
 
-        // Recipients: provider user + company members with all-notifications
-        const recipientsSet = new Set();
-
         const primaryEmail = (u?.email || "").trim();
         if (isEmail(primaryEmail)) recipientsSet.add(primaryEmail);
 
@@ -226,42 +228,15 @@ export async function POST(req, context) {
           const em = (m?.email || "").trim();
           if (isEmail(em)) recipientsSet.add(em);
         }
-
-        let sentAtLeastOne = false;
-
-        for (const email of recipientsSet) {
-          try {
-            await notifyProvidersAdditionalQuestionAnswered({
-              to: [email],
-              requestCategory: requestRecord.requestCategory,
-              requestSubcategory: requestRecord.requestSubcategory,
-              assignmentType: requestRecord.assignmentType,
-            });
-            sentAtLeastOne = true;
-          } catch (e) {
-            console.error(
-              "Provider additional-question-answered email failed for",
-              email,
-              e,
-            );
-          }
-        }
-
-        // Always send exactly ONE support email (independent of provider count)
-        try {
-          await notifyProvidersAdditionalQuestionAnswered({
-            to: "support@lexify.online",
-            requestCategory: requestRecord.requestCategory,
-            requestSubcategory: requestRecord.requestSubcategory,
-            assignmentType: requestRecord.assignmentType,
-          });
-        } catch (e) {
-          console.error(
-            "Support provider additional-question-answered failed:",
-            e,
-          );
-        }
       }
+
+      // One send: Support is TO, providers are BCC (mailer also notifies Support if nobody matches)
+      await notifyProvidersAdditionalQuestionAnswered({
+        to: Array.from(recipientsSet),
+        requestCategory: requestRecord.requestCategory,
+        requestSubcategory: requestRecord.requestSubcategory,
+        assignmentType: requestRecord.assignmentType,
+      });
     } catch (emailErr) {
       console.error(
         "Failed to send provider additional-question-answered email:",

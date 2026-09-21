@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import {
+  getDummyProviderPendingOffers,
+  isAdminRole,
+  withAdminDummyRows,
+} from "@/lib/adminDummyCases";
 
 const toNum = (d) => (d == null ? null : Number(d));
 const safeNumber = (v) => (typeof v === "bigint" ? Number(v) : v);
@@ -28,7 +33,7 @@ export async function GET() {
       },
     });
 
-    const isAdmin = me?.role === "ADMIN";
+    const isAdmin = isAdminRole(me?.role || session.role);
 
     if (!me?.companyId) {
       return NextResponse.json(
@@ -48,18 +53,10 @@ export async function GET() {
 
     const offers = await prisma.offer.findMany({
       where: {
-        ...(isAdmin
-          ? {
-              request: {
-                requestState: { in: ["PENDING", "ON HOLD", "CONFLICT_CHECK"] },
-              },
-            }
-          : {
-              providerCompanyId: me.companyId,
-              request: {
-                requestState: { in: ["PENDING", "ON HOLD", "CONFLICT_CHECK"] },
-              },
-            }),
+        providerCompanyId: me.companyId,
+        request: {
+          requestState: { in: ["PENDING", "ON HOLD", "CONFLICT_CHECK"] },
+        },
       },
       orderBy: { createdAt: "desc" },
       select: {
@@ -117,6 +114,7 @@ export async function GET() {
         offerSubmittedBy: submittedBy,
         offerSubmissionDate: o.createdAt || null,
         offeredPrice: toNum(o.offerPrice),
+        paymentRate: req.paymentRate || null,
         dateExpired: req.dateExpired,
         requestState: req.requestState || null,
         requestStatus: req.requestState || null,
@@ -152,7 +150,11 @@ export async function GET() {
 
     return NextResponse.json({
       contacts: contacts.filter((c) => c !== "All"), // page adds "All" itself
-      offers: shaped,
+      offers: withAdminDummyRows(
+        isAdmin ? "ADMIN" : me?.role,
+        getDummyProviderPendingOffers(),
+        shaped,
+      ),
     });
   } catch (e) {
     console.error("GET /api/me/offers/pending failed:", e);

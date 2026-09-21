@@ -3,6 +3,11 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import {
+  getDummyExpiredRequests,
+  isAdminRole,
+  withAdminDummyRows,
+} from "@/lib/adminDummyCases";
 
 // BigInt-safe JSON
 const serialize = (obj) =>
@@ -50,6 +55,7 @@ export async function GET() {
       where: { userPkId: BigInt(session.userId) },
       select: {
         companyId: true,
+        role: true,
         company: { select: { companyName: true } },
       },
     });
@@ -96,8 +102,12 @@ export async function GET() {
       ? requestIdRows.map((r) => r?.requestId).filter(Boolean)
       : [];
 
+    const adminDummy = isAdminRole(ua?.role || session.role)
+      ? getDummyExpiredRequests()
+      : [];
+
     if (requestIds.length === 0) {
-      return NextResponse.json(serialize({ requests: [] }));
+      return NextResponse.json(serialize({ requests: adminDummy }));
     }
 
     const requests = await prisma.request.findMany({
@@ -189,7 +199,11 @@ export async function GET() {
       };
     });
 
-    return NextResponse.json(serialize({ requests: shaped }));
+    return NextResponse.json(
+      serialize({
+        requests: withAdminDummyRows(ua?.role || session.role, adminDummy, shaped),
+      }),
+    );
   } catch (e) {
     console.error("GET /api/me/requests/expired failed:", e);
     return NextResponse.json({ error: "Server error" }, { status: 500 });

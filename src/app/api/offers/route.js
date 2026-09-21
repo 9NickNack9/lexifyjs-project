@@ -3,6 +3,11 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import {
+  getDummyRequestById,
+  isAdminRole,
+  isDummyId,
+} from "@/lib/adminDummyCases";
 
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { randomBytes } from "crypto";
@@ -162,6 +167,33 @@ export async function POST(req) {
       requestIdBigInt = BigInt(String(requestId));
     } catch {
       return NextResponse.json({ error: "Invalid requestId" }, { status: 400 });
+    }
+
+    if (isDummyId(requestId) && isAdminRole(session.role)) {
+      const dummyReq = getDummyRequestById(requestId);
+      if (!dummyReq) {
+        return NextResponse.json({ error: "Request not found" }, { status: 404 });
+      }
+      const paymentRate = String(dummyReq.paymentRate || "")
+        .trim()
+        .toLowerCase();
+      const isCapped = paymentRate.startsWith("capped price");
+      if (
+        isCapped &&
+        (offerExpectedPrice == null || String(offerExpectedPrice).trim() === "")
+      ) {
+        return NextResponse.json(
+          {
+            error:
+              "offerExpectedPrice is required when paymentRate is 'capped price'.",
+          },
+          { status: 400 },
+        );
+      }
+      return NextResponse.json(
+        { ok: true, offerId: String(Date.now()), dummy: true },
+        { status: 201 },
+      );
     }
 
     // Read request rules

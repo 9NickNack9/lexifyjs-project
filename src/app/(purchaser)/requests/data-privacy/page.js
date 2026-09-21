@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import AutoGrowTextarea from "../../../components/AutoGrowTextarea";
 
 export default function DataPrivacy() {
   const router = useRouter();
@@ -24,6 +25,38 @@ export default function DataPrivacy() {
   };
 
   const [formData, setFormData] = useState(initialFormState);
+
+  useEffect(() => {
+    window.__LEXIFY_REQUEST_CONTEXT__ = {
+      requestType: "Data Privacy",
+
+      description: formData.description,
+
+      additionalBackgroundInfo: formData.background,
+
+      dataPrivacyDetails: {
+        offerType: formData.offerType,
+        review: formData.review,
+        reviewTime: formData.reviewTime,
+        employeeCount: formData.employeeCount,
+      },
+
+      providerRequirements: {
+        providerType: formData.offerer,
+        minimumLawyerCount: formData.lawyerCount,
+        minimumFirmAge: formData.firmAge,
+        minimumRating: formData.firmRating,
+      },
+
+      commercialTerms: {
+        paymentTerms: formData.paymentTerms,
+      },
+
+      languages: formData.checkboxes || [],
+
+      offersDeadline: formData.date,
+    };
+  }, [formData]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -187,11 +220,11 @@ export default function DataPrivacy() {
             <strong>NOTE:</strong>{" "}
             <em>Please do not include any personal data in the description</em>
           </p>
-          <textarea
+          <AutoGrowTextarea
             name="description"
             className="w-full border p-2"
             onChange={handleChange}
-          ></textarea>
+          ></AutoGrowTextarea>
 
           <div>
             <h4 className="text-md font-medium mb-1">
@@ -219,11 +252,11 @@ export default function DataPrivacy() {
             <strong>NOTE:</strong>{" "}
             <em>Please do not include any personal data in the description</em>
           </p>
-          <textarea
+          <AutoGrowTextarea
             name="background"
             className="w-full border p-2"
             onChange={handleChange}
-          ></textarea>
+          ></AutoGrowTextarea>
 
           <div>
             <h4 className="text-md font-medium mb-1">

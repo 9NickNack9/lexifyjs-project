@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
+import { validateNewPassword } from "@/lib/password";
 
 export async function POST(req) {
   let body;
@@ -19,8 +20,10 @@ export async function POST(req) {
       { status: 400 },
     );
   }
-  if (newPassword.length < 8) {
-    return NextResponse.json({ error: "Password too short" }, { status: 400 });
+
+  const passwordError = validateNewPassword(newPassword);
+  if (passwordError) {
+    return NextResponse.json({ error: passwordError }, { status: 400 });
   }
 
   const prt = await prisma.passwordResetTokenUser.findUnique({

@@ -1,3 +1,9 @@
+export function isHourlyRate(paymentRate) {
+  return String(paymentRate || "")
+    .toLowerCase()
+    .includes("hourly");
+}
+
 export function fmtMoney(value, currency = "EUR") {
   if (typeof value !== "number" || Number.isNaN(value)) return "—";
   try {

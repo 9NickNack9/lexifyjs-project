@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import { normalizeLegalPanelGroups } from "@/lib/legalPanel";
 
 // Helper: JSON.stringify with BigInt -> string + strong no-cache headers
 const safeJson = (data, status = 200) =>
@@ -118,6 +119,9 @@ export async function GET() {
     row?.preferredLegalServiceProviders,
   );
   const preferredArray = groupPreferredByProvider(prefAreaMap);
+  const legalPanelGroups = normalizeLegalPanelGroups(
+    row?.legalPanelServiceProviders,
+  );
 
   const payload = {
     auth: {
@@ -144,9 +148,8 @@ export async function GET() {
         ? row.blockedServiceProviders
         : [],
       preferredLegalServiceProviders: preferredArray,
-      legalPanelServiceProviders: Array.isArray(row.legalPanelServiceProviders)
-        ? row.legalPanelServiceProviders
-        : [],
+      legalPanelGroups,
+      legalPanelServiceProviders: legalPanelGroups,
       companyId: row.companyId,
     },
 
@@ -169,9 +172,8 @@ export async function GET() {
     blockedServiceProviders: Array.isArray(row.blockedServiceProviders)
       ? row.blockedServiceProviders
       : [],
-    legalPanelServiceProviders: Array.isArray(row.legalPanelServiceProviders)
-      ? row.legalPanelServiceProviders
-      : [],
+    legalPanelGroups,
+    legalPanelServiceProviders: legalPanelGroups,
     preferredLegalServiceProviders: preferredArray,
   };
 

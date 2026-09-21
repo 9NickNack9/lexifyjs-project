@@ -20,7 +20,7 @@ export default function Providers({ children }) {
     "/",
   ];
 
-  const noBannerPages = ["/", "/login", "/register"];
+  const noBannerPages = ["/", "/login", "/register", "/forgot-password", "/reset-password"];
 
   const hideNav = noNavPages.some((p) => {
     if (p === "/") return pathname === "/";

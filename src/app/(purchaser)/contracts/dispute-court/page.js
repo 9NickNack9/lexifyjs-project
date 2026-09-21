@@ -1,21 +1,101 @@
 "use client";
-import { useEffect, useState } from "react";
-import { useRouter, useSearchParams } from "next/navigation";
-import QuestionMarkTooltip from "../../../components/QuestionmarkTooltip";
 
-// ==== COMPONENT START ====
+import { useEffect, useRef, useState } from "react";
+import useLexiDraftPrefill from "@/hooks/useLexiDraftPrefill";
+import useRequestDrafts from "@/hooks/useRequestDrafts";
+import useRequestWizardNav from "@/hooks/useRequestWizardNav";
+import { useRouter } from "next/navigation";
+import QuestionMarkTooltip from "../../../components/QuestionmarkTooltip";
+import AutoGrowTextarea from "../../../components/AutoGrowTextarea";
+import RequestWizard from "../../../components/RequestWizard";
+import NeedOptionCards from "../../../components/request-wizard/NeedOptionCards";
+import SummaryRow from "../../../components/request-wizard/SummaryRow";
+import BackgroundFields from "../../../components/request-wizard/BackgroundFields";
+import ProviderOffersFields from "../../../components/request-wizard/ProviderOffersFields";
+import ReviewSubmitFields from "../../../components/request-wizard/ReviewSubmitFields";
+import {
+  DraftHeaderActions,
+  SaveDraftModal,
+  LoadDraftModal,
+} from "../../../components/request-wizard/DraftControls";
+import RequestPreviewModal, {
+  PreviewSection as Section,
+} from "@/app/components/request-wizard/RequestPreviewModal";
+import {
+  FIELD_CLASS,
+  DEFAULT_WIZARD_STEPS,
+  validateProviderOffers,
+  validateReviewSubmit,
+  eligibleFirmsSummary,
+  legalPanelSubmitFields,
+  retainerFeeOptionsForNeed,
+  normalizeRetainerFee,
+  selectedLanguagesFromForm,
+  formatDeadlineDate,
+  optionLabel,
+  PROVIDER_REFERENCE_OPTIONS,
+  getSelectableLegalPanels,
+  getSelectedLegalPanel,
+  fileNames,
+} from "@/lib/requestWizard";
+import {
+  getDummyLegalPanelGroups,
+  withAdminDummyRows,
+} from "@/lib/adminDummyCases";
+
+const NEED_FULL =
+  "Full legal representation in pending court proceedings (including, for example, drafting of legal briefs, representation in court hearings and related attorney-client communications)";
+const NEED_OCCASIONAL =
+  "Occasional support with pending court proceedings (including, for example, commenting on legal briefs or advising on legal strategy during different stages of the proceedings, if requested)";
+
+const NEED_OPTIONS = [
+  {
+    value: NEED_FULL,
+    title: NEED_FULL,
+    pricing: "Capped price",
+    note: "Any offers you receive will be for a capped price and cover the pending proceedings in one court instance only. Any offers you receive will not include fees or charges possibly levied by the competent court and such fees and charges, if any, will be invoiced separately. The capped price offer will provide the maximum price for the work, taking into account all possible unexpected developments in the dispute proceedings (such as an unusually high number of rounds of written pleadings). In addition to the capped price, the offer will include an expected price, representing the price of the work if the dispute proceedings proceed without such unexpected developments.",
+    icon: "template",
+  },
+  {
+    value: NEED_OCCASIONAL,
+    title: NEED_OCCASIONAL,
+    pricing: "Blended hourly rate",
+    note: "Any offers you receive will provide an applicable hourly rate only. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the legal service provider submitting the winning offer. The offered hourly rate will be valid until the court proceedings in the current court instance have concluded.",
+    icon: "review",
+  },
+];
+
+const WIZARD_STEPS = DEFAULT_WIZARD_STEPS.map((step) =>
+  step.id === "need"
+    ? {
+        ...step,
+        title: "What kind of support do you need?",
+        label: "Support needed",
+      }
+    : step,
+);
+const PAGE_PATH = "/contracts/dispute-court";
+const REQUEST_DRAFT_TYPE = "courtProceedings";
+const DRAFT_EMPTY_TEXT = "No saved Court Proceedings drafts found.";
+
+function isFullNeed(need) {
+  return String(need || "").startsWith(
+    "Full legal representation in pending court proceedings",
+  );
+}
+
 export default function DisputeCourt() {
   const router = useRouter();
-  const searchParams = useSearchParams();
 
-  // ---- initial state ----
   const initialFormState = {
-    need: "", // radio: full vs occasional
+    need: "",
     confidential: "",
     confboxes: [],
     description: "",
     background: "",
     backgroundFiles: [],
+    providerSource: "",
+    legalPanelGroupId: "",
     offerer: "",
     providerCountry: "",
     lawyerCount: "",
@@ -35,24 +115,121 @@ export default function DisputeCourt() {
   };
 
   const [formData, setFormData] = useState(initialFormState);
+  useLexiDraftPrefill(setFormData);
   const [showPreview, setShowPreview] = useState(false);
   const [submitting, setSubmitting] = useState(false);
-
-  const [showLoadDraftModal, setShowLoadDraftModal] = useState(false);
-  const [drafts, setDrafts] = useState([]);
-  const [draftsLoading, setDraftsLoading] = useState(false);
-  const [draftActionLoading, setDraftActionLoading] = useState(false);
-
-  const REQUEST_DRAFT_TYPE = "courtProceedings";
-  const DRAFT_EMPTY_TEXT = "No saved Court Proceedings drafts found.";
-
   const [company, setCompany] = useState({
     name: "",
     businessId: "",
     country: "",
   });
+  const [legalPanelGroups, setLegalPanelGroups] = useState([]);
+  const [panelDropdownOpen, setPanelDropdownOpen] = useState(false);
+  const panelDropdownRef = useRef(null);
 
-  // Load company + contacts
+  const isFullCourt = isFullNeed(formData.need);
+  const isFixedFee = isFullCourt;
+  const selectedNeed = NEED_OPTIONS.find(
+    (option) => option.value === formData.need,
+  );
+  const retainerFeeOptions = retainerFeeOptionsForNeed(isFixedFee);
+  const selectedLanguages = selectedLanguagesFromForm(formData);
+  const selectableLegalPanels = getSelectableLegalPanels(legalPanelGroups);
+  const selectedLegalPanel = getSelectedLegalPanel(
+    legalPanelGroups,
+    formData.legalPanelGroupId,
+  );
+  const usingLegalPanel = formData.providerSource === "panel";
+
+  const drafts = useRequestDrafts({
+    requestType: REQUEST_DRAFT_TYPE,
+    pagePath: PAGE_PATH,
+    formData,
+    setFormData,
+    emptyText: DRAFT_EMPTY_TEXT,
+    applyDraftData: (prev, draft) => {
+      const next = {
+        ...prev,
+        ...(draft.data || {}),
+        requestTitle: draft.data?.requestTitle || draft.title || "",
+        providerSource: draft.data?.providerSource || "criteria",
+        legalPanelGroupId: draft.data?.legalPanelGroupId || "",
+        backgroundFiles: [],
+        supplierFiles: [],
+        agree: false,
+      };
+      next.retainerFee = normalizeRetainerFee(
+        next.retainerFee,
+        isFullNeed(next.need),
+      );
+      return next;
+    },
+  });
+
+  const validateStep = (step) => {
+    if (step === 0) {
+      if (!formData.need) {
+        return {
+          error: "Please select what kind of support you need.",
+          field: "need",
+        };
+      }
+      return null;
+    }
+
+    if (step === 1) {
+      if (!String(formData.confidential || "").trim()) {
+        return {
+          error: "Please provide the name of your counterparty.",
+          field: "confidential",
+        };
+      }
+      return null;
+    }
+
+    if (step === 2) {
+      if (!formData.description) {
+        return {
+          error:
+            "Please describe briefly the matter under dispute and the current status of the court proceedings.",
+          field: "description",
+        };
+      }
+      return null;
+    }
+
+    if (step === 3) {
+      return validateProviderOffers(formData, {
+        usingLegalPanel,
+        selectedLegalPanel,
+        selectedLanguages,
+      });
+    }
+
+    if (step === 4) return validateReviewSubmit(formData);
+
+    return null;
+  };
+
+  const {
+    currentStep,
+    setCurrentStep,
+    stepError,
+    setStepError,
+    formRef,
+    goToStep,
+    goNext,
+    goBack,
+    showFirstInvalidStep,
+  } = useRequestWizardNav({ steps: WIZARD_STEPS, validateStep });
+
+  useEffect(() => {
+    drafts.onDraftLoadedRef.current = (skipReset) => {
+      if (!skipReset) setCurrentStep(0);
+      setStepError(null);
+    };
+  }, [drafts.onDraftLoadedRef, setCurrentStep, setStepError]);
+
   useEffect(() => {
     (async () => {
       try {
@@ -64,53 +241,90 @@ export default function DisputeCourt() {
           businessId: me?.company?.businessId || "",
           country: me?.company?.companyCountry || me?.companyCountry || "",
         });
-      } catch {}
+        setLegalPanelGroups(
+          withAdminDummyRows(
+            me?.role,
+            getDummyLegalPanelGroups(),
+            Array.isArray(me?.legalPanelGroups)
+              ? me.legalPanelGroups
+              : Array.isArray(me?.legalPanelServiceProviders)
+                ? me.legalPanelServiceProviders
+                : [],
+          ),
+        );
+      } catch {
+        /* no-op */
+      }
     })();
   }, []);
 
   useEffect(() => {
-    const draftId = searchParams.get("draftId");
+    window.__LEXIFY_REQUEST_CONTEXT__ = {
+      requestType: "Court Proceedings",
+      scopeOfWork: formData.need,
+      description: formData.description,
+      additionalBackgroundInfo: formData.background,
+      confidentialCounterpartyInfo: formData.confidential,
+      providerRequirements:
+        formData.providerSource === "panel"
+          ? {
+              selection: "legalPanel",
+              legalPanelGroupId: formData.legalPanelGroupId,
+              legalPanelGroupName:
+                legalPanelGroups.find(
+                  (group) => group.id === formData.legalPanelGroupId,
+                )?.name || "",
+              legalPanelProviders:
+                legalPanelGroups.find(
+                  (group) => group.id === formData.legalPanelGroupId,
+                )?.providers || [],
+            }
+          : {
+              selection: "criteria",
+              providerType: formData.offerer,
+              providerCountry: formData.providerCountry,
+              minimumLawyerCount: formData.lawyerCount,
+              minimumFirmAge: formData.firmAge,
+              minimumRating: formData.firmRating,
+              requiredReferences: formData.providerReferences,
+            },
+      commercialTerms: {
+        currency: formData.currency,
+        maximumPrice: null,
+        retainerFee: formData.retainerFee,
+        paymentTerms: formData.paymentTerms,
+      },
+      languages: selectedLanguages,
+      offersDeadline: formData.date,
+      uploadedBackgroundFiles: formData.backgroundFiles?.map((f) => f.name),
+      uploadedSupplierFiles: formData.supplierFiles?.map((f) => f.name),
+    };
+  }, [formData, legalPanelGroups, selectedLanguages]);
 
-    if (!draftId) return;
-
-    const loadDraftFromUrl = async () => {
-      try {
-        const res = await fetch(`/api/request-drafts/${REQUEST_DRAFT_TYPE}`, {
-          method: "GET",
-          cache: "no-store",
-        });
-
-        const json = await res.json().catch(() => null);
-
-        if (!res.ok) {
-          throw new Error(json?.error || "Failed to load draft.");
-        }
-
-        const draft = Array.isArray(json?.drafts)
-          ? json.drafts.find((item) => String(item.id) === String(draftId))
-          : null;
-
-        if (!draft) {
-          alert("The selected draft could not be found.");
-          return;
-        }
-
-        setFormData((prev) => ({
-          ...prev,
-          ...draft.data,
-          backgroundFiles: [],
-          supplierFiles: [],
-          agree: false,
-        }));
-      } catch (error) {
-        alert(error.message || "Failed to load draft.");
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        panelDropdownRef.current &&
+        !panelDropdownRef.current.contains(event.target)
+      ) {
+        setPanelDropdownOpen(false);
       }
     };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
-    loadDraftFromUrl();
-  }, [searchParams]);
+  useEffect(() => {
+    setFormData((prev) => {
+      const nextRetainerFee = normalizeRetainerFee(
+        prev.retainerFee,
+        isFullNeed(prev.need),
+      );
+      if (nextRetainerFee === prev.retainerFee) return prev;
+      return { ...prev, retainerFee: nextRetainerFee };
+    });
+  }, [isFixedFee]);
 
-  // ---- file handlers ----
   const handleBackgroundFileChange = (e) => {
     const files = Array.from(e.target.files || []);
     setFormData((s) => ({
@@ -138,9 +352,9 @@ export default function DisputeCourt() {
     setFormData({ ...formData, supplierFiles: arr });
   };
 
-  // ---- change handler ----
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
+    setStepError(null);
     if (type === "checkbox") {
       if (name === "agree") {
         setFormData({ ...formData, agree: checked });
@@ -160,212 +374,53 @@ export default function DisputeCourt() {
         });
       }
     } else if (type === "radio") {
-      setFormData({ ...formData, need: value });
+      if (name === "providerSource") {
+        setFormData({
+          ...formData,
+          providerSource: value,
+          legalPanelGroupId:
+            value === "panel" && selectableLegalPanels.length === 1
+              ? selectableLegalPanels[0].id
+              : value === "panel"
+                ? formData.legalPanelGroupId
+                : "",
+        });
+        setPanelDropdownOpen(false);
+      } else {
+        const paymentTypeChanged =
+          name === "need" && isFullNeed(value) !== isFullNeed(formData.need);
+        setFormData({
+          ...formData,
+          [name]: value,
+          ...(paymentTypeChanged ? { retainerFee: "" } : {}),
+        });
+      }
     } else {
       setFormData({ ...formData, [name]: value });
     }
   };
 
-  const isFullCourt = formData.need.startsWith(
-    "Full legal representation in pending court proceedings",
-  );
-
-  // ---- validation ----
-  const validate = () => {
-    if (!formData.need) return "Please select what kind of support you need.";
-    if (!formData.offerer) return "Choose which providers can offer.";
-    if (!formData.providerCountry) return "Choose domestic/foreign offers.";
-    if (!formData.lawyerCount) return "Choose a minimum provider size.";
-    if (!formData.firmAge) return "Choose a minimum company age.";
-    if (!formData.firmRating) return "Choose a minimum rating.";
-    if (!formData.providerReferences)
-      return "Please choose the amount of references needed.";
-    if (!formData.currency) return "Choose a currency.";
-    if (!formData.retainerFee) return "Choose an advance retainer option.";
-    if (!formData.paymentTerms) return "Choose how you want to be invoiced.";
-    if (isFullCourt && !formData.maxPrice) {
-      return "Set a maximum price (VAT 0%) for full court representation.";
-    }
-    const langs = [
-      ...(formData.checkboxes || []).filter((l) => l !== "Other:"),
-      formData.otherLang || null,
-    ].filter(Boolean);
-    if (langs.length === 0)
-      return "Select at least one language (or type another).";
-    if (!formData.date) return "Pick an offers deadline.";
-    if (!formData.requestTitle) return "Give a title for your LEXIFY Request.";
-    if (!formData.agree) return "Confirm you're ready to submit.";
-    return null;
+  const handleCancel = () => {
+    if (!drafts.confirmLeave()) return;
+    router.push("/main");
   };
 
-  const getDraftDataForSave = () => {
-    const { backgroundFiles, supplierFiles, agree, ...draftData } = formData;
-
-    return {
-      ...draftData,
-      backgroundFiles: [],
-      supplierFiles: [],
-      agree: false,
-    };
-  };
-
-  const fetchDrafts = async () => {
-    setDraftsLoading(true);
-
-    try {
-      const res = await fetch(`/api/request-drafts/${REQUEST_DRAFT_TYPE}`, {
-        method: "GET",
-        cache: "no-store",
-      });
-
-      const json = await res.json().catch(() => null);
-
-      if (!res.ok) {
-        throw new Error(json?.error || "Failed to load drafts.");
-      }
-
-      setDrafts(Array.isArray(json?.drafts) ? json.drafts : []);
-    } catch (error) {
-      alert(error.message || "Failed to load drafts.");
-      setDrafts([]);
-    } finally {
-      setDraftsLoading(false);
-    }
-  };
-
-  const openLoadDraftModal = () => {
-    setShowLoadDraftModal(true);
-    fetchDrafts();
-  };
-
-  const postDraft = async ({ overwrite = false } = {}) => {
-    const res = await fetch(`/api/request-drafts/${REQUEST_DRAFT_TYPE}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        title: formData.requestTitle,
-        data: getDraftDataForSave(),
-        overwrite,
-      }),
-    });
-
-    const json = await res.json().catch(() => null);
-
-    return { res, json };
-  };
-
-  const handleSaveDraft = async () => {
-    const title = String(formData.requestTitle || "").trim();
-
-    if (!title) {
-      alert(
-        "Please give a title for your LEXIFY Request before saving a draft.",
-      );
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    if (currentStep < WIZARD_STEPS.length - 1) {
+      goNext();
       return;
     }
 
-    const confirmed = confirm(
-      "Your LEXIFY Request will be saved as a draft for later completion. Attachments are not saved with drafts — please upload them only before submitting the LEXIFY Request. The draft will be saved under the LEXIFY Request title you have entered. Do you want to save this LEXIFY Request as a draft?",
-    );
-
-    if (!confirmed) return;
-
-    setDraftActionLoading(true);
-
-    try {
-      let { res, json } = await postDraft({ overwrite: false });
-
-      if (res.status === 409 && json?.duplicate) {
-        const overwriteConfirmed = confirm(
-          `A draft named "${title}" already exists in this request type. Do you want to overwrite the existing draft?`,
-        );
-
-        if (!overwriteConfirmed) {
-          return;
-        }
-
-        ({ res, json } = await postDraft({ overwrite: true }));
-      }
-
-      if (!res.ok) {
-        throw new Error(json?.error || "Failed to save draft.");
-      }
-
-      alert(
-        json?.overwritten
-          ? "Draft overwritten successfully."
-          : "Draft saved successfully.",
-      );
-      router.push("/main");
-    } catch (error) {
-      alert(error.message || "Failed to save draft.");
-    } finally {
-      setDraftActionLoading(false);
+    const err = showFirstInvalidStep();
+    if (err) {
+      alert(err);
+      return;
     }
-  };
-
-  const handleLoadDraft = (draft) => {
-    setFormData((prev) => ({
-      ...prev,
-      ...draft.data,
-      backgroundFiles: [],
-      supplierFiles: [],
-      agree: false,
-    }));
-
-    setShowLoadDraftModal(false);
-  };
-
-  const handleDeleteDraft = async (draftId) => {
-    const confirmed = confirm("Are you sure you want to delete this draft?");
-    if (!confirmed) return;
-
-    setDraftActionLoading(true);
-
-    try {
-      const res = await fetch(`/api/request-drafts/${REQUEST_DRAFT_TYPE}`, {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ draftId }),
-      });
-
-      const json = await res.json().catch(() => null);
-
-      if (!res.ok) {
-        throw new Error(json?.error || "Failed to delete draft.");
-      }
-
-      setDrafts(Array.isArray(json?.drafts) ? json.drafts : []);
-    } catch (error) {
-      alert(error.message || "Failed to delete draft.");
-    } finally {
-      setDraftActionLoading(false);
-    }
-  };
-
-  // ---- submit → /api/requests (multipart/form-data) ----
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    const err = validate();
-    if (err) return alert(err);
-
-    const isFull = formData.need.startsWith(
-      "Full legal representation in pending court proceedings",
-    );
 
     setSubmitting(true);
     try {
-      const languageCSV = [
-        ...(formData.checkboxes || []).filter((l) => l !== "Other:"),
-        formData.otherLang || null,
-      ]
-        .filter(Boolean)
-        .join(", ");
-
+      const languageCSV = selectedLanguages.join(", ");
       const payload = {
         requestState: "PENDING",
         requestCategory: "Help with Dispute Resolution or Debt Collection",
@@ -375,14 +430,13 @@ export default function DisputeCourt() {
         additionalBackgroundInfo: formData.background || "",
         backgroundInfoFiles: [],
         supplierCodeOfConductFiles: [],
-        serviceProviderType: formData.offerer,
-        domesticOffers: formData.providerCountry,
-        providerSize: formData.lawyerCount,
-        providerCompanyAge: formData.firmAge,
-        providerMinimumRating: formData.firmRating,
-        providerReferences: formData.providerReferences,
+        ...legalPanelSubmitFields({
+          usingLegalPanel,
+          selectedLegalPanel,
+          formData,
+        }),
         currency: formData.currency,
-        paymentRate: isFull
+        paymentRate: isFullCourt
           ? "Capped Price. The capped price covers the pending proceedings in one court instance only and does not include fees or charges possibly levied by the competent court which fees and charges, if any, will be invoiced separately."
           : "Blended Hourly Rate. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the legal service provider submitting the winning offer. The offered hourly rate will be valid until the court proceedings in the current court instance have concluded.",
         advanceRetainerFee: formData.retainerFee,
@@ -398,7 +452,7 @@ export default function DisputeCourt() {
             ? "Yes"
             : "No",
           winnerBidderOnlyStatus: (formData.confidential || "").trim(),
-          maximumPrice: isFull ? formData.maxPrice || "" : "",
+          maximumPrice: null,
         },
       };
 
@@ -417,7 +471,9 @@ export default function DisputeCourt() {
       let json = null;
       try {
         json = text ? JSON.parse(text) : null;
-      } catch {}
+      } catch {
+        /* keep json = null */
+      }
       if (!res.ok)
         throw new Error(
           (json && (json.error || json.message)) ||
@@ -426,6 +482,7 @@ export default function DisputeCourt() {
         );
 
       alert("LEXIFY Request submitted successfully.");
+      drafts.clearDraftGuard();
       router.push("/main");
     } catch (e2) {
       alert(e2.message || "Submission failed.");
@@ -434,961 +491,384 @@ export default function DisputeCourt() {
     }
   };
 
-  // ---- preview section helper ----
-  function Section({ title, children }) {
-    return (
-      <div>
-        <div className="bg-[#11999e] p-2">
-          <h3 className="text-lg font-semibold text-white">{title}</h3>
-        </div>
-        <div className="p-4">{children}</div>
-      </div>
-    );
-  }
-
-  const formatDraftSavedDate = (draft) => {
-    const rawDate = draft?.savedAt || draft?.updatedAt || draft?.createdAt;
-
-    if (!rawDate) return "Draft saved date unavailable";
-
-    const parsed = new Date(rawDate);
-
-    if (Number.isNaN(parsed.getTime())) {
-      return "Draft saved date unavailable";
-    }
-
-    return `Draft Saved ${parsed.toLocaleDateString("en-GB", {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    })}`;
-  };
+  const firmsSummary = eligibleFirmsSummary({
+    usingLegalPanel,
+    selectedLegalPanel,
+    formData,
+  });
 
   return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-6">
-      <h1 className="text-3xl font-bold mb-4">Create a LEXIFY Request</h1>
-      <h2 className="text-2xl font-semibold mb-6">
-        Help with Pending Court Proceedings
-      </h2>
+    <>
+      <form ref={formRef} onSubmit={handleSubmit} noValidate>
+        <RequestWizard
+          categoryLabel="Help with Pending Court Proceedings"
+          steps={WIZARD_STEPS}
+          currentStep={currentStep}
+          onStepClick={goToStep}
+          onNext={() =>
+            goNext({ onLastStep: () => formRef.current?.requestSubmit() })
+          }
+          onBack={goBack}
+          onCancel={handleCancel}
+          nextLabel={
+            currentStep === WIZARD_STEPS.length - 1
+              ? submitting
+                ? "Submitting…"
+                : "Submit LEXIFY Request"
+              : "Next"
+          }
+          nextDisabled={submitting}
+          error={stepError}
+          headerAction={
+            <DraftHeaderActions
+              loadedDraft={drafts.loadedDraft}
+              draftActionLoading={drafts.draftActionLoading}
+              onSaveChanges={drafts.handleSaveChanges}
+              onSaveAsNew={drafts.openSaveDraftModal}
+              onLoadDraft={drafts.openLoadDraftModal}
+            />
+          }
+        >
+          {currentStep === 0 ? (
+            <NeedOptionCards
+              options={NEED_OPTIONS}
+              value={formData.need}
+              onChange={handleChange}
+            />
+          ) : null}
 
-      <div className="w-full max-w-7xl p-6 rounded shadow-2xl bg-white text-black">
-        {/* Form Section */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="flex justify-between items-start gap-4 mb-2">
-            <h4 className="text-md font-medium font-semibold">
-              What kind of support do you need?
-            </h4>
-
-            <button
-              type="button"
-              onClick={openLoadDraftModal}
-              className="px-4 py-2 bg-[#19999e] text-white border border-black rounded hover:opacity-90 cursor-pointer shrink-0"
-            >
-              Load Draft
-            </button>
-          </div>
-          <div className="space-y-2">
-            {[
-              "Full legal representation in pending court proceedings (including, for example, drafting of legal briefs, representation in court hearings and related attorney-client communications)",
-              "Occasional support with pending court proceedings (including, for example, commenting on legal briefs or advising on legal strategy during different stages of the proceedings, if requested)",
-            ].map((option, index) => (
-              <div key={index}>
-                <label className="block">
-                  <input
-                    type="radio"
-                    name="need"
-                    value={option}
-                    checked={formData.need === option}
-                    onChange={handleChange}
-                  />
-                  {option ===
-                    "Full legal representation in pending court proceedings (including, for example, drafting of legal briefs, representation in court hearings and related attorney-client communications)" &&
-                    " Full legal representation in pending court proceedings (including, for example, drafting of legal briefs, representation in court hearings and related attorney-client communications)"}
-                  {option ===
-                    "Occasional support with pending court proceedings (including, for example, commenting on legal briefs or advising on legal strategy during different stages of the proceedings, if requested)" &&
-                    " Occasional support with pending court proceedings (including, for example, commenting on legal briefs or advising on legal strategy during different stages of the proceedings, if requested)"}
-                </label>
-                <p className="text-xs pb-2">
-                  <strong>NOTE: </strong>
-                  <em>
-                    {option ===
-                    "Full legal representation in pending court proceedings (including, for example, drafting of legal briefs, representation in court hearings and related attorney-client communications)"
-                      ? "Any offers you receive will be for a capped price and cover the pending proceedings in one court instance only. Any offers you receive will not include fees or charges possibly levied by the competent court and such fees and charges, if any, will be invoiced separately. The capped price offer will provide the maximum price for the work, taking into account all possible unexpected developments in the dispute proceedings (such as an unusually high number of rounds of written pleadings). In addition to the capped price, the offer will include an expected price, representing the price of the work if the dispute proceedings proceed without such unexpected developments."
-                      : "Any offers you receive will provide an applicable hourly rate only. The total price of the service will be calculated by multiplying the hourly rate with the number of hours of legal support provided by the legal service provider submitting the winning offer. The offered hourly rate will be valid until the court proceedings in the current court instance have concluded."}
-                  </em>
-                </p>
-              </div>
-            ))}
-          </div>
-          <br />
-          <hr />
-          <br />
-          <h4 className="text-md font-medium mb-1 font-semibold">
-            Please provide the name, business identity code and country of
-            domicile of your counterparty in the court proceedings. If you do
-            not want your name or the name of the counterparty to be visible to
-            all legal service providers qualified to make you an offer, please
-            also check the box &quot;Disclosed to Winning Bidder Only&quot;{" "}
-            <QuestionMarkTooltip tooltipText="If 'Disclosed to Winning Bidder Only' is checked, your identity and the identity of your counterparty will be disclosed solely to the legal service provider that submitted the winning offer, to enable that provider to conduct mandatory conflict checks. If the legal service provider notifies LEXIFY of an existing conflict, the winning offer will automatically be disqualified, and you will have the option to select an alternative winning offer." />
-          </h4>
-          <textarea
-            name="confidential"
-            className="w-full border p-2"
-            onChange={handleChange}
-            value={formData.confidential}
-          ></textarea>
-          {["Disclosed to Winning Bidder Only"].map((option, index) => (
-            <label key={index} className="block">
-              <input
-                type="checkbox"
-                name="confboxes"
-                value={option}
-                checked={formData.confboxes.includes(option)}
-                onChange={handleChange}
-              />{" "}
-              {option}{" "}
-              <QuestionMarkTooltip tooltipText="Please note that checking “Disclosed to Winning Bidder Only” may cause additional delay in the processing of your LEXIFY Request as statutory conflict checks are postponed until the winning offer has been verified." />
-            </label>
-          ))}
-          <br />
-          <hr />
-          <br />
-          <h4 className="text-md font-medium mb-1 font-semibold">
-            Please describe briefly the matter under dispute and the current
-            status of the court proceedings (Which side - you or the
-            counterparty - has started the court proceedings? What has happened
-            in the proceedings so far? Are you currently expected to provide a
-            response or other written document to the court by a fixed
-            deadline?){" "}
-            <QuestionMarkTooltip tooltipText="Please do not include any personal data in the description. This information will be visible to all legal service providers qualified to submit an offer in response to your LEXIFY Request." />
-          </h4>
-          <textarea
-            name="description"
-            className="w-full border p-2"
-            onChange={handleChange}
-            value={formData.description}
-          ></textarea>
-          <br />
-          <hr />
-          <br />
-          <h4 className="text-md font-medium mb-1 font-semibold">
-            Please provide additional background information, if any, you wish
-            to share with legal service providers in your LEXIFY Request. If you
-            want, you can also upload a separate file with additional background
-            information by clicking “Upload Background Info”
-            <QuestionMarkTooltip tooltipText="Please do not include any personal data in the description. Any background information provided will be visible to all legal service providers qualified to submit an offer in response to your LEXIFY Request." />
-          </h4>
-          <textarea
-            name="background"
-            className="w-full border p-2"
-            onChange={handleChange}
-            value={formData.background}
-          ></textarea>
-          <div className="mt-2">
-            <label className="inline-block px-4 py-2 bg-[#c8c8cf] text-black border border-black rounded cursor-pointer">
-              Upload Background Info
-              <input
-                type="file"
-                name="backgroundFiles"
-                multiple
-                className="hidden"
-                onChange={handleBackgroundFileChange}
-              />
-            </label>
-            <span className="ml-2 text-sm">
-              {formData.backgroundFiles.length > 0
-                ? `${formData.backgroundFiles.length} file(s) selected`
-                : "No files selected"}
-            </span>
-          </div>
-          {/* Display background files */}
-          {formData.backgroundFiles.length > 0 && (
-            <div className="mt-2 p-2">
-              <h5 className="font-medium mb-1">Uploaded Files:</h5>
-              <ul className="list-disc pl-6">
-                {formData.backgroundFiles.map((file, index) => (
-                  <li key={index} className="flex items-center mb-1">
-                    <span className="truncate">{file.name}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteBackgroundFile(index)}
-                      className="ml-2 px-2 py-1 bg-red-500 text-white text-xs rounded cursor-pointer"
-                    >
-                      Delete
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          <br />
-          <br />
-          <hr />
-          <br />
-          <div>
-            <h4 className="text-md font-medium mb-1 font-semibold">
-              Which legal service providers can make you an offer?
-            </h4>
-            <select
-              name="offerer"
-              className="w-full border p-2"
-              onChange={handleChange}
-              value={formData.offerer}
-            >
-              <option value="">Select</option>
-              <option value="Attorneys-at-law">Attorneys-at-law</option>
-              <option value="Qualified Law firms">Qualified law firms</option>
-              <option value="All">
-                Both attorneys-at-law & qualified law firms
-              </option>
-            </select>
-          </div>
-          <p className="text-xs pt-2">
-            <strong>NOTE:</strong>{" "}
-            <em>
-              Attorneys-at-law are legal service providers who are members of
-              the local bar association in their country of domicile. Qualified
-              law firms are legal service providers who are not members of the
-              local bar association in their country of domicile, but who may
-              offer legal services, including legal representation in court,
-              according to the law of their country of domicile.
-            </em>
-          </p>
-          <br />
-          <hr />
-          <br />
-          <div>
-            <h4 className="text-md font-medium mb-1 font-semibold">
-              Do you want offers only from legal service providers based in the
-              same country as you?
-            </h4>
-            <select
-              name="providerCountry"
-              className="w-full border p-2"
-              onChange={handleChange}
-              value={formData.providerCountry}
-            >
-              <option value="">Select</option>
-              <option value="Yes, I want offers from domestic legal service providers only.">
-                Yes, I want offers from domestic legal service providers only.
-              </option>
-              <option value="No, I want offers from both domestic and foreign legal service providers.">
-                No, I want offers from both domestic and foreign legal service
-                providers.
-              </option>
-            </select>
-          </div>
-          <br />
-          <hr />
-          <br />
-          <div>
-            <h4 className="text-md font-medium mb-1 font-semibold">
-              Do you want offers only from legal service providers of a specific
-              minimum size?
-            </h4>
-            <select
-              name="lawyerCount"
-              className="w-full border p-2"
-              onChange={handleChange}
-              value={formData.lawyerCount}
-            >
-              <option value="">Select</option>
-              <option value="Any size">
-                No, the legal service provider can be of any size
-              </option>
-              <option value="5">
-                Yes, the legal service provider must employ at least 5 lawyers
-              </option>
-              <option value="15">
-                Yes, the legal service provider must employ at least 15 lawyers
-              </option>
-              <option value="40">
-                Yes, the legal service provider must employ at least 40 lawyers
-              </option>
-            </select>
-          </div>
-          <br />
-          <hr />
-          <br />
-          <div>
-            <h4 className="text-md font-medium mb-1 font-semibold">
-              Do you want offers only from legal service providers who have been
-              in operation for a specific minimum period of time?
-            </h4>
-            <select
-              name="firmAge"
-              className="w-full border p-2"
-              onChange={handleChange}
-              value={formData.firmAge}
-            >
-              <option value="">Select</option>
-              <option value="Any age">
-                No, the legal service provider can be of any age
-              </option>
-              <option value="5">
-                Yes, the legal service provider has been in operation for at
-                least 5 years
-              </option>
-              <option value="10">
-                Yes, the legal service provider has been in operation for at
-                least 10 years
-              </option>
-              <option value="25">
-                Yes, the legal service provider has been in operation for at
-                least 25 years
-              </option>
-            </select>
-          </div>
-          <br />
-          <hr />
-          <br />
-          <div>
-            <h4 className="text-md font-medium mb-1 font-semibold">
-              Do tendering legal service providers need to have a minimum
-              customer feedback rating? This rating is based on aggregated
-              feedback a legal service provider has received previously from
-              other legal service purchasers on LEXIFY.
-            </h4>
-            <select
-              name="firmRating"
-              className="w-full border p-2"
-              onChange={handleChange}
-              value={formData.firmRating}
-            >
-              <option value="">Select</option>
-              <option value="Any rating">No</option>
-              <option value="3">Yes, average rating of at least 3/5</option>
-              <option value="4">Yes, average rating of at least 4/5</option>
-            </select>
-          </div>
-          <br />
-          <hr />
-          <br />
-          <div>
-            <h4 className="text-md font-medium mb-1 font-semibold">
-              Do tendering legal service providers need to provide a written
-              reference with their offer?{" "}
-              <QuestionMarkTooltip tooltipText="A written reference is a formal statement or endorsement that describes a legal service provider's performance for a past client on previous legal work of a similar nature to the legal services sought in your LEXIFY Request." />
-            </h4>
-            <select
-              name="providerReferences"
-              className="w-full border p-2"
-              onChange={handleChange}
-              value={formData.providerReferences}
-            >
-              <option value="">Select</option>
-              <option value="No">No</option>
-              <option value="Yes, 1 written reference must be provided">
-                Yes, 1 written reference must be provided
-              </option>
-              <option value="Yes, 2 written references must be provided">
-                Yes, 2 written references must be provided
-              </option>
-            </select>
-          </div>
-          <br />
-          <hr />
-          <br />
-          <div>
-            <h4 className="text-md font-medium mb-1 font-semibold">
-              In what currency do you want to buy the legal service?
-            </h4>
-            <select
-              name="currency"
-              className="w-full border p-2"
-              onChange={handleChange}
-              value={formData.currency}
-            >
-              <option value="">Select</option>
-              <option value="Euro (€)">Euro (€)</option>
-              <option value="Swedish krona (kr)">Swedish krona (kr)</option>
-              <option value="Danish krone (kr)">Danish krone (kr)</option>
-              <option value="Polish złoty (zł)">Polish złoty (zł)</option>
-              <option value="Czech koruna (Kč)">Czech koruna (Kč)</option>
-              <option value="Romanian leu (Leu)">Romanian leu (Leu)</option>
-              <option value="Bulgarian lev (лв)">Bulgarian lev (лв)</option>
-              <option value="Hungarian forint (Ft)">
-                Hungarian forint (Ft)
-              </option>
-            </select>
-          </div>
-          <br />
-          <hr />
-          <br />
-          <div>
-            {[
-              "Full legal representation in pending court proceedings (including, for example, drafting of legal briefs, representation in court hearings and related attorney-client communications)",
-            ].includes(formData.need) && (
-              <div>
-                <h4 className="text-md font-medium mb-1 font-semibold">
-                  Please set a maximum price (VAT 0%) for the legal service you
-                  are buying
+          {currentStep === 1 ? (
+            <div className="space-y-6">
+              <div data-field="confidential">
+                <h4 className="mb-2 text-sm font-semibold text-gray-900">
+                  Please provide the name, business identity code and country of
+                  domicile of your counterparty in the court proceedings. If you
+                  do not want your name or the name of the counterparty to be
+                  visible to all legal service providers qualified to make you
+                  an offer, please also check the box &quot;Disclosed to Winning
+                  Bidder Only&quot;{" "}
+                  <QuestionMarkTooltip tooltipText="If 'Disclosed to Winning Bidder Only' is checked, your identity and the identity of your counterparty will be disclosed solely to the legal service provider that submitted the winning offer, to enable that provider to conduct mandatory conflict checks. If the legal service provider notifies LEXIFY of an existing conflict, the winning offer will automatically be disqualified, and you will have the option to select an alternative winning offer." />
                 </h4>
-                <input
-                  type="text"
-                  name="maxPrice"
-                  placeholder="Set Maximum Price"
-                  className="border p-2 w-full mb-2"
-                  value={formData.maxPrice}
-                  onChange={(e) => {
-                    const onlyNumbers = e.target.value.replace(/[^0-9]/g, "");
-                    setFormData({ ...formData, maxPrice: onlyNumbers });
-                  }}
-                />
-                <p className="text-xs">
-                  <strong>NOTE:</strong>{" "}
-                  <em>
-                    Any maximum price set by you will not be visible to legal
-                    service providers. If the best offer you receive exceeds
-                    your maximum price, you can still choose to accept such
-                    offer by confirming your acceptance within 7 days of the
-                    expiration of your LEXIFY Request.
-                  </em>
-                </p>
-                <br />
-                <hr />
-                <br />
-              </div>
-            )}
-          </div>
-          <div>
-            <h4 className="text-md font-medium mb-1 font-semibold">
-              Are you prepared to pay an advance retainer fee to the legal
-              service provider submitting the winning offer?{" "}
-              <QuestionMarkTooltip tooltipText="An advance retainer fee is an amount payable by you to the legal service provider submitting the winning offer within 14 days of the date of the LEXIFY Contract between you and the legal service provider. The advance retainer fee forms a part of the total price of the legal service as offered by the legal service provider. For legal work based on an hourly rate offer, the legal service provider will refund you for any unused amount of the advance retainer fee if the total price of the legal service when completed amounts to less than the amount of the advance retainer fee." />
-            </h4>
-            <select
-              name="retainerFee"
-              className="w-full border p-2"
-              onChange={handleChange}
-              value={formData.retainerFee}
-            >
-              <option value="">Select</option>
-              <option value="No">No</option>
-              <option value="Yes, 10% of the lump sum price (for lump sum offers) or the offered hourly rate multiplied by 3 (for hourly rate offers)">
-                Yes, 10% of the lump sum price (for lump sum offers) or the
-                offered hourly rate multiplied by 3 (for hourly rate offers)
-              </option>
-              <option value="Yes, 25% of the lump sum price (for lump sum offers) or the offered hourly rate multiplied by 5 (for hourly rate offers)">
-                Yes, 25% of the lump sum price (for lump sum offers) or the
-                offered hourly rate multiplied by 5 (for hourly rate offers)
-              </option>
-              <option value="Yes, 50% of the lump sum price (for lump sum offers) or the offered hourly rate multiplied by 10 (for hourly rate offers)">
-                Yes, 50% of the lump sum price (for lump sum offers) or the
-                offered hourly rate multiplied by 10 (for hourly rate offers)
-              </option>
-            </select>
-          </div>
-          <br />
-          <hr />
-          <br />
-          <div>
-            <h4 className="text-md font-medium mb-1 font-semibold">
-              How do you want to be invoiced?
-            </h4>
-            <select
-              name="paymentTerms"
-              className="w-full border p-2"
-              onChange={handleChange}
-              value={formData.paymentTerms}
-            >
-              <option value="">Select</option>
-              <option value="On a monthly basis, invoice sent at end of each calendar month">
-                On a monthly basis, invoice sent at end of each calendar month
-              </option>
-              <option value="On a quarterly basis, invoice sent at end of each quarter">
-                On a quarterly basis, invoice sent at end of each quarter
-              </option>
-              <option value="One time invoice upon completion of the assignment">
-                One time invoice upon completion of the assignment
-              </option>
-            </select>
-          </div>
-          <br />
-          <hr />
-          <br />
-          <h4 className="text-md font-medium mb-1 font-semibold">
-            What languages are needed for the performance of the work?
-          </h4>
-          {["English", "Finnish", "Swedish", "German", "French", "Other:"].map(
-            (option, index) => (
-              <label key={index} className="block">
-                <input
-                  type="checkbox"
-                  value={option}
-                  checked={formData.checkboxes.includes(option)}
+                <AutoGrowTextarea
+                  name="confidential"
+                  className={FIELD_CLASS}
                   onChange={handleChange}
-                />{" "}
-                {option}
-              </label>
-            ),
-          )}
-          {formData.checkboxes.includes("Other:") && (
-            <input
-              type="text"
-              name="otherLang"
-              placeholder="Specify Other Language"
-              className="w-full border p-2"
-              value={formData.otherLang}
-              onChange={handleChange}
+                  value={formData.confidential}
+                />
+                <label className="mt-3 flex items-center gap-2 text-sm text-gray-800">
+                  <input
+                    type="checkbox"
+                    name="confboxes"
+                    value="Disclosed to Winning Bidder Only"
+                    checked={formData.confboxes.includes(
+                      "Disclosed to Winning Bidder Only",
+                    )}
+                    onChange={handleChange}
+                    className="accent-[#11999e]"
+                  />
+                  Disclosed to Winning Bidder Only{" "}
+                  <QuestionMarkTooltip tooltipText="Please note that checking “Disclosed to Winning Bidder Only” may cause additional delay in the processing of your LEXIFY Request as statutory conflict checks are postponed until the winning offer has been verified." />
+                </label>
+              </div>
+            </div>
+          ) : null}
+
+          {currentStep === 2 ? (
+            <div className="space-y-6">
+              <div data-field="description">
+                <h4 className="mb-2 text-sm font-semibold text-gray-900">
+                  Please describe briefly the matter under dispute and the
+                  current status of the court proceedings (Which side - you or
+                  the counterparty - has started the court proceedings? What has
+                  happened in the proceedings so far? Are you currently expected
+                  to provide a response or other written document to the court
+                  by a fixed deadline?){" "}
+                  <QuestionMarkTooltip tooltipText="Please do not include any personal data in the description. This information will be visible to all legal service providers qualified to submit an offer in response to your LEXIFY Request." />
+                </h4>
+                <AutoGrowTextarea
+                  name="description"
+                  className={FIELD_CLASS}
+                  onChange={handleChange}
+                  value={formData.description}
+                />
+              </div>
+              <BackgroundFields
+                formData={formData}
+                onChange={handleChange}
+                onFileChange={handleBackgroundFileChange}
+                onDeleteFile={handleDeleteBackgroundFile}
+                heading={
+                  <>
+                    Please provide additional background information, if any,
+                    you wish to share with legal service providers in your
+                    LEXIFY Request. If you want, you can also upload a separate
+                    file with additional background information by clicking
+                    “Upload Background Info”
+                    <QuestionMarkTooltip tooltipText="Please do not include any personal data in the description. Any background information provided will be visible to all legal service providers qualified to submit an offer in response to your LEXIFY Request." />
+                  </>
+                }
+              />
+            </div>
+          ) : null}
+
+          {currentStep === 3 ? (
+            <ProviderOffersFields
+              formData={formData}
+              setFormData={setFormData}
+              handleChange={handleChange}
+              setStepError={setStepError}
+              selectableLegalPanels={selectableLegalPanels}
+              selectedLegalPanel={selectedLegalPanel}
+              usingLegalPanel={usingLegalPanel}
+              panelDropdownRef={panelDropdownRef}
+              panelDropdownOpen={panelDropdownOpen}
+              setPanelDropdownOpen={setPanelDropdownOpen}
+              retainerFeeOptions={retainerFeeOptions}
+              isFixedFee={isFixedFee}
             />
+          ) : null}
+
+          {currentStep === 4 ? (
+            <div className="space-y-6">
+              <dl className="rounded-xl border border-gray-200 px-4">
+                <SummaryRow
+                  label="Legal support needed"
+                  value={selectedNeed?.title || formData.need}
+                />
+                <SummaryRow
+                  label="Counterparty"
+                  value={
+                    formData.confboxes.includes(
+                      "Disclosed to Winning Bidder Only",
+                    )
+                      ? "Disclosed to Winning Bidder Only"
+                      : formData.confidential
+                  }
+                />
+                <SummaryRow
+                  label="Disputed matter"
+                  value={formData.description}
+                />
+                <SummaryRow label="Background" value={formData.background} />
+                <SummaryRow
+                  label="Background files"
+                  value={fileNames(formData.backgroundFiles)}
+                />
+                <SummaryRow
+                  label="Law firms eligible to submit offers"
+                  value={firmsSummary}
+                />
+                <SummaryRow
+                  label="Written references required"
+                  value={optionLabel(
+                    PROVIDER_REFERENCE_OPTIONS,
+                    formData.providerReferences,
+                  )}
+                />
+                <SummaryRow label="Currency" value={formData.currency} />
+                <SummaryRow
+                  label="Advance retainer fee offered"
+                  value={optionLabel(retainerFeeOptions, formData.retainerFee)}
+                />
+                <SummaryRow label="Invoicing" value={formData.paymentTerms} />
+                <SummaryRow
+                  label="Languages"
+                  value={selectedLanguages}
+                />
+                <SummaryRow
+                  label="Deadline for offers"
+                  value={formatDeadlineDate(formData.date)}
+                />
+                <SummaryRow
+                  label="Pricing model"
+                  value={selectedNeed?.pricing}
+                />
+              </dl>
+              <ReviewSubmitFields
+                formData={formData}
+                handleChange={handleChange}
+                onFileChange={handleSupplierFileChange}
+                onDeleteFile={handleDeleteSupplierFile}
+                onPreview={() => setShowPreview(true)}
+                winningBidderNote={formData.confboxes.includes(
+                  "Disclosed to Winning Bidder Only",
+                )}
+              />
+            </div>
+          ) : null}
+        </RequestWizard>
+      </form>
+
+      <RequestPreviewModal
+        open={showPreview}
+        onClose={() => setShowPreview(false)}
+      >
+        <Section title="Client Name, Business Identity Code and Country of Domicile">
+          {formData.confboxes.includes("Disclosed to Winning Bidder Only")
+            ? "Disclosed to Winning Bidder Only"
+            : [company.name, company.businessId, company.country]
+                .filter(Boolean)
+                .join(", ") || "-"}
+        </Section>
+        <Section title="Scope of Work">
+          {formData.need ? formData.need : "-"}
+        </Section>
+        <Section title="Contract Price (Capped Price or Blended Hourly Rate) and Currency">
+          {formData.need.includes(NEED_FULL) ? (
+            <>
+              {`Capped Price ${
+                formData.currency ? `(${formData.currency})` : ""
+              }`}
+              <p className="text-md mt-2">
+                The capped price covers the pending proceedings in one court
+                instance only and does not include fees or charges possibly
+                levied by the competent court which fees and charges, if any,
+                will be invoiced separately.
+              </p>
+            </>
+          ) : (
+            <>
+              {`Blended Hourly Rate ${
+                formData.currency ? `(${formData.currency})` : ""
+              }`}
+              <p className="text-md mt-2">
+                The total price of the service will be calculated by multiplying
+                the hourly rate with the number of hours of legal support
+                provided by the legal service provider submitting the winning
+                offer. The offered hourly rate will be valid until the court
+                proceedings in the current court instance have concluded
+              </p>
+            </>
           )}
-          <br />
-          <hr />
-          <br />
-          <h4 className="text-md font-medium mb-1 font-semibold">
-            By when do you need offers from interested legal service providers?
-          </h4>
-          <input
-            type="date"
-            name="date"
-            className="w-1/6 border p-2"
-            value={formData.date}
-            onChange={handleChange}
-            min={new Date().toISOString().split("T")[0]}
-          />
-          <br />
-          <br />
-          <hr />
-          <br />
-          <h4 className="text-md font-medium mb-1 font-semibold">
-            Do you want to include in the LEXIFY Request your Supplier Code of
-            Conduct or other procurement related requirements which legal
-            service providers are required to follow? If yes, please upload the
-            relevant documents by clicking “Upload Procurement Appendices”
-            below.{" "}
-            <QuestionMarkTooltip tooltipText="Please upload only requirements mandatory to all suppliers of your company (such as your Supplier Code of Conduct or minimum standards for supplier information security). Please do not upload your general procurement contract terms and conditions. Any such general contract terms and conditions, even if uploaded, will not become a binding part of the LEXIFY Contract between you and the legal service provider submitting the winning offer. The terms and conditions applicable to all LEXIFY Contracts are set out in the General Terms and Conditions for LEXIFY Contracts." />
-          </h4>
-          <br />
-          <label className="inline-block px-4 py-2 bg-[#c8c8cf] text-black border border-black rounded cursor-pointer">
-            Upload Procurement Appendices
-            <input
-              type="file"
-              name="supplierFiles"
-              multiple
-              className="hidden"
-              onChange={handleSupplierFileChange}
-            />
-          </label>
-          <span className="ml-2 text-sm">
-            {formData.supplierFiles.length > 0
-              ? `${formData.supplierFiles.length} file(s) selected`
-              : "No files selected"}
-          </span>
-          {/* Display supplier files */}
-          {formData.supplierFiles.length > 0 && (
-            <div className="mt-2 p-2">
-              <h5 className="font-medium mb-1">Uploaded Files:</h5>
+          <p className="text-md mt-2">
+            The Legal Service Provider shall submit all invoices to the Client
+            in the contract price currency, unless otherwise instructed in
+            writing by the Client.
+          </p>
+        </Section>
+        <Section title="Description of Disputed Matter and Current Status of Court Proceedings">
+          <p>{formData.description || "-"}</p>
+        </Section>
+        <Section title="Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter">
+          {formData.confboxes.includes("Disclosed to Winning Bidder Only")
+            ? "Disclosed to Winning Bidder Only"
+            : formData.confidential || "-"}
+          <p className="text-xs mt-2 italic">
+            <strong>NOTE:</strong> If the above states &quot;Disclosed to
+            Winning Bidder Only&quot;, the relevant identity or identities will
+            be disclosed only to the legal service provider submitting the
+            winning offer to enable that service provider to complete its
+            mandatory conflict checks. If an existing conflict is then notified
+            by the legal service provider to LEXIFY, the winning offer will
+            automatically be disqualified and you will have the option to select
+            an alternative winning offer.
+          </p>
+        </Section>
+        <Section title="Additional Background Information Provided by Client">
+          <p>{formData.background || "-"}</p>
+          {formData.backgroundFiles.length > 0 && (
+            <ul className="list-disc pl-6 mt-2">
+              {formData.backgroundFiles.map((file, index) => (
+                <li key={index}>
+                  <a
+                    href={URL.createObjectURL(file)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-blue-600 underline"
+                  >
+                    {file.name}
+                  </a>
+                </li>
+              ))}
+            </ul>
+          )}
+        </Section>
+        <Section title="Is an Advance Retainer Fee Paid to the Legal Service Provider?">
+          {formData.retainerFee || "-"}
+          <p className="text-xs mt-2 italic">
+            <strong>NOTE:</strong> An advance retainer fee is an amount payable
+            by the client to the legal service provider submitting the winning
+            offer within 14 days of the date of the LEXIFY Contract between the
+            client and the legal service provider. The advance retainer fee
+            forms a part of the total price of the legal service as offered by
+            the legal service provider. For legal service based on an hourly
+            rate, the legal service provider shall refund the client for any
+            unused amount of the advance retainer fee if the total price of the
+            legal service when completed amounts to less than the amount of the
+            advance retainer fee. Such refund shall be paid within 14 days of
+            the completion of the legal service.
+          </p>
+        </Section>
+        <Section title="Invoicing">
+          <p className="text-md mt-2">
+            The Legal Service Provider shall invoice the Client in the following
+            manner:
+          </p>
+          {formData.paymentTerms || "-"}
+          <p className="text-md mt-2">
+            Further details, such as contact person for invoices and method of
+            invoicing (for example, email, e-invoicing or other), related to
+            invoicing shall be agreed separately between the client and the
+            legal service provider.
+          </p>
+        </Section>
+        <Section title="Languages Required for the Performance of the Work">
+          {selectedLanguages.join(", ") || "-"}
+          <p className="text-md mt-2">
+            The legal service provider confirms that its representatives
+            involved in the performance of the work have appropriate advanced
+            proficiency in all the languages listed above.
+          </p>
+        </Section>
+        <Section title="Is the Legal Service Provider Required to Comply with a Supplier Code of Conduct and/or Other Procurement related Requirements of the Client?">
+          {formData.supplierFiles.length > 0 ? (
+            <>
+              <p className="mb-2">
+                Yes, please see the Supplier Code of Conduct attached:
+              </p>
               <ul className="list-disc pl-6">
                 {formData.supplierFiles.map((file, index) => (
-                  <li key={index} className="flex items-center mb-1">
-                    <span className="truncate">{file.name}</span>
-                    <button
-                      type="button"
-                      onClick={() => handleDeleteSupplierFile(index)}
-                      className="ml-2 px-2 py-1 bg-red-500 text-white text-xs rounded cursor-pointer"
+                  <li key={index}>
+                    <a
+                      href={URL.createObjectURL(file)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 underline"
                     >
-                      Delete
-                    </button>
+                      {file.name}
+                    </a>
                   </li>
                 ))}
               </ul>
-            </div>
+            </>
+          ) : (
+            "No"
           )}
-          <p className="text-xs">
-            <strong>NOTE:</strong>{" "}
-            <em>
-              If you have selected &quot;Disclosed to Winning Bidder Only&quot;
-              earlier in the LEXIFY Request to ensure your name and the name of
-              your counterparty are disclosed only to the legal service provider
-              submitting the winning offer, please make sure that any
-              procurement appendices you may upload do not disclose the name of
-              your company.
-            </em>
-          </p>
-          <br />
-          <hr />
-          <br />
-          <h4 className="text-md font-medium mb-1 font-semibold">
-            Give a title for your LEXIFY Request{" "}
-            <QuestionMarkTooltip tooltipText="This title will not be shown to any legal service providers and will only be used in your personal LEXIFY Request archive (see My Dashboard in the LEXIFY main menu)." />
-          </h4>
-          <input
-            type="text"
-            name="requestTitle"
-            className="w-full border p-2"
-            value={formData.requestTitle}
-            onChange={handleChange}
-          />
-          <br />
-          <br />
-          <hr />
-          <br />
-          <div className="flex gap-4">
-            <button
-              type="button"
-              onClick={() => setShowPreview(true)}
-              className="p-2 bg-gray-700 text-white rounded cursor-pointer"
-            >
-              Preview LEXIFY Request
-            </button>
-            <button
-              type="button"
-              onClick={handleSaveDraft}
-              disabled={draftActionLoading}
-              className="p-2 bg-gray-500 text-white rounded cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-            >
-              {draftActionLoading ? "Saving…" : "Save as Draft"}
-            </button>
-          </div>
-          <br />
-          <label className="block">
-            <input
-              type="checkbox"
-              name="agree"
-              checked={formData.agree}
-              onChange={handleChange}
-              required
-            />{" "}
-            I have carefully reviewed my LEXIFY Request and I am ready to submit
-            it.
-          </label>
-          <p className="text-xs font-bold">
-            <em>
-              By submitting this LEXIFY Request, I accept that LEXIFY will
-              automatically generate a binding LEXIFY Contract between my
-              company, as the legal service purchaser, and the legal service
-              provider submitting the winning offer, subject to the parameters
-              defined in my LEXIFY Request and my selection of the winning offer
-              from the best offers received. The LEXIFY Contract will consist of
-              (i) the service description, other specifications, and any
-              Procurement Appendices (if applicable) designated in the LEXIFY
-              Request, and (ii) the General Terms and Conditions for LEXIFY
-              Contracts. The LEXIFY Contract will not be generated if (i) no
-              qualifying offers have been received prior to the expiration of my
-              LEXIFY Request, (ii) I, as representative of the legal service
-              purchaser, cancel the LEXIFY Request, or (iii) I do not actively
-              select any winning service provider within the period allocated
-              for the selection of a winning offer after the expiration of the
-              LEXIFY Request.
-            </em>
-          </p>
-          <br />
-          <div className="flex gap-4">
-            <button
-              type="submit"
-              disabled={submitting}
-              className="p-2 bg-[#11999e] text-white rounded disabled:cursor-not-allowed disabled:opacity-60 cursor-pointer"
-            >
-              {submitting ? "Submitting…" : "Submit LEXIFY Request"}
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                const confirmed = confirm(
-                  "Are you sure you want to exit? All unsaved changes will be lost.",
-                );
-                if (!confirmed) return;
-                router.push("/main");
-              }}
-              className="p-2 bg-red-500 text-white rounded cursor-pointer"
-            >
-              Exit Without Submitting
-            </button>
-          </div>
-        </form>
-        {showPreview && (
-          <div className="fixed inset-0 bg-[#11999e] bg-opacity-50 flex justify-center items-center z-50 transition-opacity duration-300">
-            <div className="bg-white w-11/12 max-w-4xl shadow-lg overflow-y-auto max-h-[90vh] animate-fadeInScale relative">
-              {/* Header */}
-              <div className="w-full p-4 flex flex-col items-center">
-                <img
-                  src="/lexify.png"
-                  alt="LEXIFY Logo"
-                  className="h-12 mb-2 w-96 h-48"
-                />
-                <h2 className="text-2xl font-bold text-white">
-                  LEXIFY Request Preview
-                </h2>
-              </div>
+        </Section>
+        <Section title="Is the Legal Service Provider Required to Provide Written References with the Offer?">
+          {formData.providerReferences || "-"}
+        </Section>
+      </RequestPreviewModal>
 
-              {/* Close Button */}
-              <button
-                onClick={() => setShowPreview(false)}
-                className="absolute top-4 right-4 text-white bg-[#3a3a3c] rounded-full w-8 h-8 flex items-center justify-center text-xl hover:bg-red-600 transition cursor-pointer"
-              >
-                &times;
-              </button>
-
-              {/* Download Button */}
-              {/*}
-              <button
-                onClick={handleDownloadPdf}
-                className="absolute top-4 left-4 text-white bg-[#3a3a3c] rounded flex items-center justify-center text-xl hover:bg-[#11999e] transition cursor-pointer p-1"
-                title="Save as PDF"
-              >
-                Save as PDF
-              </button> 
-              */}
-
-              {/* Content */}
-              <div id="lexify-preview" className="space-y-6 text-black p-8">
-                {/* Client Name */}
-                <Section title="Client Name, Business Identity Code and Country of Domicile">
-                  {formData.confboxes.includes(
-                    "Disclosed to Winning Bidder Only",
-                  )
-                    ? "Disclosed to Winning Bidder Only"
-                    : [company.name, company.businessId, company.country]
-                        .filter(Boolean)
-                        .join(", ") || "-"}
-                </Section>
-
-                {/* Scope of Work */}
-                <Section title="Scope of Work">
-                  {formData.need ? formData.need : "-"}
-                </Section>
-
-                {/* Contract Price and Currency */}
-                <Section title="Contract Price (Capped Price or Flat Hourly Rate) and Currency">
-                  {formData.need.includes(
-                    "Full legal representation in pending court proceedings (including, for example, drafting of legal briefs, representation in court hearings and related attorney-client communications)",
-                  ) ? (
-                    <>
-                      {`Capped Price ${
-                        formData.currency ? `(${formData.currency})` : ""
-                      }`}
-                      <p className="text-md mt-2">
-                        The capped price covers the pending proceedings in one
-                        court instance only and does not include fees or charges
-                        possibly levied by the competent court which fees and
-                        charges, if any, will be invoiced separately.
-                      </p>
-                    </>
-                  ) : (
-                    <>
-                      {`Flat Hourly Rate ${
-                        formData.currency ? `(${formData.currency})` : ""
-                      }`}
-                      <p className="text-md mt-2">
-                        The total price of the service will be calculated by
-                        multiplying the hourly rate with the number of hours of
-                        legal support provided by the legal service provider
-                        submitting the winning offer. The offered hourly rate
-                        will be valid until the court proceedings in the current
-                        court instance have concluded
-                      </p>
-                    </>
-                  )}
-                  <p className="text-md mt-2">
-                    The Legal Service Provider shall submit all invoices to the
-                    Client in the contract price currency, unless otherwise
-                    instructed in writing by the Client.
-                  </p>
-                </Section>
-
-                {/* Description of Client's Line of Business */}
-                <Section title="Description of Disputed Matter and Current Status of Court Proceedings">
-                  <p>{formData.description || "-"}</p>
-                </Section>
-
-                {/* Counterparty */}
-
-                <Section title="Name, Business Identity Code and Country of Domicile of Client's Counterparty in the Matter">
-                  {formData.confboxes.includes(
-                    "Disclosed to Winning Bidder Only",
-                  )
-                    ? "Disclosed to Winning Bidder Only"
-                    : formData.confidential || "-"}
-                  <p className="text-xs mt-2 italic">
-                    <strong>NOTE:</strong> If the above states &quot;Disclosed
-                    to Winning Bidder Only&quot;, the relevant identity or
-                    identities will be disclosed only to the legal service
-                    provider submitting the winning offer to enable that service
-                    provider to complete its mandatory conflict checks. If an
-                    existing conflict is then notified by the legal service
-                    provider to LEXIFY, the winning offer will automatically be
-                    disqualified and you will have the option to select an
-                    alternative winning offer.
-                  </p>
-                </Section>
-
-                {/* Additional Background */}
-                <Section title="Additional Background Information Provided by Client">
-                  <p>{formData.background || "-"}</p>
-                  {formData.backgroundFiles.length > 0 && (
-                    <ul className="list-disc pl-6 mt-2">
-                      {formData.backgroundFiles.map((file, index) => (
-                        <li key={index}>
-                          <a
-                            href={URL.createObjectURL(file)}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-blue-600 underline"
-                          >
-                            {file.name}
-                          </a>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                </Section>
-
-                {/* Advance Retainer Fee */}
-                <Section title="Is an Advance Retainer Fee Paid to the Legal Service Provider?">
-                  {formData.retainerFee || "-"}
-                  <p className="text-xs mt-2 italic">
-                    <strong>NOTE:</strong> An advance retainer fee is an amount
-                    payable by the client to the legal service provider
-                    submitting the winning offer within 14 days of the date of
-                    the LEXIFY Contract between the client and the legal service
-                    provider. The advance retainer fee forms a part of the total
-                    price of the legal service as offered by the legal service
-                    provider. For legal service based on an hourly rate, the
-                    legal service provider shall refund the client for any
-                    unused amount of the advance retainer fee if the total price
-                    of the legal service when completed amounts to less than the
-                    amount of the advance retainer fee. Such refund shall be
-                    paid within 14 days of the completion of the legal service.
-                  </p>
-                </Section>
-
-                {/* Invoicing */}
-                <Section title="Invoicing">
-                  <p className="text-md mt-2">
-                    The Legal Service Provider shall invoice the Client in the
-                    following manner:
-                  </p>
-                  {formData.paymentTerms || "-"}
-                  <p className="text-md mt-2">
-                    Further details, such as contact person for invoices and
-                    method of invoicing (for example, email, e-invoicing or
-                    other), related to invoicing shall be agreed separately
-                    between the client and the legal service provider.
-                  </p>
-                </Section>
-
-                {/* Languages */}
-                <Section title="Languages Required for the Performance of the Work">
-                  {[
-                    ...(formData.checkboxes || []).filter(
-                      (lang) => lang !== "Other:",
-                    ),
-                    formData.otherLang,
-                  ]
-                    .filter(Boolean)
-                    .join(", ") || "-"}
-                  <p className="text-md mt-2">
-                    The legal service provider confirms that its representatives
-                    involved in the performance of the work have appropriate
-                    advanced proficiency in all the languages listed above.
-                  </p>
-                </Section>
-
-                {/* Supplier Code of Conduct */}
-                <Section title="Is the Legal Service Provider Required to Comply with a Supplier Code of Conduct and/or Other Procurement related Requirements of the Client?">
-                  {formData.supplierFiles.length > 0 ? (
-                    <>
-                      <p className="mb-2">
-                        Yes, please see the Supplier Code of Conduct attached:
-                      </p>
-                      <ul className="list-disc pl-6">
-                        {formData.supplierFiles.map((file, index) => (
-                          <li key={index}>
-                            <a
-                              href={URL.createObjectURL(file)}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-blue-600 underline"
-                            >
-                              {file.name}
-                            </a>
-                          </li>
-                        ))}
-                      </ul>
-                    </>
-                  ) : (
-                    "No"
-                  )}
-                </Section>
-
-                <Section title="Is the Legal Service Provider Required to Provide Written References with the Offer?">
-                  {formData.providerReferences || "-"}
-                </Section>
-              </div>
-              {/* Close Button */}
-              <button
-                onClick={() => setShowPreview(false)}
-                className="top-4 right-4 text-white bg-[#3a3a3c] rounded w-24 h-15 flex items-center justify-center text-xl hover:bg-red-600 transition cursor-pointer"
-              >
-                Close Preview
-              </button>
-            </div>
-          </div>
-        )}
-        {showLoadDraftModal && (
-          <div className="fixed inset-0 bg-black/40 flex justify-center items-center z-50">
-            <div className="bg-white w-full max-w-xl p-6 rounded shadow-lg relative">
-              <button
-                type="button"
-                className="absolute top-3 right-3 px-3 py-1 rounded bg-gray-300 hover:bg-gray-400 cursor-pointer"
-                onClick={() => setShowLoadDraftModal(false)}
-              >
-                Close
-              </button>
-
-              <h2 className="text-xl font-semibold mb-4">
-                Select a draft to load
-              </h2>
-
-              <div className="space-y-3 max-h-[400px] overflow-y-auto">
-                {draftsLoading ? (
-                  <p className="text-sm text-gray-600">Loading drafts…</p>
-                ) : drafts.length === 0 ? (
-                  <p className="text-sm text-gray-600">{DRAFT_EMPTY_TEXT}</p>
-                ) : (
-                  drafts.map((draft) => (
-                    <div
-                      key={draft.id}
-                      className="flex justify-between items-center border p-3 rounded gap-3"
-                    >
-                      <div className="min-w-0">
-                        <p className="font-medium break-words">
-                          {draft.title || "Untitled draft"}
-                        </p>
-
-                        <p className="text-xs text-gray-400 mt-1">
-                          {formatDraftSavedDate(draft)}
-                        </p>
-                      </div>
-
-                      <div className="flex gap-2 shrink-0">
-                        <button
-                          type="button"
-                          onClick={() => handleLoadDraft(draft)}
-                          disabled={draftActionLoading}
-                          className="px-3 py-1 bg-[#11999e] text-white rounded hover:opacity-90 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-                        >
-                          Load Draft
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteDraft(draft.id)}
-                          disabled={draftActionLoading}
-                          className="px-3 py-1 bg-red-500 text-white rounded hover:opacity-90 cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
-                        >
-                          Delete Draft
-                        </button>
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
+      <SaveDraftModal
+        open={drafts.showSaveDraftModal}
+        title={drafts.draftTitleInput}
+        error={drafts.draftSaveError}
+        loading={drafts.draftActionLoading}
+        onChangeTitle={drafts.setDraftTitleInput}
+        onClose={drafts.closeSaveDraftModal}
+        onSave={drafts.handleSaveDraft}
+      />
+      <LoadDraftModal
+        open={drafts.showLoadDraftModal}
+        drafts={drafts.drafts}
+        loading={drafts.draftsLoading}
+        actionLoading={drafts.draftActionLoading}
+        emptyText={drafts.emptyText}
+        onClose={() => drafts.setShowLoadDraftModal(false)}
+        onLoad={drafts.handleLoadDraft}
+        onDelete={drafts.handleDeleteDraft}
+      />
+    </>
   );
 }

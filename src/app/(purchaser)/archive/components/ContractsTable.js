@@ -1,7 +1,19 @@
 "use client";
 // Uses api/me/contracts/route.js
 import { useEffect, useMemo, useState } from "react";
-import { fmtMoney } from "../utils/format";
+import { fmtMoney, isHourlyRate } from "../utils/format";
+import {
+  btnGhost,
+  btnPrimary,
+  emptyCard,
+  table,
+  tableCard,
+  tableScroll,
+  td,
+  th,
+  theadRow,
+  tr,
+} from "./tableUi";
 
 function formatDateDDMMYYYY(isoish) {
   const d = new Date(isoish);
@@ -54,6 +66,7 @@ function RatingDetails({
   rating,
   hasRatings = true,
   emptyText = "No Ratings Yet",
+  align = "left",
 }) {
   if (!hasRatings) {
     return <span>{emptyText}</span>;
@@ -69,11 +82,11 @@ function RatingDetails({
   if (!has) return <span>{emptyText}</span>;
 
   return (
-    <details>
-      <summary className="cursor-pointer">
+    <details className={align === "center" ? "text-center" : "text-left"}>
+      <summary className="cursor-pointer font-medium text-[#0f7c80] hover:text-[#11999e]">
         {label}: {rating.total != null ? `${rating.total}/5` : "N/A"}
       </summary>
-      <div className="mt-1 pl-4 text-left">
+      <div className="mt-2 space-y-0.5 pl-1 text-left text-xs text-gray-600">
         <div>Quality: {rating.quality ?? "—"}/5</div>
         <div>Communication: {rating.communication ?? "—"}/5</div>
         <div>Billing: {rating.billing ?? "—"}/5</div>
@@ -82,7 +95,11 @@ function RatingDetails({
   );
 }
 
-export default function ContractsTable({ rows, onShowContract }) {
+export default function ContractsTable({
+  rows,
+  onShowContract,
+  hideHeading = false,
+}) {
   const enriched = useMemo(
     () =>
       (rows || []).map((c) => ({
@@ -105,95 +122,95 @@ export default function ContractsTable({ rows, onShowContract }) {
   const canLoadMore = visibleCount < enriched.length;
 
   return (
-    <div className="w-full mb-8">
-      <h2 className="text-2xl font-semibold mb-4">My LEXIFY Contracts</h2>
+    <div className="w-full">
+      {!hideHeading && (
+        <h2 className="mb-4 text-2xl font-semibold text-gray-900">
+          My LEXIFY Contracts
+        </h2>
+      )}
 
       {enriched.length === 0 ? (
-        <div className="p-4 bg-white rounded border text-black">N/A</div>
+        <div className={emptyCard}>N/A</div>
       ) : (
         <>
-          <table className="w-full border-collapse border border-gray-300 bg-white text-black">
-            <thead>
-              <tr className="bg-[#3a3a3c] text-white">
-                <th className="border p-2 text-center">Title</th>
-                <th className="border p-2 text-center">Created by</th>
-                <th className="border p-2 text-center">Date of Contract</th>
-                <th className="border p-2 text-center">
-                  Legal Service Provider
-                </th>
-                <th className="border p-2 text-center">Contract Price</th>
-                <th className="border p-2 text-center">View LEXIFY Contract</th>
-                <th className="border p-2 text-center">
-                  My Rating of the Law Firm on LEXIFY
-                </th>
-                <th className="border p-2 text-center">
-                  Aggregate Rating of the Law Firm on LEXIFY
-                </th>
-              </tr>
-            </thead>
+          <div className={tableCard}>
+            <div className={tableScroll}>
+              <table className={table}>
+                <thead>
+                  <tr className={theadRow}>
+                    <th className={th}>Title</th>
+                    <th className={th}>Created by</th>
+                    <th className={th}>Date of Contract</th>
+                    <th className={th}>Legal Service Provider</th>
+                    <th className={th}>Contract Price</th>
+                    <th className={th}>View LEXIFY Contract</th>
+                    <th className={th}>My Rating of the Law Firm on LEXIFY</th>
+                    <th className={th}>
+                      Aggregate Rating of the Law Firm on LEXIFY
+                    </th>
+                  </tr>
+                </thead>
 
-            <tbody>
-              {visibleRows.map((c) => (
-                <tr key={c.contractId}>
-                  <td className="border p-2 text-center">
-                    {c.request?.title || "—"}
-                  </td>
-                  <td className="border p-2 text-center">
-                    {c.createdBy || "—"}
-                  </td>
-                  <td className="border p-2 text-center">
-                    {formatDateDDMMYYYY(c.contractDate)}
-                  </td>
+                <tbody>
+                  {visibleRows.map((c) => (
+                    <tr key={c.contractId} className={tr}>
+                      <td className={td}>{c.request?.title || "—"}</td>
+                      <td className={td}>{c.createdBy || "—"}</td>
+                      <td className={td}>
+                        {formatDateDDMMYYYY(c.contractDate)}
+                      </td>
 
-                  <td className="border p-2 text-center">
-                    {c.provider?.companyName || "—"}
-                  </td>
+                      <td className={td}>{c.provider?.companyName || "—"}</td>
 
-                  <td className="border p-2 text-center">
-                    {c.contractPrice != null
-                      ? fmtMoney(c.contractPrice, c.contractPriceCurrency)
-                      : "—"}
-                    {c.contractPriceType
-                      ?.toLowerCase?.()
-                      .startsWith("hourly rate")
-                      ? "/h"
-                      : ""}
-                  </td>
+                      <td className={td}>
+                        {c.contractPrice != null
+                          ? fmtMoney(c.contractPrice, c.contractPriceCurrency)
+                          : "—"}
+                        {isHourlyRate(
+                          c.contractPriceType || c.request?.paymentRate,
+                        )
+                          ? "/h"
+                          : ""}
+                      </td>
 
-                  <td className="border p-2 text-center">
-                    <button
-                      className="bg-[#11999e] text-white px-3 py-1 rounded cursor-pointer"
-                      onClick={() => onShowContract?.(c)}
-                    >
-                      View
-                    </button>
-                  </td>
+                      <td className={td}>
+                        <button
+                          className={btnPrimary}
+                          onClick={() => onShowContract?.(c)}
+                        >
+                          View
+                        </button>
+                      </td>
 
-                  <td className="border p-2 text-center">
-                    <RatingDetails
-                      label="My rating for this contract"
-                      rating={c.myRating}
-                      hasRatings={c.myHasRating}
-                      emptyText="No Rating Yet"
-                    />
-                  </td>
+                      <td className={td}>
+                        <RatingDetails
+                          label="My rating"
+                          rating={c.myRating}
+                          hasRatings={c.myHasRating}
+                          emptyText="No Rating Yet"
+                          align="center"
+                        />
+                      </td>
 
-                  <td className="border p-2 text-center">
-                    <RatingDetails
-                      label="Aggregate rating"
-                      rating={c.providerRating}
-                      hasRatings={c.providerHasRatings}
-                    />
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
+                      <td className={td}>
+                        <RatingDetails
+                          label="Aggregate rating"
+                          rating={c.providerRating}
+                          hasRatings={c.providerHasRatings}
+                          align="center"
+                        />
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
 
           {canLoadMore && (
             <div className="mt-4 flex justify-center">
               <button
-                className="bg-white text-black px-4 py-2 rounded cursor-pointer"
+                className={btnGhost}
                 onClick={() =>
                   setVisibleCount((n) =>
                     Math.min(n + PAGE_SIZE, enriched.length),

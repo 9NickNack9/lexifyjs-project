@@ -26,7 +26,7 @@ export async function GET() {
   }
 
   const rows = await prisma.request.findMany({
-    where: sessionUser.role === "ADMIN" ? {} : { clientId: sessionUser.userId },
+    where: { clientId: sessionUser.userId },
     include: { _count: { select: { offers: true } } },
     orderBy: { dateCreated: "desc" },
   });

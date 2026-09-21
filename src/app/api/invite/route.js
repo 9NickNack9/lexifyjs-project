@@ -5,6 +5,10 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 import { notifyProviderInvites } from "@/lib/mailer";
 import { buildReferralRegisterUrl } from "@/lib/referral";
+import {
+  getDummyInvites,
+  withAdminDummyRows,
+} from "@/lib/adminDummyCases";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -68,13 +72,17 @@ export async function GET() {
     });
 
     return NextResponse.json({
-      invites: invites.map((invite) => ({
-        id: String(invite.inviteId),
-        companyName: invite.firmName,
-        contactPersons: formatContactPersons(invite.contactPersons),
-        inviteDate: formatInviteDate(invite.createdAt),
-        status: invite.status === "JOINED" ? "Joined" : "Pending",
-      })),
+      invites: withAdminDummyRows(
+        session.role,
+        getDummyInvites(),
+        invites.map((invite) => ({
+          id: String(invite.inviteId),
+          companyName: invite.firmName,
+          contactPersons: formatContactPersons(invite.contactPersons),
+          inviteDate: formatInviteDate(invite.createdAt),
+          status: invite.status === "JOINED" ? "Joined" : "Pending",
+        })),
+      ),
     });
   } catch (error) {
     console.error("GET /api/invite failed:", error);
@@ -104,6 +112,13 @@ export async function POST(req) {
     if (!firmName) {
       return NextResponse.json(
         { error: "Firm name is required" },
+        { status: 400 },
+      );
+    }
+
+    if (personalMessage.length > 1000) {
+      return NextResponse.json(
+        { error: "Personal message must be 1000 characters or fewer" },
         { status: 400 },
       );
     }

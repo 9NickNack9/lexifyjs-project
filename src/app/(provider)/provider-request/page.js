@@ -5,6 +5,19 @@ import Link from "next/link";
 import { formatTimeUntil } from "@/app/(purchaser)/archive/utils/format";
 import { FaFileAlt } from "react-icons/fa";
 import NarrowTooltip from "../../components/NarrowTooltip";
+import { AppPage } from "@/app/components/HubPage";
+import {
+  btnPrimary,
+  emptyCard,
+  loadingCard,
+  table,
+  tableCard,
+  tableScroll,
+  td,
+  th,
+  theadRow,
+  tr,
+} from "@/app/(purchaser)/archive/components/tableUi";
 
 const subcategoriesByCategory = {
   "Help with Contracts": [
@@ -60,11 +73,7 @@ const assignmentTypesBySubcategory = {
 };
 
 function EmptyBox({ children }) {
-  return (
-    <div className="p-4 bg-white text-black border border-black rounded text-center mt-8">
-      {children}
-    </div>
-  );
+  return <div className={emptyCard}>{children}</div>;
 }
 
 export default function ProviderRequest() {
@@ -110,14 +119,14 @@ export default function ProviderRequest() {
   }, [queryString]);
 
   return (
-    <div className="flex flex-col items-center min-h-screen p-6">
-      <h1 className="text-3xl font-bold text-center mb-8">
-        Available LEXIFY Requests
-      </h1>
-
+    <AppPage
+      eyebrow=""
+      title="Available LEXIFY Requests"
+      contentClassName="max-w-[90rem]"
+    >
       {/* Filters */}
-      <div className="w-full max-w-7xl p-6 rounded text-black">
-        <div className="flex flex-col gap-4">
+      <div className="w-full rounded-2xl text-black bg-[#11999e] p-1 shadow-[0_16px_44px_rgba(17,153,158,0.22)] ring-1 ring-black/10">
+        <div className="flex flex-col gap-1">
           <select
             value={descriptionFilter}
             onChange={(e) => {
@@ -125,7 +134,7 @@ export default function ProviderRequest() {
               setSubcategoryFilter("All");
               setAssignmentTypeFilter("All");
             }}
-            className="w-full p-2 border rounded bg-white text-black text-center"
+            className="w-full rounded-lg border border-gray-200 bg-white p-2.5 text-center text-black focus:outline-none focus:ring-2 focus:ring-[#11999e]/30"
           >
             <option value="All">Filter LEXIFY Requests by Category</option>
             <option value="Help with Contracts">Help with Contracts</option>
@@ -166,7 +175,7 @@ export default function ProviderRequest() {
                 setSubcategoryFilter(e.target.value);
                 setAssignmentTypeFilter("All");
               }}
-              className="w-full p-2 border rounded bg-white text-black text-center"
+              className="w-full rounded-lg border border-gray-200 bg-white p-2.5 text-center text-black focus:outline-none focus:ring-2 focus:ring-[#11999e]/30"
             >
               <option value="All">Filter LEXIFY Requests by Subcategory</option>
               {subcategoriesByCategory[descriptionFilter].map((subcat) => (
@@ -181,7 +190,7 @@ export default function ProviderRequest() {
             <select
               value={assignmentTypeFilter}
               onChange={(e) => setAssignmentTypeFilter(e.target.value)}
-              className="w-full p-2 border rounded bg-white text-black text-center"
+              className="w-full rounded-lg border border-gray-200 bg-white p-2.5 text-center text-black focus:outline-none focus:ring-2 focus:ring-[#11999e]/30"
             >
               <option value="All">
                 Filter LEXIFY Requests by Assignment Type
@@ -196,29 +205,29 @@ export default function ProviderRequest() {
             </select>
           )}
         </div>
+      </div>
 
-        {/* Table */}
-        <div className="mt-8">
-          {loading ? (
-            <EmptyBox>Loading…</EmptyBox>
-          ) : rows.length === 0 ? (
-            <EmptyBox>
-              No matching LEXIFY Requests available at the moment.
-            </EmptyBox>
-          ) : (
-            <table className="w-full border-collapse border border-gray-300 bg-white text-black">
+      {/* Table */}
+      {loading ? (
+        <div className={loadingCard}>Loading…</div>
+      ) : rows.length === 0 ? (
+        <EmptyBox>
+          No matching LEXIFY Requests available at the moment.
+        </EmptyBox>
+      ) : (
+        <div className={tableCard}>
+          <div className={tableScroll}>
+            <table className={table}>
               <thead>
-                <tr className="bg-[#3a3a3c] text-white">
-                  <th className="border p-2 text-center">Category</th>
-                  <th className="border p-2 text-center">Subcategory</th>
-                  <th className="border p-2 text-center">Assignment type</th>
-                  <th className="border p-2 text-center">Client Name</th>
-                  <th className="border p-2 text-center">
-                    Time until Deadline for Offers
-                  </th>
-                  <th className="border p-2 text-center">
+                <tr className={theadRow}>
+                  <th className={th}>Category</th>
+                  <th className={th}>Subcategory</th>
+                  <th className={th}>Assignment type</th>
+                  <th className={th}>Client Name</th>
+                  <th className={th}>Time until Deadline for Offers</th>
+                  <th className={th}>
                     Review LEXIFY Request and Submit Offer{" "}
-                    <NarrowTooltip tooltipText="Only one offer can be submitted for each LEXIFY Request." />
+                    <NarrowTooltip tooltipText="Only one offer can be submitted for each LEXIFY Request. If you cannot see a certain Request, a colleague at your firm has already submitted an offer for it." />
                   </th>
                 </tr>
               </thead>
@@ -226,15 +235,11 @@ export default function ProviderRequest() {
                 {rows.map((r) => {
                   const timeLeft = formatTimeUntil(r.offersDeadline);
                   return (
-                    <tr key={r.requestId}>
-                      <td className="border p-2 text-center">{r.category}</td>
-                      <td className="border p-2 text-center">
-                        {r.subcategory}
-                      </td>
-                      <td className="border p-2 text-center">
-                        {r.assignmentType}
-                      </td>
-                      <td className="border p-2 text-center">
+                    <tr key={r.requestId} className={tr}>
+                      <td className={td}>{r.category}</td>
+                      <td className={td}>{r.subcategory}</td>
+                      <td className={td}>{r.assignmentType}</td>
+                      <td className={td}>
                         {(r.confidential ?? r.details?.confidential)
                           ?.toString()
                           .trim()
@@ -243,7 +248,7 @@ export default function ProviderRequest() {
                           : r.clientCompanyName || "—"}
                       </td>
                       <td
-                        className="border p-2 text-center"
+                        className={td}
                         title={
                           r.offersDeadline
                             ? new Date(r.offersDeadline).toString()
@@ -252,12 +257,12 @@ export default function ProviderRequest() {
                       >
                         {timeLeft || "—"}
                       </td>
-                      <td className="border p-2 text-center">
+                      <td className={td}>
                         <Link
                           href={`/make-offer?requestId=${r.requestId}`}
-                          className="bg-[#11999e] text-white px-3 py-1 rounded inline-block"
+                          className={btnPrimary}
                         >
-                          <FaFileAlt className="inline-block w-5 h-5" />
+                          <FaFileAlt className="inline-block h-5 w-5" />
                         </Link>
                       </td>
                     </tr>
@@ -265,9 +270,9 @@ export default function ProviderRequest() {
                 })}
               </tbody>
             </table>
-          )}
+          </div>
         </div>
-      </div>
-    </div>
+      )}
+    </AppPage>
   );
 }

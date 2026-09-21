@@ -4,6 +4,7 @@ import { prisma } from "@/lib/prisma";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 import { notifySupportNewRegistration } from "@/lib/mailer";
+import { validateNewPassword } from "@/lib/password";
 
 /** Helpers */
 const trim = (s) => (typeof s === "string" ? s.trim() : s);
@@ -38,7 +39,12 @@ const BaseSchema = z.object({
   companyJoinType: z.enum(["new_company", "existing_company"]),
 
   username: z.string().min(3, "Username must be at least 3 characters"),
-  password: z.string().min(8, "Password must be at least 8 characters"),
+  password: z.string().superRefine((val, ctx) => {
+    const error = validateNewPassword(val);
+    if (error) {
+      ctx.addIssue({ code: "custom", message: error });
+    }
+  }),
 
   companyName: z.string().min(2, "Company name is required"),
   companyId: z.string().min(2, "Business ID is required"),
@@ -215,9 +221,16 @@ export async function POST(req) {
     const parsed = RegisterSchema.safeParse(body);
     if (!parsed.success) {
       const flat = parsed.error.flatten();
+      const firstFieldError = Object.values(flat.fieldErrors)
+        .flat()
+        .find(Boolean);
+      const firstFormError = flat.formErrors.find(Boolean);
       return NextResponse.json(
         {
-          error: "Invalid input",
+          error:
+            firstFieldError ||
+            firstFormError ||
+            "Please check the form and try again.",
           fields: flat.fieldErrors,
           form: flat.formErrors,
         },
@@ -293,7 +306,7 @@ export async function POST(req) {
       return NextResponse.json(
         {
           error:
-            "No existing company found with this name or Business ID. Please choose 'Unregistered Company' instead.",
+            "No organization was found with this name or business ID. If your company or law firm is not yet on LEXIFY, go back and select that option.",
           field: "companyId",
         },
         { status: 404 },
@@ -420,6 +433,12 @@ export async function POST(req) {
     );
   } catch (err) {
     console.error("POST /api/register failed:", err);
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return NextResponse.json(
+      {
+        error:
+          "Something went wrong while creating your account. Please try again.",
+      },
+      { status: 500 },
+    );
   }
 }

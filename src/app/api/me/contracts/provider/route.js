@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import {
+  getDummyProviderContracts,
+  withAdminDummyRows,
+} from "@/lib/adminDummyCases";
 
 const toNum = (d) => (d == null ? null : Number(d));
 const safeNumber = (v) => (typeof v === "bigint" ? Number(v) : v);
@@ -22,6 +26,7 @@ export async function GET() {
         firstName: true,
         lastName: true,
         companyId: true,
+        role: true,
       },
     });
 
@@ -86,7 +91,11 @@ export async function GET() {
         contacts: Array.from(
           new Set([...contactsFromMembers, meName].filter(Boolean)),
         ),
-        contracts: [],
+        contracts: withAdminDummyRows(
+          me?.role || session.role,
+          getDummyProviderContracts(),
+          [],
+        ),
       });
     }
 
@@ -254,6 +263,7 @@ export async function GET() {
         contractId: safeNumber(c.contractId),
         contractDate: c.contractDate,
         contractPrice: toNum(c.contractPrice),
+        contractPriceType: c.request?.paymentRate || null,
         title: offerTitle,
         clientName: c.clientCompany?.companyName || "—",
         contractOwner: owner || "—",
@@ -341,7 +351,11 @@ export async function GET() {
           ),
         ),
       ),
-      contracts: shaped,
+      contracts: withAdminDummyRows(
+        me?.role || session.role,
+        getDummyProviderContracts(),
+        shaped,
+      ),
     });
   } catch (e) {
     console.error("GET /api/me/contracts/provider failed:", e);

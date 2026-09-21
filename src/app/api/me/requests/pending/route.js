@@ -4,6 +4,11 @@ import { NextResponse } from "next/server";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
+import {
+  getDummyPendingRequests,
+  isAdminRole,
+  withAdminDummyRows,
+} from "@/lib/adminDummyCases";
 
 // --- helpers (read-only shaping only) ---
 const toNum = (d) => (d == null ? null : Number(d));
@@ -56,25 +61,21 @@ export async function GET() {
       return NextResponse.json({ error: "Company not found" }, { status: 404 });
     }
 
-    const isAdmin = ua?.role === "ADMIN";
+    const isAdmin = isAdminRole(ua?.role || session.role);
 
     // filter by purchaser Company PK
     const requests = await prisma.request.findMany({
       where: {
         requestState: { in: ["PENDING", "ON HOLD", "CONFLICT_CHECK"] },
-        ...(isAdmin
-          ? {} // admins see ALL
-          : {
-              OR: [
-                { clientCompanyId: ua.companyId },
-                {
-                  details: {
-                    path: ["sharedAccounts"],
-                    array_contains: [{ userPkId: Number(session.userId) }],
-                  },
-                },
-              ],
-            }),
+        OR: [
+          { clientCompanyId: ua.companyId },
+          {
+            details: {
+              path: ["sharedAccounts"],
+              array_contains: [{ userPkId: Number(session.userId) }],
+            },
+          },
+        ],
       },
       orderBy: { dateCreated: "desc" },
       select: {
@@ -179,7 +180,11 @@ export async function GET() {
       companyName: ua.company?.companyName || null,
       businessId: ua.company?.businessId || null,
       companyCountry: ua.company?.companyCountry || null,
-      requests: shaped,
+      requests: withAdminDummyRows(
+        isAdmin ? "ADMIN" : ua?.role,
+        getDummyPendingRequests(),
+        shaped,
+      ),
     });
   } catch (err) {
     console.error("GET /api/me/requests/pending failed:", err);

@@ -23,6 +23,7 @@
 # misc
 .DS_Store
 *.pem
+tmp-audit*.json
 
 # debug
 npm-debug.log*
@@ -47,6 +48,7 @@ next-env.d.ts
 /public/supplier
 /public/references
 /public/contractpdfs
+/public/invoices
 
 /src/app/api/test-contract-email
 /src/app/api/test-send-contract

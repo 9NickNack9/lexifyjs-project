@@ -70,7 +70,7 @@ const NarrowTooltip = ({ tooltipText }) => {
       <div className="inline-flex">
         <div
           ref={iconRef}
-          className="flex items-center justify-center w-5 h-5 rounded-full bg-gray-200 text-gray-700 text-xs font-bold cursor-help select-none"
+          className="flex h-5 w-5 cursor-help select-none items-center justify-center overflow-visible rounded-full bg-gray-300 text-[11px] font-bold leading-none tracking-normal text-gray-700 normal-case"
           onMouseEnter={() => setShowTooltip(true)}
           onMouseLeave={() => setShowTooltip(false)}
           aria-label={tooltipText}

@@ -3,16 +3,32 @@ import { getServerSession } from "next-auth";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import { prisma } from "@/lib/prisma";
 
+function uniqueCompanyNames(values) {
+  const out = [];
+  const seen = new Set();
+  for (const value of Array.isArray(values) ? values : []) {
+    const name = typeof value === "string" ? value.trim() : "";
+    if (!name) continue;
+    const key = name.toLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(name);
+  }
+  return out;
+}
+
 export async function POST(req) {
   const session = await getServerSession(authOptions);
   if (!session?.userId)
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
   const body = await req.json().catch(() => null);
-  const name = (body?.companyName || "").trim();
-  if (!name)
+  const names = Array.isArray(body?.companyNames)
+    ? uniqueCompanyNames(body.companyNames)
+    : uniqueCompanyNames([body?.companyName]);
+  if (names.length === 0)
     return NextResponse.json(
-      { error: "companyName required" },
+      { error: "Select at least one provider." },
       { status: 400 },
     );
 
@@ -22,11 +38,17 @@ export async function POST(req) {
   });
 
   const current = Array.isArray(me?.blockedServiceProviders)
-    ? me.blockedServiceProviders
+    ? me.blockedServiceProviders.filter((name) => typeof name === "string")
     : [];
-  const next = current.includes(name) ? current : [...current, name]; // ✅ companyName string
+  const seen = new Set(current.map((name) => name.toLowerCase()));
+  const next = [...current];
+  for (const name of names) {
+    if (seen.has(name.toLowerCase())) continue;
+    seen.add(name.toLowerCase());
+    next.push(name);
+  }
 
-  if (next !== current) {
+  if (next.length !== current.length) {
     await prisma.userAccount.update({
       where: { userPkId: BigInt(session.userId) },
       data: { blockedServiceProviders: next },

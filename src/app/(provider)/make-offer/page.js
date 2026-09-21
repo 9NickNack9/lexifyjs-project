@@ -3,17 +3,42 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import QuestionMarkTooltip from "../../components/QuestionmarkTooltip";
+import { AppPage } from "@/app/components/HubPage";
+
+const cardClass =
+  "w-full rounded-2xl bg-white p-6 text-black shadow-[0_16px_44px_rgba(17,153,158,0.22)] ring-1 ring-black/10";
+
+const inputClass =
+  "w-full rounded-lg border border-gray-300 bg-white p-2.5 text-sm text-gray-800 outline-none placeholder:text-gray-400 focus:border-[#11999e] focus:ring-1 focus:ring-[#11999e]/30";
+
+const btnPrimary =
+  "inline-flex items-center justify-center rounded-lg bg-[#11999e] px-4 py-2.5 text-sm font-medium text-white cursor-pointer transition-colors hover:bg-[#0e8488] disabled:opacity-50 disabled:cursor-not-allowed";
+
+const btnDanger =
+  "inline-flex items-center justify-center rounded-lg bg-red-500 px-4 py-2.5 text-sm font-medium text-white cursor-pointer transition-colors hover:bg-red-600";
+
+const statusCard =
+  "rounded-2xl bg-white px-6 py-12 text-center text-sm text-gray-500 shadow-[0_16px_44px_rgba(17,153,158,0.22)] ring-1 ring-black/10";
+
+function PageShell({ children }) {
+  return (
+    <AppPage
+      title="Review LEXIFY Request and Submit Offer"
+      contentClassName="max-w-7xl"
+    >
+      {children}
+    </AppPage>
+  );
+}
 
 // ---------------- small helpers ----------------
 function Section({ title, children }) {
   return (
-    <div>
-      <div className="bg-[#11999e] p-2">
+    <div className="overflow-hidden rounded-xl ring-1 ring-black/10">
+      <div className="bg-[#11999e] px-4 py-2.5">
         <h3 className="text-lg font-semibold text-white">{title}</h3>
       </div>
-      <div className="p-4 border-x border-b rounded-b bg-white text-black border-white">
-        {children ?? "—"}
-      </div>
+      <div className="bg-white p-4 text-black">{children ?? "—"}</div>
     </div>
   );
 }
@@ -293,7 +318,7 @@ function renderValue(v, pathHint) {
                 href={file.url}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="text-blue-600 hover:text-blue-800 hover:underline"
+                className="text-[#11999e] hover:text-[#0e8488] hover:underline"
               >
                 {file.name || `File ${idx + 1}`}
               </a>
@@ -322,7 +347,10 @@ function renderValue(v, pathHint) {
     return (
       <div className="space-y-2">
         {entries.map(([question, answer], idx) => (
-          <div key={idx} className="border-b last:border-b-0 pb-2 last:pb-0">
+          <div
+            key={idx}
+            className="border-b border-gray-200 last:border-b-0 pb-2 last:pb-0"
+          >
             <div className="flex">
               <span className="font-semibold mr-1">Information Request:</span>
               <span className="whitespace-pre-wrap flex-1">{question}</span>
@@ -692,7 +720,9 @@ export default function MakeOffer() {
         return;
       }
 
-      alert("Your question has been submitted to the client.");
+      alert(
+        "Thank you! Your information request has been submitted and is awaiting the client's response.",
+      );
       setAdditionalQuestion("");
     } catch (e) {
       alert("Unexpected error while submitting your question.");
@@ -732,33 +762,27 @@ export default function MakeOffer() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen p-6">
-        <div className="p-4 bg-white text-black rounded border">Loading…</div>
-      </div>
+      <PageShell>
+        <div className={statusCard}>Loading…</div>
+      </PageShell>
     );
   }
 
   if (!request) {
     return (
-      <div className="flex items-center justify-center min-h-screen p-6">
-        <div className="p-4 bg-white text-black rounded border">
-          Request not found.
-        </div>
-      </div>
+      <PageShell>
+        <div className={statusCard}>Request not found.</div>
+      </PageShell>
     );
   }
 
   return (
-    <div className="flex flex-col items-center min-h-screen p-6">
-      <h1 className="text-3xl font-bold mb-4 text-center">
-        Review LEXIFY Request and Submit Offer
-      </h1>
-
-      <div className="w-full max-w-7xl rounded shadow-2xl bg-white text-black p-0 overflow-hidden">
+    <PageShell>
+      <div className={cardClass}>
         {/* ---------- PREVIEW (PreviewModal-equivalent, with filtering) ---------- */}
-        <div className="space-y-6 p-6">
+        <div className="space-y-6">
           {!def ? (
-            <div className="p-3 border rounded bg-gray-50 text-black">
+            <div className="rounded-xl border border-gray-200 bg-gray-50 p-4 text-black">
               No matching preview definition found.
             </div>
           ) : (
@@ -795,11 +819,13 @@ export default function MakeOffer() {
                             }
 
                             return (
-                              <tr key={fi} className="border-t">
-                                <td className="py-1 pr-4 font-semibold align-top w-1/3">
+                              <tr key={fi} className="border-t border-gray-200">
+                                <td className="w-1/3 py-2 pr-4 align-top font-semibold text-gray-800">
                                   {label}
                                 </td>
-                                <td className="py-1 align-top">{display}</td>
+                                <td className="py-2 align-top text-gray-800">
+                                  {display}
+                                </td>
                               </tr>
                             );
                           })}
@@ -817,42 +843,42 @@ export default function MakeOffer() {
               })
           )}
         </div>
+      </div>
 
-        {/* ---------- ADDITIONAL QUESTION TO CLIENT ---------- */}
-        <div className="px-6 pb-6">
-          <h2 className="font-semibold mb-2">
-            Do you need any additional information about the LEXIFY Request
-            before submitting an offer? You can submit your additional
-            information request to the client below:
-          </h2>
-          <textarea
-            className="w-full border rounded p-2 min-h-[100px]"
-            value={additionalQuestion}
-            onChange={(e) => setAdditionalQuestion(e.target.value)}
-            placeholder="Insert additional information request here"
-          />
-          <div className="mt-3">
-            <button
-              type="button"
-              onClick={handleSubmitAdditionalQuestion}
-              disabled={
-                questionSubmitting || !additionalQuestion.trim() || !requestId
-              }
-              className="px-4 py-2 bg-[#11999e] text-white rounded disabled:opacity-50 cursor-pointer disabled:cursor-not-allowed"
-            >
-              {questionSubmitting
-                ? "Submitting Question…"
-                : "Submit Additional Information Request"}
-            </button>
-          </div>
+      {/* ---------- ADDITIONAL QUESTION TO CLIENT ---------- */}
+      <div className={cardClass}>
+        <h2 className="mb-2 font-semibold">
+          Do you need any additional information about the LEXIFY Request before
+          submitting an offer? You can submit your additional information
+          request to the client below:
+        </h2>
+        <textarea
+          className={`${inputClass} min-h-[100px]`}
+          value={additionalQuestion}
+          onChange={(e) => setAdditionalQuestion(e.target.value)}
+          placeholder="Insert additional information request here"
+        />
+        <div className="mt-3">
+          <button
+            type="button"
+            onClick={handleSubmitAdditionalQuestion}
+            disabled={
+              questionSubmitting || !additionalQuestion.trim() || !requestId
+            }
+            className={btnPrimary}
+          >
+            {questionSubmitting
+              ? "Submitting Question…"
+              : "Submit Additional Information Request"}
+          </button>
         </div>
+      </div>
 
-        <div className="h-px w-full bg-gray-200" />
-
-        {/* ---------------------- OFFER FORM ---------------------- */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
+      {/* ---------------------- OFFER FORM ---------------------- */}
+      <div className={cardClass}>
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div>
-            <label className="block font-semibold mb-2">
+            <label className="mb-2 block font-semibold">
               Offer Title{" "}
               <QuestionMarkTooltip
                 tooltipText="This title will not be shown to the client and will only be used
@@ -862,7 +888,7 @@ export default function MakeOffer() {
             </label>
             <input
               type="text"
-              className="border p-2 w-full rounded"
+              className={inputClass}
               value={offerTitle}
               onChange={(e) => setOfferTitle(e.target.value)}
               placeholder="Insert offer title"
@@ -871,7 +897,7 @@ export default function MakeOffer() {
           </div>
 
           <div>
-            <label className="block font-semibold mb-2">
+            <label className="mb-2 block font-semibold">
               {isCapped ? (
                 <>
                   Insert Your Offered Capped Price in Accordance with the LEXIFY
@@ -885,7 +911,7 @@ export default function MakeOffer() {
             <input
               type="text"
               inputMode="numeric"
-              className="border p-2 w-full rounded"
+              className={inputClass}
               placeholder={
                 paymentRate === "capped price"
                   ? "Insert your offered capped price"
@@ -901,7 +927,7 @@ export default function MakeOffer() {
 
           {isCapped && (
             <div>
-              <label className="block font-semibold mb-2">
+              <label className="mb-2 block font-semibold">
                 Insert Your Expected Price in Accordance with the LEXIFY Request
                 (VAT 0%){" "}
                 <QuestionMarkTooltip tooltipText="Expected price refers to your expected price for the work if the dispute proceedings do not involve any unexpected developments (such as an unusually high number of rounds of written pleadings)." />
@@ -909,7 +935,7 @@ export default function MakeOffer() {
               <input
                 type="text"
                 inputMode="numeric"
-                className="border p-2 w-full rounded"
+                className={inputClass}
                 placeholder="Insert expected price"
                 value={offerExpectedPrice}
                 onChange={(e) =>
@@ -921,16 +947,16 @@ export default function MakeOffer() {
           )}
           {requiresReferences && (
             <div>
-              <label className="block font-semibold mb-2">
+              <label className="mb-2 block font-semibold">
                 Upload Your Written References in Accordance with the LEXIFY
                 Request
               </label>
-              <p className="text-sm mb-2">
+              <p className="mb-2 text-sm text-gray-600">
                 You must upload at least {minReferenceFiles} written reference
                 {minReferenceFiles > 1 ? "s" : ""} to submit your offer.
               </p>
 
-              <label className="inline-block px-4 py-2 bg-[#c8c8cf] text-black border border-black rounded cursor-pointer">
+              <label className="inline-block cursor-pointer rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-800 transition-colors hover:bg-gray-50">
                 Upload Reference Files
                 <input
                   type="file"
@@ -941,23 +967,23 @@ export default function MakeOffer() {
                   required={referenceFiles.length === 0}
                 />
               </label>
-              <span className="ml-2 text-sm">
+              <span className="ml-2 text-sm text-gray-600">
                 {referenceFiles.length > 0
                   ? `${referenceFiles.length} file(s) selected`
                   : "No files selected"}
               </span>
 
               {referenceFiles.length > 0 && (
-                <div className="mt-2 p-2">
-                  <h5 className="font-medium mb-1">Uploaded References:</h5>
+                <div className="mt-3 rounded-xl border border-gray-200 p-3">
+                  <h5 className="mb-1 font-medium">Uploaded References:</h5>
                   <ul className="list-disc pl-6">
                     {referenceFiles.map((file, index) => (
-                      <li key={index} className="flex items-center mb-1">
+                      <li key={index} className="mb-1 flex items-center">
                         <span className="truncate">{file.name}</span>
                         <button
                           type="button"
                           onClick={() => handleDeleteReferenceFile(index)}
-                          className="ml-2 px-2 py-1 bg-red-500 text-white text-xs rounded cursor-pointer"
+                          className="ml-2 cursor-pointer rounded-lg bg-red-500 px-2 py-1 text-xs font-medium text-white hover:bg-red-600"
                         >
                           Delete
                         </button>
@@ -973,13 +999,13 @@ export default function MakeOffer() {
           )}
           {/* ---------- ADDITIONAL MESSAGE ATTACHED TO OFFER ---------- */}
           <div className="mt-6">
-            <label className="block font-semibold mb-2">
+            <label className="mb-2 block font-semibold">
               Add a Message to Your Offer (Optional){" "}
               <QuestionMarkTooltip tooltipText="This optional field allows you to include additional context, clarifications, or disclaimers alongside your offer. The message will be visible to the client company when they review and select the winning offer." />
             </label>
 
             <textarea
-              className="border p-2 w-full rounded"
+              className={inputClass}
               value={providerAdditionalInfo}
               onChange={(e) => setProviderAdditionalInfo(e.target.value)}
               placeholder="Insert message (optional). Maximum 600 characters."
@@ -987,10 +1013,10 @@ export default function MakeOffer() {
             />
           </div>
 
-          <label className="block">
+          <label className="block cursor-pointer">
             <input
               type="checkbox"
-              className="mr-2"
+              className="mr-2 h-4 w-4 accent-[#11999e]"
               checked={agree}
               onChange={(e) => setAgree(e.target.checked)}
               required
@@ -998,7 +1024,7 @@ export default function MakeOffer() {
             I have carefully reviewed the LEXIFY Request and I am ready to
             submit my offer.
           </label>
-          <p className="text-xs">
+          <p className="text-xs text-gray-700">
             <em>
               <strong>
                 By submitting my offer I accept that, if my offer becomes the
@@ -1014,24 +1040,20 @@ export default function MakeOffer() {
               </strong>
             </em>
           </p>
-          <div className="flex gap-4">
-            <button
-              type="submit"
-              disabled={!canSubmit}
-              className="p-2 bg-[#11999e] text-white rounded cursor-pointer disabled:opacity-50"
-            >
+          <div className="flex flex-wrap gap-4">
+            <button type="submit" disabled={!canSubmit} className={btnPrimary}>
               {submitting ? "Submitting…" : "Submit Offer"}
             </button>
             <button
               type="button"
               onClick={() => router.push("/provider-request")}
-              className="p-2 bg-red-500 text-white rounded"
+              className={btnDanger}
             >
               Exit Without Submitting an Offer
             </button>
           </div>
         </form>
       </div>
-    </div>
+    </PageShell>
   );
 }
