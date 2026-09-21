@@ -676,7 +676,7 @@ const LexifyLanding = () => {
   return (
     <div
       ref={rootRef}
-      className="min-h-screen w-full bg-[linear-gradient(45deg,#11999e_0%,#cfecee_30%,#cfecee_70%,#11999e_100%)] bg-fixed font-['Inter',Arial,sans-serif] text-base leading-[1.65] text-[#0b2744] [&_h1]:font-headline [&_h2]:font-headline [&_h3]:font-headline [&_h1]:font-bold [&_h2]:font-normal [&_h3]:font-normal [&_h1]:leading-[1.09] [&_h2]:leading-[1.09] [&_h3]:leading-[1.09] [&_h1]:whitespace-nowrap [&_h1]:text-[clamp(13px,calc((100vw-80px)/23),56px)] [&_h2]:text-[40px] md:[&_h2]:text-[52px] [&_h3]:text-[25px] md:[&_h3]:text-[26px] [&_h1]:tracking-[-0.035em] [&_h2]:tracking-[-0.035em] [&_h3]:tracking-[-0.025em] [&_h2]:max-w-[710px] [&_a]:no-underline [&_blockquote]:m-0 [&_blockquote]:max-w-[875px] [&_blockquote]:font-headline [&_blockquote]:text-[25px] md:[&_blockquote]:text-[30px] [&_blockquote]:leading-[1.5] [&_blockquote]:tracking-[-0.02em]"
+      className="min-h-screen w-full bg-[linear-gradient(45deg,#11999e_0%,#cfecee_30%,#cfecee_70%,#11999e_100%)] bg-fixed font-['Inter',Arial,sans-serif] text-base leading-[1.65] text-[#0b2744] [&_h1]:font-headline [&_h2]:font-headline [&_h3]:font-headline [&_h1]:font-bold [&_h2]:font-normal [&_h3]:font-normal [&_h1]:leading-[1.09] [&_h2]:leading-[1.09] [&_h3]:leading-[1.09] md:[&_h1]:whitespace-nowrap md:[&_h1]:text-[clamp(13px,calc((100vw-80px)/23),56px)] [&_h2]:text-[40px] md:[&_h2]:text-[52px] [&_h3]:text-[25px] md:[&_h3]:text-[26px] [&_h1]:tracking-[-0.035em] [&_h2]:tracking-[-0.035em] [&_h3]:tracking-[-0.025em] [&_h2]:max-w-[710px] [&_a]:no-underline [&_blockquote]:m-0 [&_blockquote]:max-w-[875px] [&_blockquote]:font-headline [&_blockquote]:text-[25px] md:[&_blockquote]:text-[30px] [&_blockquote]:leading-[1.5] [&_blockquote]:tracking-[-0.02em]"
     >
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap');
@@ -811,12 +811,15 @@ const LexifyLanding = () => {
             className={`${wrap} relative flex flex-col items-center gap-6 text-center md:gap-7`}
           >
             <Reveal>
-              <h1 id="hero-title" className="text-[#0b2744]">
+              <h1
+                id="hero-title"
+                className="text-[2.15rem] leading-[1.12] text-[#0b2744] sm:text-[2.6rem] md:text-[clamp(13px,calc((100vw-80px)/23),56px)]"
+              >
                 The marketplace for legal services
               </h1>
             </Reveal>
             <Reveal delay={120}>
-              <p className="font-headline text-[25px] leading-[1.3] tracking-[-0.02em] text-[#11999e] md:text-[28px]">
+              <p className="font-headline text-[25px] leading-[1.3] tracking-[-0.02em] text-[#5b6e75] md:text-[28px] md:text-[#11999e]">
                 Where companies and premium law firms connect.
               </p>
               <div className="mt-[26px] flex flex-wrap items-center justify-center gap-5 md:mt-[30px]">
