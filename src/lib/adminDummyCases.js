@@ -114,7 +114,7 @@ function makeRequest({
   currency = "EUR",
   paymentRate = "Lump sum fixed fee",
   advanceRetainerFee = "No",
-  invoiceType = "On completion",
+  invoiceType = "On a monthly basis, invoice sent at end of each calendar month",
   language = "English",
   offersDeadlineHours = 48,
   dateCreatedDaysAgo = 2,
@@ -203,9 +203,9 @@ function requestByIdMap() {
       requestSubcategory: "B2B Sales",
       primaryContactPerson: "John Doe",
       scopeOfWork:
-        "Prepare a B2B sales agreement template for a SaaS subscription business.",
+        "A sales contract template for the client's B2B business. The work includes preparation of the template documentation, necessary revisisions based on client feedback and all related attorney-client communication.",
       description:
-        "We sell annual SaaS subscriptions to EU customers. Need standard terms + negotiation fallback positions.",
+        "We sell annual SaaS subscriptions to customers in Finland. Need standard terms + negotiation fallback positions.",
       offersDeadlineHours: 26,
       company: odyssey,
     }),
