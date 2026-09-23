@@ -4,6 +4,7 @@ import Link from "next/link";
 import { signOut, useSession } from "next-auth/react";
 import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
+import { isProviderSidePath } from "@/lib/providerPaths";
 import {
   BookOpen,
   ChevronDown,
@@ -99,18 +100,21 @@ export default function Navbar() {
   const registerStatus = session?.registerStatus ?? null;
   const companyName = session?.companyName ?? null;
 
+  const onProviderSide = isProviderSidePath(pathname);
+  const showProviderNav =
+    role === "PROVIDER" || (role === "ADMIN" && onProviderSide);
+
   let logoHref = "/main";
-  if (role === "PROVIDER") logoHref = "/provider";
-  if (role === "ADMIN") logoHref = "/admin";
+  if (showProviderNav) logoHref = "/provider";
+  else if (role === "ADMIN") logoHref = "/admin";
 
-  const accountHref = role === "PROVIDER" ? "/provider-account" : "/account";
+  const accountHref = showProviderNav ? "/provider-account" : "/account";
 
-  const navLinks =
-    role === "PROVIDER"
-      ? providerLinks
-      : role === "ADMIN"
-        ? adminLinks
-        : purchaserLinks;
+  const navLinks = showProviderNav
+    ? providerLinks
+    : role === "ADMIN"
+      ? adminLinks
+      : purchaserLinks;
 
   const handleLogout = () => {
     setMenuOpen(false);
