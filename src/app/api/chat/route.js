@@ -1,7 +1,10 @@
 import { anthropic } from "@ai-sdk/anthropic";
 import { convertToModelMessages, generateText } from "ai";
 import { buildDraftFieldCatalogPrompt } from "@/lib/lexiDraftFields";
-import { resolveChatIntent, isApplyOptimizationsRequest } from "@/lib/lexiIntent";
+import {
+  resolveChatIntent,
+  isApplyOptimizationsRequest,
+} from "@/lib/lexiIntent";
 
 export const maxDuration = 60;
 
@@ -75,8 +78,7 @@ export async function POST(req) {
     return allMessages.some((message) => {
       const text = getMessageText(message);
       return (
-        /DRAFT_DATA:\s*\{/i.test(text) ||
-        /CURRENT_REQUEST_CONTEXT:/i.test(text)
+        /DRAFT_DATA:\s*\{/i.test(text) || /CURRENT_REQUEST_CONTEXT:/i.test(text)
       );
     });
   }
@@ -981,7 +983,7 @@ them that the firms bidding on the Request are the ones qualified to advise.
 
   const result = shouldCacheDraftPrompt
     ? await generateText({
-        model: anthropic("claude-opus-5"),
+        model: anthropic("claude-opus-5-5"),
         messages: [
           {
             role: "system",
@@ -1001,7 +1003,7 @@ them that the firms bidding on the Request are the ones qualified to advise.
         maxOutputTokens: 16384,
       })
     : await generateText({
-        model: anthropic("claude-opus-5"),
+        model: anthropic("claude-opus-5-5"),
         system: `${systemPrompt}\n${dateBlock}`,
         messages: modelMessages,
         maxOutputTokens: 16384,
