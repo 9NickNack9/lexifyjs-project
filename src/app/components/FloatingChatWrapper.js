@@ -13,8 +13,11 @@ export default function FloatingChatWrapper() {
   if (status === "loading" && !session) return null;
 
   const role = session?.role;
+  const showLexi =
+    role === "PURCHASER" ||
+    (role === "ADMIN" && !isProviderSidePath(pathname));
 
-  if (role !== "ADMIN" || isProviderSidePath(pathname)) {
+  if (!showLexi) {
     return null;
   }
 
